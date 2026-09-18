@@ -748,34 +748,36 @@
     };
   }
 
+  var projetosFoiCarregadoAlgumaVez = false;
   async function loadAll(){
     try{
       var r = await window.storage.get('clm-projetos', true);
       if(r && r.value){ state.projetos = JSON.parse(r.value); }
-      else if(state.projetos === undefined){ state.projetos = []; }
-    }catch(e){ if(state.projetos === undefined){ state.projetos = []; } }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; } }
     try{
       var r2 = await window.storage.get('clm-tarefas', true);
       if(r2 && r2.value){ state.tarefas = JSON.parse(r2.value); }
-      else if(state.tarefas === undefined){ state.tarefas = []; }
-    }catch(e){ if(state.tarefas === undefined){ state.tarefas = []; } }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; } }
     try{
       var r3 = await window.storage.get('clm-equipe', true);
       if(r3 && r3.value){ state.equipe = JSON.parse(r3.value); }
-      else if(state.equipe === undefined){ state.equipe = []; }
-    }catch(e){ if(state.equipe === undefined){ state.equipe = []; } }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; } }
     if(!state.equipe || state.equipe.length === 0){ state.equipe = EQUIPE_PADRAO.slice(); saveEquipe(); }
     try{
       var r4 = await window.storage.get('clm-tipos', true);
       if(r4 && r4.value){ state.tipos = JSON.parse(r4.value); }
-      else if(state.tipos === undefined){ state.tipos = TIPOS_PADRAO.slice(); }
-    }catch(e){ if(state.tipos === undefined){ state.tipos = TIPOS_PADRAO.slice(); } }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); } }
     if(!state.tipos || state.tipos.length === 0){ state.tipos = TIPOS_PADRAO.slice(); }
     try{
       var r5 = await window.storage.get('clm-link-painel', true);
       if(r5 && r5.value){ state.linkPainel = r5.value; }
-      else if(state.linkPainel === undefined){ state.linkPainel = LINK_ARTEFATO; }
-    }catch(e){ if(state.linkPainel === undefined){ state.linkPainel = LINK_ARTEFATO; } }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; } }
+    projetosFoiCarregadoAlgumaVez = true;
     reindexAtivos();
     if(financeiroCarregado){ sincronizarProjetosComFinanceiro(); }
     render();
@@ -786,17 +788,19 @@
   async function saveTipos(){ try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){} }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){} }
   async function saveFinanceiro(){ try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){} }
+  var financeiroFoiCarregadoAlgumaVez = false;
   async function carregarFinanceiro(){
     var r = null;
     try{ r = await window.storage.get('clm-financeiro', true); }catch(e){ r = null; }
     if(r && r.value){
-      try{ state.financeiro = JSON.parse(r.value); }catch(e){ if(state.financeiro === undefined){ state.financeiro = []; } }
-    } else if(state.financeiro === undefined){
+      try{ state.financeiro = JSON.parse(r.value); }catch(e){ if(!financeiroFoiCarregadoAlgumaVez){ state.financeiro = []; } }
+    } else if(!financeiroFoiCarregadoAlgumaVez){
       state.financeiro = FINANCEIRO_PADRAO.map(function(rec, i){
         return Object.assign({ id: 'fin' + i + '_' + Date.now().toString(36) }, rec);
       });
       await saveFinanceiro();
     }
+    financeiroFoiCarregadoAlgumaVez = true;
     var algumaMudanca = false;
     state.financeiro.forEach(function(rec){
       migrarLocalidade(rec);
