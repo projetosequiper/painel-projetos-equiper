@@ -2927,12 +2927,12 @@
       saveFinanceiro();
       if(projetosCarregado){ sincronizarProjetosComFinanceiro(); }
       var pessoaContato = (novo.contato || '').trim();
-      var mensagemWhats = '🔔 *NOVO FECHAMENTO — SINAL RECEBIDO* 💰\n\n'+
-        '👤 Cliente: *' + novo.cliente + '*\n\n'+
+      var mensagemWhats = '\u{1F514} *NOVO CLIENTE \u2014 SINAL RECEBIDO* \u{1F4B0}\n\n'+
+        '\u{1F464} Cliente: *' + novo.cliente + '*\n\n'+
         (pessoaContato
-          ? '📅 Fazer reunião inicial com *' + pessoaContato + '*'
-          : '⚠️ Confirmar quem é a pessoa responsável antes da reunião inicial')+
-        '\n\n▬▬▬▬▬▬▬▬▬▬';
+          ? '\u{1F4C5} Fazer reunião inicial com *' + pessoaContato + '*'
+          : '\u{26A0}\u{FE0F} Confirmar quem é a pessoa responsável antes da reunião inicial')+
+        '\n\n' + '\u25AC'.repeat(10);
       window.open('https://wa.me/?text='+encodeURIComponent(mensagemWhats), '_blank');
       painel.innerHTML = '';
       renderFinanceiro();
