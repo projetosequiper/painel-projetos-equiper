@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <style>
   :root{
     --paper:#F3F0E7;
@@ -10,14 +11,32 @@
     --red:#9C3327;
     --green:#2E5B3D;
     --border:#D8D3C4;
+    --overlay-1:rgba(255,255,255,0.55);
+    --overlay-2:rgba(31,64,104,0.05);
   }
+  body.tema-escuro{
+    --paper:#141B2B;
+    --sheet:#1E2A40;
+    --ink:#E7E9EE;
+    --ink-soft:#95A2BC;
+    --blue:#5B9BD8;
+    --blue-deep:#8FC1F2;
+    --amber:#E0A94D;
+    --red:#E58579;
+    --green:#74C08F;
+    --border:#33405C;
+    --overlay-1:rgba(255,255,255,0.04);
+    --overlay-2:rgba(91,155,216,0.10);
+  }
+  #botaoTema{position:fixed; top:14px; right:14px; z-index:6000; background:var(--sheet); border:1px solid var(--border); border-radius:20px; padding:7px 14px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15); color:var(--ink);}
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
   *{box-sizing:border-box}
-  body{margin:0}
   .app{font-family:'IBM Plex Sans',-apple-system,sans-serif; background-color:var(--paper); background-image:
-      linear-gradient(rgba(31,64,104,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(31,64,104,0.06) 1px, transparent 1px);
-    background-size:28px 28px; color:var(--ink); padding:20px; border-radius:6px;}
+      radial-gradient(ellipse at top left, var(--overlay-1) 0%, rgba(255,255,255,0) 55%),
+      radial-gradient(ellipse at bottom right, var(--overlay-2) 0%, rgba(31,64,104,0) 60%);
+    background-size:100% 100%, 100% 100%;
+    background-position:0 0, 0 0;
+    color:var(--ink); padding:20px; border-radius:6px;}
   .masthead{display:flex; align-items:center; gap:16px; margin-bottom:18px;}
   .masthead-line{flex:1; height:1px; background:linear-gradient(90deg, transparent, var(--blue) 15%, var(--blue) 85%, transparent);}
   .masthead-title{margin:0; text-align:center; white-space:nowrap; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:26px; letter-spacing:6px; color:var(--blue-deep);}
@@ -118,7 +137,7 @@
   .cal-label{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; min-width:150px; text-align:center; color:var(--blue-deep); text-transform:uppercase; letter-spacing:0.5px;}
   .calendar-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:4px; overflow:hidden;}
   .cal-daylabel{background:#EAE7DC; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); padding:6px 0;}
-  .cal-cell{background:var(--sheet); min-height:82px; padding:4px; }
+  .cal-cell{background:var(--sheet); min-height:130px; padding:4px; }
   .cal-cell.tem-tarefa{cursor:pointer;}
   .cal-cell.tem-tarefa:hover{background:#EFF3F6;}
   .cal-cell.faded{background:#F0EEE6;}
@@ -143,7 +162,8 @@
   .dia-modal-item:first-child{border-top:none;}
   .dia-modal-item .quem{display:flex; align-items:center; gap:6px; font-weight:600;}
   .dia-modal-item .detalhe{color:var(--ink-soft); margin-top:2px; font-size:11.5px;}
-  .gate{position:fixed; inset:0; background:linear-gradient(160deg, #F7F5EE 0%, #ECE7D8 100%); z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px;}
+  body{margin:0; background:var(--paper);}
+  .gate{position:fixed; inset:0; background:linear-gradient(160deg, var(--paper) 0%, var(--sheet) 100%); z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px;}
   .gate-box{background:var(--sheet); border:1px solid var(--border); border-top:5px solid #C0392B; border-radius:10px; padding:36px 32px 30px; max-width:360px; width:100%; text-align:center; box-shadow:0 12px 32px rgba(0,0,0,0.12);}
   .gate-logo{max-width:220px; width:80%; height:auto; margin:0 auto 22px; display:block;}
   .gate-box h2{margin:0 0 6px; font-family:'IBM Plex Sans',sans-serif; font-size:18px; color:var(--blue-deep);}
@@ -223,6 +243,8 @@
   .resumo-item .proj{font-weight:500;}
   .resumo-item .desc{color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:10.5px;}
 </style>
+
+<button id="botaoTema" type="button">🌙 Escuro</button>
 
 <div id="senhaGate"></div>
 <div class="app" id="appContainer" style="display:none;">
@@ -322,6 +344,14 @@
       </div>
     </div>
     <div id="resumoLista"></div>
+  </section>
+
+  <section>
+    <span class="label" id="lblStatusClientes" style="cursor:pointer; user-select:none;">▸ Status de projeto por cliente</span>
+    <div id="statusClientesConteudo" style="display:none; margin-top:10px;">
+      <input type="text" id="statusClientesBusca" placeholder="Buscar cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
+      <div id="statusClientesLista"></div>
+    </div>
   </section>
 
   <div class="team-row" style="margin-top:20px; opacity:0.85;">
@@ -491,30 +521,61 @@
     function pathFor(key){
       return 'storage/' + String(key).replace(/[.#$\[\]]/g, '_');
     }
+    function lsKey(key){ return 'clm_local_' + key; }
     return {
       get: function(key, shared){
+        if(!shared){
+          return new Promise(function(resolve, reject){
+            try{
+              var raw = localStorage.getItem(lsKey(key));
+              if(raw === null){ reject(new Error('not found')); return; }
+              resolve({ key: key, value: raw, shared: false });
+            }catch(e){ reject(e); }
+          });
+        }
         return _fbDb.ref(pathFor(key)).once('value').then(function(snap){
           if(!snap.exists()) throw new Error('not found');
-          return { key: key, value: snap.val(), shared: !!shared };
+          return { key: key, value: snap.val(), shared: true };
         });
       },
       set: function(key, value, shared){
+        if(!shared){
+          try{ localStorage.setItem(lsKey(key), value); }catch(e){}
+          return Promise.resolve({ key: key, value: value, shared: false });
+        }
         return _fbDb.ref(pathFor(key)).set(value).then(function(){
-          return { key: key, value: value, shared: !!shared };
+          return { key: key, value: value, shared: true };
         });
       },
       delete: function(key, shared){
+        if(!shared){
+          try{ localStorage.removeItem(lsKey(key)); }catch(e){}
+          return Promise.resolve({ key: key, deleted: true, shared: false });
+        }
         return _fbDb.ref(pathFor(key)).remove().then(function(){
-          return { key: key, deleted: true, shared: !!shared };
+          return { key: key, deleted: true, shared: true };
         });
       },
       list: function(prefix, shared){
-        return _fbDb.ref('storage').once('value').then(function(snap){
+        if(!shared){
           var keys = [];
+          try{
+            for(var i=0; i<localStorage.length; i++){
+              var k = localStorage.key(i);
+              if(k && k.indexOf('clm_local_') === 0){
+                var orig = k.slice('clm_local_'.length);
+                if(!prefix || orig.indexOf(prefix) === 0){ keys.push(orig); }
+              }
+            }
+          }catch(e){}
+          return Promise.resolve({ keys: keys, prefix: prefix, shared: false });
+        }
+        return _fbDb.ref('storage').once('value').then(function(snap){
+          var keysS = [];
           snap.forEach(function(child){
-            if(!prefix || child.key.indexOf(prefix) === 0){ keys.push(child.key); }
+            if(!prefix || child.key.indexOf(prefix) === 0){ keysS.push(child.key); }
           });
-          return { keys: keys, prefix: prefix, shared: !!shared };
+          return { keys: keysS, prefix: prefix, shared: true };
         });
       }
     };
@@ -1640,6 +1701,37 @@
       reindexAtivos();
       saveTarefas(); closeForm(); render();
     };
+  }
+
+  async function renderStatusClientes(){
+    var el = document.getElementById('statusClientesLista');
+    if(!el) return;
+    if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
+      try{
+        var rf = await window.storage.get('clm-financeiro', true);
+        if(rf && rf.value){ state.financeiro = JSON.parse(rf.value); }
+      }catch(e){}
+    }
+    var busca = (document.getElementById('statusClientesBusca').value || '').toLowerCase();
+    var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
+    lista = lista.slice().sort(function(a,b){ return a.cliente.localeCompare(b.cliente,'pt-BR',{sensitivity:'base'}); });
+    var html = '';
+    lista.forEach(function(f){
+      var disciplinas = DISCIPLINAS_FINANCEIRO.filter(function(d){
+        var st = (f.disciplinasStatus||{})[d];
+        return st && st !== 'Não tem';
+      });
+      if(disciplinas.length === 0) return;
+      var badges = disciplinas.map(function(d){
+        var st = f.disciplinasStatus[d];
+        return '<span class="'+classeStatusDisciplina(st)+'" style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:10.5px;margin:2px 4px 2px 0;">'+escapeHtml(d)+': '+escapeHtml(st)+'</span>';
+      }).join('');
+      html += '<div class="projeto-row" style="flex-direction:column; align-items:flex-start; gap:4px;">'+
+        '<b>'+escapeHtml(f.cliente)+(f.localidade?' <span style="color:var(--ink-soft);font-weight:400;font-size:11px;">('+escapeHtml(f.localidade)+')</span>':'')+'</b>'+
+        '<div>'+badges+'</div>'+
+      '</div>';
+    });
+    el.innerHTML = html || '<div class="empty-hint">Nenhum cliente com disciplinas ativas encontrado.</div>';
   }
 
   function renderResumo(){
@@ -2834,6 +2926,14 @@
       state.financeiro.push(novo);
       saveFinanceiro();
       if(projetosCarregado){ sincronizarProjetosComFinanceiro(); }
+      var pessoaContato = (novo.contato || '').trim();
+      var mensagemWhats = '🔔 *NOVO FECHAMENTO — SINAL RECEBIDO* 💰\n\n'+
+        '👤 Cliente: *' + novo.cliente + '*\n\n'+
+        (pessoaContato
+          ? '📅 Fazer reunião inicial com *' + pessoaContato + '*'
+          : '⚠️ Confirmar quem é a pessoa responsável antes da reunião inicial')+
+        '\n\n▬▬▬▬▬▬▬▬▬▬';
+      window.open('https://wa.me/?text='+encodeURIComponent(mensagemWhats), '_blank');
       painel.innerHTML = '';
       renderFinanceiro();
     };
@@ -2884,7 +2984,11 @@
     fResp.innerHTML = '<option value="">Todos os responsáveis</option>' + state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'"'+(curR===n?' selected':'')+'>'+escapeHtml(n)+'</option>'; }).join('');
     fResp.value = curR;
 
-    var tarefas = tarefasComPeriodo().filter(function(t){ return t.status !== 'A fazer' && (!calFiltroResp || t.responsavel === calFiltroResp); });
+    var tarefasNormais = tarefasComPeriodo().filter(function(t){ return t.status !== 'A fazer' && (!calFiltroResp || t.responsavel === calFiltroResp); });
+    var tarefasAFazer = tarefasComProjeto().filter(function(t){ return t.status === 'A fazer' && t.prazo && (!calFiltroResp || t.responsavel === calFiltroResp); }).map(function(t){
+      return Object.assign({}, t, { inicio: t.prazo, fim: t.prazo });
+    });
+    var tarefas = tarefasNormais.concat(tarefasAFazer);
 
     var primeiroDow = new Date(calAno, calMes, 1).getDay();
     var totalDias = new Date(calAno, calMes+1, 0).getDate();
@@ -2927,13 +3031,14 @@
         cell.classList.add('tem-tarefa');
         cell.addEventListener('click', function(){ abrirDiaModal(dataStr, doDia); });
       }
-      let maxVisivel = 3;
+      let maxVisivel = 5;
       doDia.slice(0, maxVisivel).forEach(function(t){
         var pill = document.createElement('div');
         pill.className = 'cal-pill';
         pill.title = t.responsavel+' — '+t.projetoNome+' ('+t.cliente+') — '+t.tipo;
-        pill.innerHTML = '<span class="dot" style="background:'+corDesenhista(t.responsavel)+'"></span><span class="cal-pill-texto">' + (t.status==='Concluído' ? '✓ ' : '') + escapeHtml((t.responsavel||'—').split(' ')[0]) + ' · ' + escapeHtml(t.cliente) + ' · ' + escapeHtml(t.tipo) + '</span>';
+        pill.innerHTML = '<span class="dot" style="background:'+corDesenhista(t.responsavel)+'"></span><span class="cal-pill-texto">' + (t.status==='Concluído' ? '✓ ' : '') + (t.status==='A fazer' ? '⏰ ' : '') + escapeHtml((t.responsavel||'—').split(' ')[0]) + ' · ' + escapeHtml(t.cliente) + ' · ' + escapeHtml(t.tipo) + '</span>';
         if(t.status === 'Concluído'){ pill.style.opacity = '0.65'; pill.style.textDecoration = 'line-through'; }
+        if(t.status === 'A fazer'){ pill.style.background = '#FCE28A'; pill.style.border = '2px solid #B5720B'; pill.style.color = '#3A2E00'; pill.style.fontWeight = '700'; pill.title = '⏰ PRAZO HOJE: ' + pill.title; }
         cell.appendChild(pill);
       });
       if(doDia.length > maxVisivel){
@@ -3296,6 +3401,14 @@
   document.getElementById('resPrev').onclick = function(){ resMes--; if(resMes<0){resMes=11; resAno--;} renderResumo(); };
   document.getElementById('resNext').onclick = function(){ resMes++; if(resMes>11){resMes=0; resAno++;} renderResumo(); };
   document.getElementById('resHoje').onclick = function(){ var h = new Date(); resAno = h.getFullYear(); resMes = h.getMonth(); renderResumo(); };
+  document.getElementById('lblStatusClientes').onclick = function(){
+    var content = document.getElementById('statusClientesConteudo');
+    var visible = content.style.display !== 'none';
+    content.style.display = visible ? 'none' : 'block';
+    document.getElementById('lblStatusClientes').textContent = (visible ? '▸ ' : '▾ ') + 'Status de projeto por cliente';
+    if(!visible){ renderStatusClientes(); }
+  };
+  document.getElementById('statusClientesBusca').addEventListener('input', function(){ renderStatusClientes(); });
   document.getElementById('lblLinkPainel').onclick = function(){
     var content = document.getElementById('linkPainelContent');
     var visible = content.style.display !== 'none';
@@ -3601,6 +3714,23 @@
       telaLoginUnificado();
     }
   }
+
+  function aplicarTemaSalvo(){
+    var salvo = null;
+    try{ salvo = localStorage.getItem('clm_local_tema'); }catch(e){ salvo = null; }
+    var escuro = salvo === 'escuro';
+    document.body.classList.toggle('tema-escuro', escuro);
+    var btn = document.getElementById('botaoTema');
+    if(btn) btn.textContent = escuro ? '☀️ Claro' : '🌙 Escuro';
+  }
+  aplicarTemaSalvo();
+  document.getElementById('botaoTema').onclick = function(){
+    var estaEscuro = document.body.classList.contains('tema-escuro');
+    var novoEscuro = !estaEscuro;
+    document.body.classList.toggle('tema-escuro', novoEscuro);
+    this.textContent = novoEscuro ? '☀️ Claro' : '🌙 Escuro';
+    try{ localStorage.setItem('clm_local_tema', novoEscuro ? 'escuro' : 'claro'); }catch(e){}
+  };
 
   prepararHashesEIniciar();
   criarBackupAutomaticoSeNecessario();
