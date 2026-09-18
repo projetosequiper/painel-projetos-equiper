@@ -76,6 +76,7 @@
 
   .board{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   .column h3{font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue-deep); font-family:'IBM Plex Mono',monospace; margin:0 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border);}
+  .column.drag-over-coluna{background:rgba(31,64,104,0.08); outline:2px dashed var(--blue); border-radius:6px;}
   .column .count{color:var(--ink-soft); font-weight:400;}
   .cards{display:flex; flex-direction:column; gap:10px; min-height:40px;}
 
@@ -649,9 +650,20 @@
     document.querySelectorAll('.card.drag-over-antes, .card.drag-over-depois').forEach(function(el){
       el.classList.remove('drag-over-antes', 'drag-over-depois');
     });
+    document.querySelectorAll('.column.drag-over-coluna').forEach(function(el){
+      el.classList.remove('drag-over-coluna');
+    });
     dragState.overId = null;
     dragState.overPos = null;
+    dragState.overStatus = null;
     var elAlvo = document.elementFromPoint(e.clientX, e.clientY);
+    var colunaAlvo = elAlvo && elAlvo.closest ? elAlvo.closest('.column') : null;
+    var statusColuna = colunaAlvo ? colunaAlvo.getAttribute('data-status') : null;
+    if(statusColuna && statusColuna !== dragState.status){
+      colunaAlvo.classList.add('drag-over-coluna');
+      dragState.overStatus = statusColuna;
+      return;
+    }
     var cardAlvo = elAlvo && elAlvo.closest ? elAlvo.closest('.card') : null;
     if(cardAlvo){
       var alvoId = cardAlvo.getAttribute('data-task-id');
@@ -675,10 +687,21 @@
     document.querySelectorAll('.card.drag-over-antes, .card.drag-over-depois').forEach(function(el){
       el.classList.remove('drag-over-antes', 'drag-over-depois');
     });
+    document.querySelectorAll('.column.drag-over-coluna').forEach(function(el){
+      el.classList.remove('drag-over-coluna');
+    });
     if(dragState && dragState.ghostEl && dragState.ghostEl.parentNode){ dragState.ghostEl.parentNode.removeChild(dragState.ghostEl); }
     if(dragState && dragState.sourceEl) dragState.sourceEl.classList.remove('dragging-source');
 
-    if(dragState && dragState.moved && dragState.overId){
+    if(dragState && dragState.moved && dragState.overStatus){
+      var draggedMudarStatus = state.tarefas.find(function(x){ return x.id === dragState.taskId; });
+      if(draggedMudarStatus){
+        aplicarStatus(draggedMudarStatus, dragState.overStatus);
+        reindexAtivos();
+        saveTarefas();
+        renderBoard();
+      }
+    } else if(dragState && dragState.moved && dragState.overId){
       var dragged = state.tarefas.find(function(x){ return x.id === dragState.taskId; });
       var alvo = state.tarefas.find(function(x){ return x.id === dragState.overId; });
       if(dragged && alvo) reordenarArrasto(dragged, alvo, dragState.overPos);
@@ -1196,6 +1219,7 @@
     STATUSES.forEach(function(status){
       var col = document.createElement('div');
       col.className = 'column';
+      col.setAttribute('data-status', status);
       var items = list.filter(function(t){ return t.status === status; })
         .sort(function(a,b){
           if(status === 'A fazer' || status === 'Em andamento'){
@@ -1235,6 +1259,7 @@
       .sort(function(a,b){ return (a.dataConclusao||'9999').localeCompare(b.dataConclusao||'9999'); });
     var colFQ = document.createElement('div');
     colFQ.className = 'column';
+    colFQ.setAttribute('data-status', 'Fechar quadro');
     var isColapsadaFQ = !!colapsados['Fechar quadro'];
     var h3FQ = document.createElement('h3');
     h3FQ.style.cursor = 'pointer';
@@ -1325,7 +1350,7 @@
     card.style.borderTopColor = t.responsavel ? corDesenhista(t.responsavel) : 'var(--blue)';
 
     card.setAttribute('data-task-id', t.id);
-    if(false){
+    if(true){
       card.classList.add('draggable-card');
       card.style.touchAction = 'none';
       card.addEventListener('pointerdown', function(e){
@@ -3520,7 +3545,6 @@
         financeiroDesbloqueado = true;
         document.getElementById('financeiroGate').style.display = 'none';
         document.getElementById('financeiroConteudo').style.display = 'block';
-        try{ window.storage.set('clm-lembrar-financeiro', '1', false); }catch(e){}
         if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
         renderFinanceiro();
       } else {
@@ -3535,7 +3559,6 @@
     financeiroDesbloqueado = false;
     document.getElementById('financeiroConteudo').style.display = 'none';
     document.getElementById('financeiroGate').style.display = 'block';
-    try{ window.storage.set('clm-lembrar-financeiro', '', false); }catch(e){}
     telaLoginFinanceiro(financeiroHashAtual);
   }
 
@@ -3556,7 +3579,6 @@
         projetosDesbloqueado = true;
         document.getElementById('projetosGate').style.display = 'none';
         document.getElementById('projetosConteudo').style.display = 'block';
-        try{ window.storage.set('clm-lembrar-projetos', '1', false); }catch(e){}
         if(!projetosCarregado){ loadAll(); projetosCarregado = true; }
       } else {
         document.getElementById('projGateErro').textContent = 'Senha incorreta.';
@@ -3570,7 +3592,6 @@
     projetosDesbloqueado = false;
     document.getElementById('projetosConteudo').style.display = 'none';
     document.getElementById('projetosGate').style.display = 'block';
-    try{ window.storage.set('clm-lembrar-projetos', '', false); }catch(e){}
     telaLoginProjetos(senhaHashAtual);
   }
 
@@ -3596,7 +3617,6 @@
     projetosDesbloqueado = true;
     document.getElementById('projetosGate').style.display = 'none';
     document.getElementById('projetosConteudo').style.display = 'block';
-    try{ window.storage.set('clm-lembrar-projetos', '1', false); }catch(e){}
     if(!projetosCarregado){ loadAll(); projetosCarregado = true; }
   }
 
@@ -3606,7 +3626,6 @@
     financeiroDesbloqueado = true;
     document.getElementById('financeiroGate').style.display = 'none';
     document.getElementById('financeiroConteudo').style.display = 'block';
-    try{ window.storage.set('clm-lembrar-financeiro', '1', false); }catch(e){}
     if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
     renderFinanceiro();
   }
@@ -3698,21 +3717,7 @@
     }
     financeiroHashAtual = hashFin;
 
-    var lembraProjetos = false, lembraFinanceiro = false;
-    try{ var rp = await window.storage.get('clm-lembrar-projetos', false); lembraProjetos = !!(rp && rp.value === '1'); }catch(e){ lembraProjetos = false; }
-    try{ var rf = await window.storage.get('clm-lembrar-financeiro', false); lembraFinanceiro = !!(rf && rf.value === '1'); }catch(e){ lembraFinanceiro = false; }
-
-    if(lembraProjetos){
-      entrarEmProjetos();
-      if(lembraFinanceiro){
-        financeiroDesbloqueado = true;
-        if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
-      }
-    } else if(lembraFinanceiro){
-      entrarEmFinanceiro();
-    } else {
-      telaLoginUnificado();
-    }
+    telaLoginUnificado();
   }
 
   function aplicarTemaSalvo(){
