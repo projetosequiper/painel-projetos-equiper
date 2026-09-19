@@ -3300,7 +3300,7 @@
         cell.appendChild(lblFerias);
       });
 
-      let doDia = tarefas.filter(function(t){ return t.inicio <= dataStr && dataStr <= t.fim; });
+      let doDia = ehFDS ? [] : tarefas.filter(function(t){ return t.inicio <= dataStr && dataStr <= t.fim; });
       if(doDia.length > 0){
         cell.classList.add('tem-tarefa');
         cell.addEventListener('click', function(){ if(calJustDragged) return; abrirDiaModal(dataStr, doDia); });
