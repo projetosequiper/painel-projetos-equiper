@@ -77,6 +77,7 @@
   .board{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   .column h3{font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue-deep); font-family:'IBM Plex Mono',monospace; margin:0 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border);}
   .column.drag-over-coluna{background:rgba(31,64,104,0.08); outline:2px dashed var(--blue); border-radius:6px;}
+  .cal-cell.drag-over-dia{background:rgba(31,64,104,0.12); outline:2px dashed var(--blue);}
   .column .count{color:var(--ink-soft); font-weight:400;}
   .cards{display:flex; flex-direction:column; gap:10px; min-height:40px;}
 
@@ -1423,7 +1424,10 @@
         '<div class="row"><div class="k">Prazo</div><div class="v prazo '+pClass+'"><input type="date" class="inline-edit" data-field="prazo" value="'+(t.prazo||'')+'"></div></div>'+
         (t.status==='Concluído' ? '<div class="row"><div class="k">Concluído</div><div class="v"><input type="date" class="inline-edit" data-field="dataConclusao" value="'+(t.dataConclusao||'')+'"></div></div>' : '')+
         '<div class="row"><div class="k">Obs.</div><div class="v">'+
-          '<textarea class="inline-edit-obs" rows="2" placeholder="Observações (cole um print com Ctrl+V)">'+escapeHtml(t.obs||'')+'</textarea>'+
+          '<div style="position:relative;">'+
+            '<textarea class="inline-edit-obs" rows="2" placeholder="Observações (cole um print com Ctrl+V)">'+escapeHtml(t.obs||'')+'</textarea>'+
+            '<button type="button" class="btn-expandir-obs" title="Abrir em tela grande" style="position:absolute; top:3px; right:3px; font-size:12px; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--sheet); cursor:pointer; opacity:0.8;">⤢</button>'+
+          '</div>'+
           '<div class="anexos-area">'+(t.anexos||[]).map(function(a){ return renderAnexoChip(a); }).join('')+'</div>'+
           '<div class="anexos-actions">'+
             '<button type="button" class="btn-anexo">📎 Anexar imagem/arquivo</button>'+
@@ -1542,6 +1546,14 @@
         }
       });
     });
+
+    var btnExpandirObs = card.querySelector('.btn-expandir-obs');
+    if(btnExpandirObs){
+      btnExpandirObs.addEventListener('click', function(e){
+        e.stopPropagation();
+        abrirObsExpandida(t.id);
+      });
+    }
 
     var areaAnexos = card.querySelector('.anexos-area');
     var areaAcoes = card.querySelector('.anexos-actions');
@@ -2078,6 +2090,15 @@
     lista.forEach(function(rec){
       el.appendChild(renderClienteFinanceiroCard(rec));
     });
+    var btnInicio = document.createElement('button');
+    btnInicio.type = 'button';
+    btnInicio.className = 'btn small secondary';
+    btnInicio.textContent = '⬆ Ir para o início';
+    btnInicio.style.marginTop = '14px';
+    btnInicio.onclick = function(){
+      document.getElementById('lblFinLista').scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    el.appendChild(btnInicio);
   }
 
   function renderClienteFinanceiroCard(rec){
@@ -2976,6 +2997,33 @@
   function pad2(n){ return n < 10 ? '0'+n : ''+n; }
   function dataISO(ano, mes, dia){ return ano+'-'+pad2(mes+1)+'-'+pad2(dia); }
 
+  function abrirObsExpandida(taskId){
+    var t = state.tarefas.find(function(x){ return x.id === taskId; });
+    if(!t) return;
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<h3 style="margin:0;">Observações — '+escapeHtml(t.cliente)+' ('+escapeHtml(t.tipo)+')</h3>'+
+        '<button class="btn small secondary" id="btnFecharObsExpandida">Fechar</button>'+
+      '</div>'+
+      '<textarea id="textareaObsExpandida" style="width:100%; min-height:50vh; font-size:14px; padding:12px; border:1px solid var(--border); border-radius:6px; font-family:\'IBM Plex Sans\',sans-serif; resize:vertical; color:var(--ink); background:var(--sheet);" placeholder="Observações (cole um print com Ctrl+V)">'+escapeHtml(t.obs||'')+'</textarea>'+
+      '<div class="hint" style="margin-top:6px;">Salva automaticamente conforme você digita.</div>';
+    overlay.style.display = 'flex';
+    var textareaExp = document.getElementById('textareaObsExpandida');
+    textareaExp.focus();
+    textareaExp.addEventListener('input', function(){
+      var real = state.tarefas.find(function(x){ return x.id === taskId; });
+      if(!real) return;
+      real.obs = textareaExp.value;
+      saveTarefas();
+    });
+    document.getElementById('btnFecharObsExpandida').onclick = function(){
+      fecharDiaModal();
+      renderBoard();
+    };
+  }
+
   function abrirDiaModal(dataStr, tarefasDoDia){
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
@@ -2998,6 +3046,67 @@
   }
   function fecharDiaModal(){
     document.getElementById('diaModalOverlay').style.display = 'none';
+  }
+
+  var calDragState = null;
+  var calJustDragged = false;
+
+  function iniciarArrastoCalendario(pillEl, t, ePointerDown){
+    calDragState = { taskId: t.id, moved:false, overDate:null, sourceEl: pillEl };
+    pillEl.classList.add('dragging-source');
+    var ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.innerHTML = '⏰ '+escapeHtml(t.cliente)+' · '+escapeHtml(t.tipo);
+    ghost.style.left = ePointerDown.clientX + 'px';
+    ghost.style.top = ePointerDown.clientY + 'px';
+    document.body.appendChild(ghost);
+    calDragState.ghostEl = ghost;
+    document.addEventListener('pointermove', onArrastoCalMover);
+    document.addEventListener('pointerup', onArrastoCalSoltar);
+  }
+
+  function onArrastoCalMover(e){
+    if(!calDragState) return;
+    e.preventDefault();
+    calDragState.moved = true;
+    if(calDragState.ghostEl){
+      calDragState.ghostEl.style.left = e.clientX + 'px';
+      calDragState.ghostEl.style.top = e.clientY + 'px';
+    }
+    document.querySelectorAll('.cal-cell.drag-over-dia').forEach(function(el){ el.classList.remove('drag-over-dia'); });
+    calDragState.overDate = null;
+    var elAlvo = document.elementFromPoint(e.clientX, e.clientY);
+    var celulaAlvo = elAlvo && elAlvo.closest ? elAlvo.closest('.cal-cell') : null;
+    if(celulaAlvo){
+      var dataAlvo = celulaAlvo.getAttribute('data-date');
+      if(dataAlvo){
+        celulaAlvo.classList.add('drag-over-dia');
+        calDragState.overDate = dataAlvo;
+      }
+    }
+  }
+
+  function onArrastoCalSoltar(){
+    document.removeEventListener('pointermove', onArrastoCalMover);
+    document.removeEventListener('pointerup', onArrastoCalSoltar);
+    document.querySelectorAll('.cal-cell.drag-over-dia').forEach(function(el){ el.classList.remove('drag-over-dia'); });
+    if(calDragState && calDragState.ghostEl && calDragState.ghostEl.parentNode){ calDragState.ghostEl.parentNode.removeChild(calDragState.ghostEl); }
+    if(calDragState && calDragState.sourceEl) calDragState.sourceEl.classList.remove('dragging-source');
+
+    if(calDragState && calDragState.moved && calDragState.overDate){
+      var tarefa = state.tarefas.find(function(x){ return x.id === calDragState.taskId; });
+      if(tarefa && tarefa.prazo !== calDragState.overDate){
+        tarefa.prazo = calDragState.overDate;
+        saveTarefas();
+        renderCalendario();
+        renderBoard();
+      }
+    }
+    if(calDragState && calDragState.moved){
+      calJustDragged = true;
+      setTimeout(function(){ calJustDragged = false; }, 150);
+    }
+    calDragState = null;
   }
 
   function renderCalendario(){
@@ -3046,6 +3155,7 @@
       let dataStr = dataISO(anoRef, mesRef, dia);
       let cell = document.createElement('div');
       cell.className = 'cal-cell' + (faded ? ' faded' : '') + (dataStr === hojeStr ? ' hoje' : '');
+      cell.setAttribute('data-date', dataStr);
       let num = document.createElement('div');
       num.className = 'cal-daynum';
       num.textContent = dia;
@@ -3054,7 +3164,7 @@
       let doDia = tarefas.filter(function(t){ return t.inicio <= dataStr && dataStr <= t.fim; });
       if(doDia.length > 0){
         cell.classList.add('tem-tarefa');
-        cell.addEventListener('click', function(){ abrirDiaModal(dataStr, doDia); });
+        cell.addEventListener('click', function(){ if(calJustDragged) return; abrirDiaModal(dataStr, doDia); });
       }
       let maxVisivel = 5;
       doDia.slice(0, maxVisivel).forEach(function(t){
@@ -3063,7 +3173,16 @@
         pill.title = t.responsavel+' — '+t.projetoNome+' ('+t.cliente+') — '+t.tipo;
         pill.innerHTML = '<span class="dot" style="background:'+corDesenhista(t.responsavel)+'"></span><span class="cal-pill-texto">' + (t.status==='Concluído' ? '✓ ' : '') + (t.status==='A fazer' ? '⏰ ' : '') + escapeHtml((t.responsavel||'—').split(' ')[0]) + ' · ' + escapeHtml(t.cliente) + ' · ' + escapeHtml(t.tipo) + '</span>';
         if(t.status === 'Concluído'){ pill.style.opacity = '0.65'; pill.style.textDecoration = 'line-through'; }
-        if(t.status === 'A fazer'){ pill.style.background = '#FCE28A'; pill.style.border = '2px solid #B5720B'; pill.style.color = '#3A2E00'; pill.style.fontWeight = '700'; pill.title = '⏰ PRAZO HOJE: ' + pill.title; }
+        if(t.status === 'A fazer'){
+          pill.style.background = '#FCE28A'; pill.style.border = '2px solid #B5720B'; pill.style.color = '#3A2E00'; pill.style.fontWeight = '700'; pill.title = '⏰ PRAZO: ' + pill.title + ' (arraste pra outro dia pra mudar o prazo)';
+          pill.style.cursor = 'grab';
+          pill.style.touchAction = 'none';
+          pill.setAttribute('data-task-id', t.id);
+          pill.addEventListener('pointerdown', function(e){
+            e.stopPropagation();
+            iniciarArrastoCalendario(pill, t, e);
+          });
+        }
         cell.appendChild(pill);
       });
       if(doDia.length > maxVisivel){
