@@ -309,6 +309,14 @@
   </div>
 
   <div class="team-row apenas-gerente" style="align-items:flex-start;">
+    <span class="label" id="lblProjetistasContas" style="cursor:pointer; user-select:none;">▸ Senhas dos projetistas:</span>
+    <div id="projetistasContasContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
+      <div class="hint">O nome de cada um vem direto da lista "Equipe" abaixo — não precisa cadastrar de novo aqui.</div>
+      <div id="projetistasContasLista"></div>
+    </div>
+  </div>
+
+  <div class="team-row apenas-gerente" style="align-items:flex-start;">
     <span class="label" id="lblFerias" style="cursor:pointer; user-select:none;">▸ Férias:</span>
     <div id="feriasContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -357,7 +365,7 @@
     <div class="cal-legend" id="calLegend"></div>
   </section>
 
-  <section class="apenas-gerente">
+  <section>
     <h2>Resumo mensal (comissão)</h2>
     <div class="cal-header">
       <div class="cal-nav">
@@ -407,16 +415,6 @@
     </div>
     </div>
   </div>
-  </div>
-
-  <div class="team-row apenas-gerente" style="opacity:0.85;">
-    <span class="label" id="lblSenhaDes" style="cursor:pointer; user-select:none;">▸ Trocar senha do projetista:</span>
-    <div id="senhaDesContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
-      <input type="password" id="inSenhaDesMestra" placeholder="Senha mestra" style="width:140px;">
-      <input type="password" id="inSenhaDesNova" placeholder="Nova senha do projetista" style="width:180px;">
-      <button class="btn small secondary" id="btnSalvarSenhaDes">Salvar</button>
-      <span class="hint" id="senhaDesStatus"></span>
-    </div>
   </div>
 
   <div id="viewFinanceiro" style="display:none;">
@@ -631,7 +629,7 @@
   var LOCALIDADE_PADRAO = {"ana cristina franke (principal)": "Leblon", "ana cristina frankee (caseiro)": "Jardim Botânico", "bruno medeiros (principal)": "Petrópolis", "bruno medeiros (caseiro)": "Minas Gerais", "jorge nóbrega (as-built principal)": "Lagoa", "jorge nóbrega (as-built caseiro)": "Ipanema", "jorge nóbrega (as-built filhos)": "Barra da Tijuca", "jorge nóbrega (as-built spa)": "Mangaratiba", "jorge nóbrega (as-built lazer)": "Angra dos Reis", "jorge nóbrega (as-built situação)": "Humaitá", "luis henrique fraga": "São Paulo", "mauricio e denise": "São Conrado", "oi - são gonçalo": "Botafogo", "oi - boulevard": "Copacabana", "oi - via brasil": "Búzios", "oi - nova friburgo": "Niterói", "oi - caxias": "Recreio", "paolo dal pino": "Paraty", "patrimóvel - jardim botânico": "Flamengo", "zé elias": "Gávea", "marcelo carpenter 1": "Centro do Rio", "marcelo carpenter (jardim) 1": "Teresópolis", "antônio felipe harboe": "Campo Grande", "paulo barreto (as-built)": "Itanhangá", "leandro jaider": "Barra da Tijuca", "pousada da alcobaça": "Petrópolis", "luiz carlos santos": "Petrópolis", "kleber khayat": "Leblon", "anna lemman": "Leblon", "sergio blank": "Leblon", "eduardo bartolomeu - (valéria bartolomeu) - asbuilt": "Leblon", "roberto carneiro": "Jardim Botânico", "marcello campos": "Petrópolis", "márcio albuquerque": "Gávea", "ivan botelho": "Copacabana", "vânia marinho": "Jardim Botânico", "alexandre chequer": "Barra da Tijuca", "serrano football club": "Petrópolis", "nelson tanure": "Leblon", "cláudio daniel": "Itanhangá", "sítio cachoeirinha capela - (sítio santo antônio)": "Petrópolis", "casa do colono - (sítio santo antônio)": "Petrópolis", "complexo cocheiras - (sítio santo antônio)": "Petrópolis", "marcus vinícius": "Niterói", "willie correio": "Petrópolis", "rogério blanc": "Petrópolis", "carlos eduardo ramos": "Leblon", "patricia de alencar": "Gávea", "evandro mota": "Leblon", "cond. mansões (casa linear)": "Barra", "cond. do ed. guilhermina": "Leblon", "leonardo caserta": "Leblon", "guilhermo reid": "Leblon", "elisabete floris": "Ipanema", "cássia bomeny - alterações": "Jardim Botânico", "josé evandro lopes - (bim) *": "Mangaratiba", "brudani": "Petrópolis", "alessandro horta - (bim)": "Petrópolis", "clovis torres": "Ipanema", "bruno pandolfi": "Ipanema", "paulo fernando oliveira - (bim)": "Petrópolis", "bulus brothers participações s/a": "Lagoa", "mathias guedes (bim)": "Ipanema", "marcelo bahia (bim)": "Leblon", "vista capital": "Jardim Botânico", "eduardo navarro (bim)": "Botafogo", "marcelo orberg (bim)": "Leblon", "wilson scot": "Angra dos Reis", "carlos alves (kadu)": "Leblon", "charles vasconcelos (004942) dwg": "Petrópolis", "estela mariane (004921) bim": "Jardim Botânico", "romulo gonçalves (004640) bim": "Petrópolis", "armando e julia (004690) bim": "Leblon", "andre barreto (004951)": "Petrópolis", "raimundo oliveira (005069)": "Ipanema", "ítalo ignácio (005075)": "Barra da Tijuca", "dimensional (casa cave) (004702)": "Barra da Tijuca", "bruno barreto (005135) bim": "Petrópolis", "luiz eduardo leite (005193) bim": "Petrópolis", "gabriela ezcurra (005022) bim": "Copacabana", "fabio strutzel (005113) bim": "Leblon", "jose carlos ramos (005003) dwg": "Leblon", "danielle giancomazzi membeca (005379) bim": "Petrópolis", "paulo cezar antunes (005202)": "Minas gerais", "casa tua (005279) bim": "Barra da Tijuca", "bruno rapparini (005594) bim": "Ipanema", "rodrigo dias (005510) bim": "Ilha do Governador", "sítio santa rita (005572) bim": "Petrópolis", "fábio camarinha (005276) bim": "Petrópolis", "josé ziltemann anexo (005586) bim": "Petrópolis", "ivan guetta - hig (005365) bim": "Ipanema", "maíra torres": "Petrópolis", "joão henrique moraes (005686) bim": "Petrópolis", "augusto ferreira lima (005621) bim": "Bahia", "marcelo brandão annechino (005402)": "Petrópolis", "humberto mota (005636) bim": "Humaitá", "felipe oliveira (005689) bim": "Petrópolis", "marcelo carpenter (005013) bim": "Jardim Botânico", "leonardo grosso (005724) cad": "Barra da Tijuca", "teresa rossi (005752) bim": "Leblon", "hisc - campo grande (005838) bim": "Campo Grande", "rosemarie klien vega (005110) bim": "Petrópolis", "rodrigo farias vasconcellos bim": "Gávea", "isg - instituto stella goulart (005577) bim": "Petrópolis", "gustavo mendes (008533) bim": "Petrópolis", "lincoln rumenos (005866) bim": "Petrópolis", "joão mansur (005931) bim": "Ipanema", "tania e andré marinho (005868) bim": "Flamengo", "mariana sochaczewski simoes (005881) bim": "Jardim Botânico", "roberto ermel (005926) bim": "Joá", "thamine leta (005733) bim": "Mangaratiba", "vânia marinho (005903) bim": "Leblon", "fiotec": "Manguinhos", "richard klien (006104) bim": "Pequiri", "tatiana e gregor (006094) bim": "Mangaratiba", "cristina mendes (006026) bim": "Leblon", "cláudia levinsohn (006116) bim": "Leblon", "fabio vassel (006144) bim": "São Paulo", "ailson e lúcia (005509) bim": "Petrópolis", "aniuta e christoph (006059) bim": "Barra da Tijuca", "giovani loss (006230) bim": "Lagoa", "hugh lionel strange (005957) bim": "Leblon", "marcio roberto correa (006199) bim": "Angra dos Reis", "gustavo binenbojm (006211) bim": "Leblon", "marcelo salmon (006170) bim": "Petrópolis", "diego ribas (006115) bim": "Barra da Tijuca", "marco antônio (006171) bim": "Petrópolis", "constança e thierry (006049) bim": "Leblon", "paula andrade (006294 e 006308) bim": "Leblon", "eduardo tkacz": "Jardim Botânico", "michel elia (006337) bim": "Flamengo", "hugh lionel strange (006441) bim": "Leblon", "orlando soares (006292) bim": "Angra dos Reis", "charles vasconcelos (006415) dwg": "Petrópolis", "emerson marietto (006239) bim": "Angra dos Reis", "maria jakurski (006514) bim": "Flamengo", "patricia andrade (006499) bim": "Petrópolis", "flavia camanho (006582) bim": "Petrópolis", "ser cidadão (006293) bim": "Santa Cruz", "lior messer (006578) bim": "Areal", "luiza lopes (006567) bim": "Barra da Tijuca", "camila vianna (006650) bim": "Petrópolis", "marcelo carmpenter (006452) bim": "Petrópolis", "ana maria braga (006623) bim": "Petrópolis", "guilli chor (006677) bim": "Petrópolis", "patricia andrade (006802) bim": "Petrópolis", "richard klien vega (006819) - delfim moreira bim": "Leblon", "villa locanda (006700) - bim": "Petrópolis", "walcyr carrasco (006530) - bim": "Leblon", "vania marinho (006829) - bim": "Jardim Botânico", "carlos e isabela peixoto (006584) - bim": "Petrópolis", "vitoria taborda (006874) - bim": "Petrópolis", "patricia ransi (006818) - bim": "São Conrado", "brenda borges (006737) - bim": "Humaitá", "tatiana e gregor (006843) bim": "Mangaratiba", "juliana corrignan (006882) bim": "Petrópolis", "marcelo lajchter (006856) bim": "Lagoa", "marcelo lajchter (006906) bim": "Lagoa", "vânia marinho (006911) bim": "Jardim Botânico", "christian lorentzen (006366) bim": "Paraiba so Sul", "rosemarie klien (006731) bim - revisão itaipava": "Petrópolis", "murilo rosa (005464) - bim": "Paraiba so Sul", "roberto pestana (006672) - bim": "São Paulo", "marcus mathiezen (006853) - bim": "Petrópolis", "ylan adler e jessica kimelblat (006784) - bim": "Leblon", "bruno evora (007057) - bim": "São Paulo", "roberto thompson (006965) - bim": "Paraty", "leonardo yamamoto (006951) - bim": "Leblon", "thomas simon (007116) - bim": "São Conrado", "daniela miranda (006971) - bim": "Ipanema", "heleno palmieri (007030) - bim": "Jardim Botânico", "gisela e hugo neto (007053) - bim": "Petrópolis", "roberto kreimer (007094) - bim": "Leblon", "andrea vaz (007139) - bim": "São Conrado", "alex murad (006454) - bim": "Santa Catarina", "emerson mello (007084) - bim": "Leblon", "emerson mello (007158) - bim": "Leblon", "juliana hammes (006738) - bim": "Petrópolis", "leonardo hammes (006739) - bim": "Petrópolis", "aniuta e christoph - gatil + orquidario (007023) bim": "Barra da Tijuca", "carol e miguel (007135) - bim": "Leblon", "lucia faria (007337) - bim": "São Paulo", "emerson marietto": "Angra dos Reis", "patricia andrade (007423) - bim": "Petrópolis", "thiago fernandes (007097) - bim": "Leblon", "bruna nahoum (007272) - bim": "Leblon", "tomás champalimaud (007411) - bim": "Urca", "hospital santa teresa (007394)": "Petrópolis", "agnaldo marchi (007539) - bim": "Ipanema", "marcelo salmon - barracão (007592) - bim": "Petrópolis", "eduardo tkacz - revisão (007587) - bim": "Jardim Botânico", "renan saad (007620) - bim": "Petrópolis", "camila vianna - barracão (007619) bim": "Petrópolis", "taís araujo": "Flamengo", "otto schubck (007560)": "Petrópolis", "roberto moreno (007557)": "São Paulo", "luis dias (007668)": "São Paulo", "catarina façanha - niterói (007572)": "Niterói", "johan mathias bernuth (007588)": "Paraty", "albino pinho (007664)": "Barra da Tijuca", "eduardo castro (007742)": "Gávea", "axess - casa botafogo (007485)": "Botafogo", "casa amarela (007899)": "Centro", "antônio bindi (007898)": "Gávea", "gula gula": "Leblon", "linox (007821)": "Petrópolis", "bete floris (007985)": "Ipanema", "ricardo lutz (008027)": "Petrópolis", "alfredo faveret (008036)": "Leblon", "cedric wavelet (008029)": "Copacabana", "marco freire (007926)": "Barra da Tijuca", "guilherme pacheco (007983)": "Petrópolis", "pedro ivo (006988)": "Jardim Botânico", "josé carlos queiroz (008050)": "Petrópolis", "cristiano buerguer (006472)": "Santa Catarina", "felipe campos (006762)": "Mangaratiba", "felipe campos (008082)": "Mangaratiba", "flavio zveiter (008195)": "Leblon", "alexandre assed (008238)": "Leblon", "cnc (008229)": "centro", "guareô (008135)": "São Paulo", "clara flaksman (008276)": "Jardim Botânico", "victor hara (008133)": "São Paulo", "katia barros (008196)": "Jardim Botânico", "rosemarie klien (008043)": "Petrópolis", "paulo fernando - anexos (008275)": "Petrópolis", "fabrizzia telles (008291)": "Ipanema", "beatriz paiva (008446)": "Santa Teresa", "jayme (008423)": "Itanhangá", "marco freire (0084": "Barra da Tijuca", "wolff klabim (008428)": "Ipanema", "dorivaldo (007924)": "Barra da Tijuca", "isa graell (008541)": "Ipanema", "leandro monteiro (008508)": "Areal", "mathias bernuth (008601)": "Paraty", "camila vianna (008489)": "Petrópolis", "mayene e eric (008107)": "Itanhangá", "bruno navega (008349)": "Leblon", "leonhard ammon (008484)": "Barra da Tijuca", "matilde pereira (008259)": "Búzios", "bruno coutinho (008249)": "Búzios", "henrique bezerra (008466)": "Ipanema", "mayene e eric (008659)": "Itanhangá", "roberto kaplan (007713)": "Ipanema", "juarez de queiroz (008688)": "Leblon", "bruno gagliasso (008741)": "Itanhangá", "alberto cacciola (008384)": "São Conrado", "josemar - itaquena (008787)": "Bahia", "clarice gravioli (007254)": "Petrópolis", "spe piratininga rua 17 (008738)": "Niterói", "ana maria braga (008455) bim": "São Paulo", "cond. do ed. são conrado (008756)": "São Conrado", "jaime rodrigues (008727)": "Paraíba do Sul", "pierre rodrigues (008879)": "Gavea", "kika e edu (008836)": "São Paulo", "ana flávia e murilo (008828)": "Leblon", "lara mello - itiquira 23 (008913)": "Leblon", "denise e roberto (009004)": "Jardim Botânico", "celi elisabete (009001)": "Leblon", "marcelo marques (008994)": "Petrópolis", "marcelo fortes (008762)": "Leblon", "aline da mata (009010)": "Petrópolis", "sergio santos (009048)": "Teresópolis", "studio velocity (008982)": "Lagoa", "henrique bezerra (009050)": "Ipanema", "pedro marques (009098)": "São Conrado", "cond. linneo de paula machado (008979)": "Centro", "ivan lima (009066)": "Leblon", "marcos pitanga (009129)": "Lagoa", "roberta bittencourt (009012)": "Leblon", "renata e kevin (008875)": "Gavea", "marcelo lopes (009104)": "Leblon", "marcelo simas (009174)": "Copacabana", "rodrigo de moraes (009199)": "Brasília", "paula bulhosa (009261)": "Ipanema", "rogerio e thais (008804)": "Ipanema", "ney marinho (009135)": "Paraiba so Sul", "babyc (009257)": "Lagoa", "pedro vilella (008818)": "Joá", "escritório laer": "Leblon", "rosemarie klien - gazebo (009336)": "Petrópolis", "mauricio cacchione (009256)": "Areal", "marcelo zimet (009421)": "Ipanema", "vincent cassel (009144)": "Ipanema", "instituto yby (009429)": "Maranhão", "fábio villaça (009432)": "Petrópolis", "gabriel martins (009422)": "Jacarepagua", "lays castro (009511)": "Ipanema", "rafael levy (009297)": "Ipanema", "fabrizzia telles (009630)": "Ipanema", "helena e rafael (009258)": "Itaipava", "elkeson (009395)": "Leblon", "victor hara (009620)": "São Paulo", "irene e bruno ambar (009597)": "Leblon", "roberto kreimer - revisão (009419)": "Leblon", "paulo bandeira de mello (009608)": "Botafogo", "leonel pereira pittzer (008881)": "Paraíba do Sul", "lays castro (009764)": "Ipanema", "luiz azevedo / orion (009551)": "Flamengo", "pedro bulcão (009833)": "Petrópolis", "júlio cápua (009776)": "Leblon", "júlio cápua (009777)": "Leblon", "isabel taunay (009859)": "Leblon", "guilherme gonçalves (009829)": "Ipanema", "ana lúcia (009870)": "Ipanema", "antônio - casa concha (009701)": "Angra dos Reis", "eskill peter (009268)": "Copacabana", "andre de botton (009920)": "Ipanema", "victor hara - revisão (009974)": "São Paulo", "carlos lucchetti (009269)": "Leblon", "bruno bareto - revisão (009880)": "Itaipava", "marcelo camargo (010017)": "Bahia", "maria isabel gordilho (010048)": "São Conrado", "willer tomaz (009864)": "Angra dos Reis", "victória empreendimentos (009945)": "Angra dos Reis", "josé castroneves (010090)": "Jardim Botânico", "heloisa bertol (010177)": "Petrópolis", "rodrigo fux (010049)": "Leblon", "brudani (010294)": "Angra dos Reis", "rogério pessoa (010241)": "Ipanema", "tasso araripe (010275)": "Leblon", "cachoeiras de macacu (009980)": "Cachoeiras de Macacu", "paulo jacobsen (010332)": "São Conrado", "eduardo amaro (009735)": "Leblon", "maria josé jakurski (010334)": "Petrópolis", "marcelo trindade (010012)": "Flamengo", "joaquim monteiro (009835)": "Ipanema", "thiago gomes (010508)": "São Conrado", "regina e aluísio (010422)": "Copacabana", "marcos pinheiro (010571)": "Ipanema", "ana maria braga (010438 e 010519)": "São Paulo", "ana flávia e murilo (010596)": "Leblon", "josemo de mello jr (010631)": "Petrópolis", "joana e daian (010564)": "Petrópolis", "lucas montichel (010447)": "Barra da Tijuca", "rosangela de souza (010529)": "Mangaratiba"};
   var MESES_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   var STATUSES = ["A fazer","Em andamento","Concluído"];
-  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [], ferias: [], reunioes: [] };
+  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [], ferias: [], reunioes: [], senhasProjetistas: {} };
   var financeiroHashAtual = null;
   var desenhistaHashAtual = null;
   var financeiroDesbloqueado = false;
@@ -901,6 +899,11 @@
       else if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; }
     }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; } }
     try{
+      var r8 = await window.storage.get('clm-senhas-projetistas', true);
+      if(r8 && r8.value){ state.senhasProjetistas = JSON.parse(r8.value); }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.senhasProjetistas = {}; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.senhasProjetistas = {}; } }
+    try{
       var r5 = await window.storage.get('clm-link-painel', true);
       if(r5 && r5.value){ state.linkPainel = r5.value; }
       else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
@@ -916,6 +919,7 @@
   async function saveTipos(){ try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){} }
   async function saveFerias(){ try{ await window.storage.set('clm-ferias', JSON.stringify(state.ferias), true); }catch(e){} }
   async function saveReunioes(){ try{ await window.storage.set('clm-reunioes', JSON.stringify(state.reunioes), true); }catch(e){} }
+  async function saveSenhasProjetistas(){ try{ await window.storage.set('clm-senhas-projetistas', JSON.stringify(state.senhasProjetistas), true); }catch(e){} }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){} }
   async function saveFinanceiro(){ try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){} }
   var financeiroFoiCarregadoAlgumaVez = false;
@@ -964,6 +968,34 @@
       el.appendChild(chip);
     });
     if(state.equipe.length === 0){ el.innerHTML = '<span class="hint">nenhum desenhista cadastrado ainda</span>'; }
+  }
+
+  function renderProjetistasContas(){
+    var lista = document.getElementById('projetistasContasLista');
+    if(!lista) return;
+    if((state.equipe||[]).length === 0){
+      lista.innerHTML = '<div class="empty-hint">Cadastre nomes em "Equipe" primeiro.</div>';
+      return;
+    }
+    lista.innerHTML = state.equipe.map(function(nome){
+      var temSenha = !!(state.senhasProjetistas||{})[nome];
+      var status = temSenha ? '🔒 senha já definida' : '🔓 aguardando primeiro acesso';
+      return '<div class="projeto-row" style="padding:6px 10px;">'+
+        '<div class="info"><b>'+escapeHtml(nome)+'</b> — <span style="color:var(--ink-soft);">'+status+'</span></div>'+
+        '<div class="acts">'+
+          (temSenha ? '<button type="button" class="btn-resetar-projetista" data-nome="'+escapeHtml(nome)+'">Resetar senha</button>' : '')+
+        '</div>'+
+      '</div>';
+    }).join('');
+    lista.querySelectorAll('.btn-resetar-projetista').forEach(function(btn){
+      btn.onclick = function(){
+        armConfirm(btn, 'Confirmar?', function(){
+          delete state.senhasProjetistas[btn.getAttribute('data-nome')];
+          saveSenhasProjetistas();
+          renderProjetistasContas();
+        });
+      };
+    });
   }
 
   function renderFerias(){
@@ -1107,6 +1139,7 @@
       var pj = state.projetos.find(function(p){ return p.id === t.projetoId; }) || { nome:'(projeto removido)', cliente:'' };
       return Object.assign({}, t, { projetoNome: pj.nome, cliente: pj.cliente });
     }).filter(function(t){
+      if(nomeProjetistaAtual && t.responsavel !== nomeProjetistaAtual) return false;
       if(filters.search){
         var q = filters.search.toLowerCase();
         if(t.projetoNome.toLowerCase().indexOf(q) === -1 && t.cliente.toLowerCase().indexOf(q) === -1) return false;
@@ -1861,7 +1894,7 @@
     });
 
     var porResp = {};
-    state.equipe.forEach(function(n){ porResp[n] = []; });
+    if(!nomeProjetistaAtual){ state.equipe.forEach(function(n){ porResp[n] = []; }); }
     concluidos.forEach(function(t){
       var n = t.responsavel || '(Sem responsável)';
       if(!porResp[n]) porResp[n] = [];
@@ -1964,6 +1997,7 @@
     renderTeam();
     renderTipos();
     renderFerias();
+    renderProjetistasContas();
     renderProjetosList();
     renderFilters();
     renderBoard();
@@ -3350,7 +3384,7 @@
         lblFerias.title = f.responsavel + ' de férias (' + fmtDate(f.inicio) + ' a ' + fmtDate(f.fim) + ')';
         cell.appendChild(lblFerias);
       });
-      var reunioesDoDia = (state.reunioes||[]).filter(function(r){ return r.data === dataStr; }).sort(function(a,b){ return (a.horario||'').localeCompare(b.horario||''); });
+      var reunioesDoDia = modoDesenhista ? [] : (state.reunioes||[]).filter(function(r){ return r.data === dataStr; }).sort(function(a,b){ return (a.horario||'').localeCompare(b.horario||''); });
       reunioesDoDia.forEach(function(r){
         var lblReuniao = document.createElement('div');
         lblReuniao.className = 'cal-reuniao-label';
@@ -3479,7 +3513,7 @@
       projetosDesbloqueado = false;
       document.getElementById('projetosGate').style.display = 'block';
       document.getElementById('projetosConteudo').style.display = 'none';
-      telaLoginProjetos(desenhistaHashAtual, true);
+      mostrarGateProjetistaIndividual('projetosGate');
     } else {
       document.getElementById('projetosGate').style.display = 'none';
       document.getElementById('projetosConteudo').style.display = 'block';
@@ -3839,28 +3873,6 @@
     document.getElementById('inSenhaFinMestra').value = '';
     document.getElementById('inSenhaFinNova').value = '';
   };
-  document.getElementById('lblSenhaDes').onclick = function(){
-    var content = document.getElementById('senhaDesContent');
-    var visible = content.style.display !== 'none';
-    content.style.display = visible ? 'none' : 'flex';
-    document.getElementById('lblSenhaDes').textContent = (visible ? '▸ ' : '▾ ') + 'Trocar senha do projetista:';
-  };
-  document.getElementById('btnSalvarSenhaDes').onclick = async function(){
-    var mestra = document.getElementById('inSenhaDesMestra').value;
-    var nova = document.getElementById('inSenhaDesNova').value;
-    var statusEl = document.getElementById('senhaDesStatus');
-    if(nova.length < 4){ statusEl.style.color = 'var(--red)'; statusEl.textContent = 'A nova senha precisa ter 4+ caracteres.'; return; }
-    if(mestra !== SENHA_MESTRA){
-      statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Senha mestra incorreta.';
-      return;
-    }
-    var novoHash = await hashTexto(nova);
-    try{ await window.storage.set('clm-senha-desenhista-hash', novoHash, true); }catch(e){}
-    desenhistaHashAtual = novoHash;
-    statusEl.style.color = 'var(--green)'; statusEl.textContent = 'Senha do projetista alterada ✓';
-    document.getElementById('inSenhaDesMestra').value = '';
-    document.getElementById('inSenhaDesNova').value = '';
-  };
   document.getElementById('lblEquipe').onclick = function(){
     var content = document.getElementById('teamContent');
     var visible = content.style.display !== 'none';
@@ -3879,6 +3891,13 @@
     content.style.display = visible ? 'none' : 'flex';
     document.getElementById('lblFerias').textContent = (visible ? '▸ ' : '▾ ') + 'Férias:';
     if(!visible) renderFerias();
+  };
+  document.getElementById('lblProjetistasContas').onclick = function(){
+    var content = document.getElementById('projetistasContasContent');
+    var visible = content.style.display !== 'none';
+    content.style.display = visible ? 'none' : 'flex';
+    document.getElementById('lblProjetistasContas').textContent = (visible ? '▸ ' : '▾ ') + 'Senhas dos projetistas:';
+    if(!visible) renderProjetistasContas();
   };
   document.getElementById('btnAddFerias').onclick = function(){
     var resp = document.getElementById('feriasResp').value;
@@ -3920,6 +3939,7 @@
     var gate = document.getElementById('financeiroGate');
     gate.innerHTML =
       '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+        '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
         '<h2>Acesso financeiro</h2>'+
         '<p>Digite a senha para ver os valores e cobranças.</p>'+
         '<input type="password" id="finGateSenha" placeholder="Senha">'+
@@ -3954,6 +3974,7 @@
     var gate = document.getElementById('projetosGate');
     gate.innerHTML =
       '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+        '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
         '<h2>Acesso a ' + (modoAlvo ? 'projetista' : 'projetos') + '</h2>'+
         '<p>Digite a senha para ver o quadro de projetos.</p>'+
         '<input type="password" id="projGateSenha" placeholder="Senha">'+
@@ -3978,9 +3999,95 @@
     document.getElementById('projGateSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
   }
 
+  function mostrarGateProjetistaIndividual(containerId){
+    var gate = document.getElementById(containerId);
+    var passo = 'nome';
+    var nomeSelecionado = null;
+
+    function montar(){
+      if(passo === 'nome'){
+        if((state.equipe||[]).length === 0){
+          gate.innerHTML =
+            '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+              '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+              '<h2>Acesso projetista</h2>'+
+              '<p>Nenhum projetista foi cadastrado ainda. Peça ao gerente para adicionar seu nome em "Equipe" (dentro de Projetos).</p>'+
+            '</div>';
+          return;
+        }
+        gate.innerHTML =
+          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+            '<h2>Quem é você?</h2>'+
+            '<select id="pjSelectNome" style="width:100%; font-size:14px; padding:8px; border:1px solid var(--border); border-radius:4px; margin:10px 0; background:var(--sheet); color:var(--ink);">'+
+              '<option value="" disabled selected>Escolha seu nome…</option>'+
+              state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
+            '</select>'+
+            '<button class="btn" id="pjBtnContinuar" style="width:100%;">Continuar</button>'+
+          '</div>';
+        document.getElementById('pjBtnContinuar').onclick = function(){
+          var nome = document.getElementById('pjSelectNome').value;
+          if(!nome) return;
+          nomeSelecionado = nome;
+          passo = state.senhasProjetistas[nomeSelecionado] ? 'senha' : 'criarSenha';
+          montar();
+        };
+      } else if(passo === 'criarSenha'){
+        gate.innerHTML =
+          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
+            '<p>É o seu primeiro acesso. Crie sua senha:</p>'+
+            '<input type="password" id="pjNovaSenha" placeholder="Nova senha">'+
+            '<input type="password" id="pjNovaSenhaConfirma" placeholder="Confirme a senha">'+
+            '<button class="btn" id="pjBtnCriarSenha">Criar senha e entrar</button>'+
+            '<div class="gate-erro" id="pjGateErro"></div>'+
+            '<p style="margin-top:10px;"><a href="#" id="pjVoltarNome" style="font-size:12px;">‹ voltar</a></p>'+
+          '</div>';
+        document.getElementById('pjVoltarNome').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
+        document.getElementById('pjBtnCriarSenha').onclick = async function(){
+          var s1 = document.getElementById('pjNovaSenha').value;
+          var s2 = document.getElementById('pjNovaSenhaConfirma').value;
+          if(s1.length < 4){ document.getElementById('pjGateErro').textContent = 'A senha precisa ter 4+ caracteres.'; return; }
+          if(s1 !== s2){ document.getElementById('pjGateErro').textContent = 'As senhas não coincidem.'; return; }
+          var hash = await hashTexto(s1);
+          state.senhasProjetistas[nomeSelecionado] = hash;
+          await saveSenhasProjetistas();
+          nomeProjetistaAtual = nomeSelecionado;
+          entrarEmProjetos(true);
+        };
+      } else if(passo === 'senha'){
+        gate.innerHTML =
+          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
+            '<input type="password" id="pjSenha" placeholder="Sua senha" autofocus>'+
+            '<button class="btn" id="pjBtnEntrar">Entrar</button>'+
+            '<div class="gate-erro" id="pjGateErro"></div>'+
+            '<p style="margin-top:10px;"><a href="#" id="pjVoltarNome2" style="font-size:12px;">‹ voltar</a></p>'+
+          '</div>';
+        document.getElementById('pjVoltarNome2').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
+        var tentar = async function(){
+          var valor = document.getElementById('pjSenha').value;
+          var hash = await hashTexto(valor);
+          if(hash === state.senhasProjetistas[nomeSelecionado]){
+            nomeProjetistaAtual = nomeSelecionado;
+            entrarEmProjetos(true);
+          } else {
+            document.getElementById('pjGateErro').textContent = 'Senha incorreta.';
+          }
+        };
+        document.getElementById('pjBtnEntrar').onclick = tentar;
+        document.getElementById('pjSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
+      }
+    }
+    montar();
+  }
+
   function bloquearProjetos(){
     projetosDesbloqueado = false;
     modoDesenhista = false;
+    nomeProjetistaAtual = null;
     document.body.classList.remove('modo-desenhista');
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('senhaGate').style.display = 'block';
@@ -4005,6 +4112,7 @@
   }
 
   var modoDesenhista = false;
+  var nomeProjetistaAtual = null;
   async function entrarEmProjetos(desenhista){
     mostrarShell();
     modoDesenhista = !!desenhista;
@@ -4013,7 +4121,7 @@
     document.body.classList.toggle('modo-desenhista', modoDesenhista);
     document.getElementById('projetosGate').style.display = 'none';
     document.getElementById('projetosConteudo').style.display = 'block';
-    if(!projetosCarregado){ loadAll(); projetosCarregado = true; }
+    if(!projetosCarregado){ loadAll(); projetosCarregado = true; } else { render(); }
   }
 
   async function entrarEmFinanceiro(){
@@ -4030,14 +4138,24 @@
     var gate = document.getElementById('senhaGate');
     var selecionado = 'projetos';
     function montar(){
+      var tabsHtml =
+        '<div class="nav-tabs" style="justify-content:center; margin-bottom:14px; border-bottom:none;">'+
+          '<button type="button" class="nav-tab'+(selecionado==='projetos'?' active':'')+'" id="gateOpProjetos">📋 Projetos</button>'+
+          '<button type="button" class="nav-tab'+(selecionado==='desenhista'?' active':'')+'" id="gateOpDesenhista">🧑‍🔧 Projetista</button>'+
+          '<button type="button" class="nav-tab'+(selecionado==='financeiro'?' active':'')+'" id="gateOpFinanceiro">💰 Financeiro</button>'+
+        '</div>';
+      if(selecionado === 'desenhista'){
+        gate.innerHTML = '<div class="gate"><div>'+tabsHtml+'<div id="subGateProjetista"></div></div></div>';
+        document.getElementById('gateOpProjetos').onclick = function(){ selecionado = 'projetos'; montar(); };
+        document.getElementById('gateOpDesenhista').onclick = function(){ selecionado = 'desenhista'; montar(); };
+        document.getElementById('gateOpFinanceiro').onclick = function(){ selecionado = 'financeiro'; montar(); };
+        mostrarGateProjetistaIndividual('subGateProjetista');
+        return;
+      }
       gate.innerHTML =
         '<div class="gate"><div class="gate-box">'+
           '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-          '<div class="nav-tabs" style="justify-content:center; margin-bottom:14px; border-bottom:none;">'+
-            '<button type="button" class="nav-tab'+(selecionado==='projetos'?' active':'')+'" id="gateOpProjetos">📋 Projetos</button>'+
-            '<button type="button" class="nav-tab'+(selecionado==='desenhista'?' active':'')+'" id="gateOpDesenhista">🧑‍🔧 Projetista</button>'+
-            '<button type="button" class="nav-tab'+(selecionado==='financeiro'?' active':'')+'" id="gateOpFinanceiro">💰 Financeiro</button>'+
-          '</div>'+
+          tabsHtml+
           '<p>Digite a senha para acessar.</p>'+
           '<input type="password" id="gateSenha" placeholder="Senha" autofocus>'+
           '<button class="btn" id="gateBtnEntrar">Entrar</button>'+
@@ -4049,9 +4167,9 @@
       var tentar = async function(){
         var valor = document.getElementById('gateSenha').value;
         var hash = await hashTexto(valor);
-        var hashCerto = (selecionado === 'projetos') ? senhaHashAtual : (selecionado === 'desenhista') ? desenhistaHashAtual : financeiroHashAtual;
+        var hashCerto = (selecionado === 'projetos') ? senhaHashAtual : financeiroHashAtual;
         if(hash === hashCerto){
-          if(selecionado === 'projetos'){ entrarEmProjetos(); } else if(selecionado === 'desenhista'){ entrarEmProjetos(true); } else { entrarEmFinanceiro(); }
+          if(selecionado === 'projetos'){ entrarEmProjetos(); } else { entrarEmFinanceiro(); }
         } else {
           document.getElementById('gateErro').textContent = 'Senha incorreta.';
         }
@@ -4122,6 +4240,15 @@
       try{ await window.storage.set('clm-senha-desenhista-hash', hashDes, true); }catch(e){}
     }
     desenhistaHashAtual = hashDes;
+
+    try{
+      var rProj = await window.storage.get('clm-senhas-projetistas', true);
+      if(rProj && rProj.value){ state.senhasProjetistas = JSON.parse(rProj.value); }
+    }catch(e){}
+    try{
+      var rEq = await window.storage.get('clm-equipe', true);
+      if(rEq && rEq.value){ state.equipe = JSON.parse(rEq.value); }
+    }catch(e){}
 
     telaLoginUnificado();
   }
