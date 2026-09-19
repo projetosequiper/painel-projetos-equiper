@@ -78,6 +78,11 @@
   .column h3{font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue-deep); font-family:'IBM Plex Mono',monospace; margin:0 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border);}
   .column.drag-over-coluna{background:rgba(31,64,104,0.08); outline:2px dashed var(--blue); border-radius:6px;}
   .cal-cell.drag-over-dia{background:rgba(31,64,104,0.12); outline:2px dashed var(--blue);}
+  .cal-cell.fim-de-semana{background:rgba(0,0,0,0.045);}
+  .cal-cell.dia-feriado{background:rgba(156,51,39,0.10);}
+  .cal-feriado-label{font-size:9px; color:var(--red); font-weight:600; margin-bottom:2px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cal-ferias-label{font-size:9px; color:#fff; font-weight:700; margin-bottom:2px; padding:1px 4px; border-radius:3px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cal-cell.drag-nao-permitido{outline:2px dashed var(--red); background:rgba(156,51,39,0.15);}
   .column .count{color:var(--ink-soft); font-weight:400;}
   .cards{display:flex; flex-direction:column; gap:10px; min-height:40px;}
 
@@ -297,6 +302,19 @@
       <div id="tipoChips"></div>
       <input type="text" id="newTipo" placeholder="nova disciplina" />
       <button class="btn small secondary" id="btnAddTipo">Adicionar</button>
+    </div>
+  </div>
+
+  <div class="team-row" style="align-items:flex-start;">
+    <span class="label" id="lblFerias" style="cursor:pointer; user-select:none;">▸ Férias:</span>
+    <div id="feriasContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <select id="feriasResp"></select>
+        <label style="font-size:11px; color:var(--ink-soft);">Início <input type="date" id="feriasInicio"></label>
+        <label style="font-size:11px; color:var(--ink-soft);">Fim <input type="date" id="feriasFim"></label>
+        <button class="btn small secondary" id="btnAddFerias">Adicionar</button>
+      </div>
+      <div id="feriasLista"></div>
     </div>
   </div>
 
@@ -599,7 +617,7 @@
   var LOCALIDADE_PADRAO = {"ana cristina franke (principal)": "Leblon", "ana cristina frankee (caseiro)": "Jardim Botânico", "bruno medeiros (principal)": "Petrópolis", "bruno medeiros (caseiro)": "Minas Gerais", "jorge nóbrega (as-built principal)": "Lagoa", "jorge nóbrega (as-built caseiro)": "Ipanema", "jorge nóbrega (as-built filhos)": "Barra da Tijuca", "jorge nóbrega (as-built spa)": "Mangaratiba", "jorge nóbrega (as-built lazer)": "Angra dos Reis", "jorge nóbrega (as-built situação)": "Humaitá", "luis henrique fraga": "São Paulo", "mauricio e denise": "São Conrado", "oi - são gonçalo": "Botafogo", "oi - boulevard": "Copacabana", "oi - via brasil": "Búzios", "oi - nova friburgo": "Niterói", "oi - caxias": "Recreio", "paolo dal pino": "Paraty", "patrimóvel - jardim botânico": "Flamengo", "zé elias": "Gávea", "marcelo carpenter 1": "Centro do Rio", "marcelo carpenter (jardim) 1": "Teresópolis", "antônio felipe harboe": "Campo Grande", "paulo barreto (as-built)": "Itanhangá", "leandro jaider": "Barra da Tijuca", "pousada da alcobaça": "Petrópolis", "luiz carlos santos": "Petrópolis", "kleber khayat": "Leblon", "anna lemman": "Leblon", "sergio blank": "Leblon", "eduardo bartolomeu - (valéria bartolomeu) - asbuilt": "Leblon", "roberto carneiro": "Jardim Botânico", "marcello campos": "Petrópolis", "márcio albuquerque": "Gávea", "ivan botelho": "Copacabana", "vânia marinho": "Jardim Botânico", "alexandre chequer": "Barra da Tijuca", "serrano football club": "Petrópolis", "nelson tanure": "Leblon", "cláudio daniel": "Itanhangá", "sítio cachoeirinha capela - (sítio santo antônio)": "Petrópolis", "casa do colono - (sítio santo antônio)": "Petrópolis", "complexo cocheiras - (sítio santo antônio)": "Petrópolis", "marcus vinícius": "Niterói", "willie correio": "Petrópolis", "rogério blanc": "Petrópolis", "carlos eduardo ramos": "Leblon", "patricia de alencar": "Gávea", "evandro mota": "Leblon", "cond. mansões (casa linear)": "Barra", "cond. do ed. guilhermina": "Leblon", "leonardo caserta": "Leblon", "guilhermo reid": "Leblon", "elisabete floris": "Ipanema", "cássia bomeny - alterações": "Jardim Botânico", "josé evandro lopes - (bim) *": "Mangaratiba", "brudani": "Petrópolis", "alessandro horta - (bim)": "Petrópolis", "clovis torres": "Ipanema", "bruno pandolfi": "Ipanema", "paulo fernando oliveira - (bim)": "Petrópolis", "bulus brothers participações s/a": "Lagoa", "mathias guedes (bim)": "Ipanema", "marcelo bahia (bim)": "Leblon", "vista capital": "Jardim Botânico", "eduardo navarro (bim)": "Botafogo", "marcelo orberg (bim)": "Leblon", "wilson scot": "Angra dos Reis", "carlos alves (kadu)": "Leblon", "charles vasconcelos (004942) dwg": "Petrópolis", "estela mariane (004921) bim": "Jardim Botânico", "romulo gonçalves (004640) bim": "Petrópolis", "armando e julia (004690) bim": "Leblon", "andre barreto (004951)": "Petrópolis", "raimundo oliveira (005069)": "Ipanema", "ítalo ignácio (005075)": "Barra da Tijuca", "dimensional (casa cave) (004702)": "Barra da Tijuca", "bruno barreto (005135) bim": "Petrópolis", "luiz eduardo leite (005193) bim": "Petrópolis", "gabriela ezcurra (005022) bim": "Copacabana", "fabio strutzel (005113) bim": "Leblon", "jose carlos ramos (005003) dwg": "Leblon", "danielle giancomazzi membeca (005379) bim": "Petrópolis", "paulo cezar antunes (005202)": "Minas gerais", "casa tua (005279) bim": "Barra da Tijuca", "bruno rapparini (005594) bim": "Ipanema", "rodrigo dias (005510) bim": "Ilha do Governador", "sítio santa rita (005572) bim": "Petrópolis", "fábio camarinha (005276) bim": "Petrópolis", "josé ziltemann anexo (005586) bim": "Petrópolis", "ivan guetta - hig (005365) bim": "Ipanema", "maíra torres": "Petrópolis", "joão henrique moraes (005686) bim": "Petrópolis", "augusto ferreira lima (005621) bim": "Bahia", "marcelo brandão annechino (005402)": "Petrópolis", "humberto mota (005636) bim": "Humaitá", "felipe oliveira (005689) bim": "Petrópolis", "marcelo carpenter (005013) bim": "Jardim Botânico", "leonardo grosso (005724) cad": "Barra da Tijuca", "teresa rossi (005752) bim": "Leblon", "hisc - campo grande (005838) bim": "Campo Grande", "rosemarie klien vega (005110) bim": "Petrópolis", "rodrigo farias vasconcellos bim": "Gávea", "isg - instituto stella goulart (005577) bim": "Petrópolis", "gustavo mendes (008533) bim": "Petrópolis", "lincoln rumenos (005866) bim": "Petrópolis", "joão mansur (005931) bim": "Ipanema", "tania e andré marinho (005868) bim": "Flamengo", "mariana sochaczewski simoes (005881) bim": "Jardim Botânico", "roberto ermel (005926) bim": "Joá", "thamine leta (005733) bim": "Mangaratiba", "vânia marinho (005903) bim": "Leblon", "fiotec": "Manguinhos", "richard klien (006104) bim": "Pequiri", "tatiana e gregor (006094) bim": "Mangaratiba", "cristina mendes (006026) bim": "Leblon", "cláudia levinsohn (006116) bim": "Leblon", "fabio vassel (006144) bim": "São Paulo", "ailson e lúcia (005509) bim": "Petrópolis", "aniuta e christoph (006059) bim": "Barra da Tijuca", "giovani loss (006230) bim": "Lagoa", "hugh lionel strange (005957) bim": "Leblon", "marcio roberto correa (006199) bim": "Angra dos Reis", "gustavo binenbojm (006211) bim": "Leblon", "marcelo salmon (006170) bim": "Petrópolis", "diego ribas (006115) bim": "Barra da Tijuca", "marco antônio (006171) bim": "Petrópolis", "constança e thierry (006049) bim": "Leblon", "paula andrade (006294 e 006308) bim": "Leblon", "eduardo tkacz": "Jardim Botânico", "michel elia (006337) bim": "Flamengo", "hugh lionel strange (006441) bim": "Leblon", "orlando soares (006292) bim": "Angra dos Reis", "charles vasconcelos (006415) dwg": "Petrópolis", "emerson marietto (006239) bim": "Angra dos Reis", "maria jakurski (006514) bim": "Flamengo", "patricia andrade (006499) bim": "Petrópolis", "flavia camanho (006582) bim": "Petrópolis", "ser cidadão (006293) bim": "Santa Cruz", "lior messer (006578) bim": "Areal", "luiza lopes (006567) bim": "Barra da Tijuca", "camila vianna (006650) bim": "Petrópolis", "marcelo carmpenter (006452) bim": "Petrópolis", "ana maria braga (006623) bim": "Petrópolis", "guilli chor (006677) bim": "Petrópolis", "patricia andrade (006802) bim": "Petrópolis", "richard klien vega (006819) - delfim moreira bim": "Leblon", "villa locanda (006700) - bim": "Petrópolis", "walcyr carrasco (006530) - bim": "Leblon", "vania marinho (006829) - bim": "Jardim Botânico", "carlos e isabela peixoto (006584) - bim": "Petrópolis", "vitoria taborda (006874) - bim": "Petrópolis", "patricia ransi (006818) - bim": "São Conrado", "brenda borges (006737) - bim": "Humaitá", "tatiana e gregor (006843) bim": "Mangaratiba", "juliana corrignan (006882) bim": "Petrópolis", "marcelo lajchter (006856) bim": "Lagoa", "marcelo lajchter (006906) bim": "Lagoa", "vânia marinho (006911) bim": "Jardim Botânico", "christian lorentzen (006366) bim": "Paraiba so Sul", "rosemarie klien (006731) bim - revisão itaipava": "Petrópolis", "murilo rosa (005464) - bim": "Paraiba so Sul", "roberto pestana (006672) - bim": "São Paulo", "marcus mathiezen (006853) - bim": "Petrópolis", "ylan adler e jessica kimelblat (006784) - bim": "Leblon", "bruno evora (007057) - bim": "São Paulo", "roberto thompson (006965) - bim": "Paraty", "leonardo yamamoto (006951) - bim": "Leblon", "thomas simon (007116) - bim": "São Conrado", "daniela miranda (006971) - bim": "Ipanema", "heleno palmieri (007030) - bim": "Jardim Botânico", "gisela e hugo neto (007053) - bim": "Petrópolis", "roberto kreimer (007094) - bim": "Leblon", "andrea vaz (007139) - bim": "São Conrado", "alex murad (006454) - bim": "Santa Catarina", "emerson mello (007084) - bim": "Leblon", "emerson mello (007158) - bim": "Leblon", "juliana hammes (006738) - bim": "Petrópolis", "leonardo hammes (006739) - bim": "Petrópolis", "aniuta e christoph - gatil + orquidario (007023) bim": "Barra da Tijuca", "carol e miguel (007135) - bim": "Leblon", "lucia faria (007337) - bim": "São Paulo", "emerson marietto": "Angra dos Reis", "patricia andrade (007423) - bim": "Petrópolis", "thiago fernandes (007097) - bim": "Leblon", "bruna nahoum (007272) - bim": "Leblon", "tomás champalimaud (007411) - bim": "Urca", "hospital santa teresa (007394)": "Petrópolis", "agnaldo marchi (007539) - bim": "Ipanema", "marcelo salmon - barracão (007592) - bim": "Petrópolis", "eduardo tkacz - revisão (007587) - bim": "Jardim Botânico", "renan saad (007620) - bim": "Petrópolis", "camila vianna - barracão (007619) bim": "Petrópolis", "taís araujo": "Flamengo", "otto schubck (007560)": "Petrópolis", "roberto moreno (007557)": "São Paulo", "luis dias (007668)": "São Paulo", "catarina façanha - niterói (007572)": "Niterói", "johan mathias bernuth (007588)": "Paraty", "albino pinho (007664)": "Barra da Tijuca", "eduardo castro (007742)": "Gávea", "axess - casa botafogo (007485)": "Botafogo", "casa amarela (007899)": "Centro", "antônio bindi (007898)": "Gávea", "gula gula": "Leblon", "linox (007821)": "Petrópolis", "bete floris (007985)": "Ipanema", "ricardo lutz (008027)": "Petrópolis", "alfredo faveret (008036)": "Leblon", "cedric wavelet (008029)": "Copacabana", "marco freire (007926)": "Barra da Tijuca", "guilherme pacheco (007983)": "Petrópolis", "pedro ivo (006988)": "Jardim Botânico", "josé carlos queiroz (008050)": "Petrópolis", "cristiano buerguer (006472)": "Santa Catarina", "felipe campos (006762)": "Mangaratiba", "felipe campos (008082)": "Mangaratiba", "flavio zveiter (008195)": "Leblon", "alexandre assed (008238)": "Leblon", "cnc (008229)": "centro", "guareô (008135)": "São Paulo", "clara flaksman (008276)": "Jardim Botânico", "victor hara (008133)": "São Paulo", "katia barros (008196)": "Jardim Botânico", "rosemarie klien (008043)": "Petrópolis", "paulo fernando - anexos (008275)": "Petrópolis", "fabrizzia telles (008291)": "Ipanema", "beatriz paiva (008446)": "Santa Teresa", "jayme (008423)": "Itanhangá", "marco freire (0084": "Barra da Tijuca", "wolff klabim (008428)": "Ipanema", "dorivaldo (007924)": "Barra da Tijuca", "isa graell (008541)": "Ipanema", "leandro monteiro (008508)": "Areal", "mathias bernuth (008601)": "Paraty", "camila vianna (008489)": "Petrópolis", "mayene e eric (008107)": "Itanhangá", "bruno navega (008349)": "Leblon", "leonhard ammon (008484)": "Barra da Tijuca", "matilde pereira (008259)": "Búzios", "bruno coutinho (008249)": "Búzios", "henrique bezerra (008466)": "Ipanema", "mayene e eric (008659)": "Itanhangá", "roberto kaplan (007713)": "Ipanema", "juarez de queiroz (008688)": "Leblon", "bruno gagliasso (008741)": "Itanhangá", "alberto cacciola (008384)": "São Conrado", "josemar - itaquena (008787)": "Bahia", "clarice gravioli (007254)": "Petrópolis", "spe piratininga rua 17 (008738)": "Niterói", "ana maria braga (008455) bim": "São Paulo", "cond. do ed. são conrado (008756)": "São Conrado", "jaime rodrigues (008727)": "Paraíba do Sul", "pierre rodrigues (008879)": "Gavea", "kika e edu (008836)": "São Paulo", "ana flávia e murilo (008828)": "Leblon", "lara mello - itiquira 23 (008913)": "Leblon", "denise e roberto (009004)": "Jardim Botânico", "celi elisabete (009001)": "Leblon", "marcelo marques (008994)": "Petrópolis", "marcelo fortes (008762)": "Leblon", "aline da mata (009010)": "Petrópolis", "sergio santos (009048)": "Teresópolis", "studio velocity (008982)": "Lagoa", "henrique bezerra (009050)": "Ipanema", "pedro marques (009098)": "São Conrado", "cond. linneo de paula machado (008979)": "Centro", "ivan lima (009066)": "Leblon", "marcos pitanga (009129)": "Lagoa", "roberta bittencourt (009012)": "Leblon", "renata e kevin (008875)": "Gavea", "marcelo lopes (009104)": "Leblon", "marcelo simas (009174)": "Copacabana", "rodrigo de moraes (009199)": "Brasília", "paula bulhosa (009261)": "Ipanema", "rogerio e thais (008804)": "Ipanema", "ney marinho (009135)": "Paraiba so Sul", "babyc (009257)": "Lagoa", "pedro vilella (008818)": "Joá", "escritório laer": "Leblon", "rosemarie klien - gazebo (009336)": "Petrópolis", "mauricio cacchione (009256)": "Areal", "marcelo zimet (009421)": "Ipanema", "vincent cassel (009144)": "Ipanema", "instituto yby (009429)": "Maranhão", "fábio villaça (009432)": "Petrópolis", "gabriel martins (009422)": "Jacarepagua", "lays castro (009511)": "Ipanema", "rafael levy (009297)": "Ipanema", "fabrizzia telles (009630)": "Ipanema", "helena e rafael (009258)": "Itaipava", "elkeson (009395)": "Leblon", "victor hara (009620)": "São Paulo", "irene e bruno ambar (009597)": "Leblon", "roberto kreimer - revisão (009419)": "Leblon", "paulo bandeira de mello (009608)": "Botafogo", "leonel pereira pittzer (008881)": "Paraíba do Sul", "lays castro (009764)": "Ipanema", "luiz azevedo / orion (009551)": "Flamengo", "pedro bulcão (009833)": "Petrópolis", "júlio cápua (009776)": "Leblon", "júlio cápua (009777)": "Leblon", "isabel taunay (009859)": "Leblon", "guilherme gonçalves (009829)": "Ipanema", "ana lúcia (009870)": "Ipanema", "antônio - casa concha (009701)": "Angra dos Reis", "eskill peter (009268)": "Copacabana", "andre de botton (009920)": "Ipanema", "victor hara - revisão (009974)": "São Paulo", "carlos lucchetti (009269)": "Leblon", "bruno bareto - revisão (009880)": "Itaipava", "marcelo camargo (010017)": "Bahia", "maria isabel gordilho (010048)": "São Conrado", "willer tomaz (009864)": "Angra dos Reis", "victória empreendimentos (009945)": "Angra dos Reis", "josé castroneves (010090)": "Jardim Botânico", "heloisa bertol (010177)": "Petrópolis", "rodrigo fux (010049)": "Leblon", "brudani (010294)": "Angra dos Reis", "rogério pessoa (010241)": "Ipanema", "tasso araripe (010275)": "Leblon", "cachoeiras de macacu (009980)": "Cachoeiras de Macacu", "paulo jacobsen (010332)": "São Conrado", "eduardo amaro (009735)": "Leblon", "maria josé jakurski (010334)": "Petrópolis", "marcelo trindade (010012)": "Flamengo", "joaquim monteiro (009835)": "Ipanema", "thiago gomes (010508)": "São Conrado", "regina e aluísio (010422)": "Copacabana", "marcos pinheiro (010571)": "Ipanema", "ana maria braga (010438 e 010519)": "São Paulo", "ana flávia e murilo (010596)": "Leblon", "josemo de mello jr (010631)": "Petrópolis", "joana e daian (010564)": "Petrópolis", "lucas montichel (010447)": "Barra da Tijuca", "rosangela de souza (010529)": "Mangaratiba"};
   var MESES_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   var STATUSES = ["A fazer","Em andamento","Concluído"];
-  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [] };
+  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [], ferias: [] };
   var financeiroHashAtual = null;
   var financeiroDesbloqueado = false;
   var financeiroCarregado = false;
@@ -858,6 +876,11 @@
     }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); } }
     if(!state.tipos || state.tipos.length === 0){ state.tipos = TIPOS_PADRAO.slice(); }
     try{
+      var r6 = await window.storage.get('clm-ferias', true);
+      if(r6 && r6.value){ state.ferias = JSON.parse(r6.value); }
+      else if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; }
+    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; } }
+    try{
       var r5 = await window.storage.get('clm-link-painel', true);
       if(r5 && r5.value){ state.linkPainel = r5.value; }
       else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
@@ -871,6 +894,7 @@
   async function saveTarefas(){ try{ await window.storage.set('clm-tarefas', JSON.stringify(state.tarefas), true); }catch(e){} }
   async function saveEquipe(){ try{ await window.storage.set('clm-equipe', JSON.stringify(state.equipe), true); }catch(e){} }
   async function saveTipos(){ try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){} }
+  async function saveFerias(){ try{ await window.storage.set('clm-ferias', JSON.stringify(state.ferias), true); }catch(e){} }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){} }
   async function saveFinanceiro(){ try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){} }
   var financeiroFoiCarregadoAlgumaVez = false;
@@ -919,6 +943,42 @@
       el.appendChild(chip);
     });
     if(state.equipe.length === 0){ el.innerHTML = '<span class="hint">nenhum desenhista cadastrado ainda</span>'; }
+  }
+
+  function renderFerias(){
+    var selResp = document.getElementById('feriasResp');
+    if(selResp){
+      var atual = selResp.value;
+      selResp.innerHTML = state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('');
+      if(atual) selResp.value = atual;
+    }
+    var lista = document.getElementById('feriasLista');
+    if(!lista) return;
+    var hoje = todayISO();
+    var ordenado = (state.ferias||[]).slice().sort(function(a,b){ return a.inicio.localeCompare(b.inicio); });
+    if(ordenado.length === 0){
+      lista.innerHTML = '<div class="empty-hint">Nenhuma férias cadastrada.</div>';
+      return;
+    }
+    lista.innerHTML = ordenado.map(function(f){
+      var emAndamento = f.inicio <= hoje && hoje <= f.fim;
+      return '<div class="projeto-row" style="padding:6px 10px;">'+
+        '<div class="info"><b>'+escapeHtml(f.responsavel)+'</b> — '+fmtDate(f.inicio)+' até '+fmtDate(f.fim)+
+        (emAndamento ? ' <span style="color:var(--amber); font-weight:600;">🏖️ de férias agora</span>' : '')+
+        '</div>'+
+        '<div class="acts"><button type="button" class="btn-remover-ferias" data-id="'+f.id+'" style="color:var(--red);">Excluir</button></div>'+
+      '</div>';
+    }).join('');
+    lista.querySelectorAll('.btn-remover-ferias').forEach(function(btn){
+      btn.onclick = function(){
+        armConfirm(btn, 'Confirmar?', function(){
+          state.ferias = state.ferias.filter(function(f){ return f.id !== btn.getAttribute('data-id'); });
+          saveFerias();
+          renderFerias();
+          renderCalendario();
+        });
+      };
+    });
   }
 
   function renderTipos(){
@@ -1882,6 +1942,7 @@
   function render(){
     renderTeam();
     renderTipos();
+    renderFerias();
     renderProjetosList();
     renderFilters();
     renderBoard();
@@ -2997,6 +3058,62 @@
   function pad2(n){ return n < 10 ? '0'+n : ''+n; }
   function dataISO(ano, mes, dia){ return ano+'-'+pad2(mes+1)+'-'+pad2(dia); }
 
+  function calcularPascoa(ano){
+    var a = ano % 19, b = Math.floor(ano/100), c = ano % 100;
+    var d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+    var g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+    var i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
+    var m = Math.floor((a+11*h+22*l)/451);
+    var valor = h+l-7*m+114;
+    var mes = Math.floor(valor/31) - 1;
+    var dia = (valor % 31) + 1;
+    return new Date(ano, mes, dia);
+  }
+  function somarDias(data, dias){
+    var d = new Date(data);
+    d.setDate(d.getDate() + dias);
+    return d;
+  }
+  function dataParaISO(d){ return dataISO(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+  var _feriadosCache = {};
+  function feriadosDoAno(ano){
+    if(_feriadosCache[ano]) return _feriadosCache[ano];
+    var pascoa = calcularPascoa(ano);
+    var lista = [
+      { data: dataISO(ano,0,1), nome: 'Confraternização Universal', tipo: 'Nacional' },
+      { data: dataISO(ano,2,16), nome: 'Aniversário de Petrópolis', tipo: 'Municipal' },
+      { data: dataParaISO(somarDias(pascoa,-48)), nome: 'Carnaval', tipo: 'Nacional' },
+      { data: dataParaISO(somarDias(pascoa,-47)), nome: 'Carnaval', tipo: 'Nacional' },
+      { data: dataParaISO(somarDias(pascoa,-2)), nome: 'Sexta-feira Santa', tipo: 'Nacional' },
+      { data: dataISO(ano,3,21), nome: 'Tiradentes', tipo: 'Nacional' },
+      { data: dataISO(ano,3,23), nome: 'Dia de São Jorge', tipo: 'Estadual (RJ)' },
+      { data: dataISO(ano,4,1), nome: 'Dia do Trabalhador', tipo: 'Nacional' },
+      { data: dataParaISO(somarDias(pascoa,60)), nome: 'Corpus Christi', tipo: 'Nacional' },
+      { data: dataISO(ano,5,29), nome: 'Chegada dos Colonos Alemães', tipo: 'Municipal' },
+      { data: dataISO(ano,8,7), nome: 'Independência do Brasil', tipo: 'Nacional' },
+      { data: dataISO(ano,9,12), nome: 'Nossa Senhora Aparecida', tipo: 'Nacional' },
+      { data: dataISO(ano,9,19), nome: 'São Pedro de Alcântara', tipo: 'Municipal' },
+      { data: dataISO(ano,10,2), nome: 'Finados', tipo: 'Nacional' },
+      { data: dataISO(ano,10,15), nome: 'Proclamação da República', tipo: 'Nacional' },
+      { data: dataISO(ano,10,20), nome: 'Consciência Negra', tipo: 'Estadual (RJ)' },
+      { data: dataISO(ano,11,25), nome: 'Natal', tipo: 'Nacional' }
+    ];
+    var mapa = {};
+    lista.forEach(function(f){ mapa[f.data] = f; });
+    _feriadosCache[ano] = mapa;
+    return mapa;
+  }
+  function ehFimDeSemana(dataStr){
+    var partes = dataStr.split('-').map(Number);
+    var dow = new Date(partes[0], partes[1]-1, partes[2]).getDay();
+    return dow === 0 || dow === 6;
+  }
+  function diaNaoUtil(dataStr){
+    var ano = parseInt(dataStr.slice(0,4), 10);
+    return ehFimDeSemana(dataStr) || !!feriadosDoAno(ano)[dataStr];
+  }
+
   function abrirObsExpandida(taskId){
     var t = state.tarefas.find(function(x){ return x.id === taskId; });
     if(!t) return;
@@ -3073,15 +3190,19 @@
       calDragState.ghostEl.style.left = e.clientX + 'px';
       calDragState.ghostEl.style.top = e.clientY + 'px';
     }
-    document.querySelectorAll('.cal-cell.drag-over-dia').forEach(function(el){ el.classList.remove('drag-over-dia'); });
+    document.querySelectorAll('.cal-cell.drag-over-dia, .cal-cell.drag-nao-permitido').forEach(function(el){ el.classList.remove('drag-over-dia', 'drag-nao-permitido'); });
     calDragState.overDate = null;
     var elAlvo = document.elementFromPoint(e.clientX, e.clientY);
     var celulaAlvo = elAlvo && elAlvo.closest ? elAlvo.closest('.cal-cell') : null;
     if(celulaAlvo){
       var dataAlvo = celulaAlvo.getAttribute('data-date');
       if(dataAlvo){
-        celulaAlvo.classList.add('drag-over-dia');
-        calDragState.overDate = dataAlvo;
+        if(diaNaoUtil(dataAlvo)){
+          celulaAlvo.classList.add('drag-nao-permitido');
+        } else {
+          celulaAlvo.classList.add('drag-over-dia');
+          calDragState.overDate = dataAlvo;
+        }
       }
     }
   }
@@ -3089,7 +3210,7 @@
   function onArrastoCalSoltar(){
     document.removeEventListener('pointermove', onArrastoCalMover);
     document.removeEventListener('pointerup', onArrastoCalSoltar);
-    document.querySelectorAll('.cal-cell.drag-over-dia').forEach(function(el){ el.classList.remove('drag-over-dia'); });
+    document.querySelectorAll('.cal-cell.drag-over-dia, .cal-cell.drag-nao-permitido').forEach(function(el){ el.classList.remove('drag-over-dia', 'drag-nao-permitido'); });
     if(calDragState && calDragState.ghostEl && calDragState.ghostEl.parentNode){ calDragState.ghostEl.parentNode.removeChild(calDragState.ghostEl); }
     if(calDragState && calDragState.sourceEl) calDragState.sourceEl.classList.remove('dragging-source');
 
@@ -3154,12 +3275,30 @@
       }
       let dataStr = dataISO(anoRef, mesRef, dia);
       let cell = document.createElement('div');
-      cell.className = 'cal-cell' + (faded ? ' faded' : '') + (dataStr === hojeStr ? ' hoje' : '');
+      let ehFDS = ehFimDeSemana(dataStr);
+      let feriadoInfo = feriadosDoAno(anoRef)[dataStr];
+      cell.className = 'cal-cell' + (faded ? ' faded' : '') + (dataStr === hojeStr ? ' hoje' : '') + (ehFDS ? ' fim-de-semana' : '') + (feriadoInfo ? ' dia-feriado' : '');
       cell.setAttribute('data-date', dataStr);
       let num = document.createElement('div');
       num.className = 'cal-daynum';
       num.textContent = dia;
       cell.appendChild(num);
+      if(feriadoInfo){
+        var lblFeriado = document.createElement('div');
+        lblFeriado.className = 'cal-feriado-label';
+        lblFeriado.textContent = '🔴 ' + feriadoInfo.nome;
+        lblFeriado.title = feriadoInfo.nome + ' — Feriado ' + feriadoInfo.tipo;
+        cell.appendChild(lblFeriado);
+      }
+      var feriasNoDia = (state.ferias||[]).filter(function(f){ return f.inicio <= dataStr && dataStr <= f.fim; });
+      feriasNoDia.forEach(function(f){
+        var lblFerias = document.createElement('div');
+        lblFerias.className = 'cal-ferias-label';
+        lblFerias.style.background = corDesenhista(f.responsavel);
+        lblFerias.textContent = '🏖️ ' + f.responsavel.split(' ')[0];
+        lblFerias.title = f.responsavel + ' de férias (' + fmtDate(f.inicio) + ' a ' + fmtDate(f.fim) + ')';
+        cell.appendChild(lblFerias);
+      });
 
       let doDia = tarefas.filter(function(t){ return t.inicio <= dataStr && dataStr <= t.fim; });
       if(doDia.length > 0){
@@ -3197,7 +3336,9 @@
     var legend = document.getElementById('calLegend');
     legend.innerHTML = state.equipe.map(function(n){
       return '<span><span class="dot" style="background:'+corDesenhista(n)+'"></span>'+escapeHtml(n)+'</span>';
-    }).join('');
+    }).join('') +
+      '<span><span class="dot" style="background:rgba(0,0,0,0.25);"></span>Fim de semana</span>'+
+      '<span><span class="dot" style="background:var(--red);"></span>Feriado (não é possível agendar prazo)</span>';
   }
 
   document.getElementById('btnSincronizarFinanceiro').onclick = async function(){
@@ -3624,6 +3765,26 @@
     var visible = content.style.display !== 'none';
     content.style.display = visible ? 'none' : 'flex';
     document.getElementById('lblTipos').textContent = (visible ? '▸ ' : '▾ ') + 'Disciplinas:';
+  };
+  document.getElementById('lblFerias').onclick = function(){
+    var content = document.getElementById('feriasContent');
+    var visible = content.style.display !== 'none';
+    content.style.display = visible ? 'none' : 'flex';
+    document.getElementById('lblFerias').textContent = (visible ? '▸ ' : '▾ ') + 'Férias:';
+    if(!visible) renderFerias();
+  };
+  document.getElementById('btnAddFerias').onclick = function(){
+    var resp = document.getElementById('feriasResp').value;
+    var inicio = document.getElementById('feriasInicio').value;
+    var fim = document.getElementById('feriasFim').value;
+    if(!resp || !inicio || !fim){ alert('Preencha responsável, início e fim.'); return; }
+    if(fim < inicio){ alert('A data de fim precisa ser depois do início.'); return; }
+    state.ferias.push({ id: uid('fer'), responsavel: resp, inicio: inicio, fim: fim });
+    saveFerias();
+    document.getElementById('feriasInicio').value = '';
+    document.getElementById('feriasFim').value = '';
+    renderFerias();
+    renderCalendario();
   };
   document.getElementById('lblProjetos').onclick = function(){
     var list = document.getElementById('projetosList');
