@@ -1,4 +1,13 @@
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Equiper">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="favicon-32.png">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --paper:#F5F5F7;
@@ -194,7 +203,7 @@
   .dia-modal-box{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-lg); max-width:440px; width:100%; max-height:80vh; overflow:auto; padding:22px; box-shadow:var(--shadow-lg); animation:popIn .22s cubic-bezier(.2,.9,.3,1);}
   @media (max-width:640px){
     .dia-modal-overlay{align-items:flex-end; padding:0;}
-    .dia-modal-box{max-width:100%; border-radius:22px 22px 0 0; max-height:88vh; animation:sheetUp .25s cubic-bezier(.2,.9,.3,1); padding-bottom:28px;}
+    .dia-modal-box{max-width:100%; border-radius:22px 22px 0 0; max-height:88vh; animation:sheetUp .25s cubic-bezier(.2,.9,.3,1); padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
     .dia-modal-box::before{content:''; display:block; width:36px; height:4px; background:var(--border); border-radius:3px; margin:0 auto 14px;}
   }
   .dia-modal-item{border-top:1px solid var(--border); padding:9px 0; font-size:12.5px;}
@@ -202,7 +211,7 @@
   .dia-modal-item .quem{display:flex; align-items:center; gap:6px; font-weight:600;}
   .dia-modal-item .detalhe{color:var(--ink-soft); margin-top:2px; font-size:11.5px;}
   body{margin:0; background:var(--paper);}
-  .gate{position:fixed; inset:0; background:var(--paper); z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeInUp .3s ease;}
+  .gate{position:fixed; inset:0; background:var(--paper); z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; padding-top:calc(20px + env(safe-area-inset-top, 0px)); padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px)); animation:fadeInUp .3s ease;}
   .gate-box{background:var(--sheet); border:1px solid var(--border); border-radius:24px; padding:40px 32px 32px; max-width:380px; width:100%; text-align:center; box-shadow:var(--shadow-lg); animation:popIn .3s cubic-bezier(.2,.9,.3,1);}
   .gate-logo{max-width:200px; width:75%; height:auto; margin:0 auto 24px; display:block;}
   .gate-box h2{margin:0 0 6px; font-family:'Inter',sans-serif; font-weight:700; font-size:19px; color:var(--ink); letter-spacing:-0.01em;}
@@ -248,9 +257,15 @@
     body.tema-escuro .nav-tabs{background:rgba(28,28,30,0.85);}
   }
   @media (max-width:900px){
-    .nav-tabs{position:fixed; left:12px; right:12px; bottom:12px; margin-bottom:0; z-index:5500; box-shadow:var(--shadow-lg);}
-    .app{padding-bottom:84px;}
+    .nav-tabs{position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); margin-bottom:0; z-index:5500; box-shadow:var(--shadow-lg);}
+    .app{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)); padding-top:calc(20px + env(safe-area-inset-top, 0px));}
+    #botaoTema{top:calc(14px + env(safe-area-inset-top, 0px));}
+    input:not([type=checkbox]):not([type=radio]), select, textarea{ font-size:16px !important; }
+    .toolbar input[type=text], .toolbar select{ font-size:16px !important; }
   }
+  html{ -webkit-text-size-adjust:100%; }
+  html, body{ overscroll-behavior:none; }
+  body{ -webkit-overflow-scrolling:touch; }
 
   .fin-resumo{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
   .fin-resumo-item{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-md); padding:12px 18px; min-width:150px; box-shadow:var(--shadow-sm);}
