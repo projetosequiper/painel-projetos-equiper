@@ -160,6 +160,14 @@
   .card select.inline-edit, .card input.inline-edit{font-size:11px; padding:2px 4px; border:1px solid var(--border); border-radius:3px; background:#fff; width:100%; font-family:'Inter',sans-serif; color:var(--ink);}
   .card textarea.inline-edit-obs{font-size:11px; padding:3px 5px; border:1px solid var(--border); border-radius:3px; width:100%; font-family:'Inter',sans-serif; resize:vertical; color:var(--ink);}
   .anexos-area{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .planta-wrap{position:relative; display:inline-block; max-width:100%; margin-top:6px; cursor:crosshair; border-radius:var(--r-sm); overflow:hidden; border:1px solid var(--border);}
+  .planta-wrap img{display:block; max-width:100%; height:auto; user-select:none; -webkit-user-drag:none;}
+  .planta-pin{position:absolute; width:24px; height:24px; margin-left:-12px; margin-top:-12px; background:var(--red); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:'Inter',sans-serif; box-shadow:0 0 0 2px #fff, var(--shadow-md); cursor:pointer;}
+  .planta-pin:hover{filter:brightness(1.15);}
+  .planta-pin-popup{position:absolute; z-index:20; background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-sm); box-shadow:var(--shadow-lg); padding:10px; width:220px; font-size:12.5px;}
+  .planta-pin-popup select, .planta-pin-popup input{width:100%; margin-bottom:8px;}
+  .planta-legenda{margin-top:8px; font-size:11.5px; color:var(--ink-soft);}
+  .planta-legenda div{padding:2px 0;}
   .anexo-chip{position:relative; display:inline-flex; align-items:center; background:var(--paper); border:1px solid var(--border); border-radius:4px;}
   .anexo-chip.anexo-img img{width:44px; height:44px; object-fit:cover; border-radius:3px; cursor:pointer; display:block;}
   .anexo-chip.anexo-file a{padding:4px 7px; color:var(--blue-deep); text-decoration:none; font-family:'IBM Plex Mono',monospace; font-size:10.5px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;}
@@ -203,7 +211,7 @@
   .cal-more{font-size:9px; color:var(--ink-soft); padding-left:2px;}
   .cal-legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:11px;}
   .cal-legend span.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
-  .dia-modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(2px); z-index:1000; display:none; align-items:center; justify-content:center; padding:16px;}
+  .dia-modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(2px); z-index:6000; display:none; align-items:center; justify-content:center; padding:16px;}
   @media print{
     #senhaGate, #appContainer, .lightbox-overlay{ display:none !important; }
     #diaModalOverlay{ position:static !important; display:block !important; width:100% !important; height:auto !important; background:#fff !important; padding:0 !important; margin:0 !important; inset:auto !important; }
@@ -2147,19 +2155,179 @@
           '<select id="relClienteSelect"><option value="">— Selecionar cliente cadastrado —</option>'+opcoesClientes+'<option value="__avulso__">Outro (não cadastrado)</option></select>'+
         '</div>'+
         '<div class="full" id="relClienteAvulsoWrap" style="display:none;"><label>Nome do cliente</label><input type="text" id="relClienteAvulso" placeholder="Nome do cliente"></div>'+
-        '<div class="full"><label>Observações</label><textarea id="relTexto" rows="6" placeholder="Descreva o que foi observado na visita..."></textarea></div>'+
-        '<div class="full"><label>Fotos</label>'+
-          '<div id="relFotosArea" class="anexos-area"></div>'+
-          '<button type="button" class="btn small secondary" id="btnAddFotoRelatorio">📷 Adicionar foto</button>'+
-          ' <span class="hint" style="font-size:11px;">ou cole (Ctrl+V) um print</span>'+
-          '<input type="file" id="relFotoInput" accept="image/*" multiple style="display:none">'+
+        '<div class="full">'+
+          '<label>Como você quer preencher?</label>'+
+          '<div style="display:flex; gap:6px; margin:4px 0 10px;">'+
+            '<button type="button" class="btn small" id="relModoLivre">Texto livre</button>'+
+            '<button type="button" class="btn small secondary" id="relModoItens">Por itens</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="full" id="relBlocoLivre">'+
+          '<label>Observações</label><textarea id="relTexto" rows="6" placeholder="Descreva o que foi observado na visita..."></textarea>'+
+          '<div style="margin-top:8px;"><label>Fotos</label>'+
+            '<div id="relFotosArea" class="anexos-area"></div>'+
+            '<button type="button" class="btn small secondary" id="btnAddFotoRelatorio">📷 Adicionar foto</button>'+
+            ' <span class="hint" style="font-size:11px;">ou cole (Ctrl+V) um print</span>'+
+            '<input type="file" id="relFotoInput" accept="image/*" multiple style="display:none">'+
+          '</div>'+
+        '</div>'+
+        '<div class="full" id="relBlocoItens" style="display:none;">'+
+          '<div id="relItensLista"></div>'+
+          '<button type="button" class="btn small secondary" id="btnAddItemRelatorio">+ Adicionar item</button>'+
+        '</div>'+
+        '<div class="full" style="border-top:1px solid var(--border); padding-top:14px; margin-top:6px;">'+
+          '<label>Plantas por pavimento (opcional)</label>'+
+          '<div class="hint" style="margin-bottom:8px;">Cole ou anexe o print da planta de cada pavimento, depois clique em cima do desenho pra marcar onde cada foto foi tirada.</div>'+
+          '<div id="relPlantasLista"></div>'+
+          '<button type="button" class="btn small secondary" id="btnAddPlanta">+ Adicionar pavimento</button>'+
         '</div>'+
         '<div class="form-actions"><button class="btn" id="btnSalvarRelatorio">Salvar relatório</button></div>'+
       '</div>';
     overlay.style.display = 'flex';
     box.classList.add('dia-modal-grande');
+
+    var modo = 'livre';
     var fotos = [];
-    fotoPasteAlvo = { adicionar: function(dataUrl){ fotos.push(dataUrl); renderFotosPreview(); } };
+    var itens = [];
+    var plantas = [];
+
+    function criarItemVazio(){ return { id: uid('itemrel'), fotos: [] }; }
+    function criarPlantaVazia(){ return { id: uid('planta'), nome: '', imagem: null, pins: [] }; }
+
+    function definirAlvoColagemPlanta(plantaId){
+      var planta = plantas.find(function(p){ return p.id === plantaId; });
+      if(!planta) return;
+      fotoPasteAlvo = { adicionar: function(dataUrl){ planta.imagem = dataUrl; renderPlantaImagem(plantaId); } };
+    }
+
+    function abrirPopupNovoPin(plantaId, xPct, yPct){
+      var planta = plantas.find(function(p){ return p.id === plantaId; });
+      var wrapEl = document.querySelector('.planta-wrap[data-planta-id="'+plantaId+'"]');
+      var antigo = wrapEl.querySelector('.planta-pin-popup');
+      if(antigo) antigo.remove();
+      var popup = document.createElement('div');
+      popup.className = 'planta-pin-popup';
+      popup.style.left = Math.min(xPct, 70) + '%';
+      popup.style.top = Math.min(yPct, 70) + '%';
+      var campoHtml;
+      if(modo === 'itens'){
+        campoHtml = '<select id="pinItemSelect"><option value="">— Escolha o item —</option>' +
+          itens.map(function(it, idx){
+            var elT = document.querySelector('.rel-item-titulo[data-id="'+it.id+'"]');
+            var titulo = elT ? elT.value.trim() : '';
+            return '<option value="'+it.id+'">'+(idx+1)+'. '+escapeHtml(titulo || '(sem nome)')+'</option>';
+          }).join('');
+      } else {
+        campoHtml = '<input type="text" id="pinLabelInput" placeholder="O que tem aqui?">';
+      }
+      popup.innerHTML = campoHtml + '<div style="display:flex; gap:6px;"><button type="button" class="btn small" id="pinConfirmar" style="flex:1;">Marcar</button><button type="button" class="btn small secondary" id="pinCancelar" style="flex:1;">Cancelar</button></div>';
+      wrapEl.appendChild(popup);
+      document.getElementById('pinCancelar').onclick = function(e){ e.stopPropagation(); popup.remove(); };
+      document.getElementById('pinConfirmar').onclick = function(e){
+        e.stopPropagation();
+        var refItemId = null, texto = '';
+        if(modo === 'itens'){
+          refItemId = document.getElementById('pinItemSelect').value;
+          if(!refItemId){ return; }
+        } else {
+          texto = document.getElementById('pinLabelInput').value.trim();
+          if(!texto){ return; }
+        }
+        planta.pins.push({ id: uid('pin'), x: xPct, y: yPct, refItemId: refItemId || null, texto: texto });
+        renderPlantaImagem(plantaId);
+      };
+    }
+
+    function renderPlantaImagem(plantaId){
+      var planta = plantas.find(function(p){ return p.id === plantaId; });
+      var container = document.getElementById('plantaImgArea_'+plantaId);
+      if(!container || !planta) return;
+      if(!planta.imagem){ container.innerHTML = ''; return; }
+      var pinsHtml = planta.pins.map(function(pin, idx){
+        return '<div class="planta-pin" data-pin-id="'+pin.id+'" style="left:'+pin.x+'%; top:'+pin.y+'%;" title="clique para remover">'+(idx+1)+'</div>';
+      }).join('');
+      container.innerHTML = '<div class="planta-wrap" data-planta-id="'+plantaId+'"><img src="'+planta.imagem+'">'+pinsHtml+'</div>';
+      var wrapEl = container.querySelector('.planta-wrap');
+      wrapEl.addEventListener('click', function(e){
+        if(e.target.closest('.planta-pin') || e.target.closest('.planta-pin-popup')) return;
+        var rect = wrapEl.getBoundingClientRect();
+        var xPct = (e.clientX - rect.left) / rect.width * 100;
+        var yPct = (e.clientY - rect.top) / rect.height * 100;
+        abrirPopupNovoPin(plantaId, xPct, yPct);
+      });
+      wrapEl.querySelectorAll('.planta-pin').forEach(function(pinEl){
+        pinEl.onclick = function(e){
+          e.stopPropagation();
+          planta.pins = planta.pins.filter(function(p){ return p.id !== pinEl.getAttribute('data-pin-id'); });
+          renderPlantaImagem(plantaId);
+        };
+      });
+      renderLegendaPlanta(plantaId);
+    }
+
+    function renderLegendaPlanta(plantaId){
+      var planta = plantas.find(function(p){ return p.id === plantaId; });
+      var el = document.getElementById('plantaLegenda_'+plantaId);
+      if(!el || !planta) return;
+      el.innerHTML = planta.pins.map(function(pin, idx){
+        var label = pin.texto;
+        if(!label && pin.refItemId){
+          var elT = document.querySelector('.rel-item-titulo[data-id="'+pin.refItemId+'"]');
+          label = elT ? elT.value.trim() : '';
+        }
+        return '<div>'+(idx+1)+'. '+escapeHtml(label||'(sem nome)')+'</div>';
+      }).join('');
+    }
+
+    function renderPlantasLista(){
+      var lista = document.getElementById('relPlantasLista');
+      lista.innerHTML = plantas.map(function(p){
+        return '<div class="projeto-row" data-planta-bloco="'+p.id+'" style="flex-direction:column; align-items:stretch; gap:8px; margin-bottom:14px;">'+
+          '<div style="display:flex; gap:8px; align-items:center;">'+
+            '<input type="text" class="rel-planta-nome" data-id="'+p.id+'" placeholder="Nome do pavimento (ex: Térreo, 1º Pav.)" style="flex:1;" value="'+escapeHtml(p.nome||'')+'">'+
+            '<button type="button" class="rel-planta-remover" data-id="'+p.id+'" style="color:var(--red); font-size:11px;">Remover</button>'+
+          '</div>'+
+          '<div id="plantaImgArea_'+p.id+'"></div>'+
+          '<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">'+
+            '<button type="button" class="btn small secondary rel-planta-add-img" data-id="'+p.id+'">🖼️ '+(p.imagem?'Trocar':'Adicionar')+' planta</button>'+
+            ' <span class="hint" style="font-size:11px;">ou clique aqui e cole (Ctrl+V)</span>'+
+            '<input type="file" class="rel-planta-img-input" data-id="'+p.id+'" accept="image/*" style="display:none">'+
+          '</div>'+
+          '<div class="planta-legenda" id="plantaLegenda_'+p.id+'"></div>'+
+        '</div>';
+      }).join('');
+      plantas.forEach(function(p){ renderPlantaImagem(p.id); });
+      lista.querySelectorAll('[data-planta-bloco]').forEach(function(bloco){
+        bloco.addEventListener('focusin', function(){ definirAlvoColagemPlanta(bloco.getAttribute('data-planta-bloco')); });
+        bloco.addEventListener('click', function(){ definirAlvoColagemPlanta(bloco.getAttribute('data-planta-bloco')); });
+      });
+      lista.querySelectorAll('.rel-planta-add-img').forEach(function(btn){
+        btn.onclick = function(){ lista.querySelector('.rel-planta-img-input[data-id="'+btn.getAttribute('data-id')+'"]').click(); };
+      });
+      lista.querySelectorAll('.rel-planta-img-input').forEach(function(input){
+        input.addEventListener('change', function(e){
+          var plantaId = input.getAttribute('data-id');
+          var planta = plantas.find(function(x){ return x.id === plantaId; });
+          var file = e.target.files[0];
+          if(file){ redimensionarImagem(file, 1600, 0.8, function(dataUrl){ planta.imagem = dataUrl; renderPlantaImagem(plantaId); }); }
+          e.target.value = '';
+        });
+      });
+      lista.querySelectorAll('.rel-planta-remover').forEach(function(btn){
+        btn.onclick = function(){
+          plantas = plantas.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
+          renderPlantasLista();
+        };
+      });
+    }
+
+    document.getElementById('btnAddPlanta').onclick = function(){
+      var nova = criarPlantaVazia();
+      plantas.push(nova);
+      renderPlantasLista();
+      definirAlvoColagemPlanta(nova.id);
+    };
+
     function renderFotosPreview(){
       document.getElementById('relFotosArea').innerHTML = fotos.map(function(f, i){
         return '<span class="anexo-chip anexo-img"><img src="'+f+'" data-idx="'+i+'" class="rel-foto-ver"><button type="button" class="anexo-remove" data-idx="'+i+'">×</button></span>';
@@ -2171,6 +2339,100 @@
         btn.onclick = function(){ fotos.splice(parseInt(btn.getAttribute('data-idx'),10),1); renderFotosPreview(); };
       });
     }
+
+    function ativarModo(novoModo){
+      modo = novoModo;
+      document.getElementById('relModoLivre').className = 'btn small' + (modo==='livre' ? '' : ' secondary');
+      document.getElementById('relModoItens').className = 'btn small' + (modo==='itens' ? '' : ' secondary');
+      document.getElementById('relBlocoLivre').style.display = modo==='livre' ? 'block' : 'none';
+      document.getElementById('relBlocoItens').style.display = modo==='itens' ? 'block' : 'none';
+      if(modo === 'livre'){
+        fotoPasteAlvo = { adicionar: function(dataUrl){ fotos.push(dataUrl); renderFotosPreview(); } };
+      } else {
+        if(itens.length === 0){ itens.push(criarItemVazio()); renderItensLista(); }
+        else { definirAlvoColagemItem(itens[itens.length-1].id); }
+      }
+    }
+    document.getElementById('relModoLivre').onclick = function(){ ativarModo('livre'); };
+    document.getElementById('relModoItens').onclick = function(){ ativarModo('itens'); };
+
+    function definirAlvoColagemItem(itemId){
+      var item = itens.find(function(x){ return x.id === itemId; });
+      if(!item) return;
+      fotoPasteAlvo = { adicionar: function(dataUrl){ item.fotos.push(dataUrl); renderFotosItem(itemId); } };
+    }
+
+    function renderFotosItem(itemId){
+      var item = itens.find(function(x){ return x.id === itemId; });
+      var el = document.getElementById('relItemFotos_'+itemId);
+      if(!el || !item) return;
+      el.innerHTML = item.fotos.map(function(f, i){
+        return '<span class="anexo-chip anexo-img"><img src="'+f+'" data-idx="'+i+'" class="rel-item-foto-ver" data-item="'+itemId+'"><button type="button" class="anexo-remove rel-item-foto-remover" data-idx="'+i+'" data-item="'+itemId+'">×</button></span>';
+      }).join('');
+      el.querySelectorAll('.rel-item-foto-ver').forEach(function(img){
+        img.onclick = function(){ var it = itens.find(function(x){ return x.id === img.getAttribute('data-item'); }); abrirImagemModalMantendo(it.fotos[parseInt(img.getAttribute('data-idx'),10)]); };
+      });
+      el.querySelectorAll('.rel-item-foto-remover').forEach(function(btn){
+        btn.onclick = function(){
+          var it = itens.find(function(x){ return x.id === btn.getAttribute('data-item'); });
+          it.fotos.splice(parseInt(btn.getAttribute('data-idx'),10),1);
+          renderFotosItem(btn.getAttribute('data-item'));
+        };
+      });
+    }
+
+    function renderItensLista(){
+      var lista = document.getElementById('relItensLista');
+      lista.innerHTML = itens.map(function(it, idx){
+        return '<div class="projeto-row" data-item-bloco="'+it.id+'" style="flex-direction:column; align-items:stretch; gap:8px; margin-bottom:10px;">'+
+          '<div style="display:flex; gap:8px; align-items:center;">'+
+            '<input type="text" class="rel-item-titulo" data-id="'+it.id+'" placeholder="Nome do item (ex: Banheiro social)" style="flex:1;" value="'+escapeHtml(it.titulo||'')+'">'+
+            (itens.length > 1 ? '<button type="button" class="rel-item-remover" data-id="'+it.id+'" style="color:var(--red); font-size:11px;">Remover</button>' : '')+
+          '</div>'+
+          '<textarea class="rel-item-texto" data-id="'+it.id+'" rows="3" placeholder="O que foi observado nesse item...">'+escapeHtml(it.texto||'')+'</textarea>'+
+          '<div>'+
+            '<div class="anexos-area" id="relItemFotos_'+it.id+'"></div>'+
+            '<button type="button" class="btn small secondary rel-item-add-foto" data-id="'+it.id+'">📷 Adicionar foto</button>'+
+            ' <span class="hint" style="font-size:11px;">ou clique aqui e cole (Ctrl+V)</span>'+
+            '<input type="file" class="rel-item-foto-input" data-id="'+it.id+'" accept="image/*" multiple style="display:none">'+
+          '</div>'+
+        '</div>';
+      }).join('');
+      itens.forEach(function(it){ renderFotosItem(it.id); });
+      lista.querySelectorAll('[data-item-bloco]').forEach(function(bloco){
+        bloco.addEventListener('focusin', function(){ definirAlvoColagemItem(bloco.getAttribute('data-item-bloco')); });
+        bloco.addEventListener('click', function(){ definirAlvoColagemItem(bloco.getAttribute('data-item-bloco')); });
+      });
+      lista.querySelectorAll('.rel-item-add-foto').forEach(function(btn){
+        btn.onclick = function(){ lista.querySelector('.rel-item-foto-input[data-id="'+btn.getAttribute('data-id')+'"]').click(); };
+      });
+      lista.querySelectorAll('.rel-item-foto-input').forEach(function(input){
+        input.addEventListener('change', function(e){
+          var itemId = input.getAttribute('data-id');
+          var item = itens.find(function(x){ return x.id === itemId; });
+          Array.prototype.forEach.call(e.target.files, function(file){
+            redimensionarImagem(file, 900, 0.72, function(dataUrl){ item.fotos.push(dataUrl); renderFotosItem(itemId); });
+          });
+          e.target.value = '';
+        });
+      });
+      lista.querySelectorAll('.rel-item-remover').forEach(function(btn){
+        btn.onclick = function(){
+          itens = itens.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
+          renderItensLista();
+        };
+      });
+    }
+
+    document.getElementById('btnAddItemRelatorio').onclick = function(){
+      var novo = criarItemVazio();
+      itens.push(novo);
+      renderItensLista();
+      definirAlvoColagemItem(novo.id);
+    };
+
+    ativarModo('livre');
+
     document.getElementById('relClienteSelect').addEventListener('change', function(){
       document.getElementById('relClienteAvulsoWrap').style.display = (this.value === '__avulso__') ? 'block' : 'none';
     });
@@ -2185,21 +2447,38 @@
     document.getElementById('btnSalvarRelatorio').onclick = function(){
       var clienteSel = document.getElementById('relClienteSelect').value;
       var clienteAvulso = document.getElementById('relClienteAvulso').value.trim();
-      var texto = document.getElementById('relTexto').value.trim();
       if(!clienteSel){ alert('Selecione um cliente ou escolha "Outro".'); return; }
       if(clienteSel === '__avulso__' && !clienteAvulso){ alert('Digite o nome do cliente.'); return; }
-      if(!texto){ alert('Escreva alguma observação.'); return; }
       var pj = clienteSel !== '__avulso__' ? state.projetos.find(function(p){ return p.id === clienteSel; }) : null;
-      state.relatoriosVisita.push({
+      var registro = {
         id: uid('relv'),
         projetoId: pj ? pj.id : null,
         clienteNome: pj ? pj.nome : clienteAvulso,
-        texto: texto,
-        fotos: fotos,
+        modo: modo,
         autor: nomeProjetistaAtual || 'Gerente',
         data: todayISO(),
         criadoEm: Date.now()
-      });
+      };
+      if(modo === 'livre'){
+        var texto = document.getElementById('relTexto').value.trim();
+        if(!texto){ alert('Escreva alguma observação.'); return; }
+        registro.texto = texto;
+        registro.fotos = fotos;
+      } else {
+        var itensValidos = itens.map(function(it){
+          var elTitulo = document.querySelector('.rel-item-titulo[data-id="'+it.id+'"]');
+          var elTexto = document.querySelector('.rel-item-texto[data-id="'+it.id+'"]');
+          return { id: it.id, titulo: elTitulo ? elTitulo.value.trim() : '', texto: elTexto ? elTexto.value.trim() : '', fotos: it.fotos };
+        }).filter(function(it){ return it.titulo || it.texto || it.fotos.length; });
+        if(itensValidos.length === 0){ alert('Preencha pelo menos um item.'); return; }
+        registro.itens = itensValidos;
+      }
+      var plantasValidas = plantas.map(function(p){
+        var elNome = document.querySelector('.rel-planta-nome[data-id="'+p.id+'"]');
+        return { nome: elNome ? elNome.value.trim() : '', imagem: p.imagem, pins: p.pins };
+      }).filter(function(p){ return p.imagem; });
+      if(plantasValidas.length){ registro.plantas = plantasValidas; }
+      state.relatoriosVisita.push(registro);
       saveRelatoriosVisita();
       fecharDiaModal();
       renderRelatoriosVisitaLista();
@@ -2211,6 +2490,59 @@
     var htmlAnterior = box.innerHTML;
     box.innerHTML = '<div style="text-align:right;margin-bottom:8px;"><button class="btn small secondary" id="btnVoltarRelatorio">‹ Voltar</button></div><img src="'+dataUrl+'" style="max-width:100%; border-radius:var(--r-md); display:block; margin:0 auto;">';
     document.getElementById('btnVoltarRelatorio').onclick = function(){ box.innerHTML = htmlAnterior; };
+  }
+
+  function mostrarPdfRelatorioVisita(registro){
+    var corpoHtml;
+    if(registro.modo === 'itens' && registro.itens){
+      corpoHtml = registro.itens.map(function(it){
+        var fotosHtml = (it.fotos && it.fotos.length) ? '<div class="pdf-ci-fotos">'+it.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
+        return '<div class="pdf-ci-secao"><h2>'+escapeHtml(it.titulo||'Item')+'</h2>'+(it.texto?'<div class="pdf-ci-campo">'+escapeHtml(it.texto)+'</div>':'')+fotosHtml+'</div>';
+      }).join('');
+    } else {
+      var fotosHtmlL = (registro.fotos && registro.fotos.length) ? '<div class="pdf-ci-fotos">'+registro.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
+      corpoHtml = '<div class="pdf-ci-secao">'+(registro.texto?'<div class="pdf-ci-obs">'+escapeHtml(registro.texto)+'</div>':'')+fotosHtmlL+'</div>';
+    }
+    var plantasHtml = (registro.plantas && registro.plantas.length) ? registro.plantas.map(function(p, idxP){
+      var pinsHtml = (p.pins||[]).map(function(pin, idx){
+        return '<div class="planta-pin" style="left:'+pin.x+'%; top:'+pin.y+'%;">'+(idx+1)+'</div>';
+      }).join('');
+      var legendaHtml = (p.pins||[]).map(function(pin, idx){
+        var label = pin.texto;
+        if(!label && pin.refItemId && registro.itens){
+          var itemRef = registro.itens.find(function(it){ return it.id === pin.refItemId; });
+          label = itemRef ? itemRef.titulo : '';
+        }
+        return '<div>'+(idx+1)+'. '+escapeHtml(label||'(sem nome)')+'</div>';
+      }).join('');
+      return '<div class="pdf-ci-secao" style="page-break-inside:avoid;"><h2>Planta — '+escapeHtml(p.nome||('Pavimento '+(idxP+1)))+'</h2>'+
+        '<div class="planta-wrap" style="width:100%; border:none;"><img src="'+p.imagem+'" style="width:100%;">'+pinsHtml+'</div>'+
+        (legendaHtml ? '<div class="planta-legenda">'+legendaHtml+'</div>' : '')+
+      '</div>';
+    }).join('') : '';
+    var html = '<div class="pdf-ci-cabecalho">'+
+      '<img src="'+LOGO_EQUIPER+'" alt="Equiper">'+
+      '<div class="titulos"><h1>Relatório de Visita</h1><p>Cliente: '+escapeHtml(registro.clienteNome)+'</p></div>'+
+      '</div>'+
+      '<div class="pdf-ci-dados">'+
+        '<div><b>Data da visita:</b> '+(registro.data?fmtDate(registro.data):'—')+'</div>'+
+        '<div><b>Responsável:</b> '+escapeHtml(registro.autor||'—')+'</div>'+
+      '</div>'+
+      corpoHtml+
+      plantasHtml+
+      '<div class="pdf-ci-rodape"><span>Gerado em '+new Date().toLocaleString('pt-BR')+'</span><span>Painel de Projetos Equiper</span></div>';
+
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
+    box.innerHTML =
+      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<span style="background:var(--amber-soft);color:var(--ink);border:1px solid var(--amber);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;">💡 Aperte <b>Ctrl+P</b> (ou <b>Cmd+P</b> no Mac) agora e escolha "Salvar como PDF" no destino da impressão.</span>'+
+        '<button class="btn small secondary" id="btnFecharPdfRV">Fechar</button>'+
+      '</div>'+
+      html;
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharPdfRV').onclick = fecharDiaModal;
   }
 
   function renderRelatoriosVisitaLista(){
@@ -2225,16 +2557,54 @@
     }
     lista.innerHTML = itens.map(function(r){
       var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
+      var conteudoHtml;
+      if(r.modo === 'itens' && r.itens){
+        conteudoHtml = r.itens.map(function(it){
+          return '<div style="border-top:1px solid var(--border); padding-top:6px; margin-top:6px; width:100%;">'+
+            (it.titulo ? '<div style="font-weight:600; font-size:12.5px;">'+escapeHtml(it.titulo)+'</div>' : '')+
+            (it.texto ? '<div style="font-size:12.5px; white-space:pre-wrap;">'+escapeHtml(it.texto)+'</div>' : '')+
+            (it.fotos && it.fotos.length ? '<div class="anexos-area">'+it.fotos.map(function(f){ return '<span class="anexo-chip anexo-img"><img src="'+f+'" class="rel-foto-abrir" data-src="'+f+'"></span>'; }).join('')+'</div>' : '')+
+          '</div>';
+        }).join('');
+      } else {
+        conteudoHtml = '<div style="font-size:12.5px; white-space:pre-wrap;">'+escapeHtml(r.texto||'')+'</div>'+
+          (r.fotos && r.fotos.length ? '<div class="anexos-area">'+r.fotos.map(function(f){ return '<span class="anexo-chip anexo-img"><img src="'+f+'" class="rel-foto-abrir" data-src="'+f+'"></span>'; }).join('')+'</div>' : '');
+      }
+      var plantasListHtml = (r.plantas && r.plantas.length) ? r.plantas.map(function(p, idxP){
+        var pinsHtml = (p.pins||[]).map(function(pin, idx){ return '<div class="planta-pin" style="left:'+pin.x+'%; top:'+pin.y+'%;">'+(idx+1)+'</div>'; }).join('');
+        var legendaHtml = (p.pins||[]).map(function(pin, idx){
+          var label = pin.texto;
+          if(!label && pin.refItemId && r.itens){
+            var itemRef = r.itens.find(function(it){ return it.id === pin.refItemId; });
+            label = itemRef ? itemRef.titulo : '';
+          }
+          return '<div>'+(idx+1)+'. '+escapeHtml(label||'(sem nome)')+'</div>';
+        }).join('');
+        return '<div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px; width:100%;">'+
+          '<div style="font-weight:600; font-size:12px; margin-bottom:4px;">📐 '+escapeHtml(p.nome||('Pavimento '+(idxP+1)))+'</div>'+
+          '<div class="planta-wrap" style="max-width:320px;"><img src="'+p.imagem+'">'+pinsHtml+'</div>'+
+          (legendaHtml ? '<div class="planta-legenda">'+legendaHtml+'</div>' : '')+
+        '</div>';
+      }).join('') : '';
       return '<div class="projeto-row" style="flex-direction:column; align-items:flex-start; gap:6px;">'+
         '<div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">'+
           '<b>'+escapeHtml(r.clienteNome)+'</b>'+
           '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(r.autor)+'</span>'+
         '</div>'+
-        '<div style="font-size:12.5px; white-space:pre-wrap;">'+escapeHtml(r.texto)+'</div>'+
-        (r.fotos && r.fotos.length ? '<div class="anexos-area">'+r.fotos.map(function(f){ return '<span class="anexo-chip anexo-img"><img src="'+f+'" class="rel-foto-abrir" data-src="'+f+'"></span>'; }).join('')+'</div>' : '')+
-        (podeExcluir ? '<button type="button" class="btn-remover-relatorio" data-id="'+r.id+'" style="color:var(--red); font-size:11px;">Excluir</button>' : '')+
+        conteudoHtml+
+        plantasListHtml+
+        '<div class="acts">'+
+          '<button type="button" class="btn-pdf-relatorio" data-id="'+r.id+'">📄 PDF</button>'+
+          (podeExcluir ? '<button type="button" class="btn-remover-relatorio" data-id="'+r.id+'" style="color:var(--red); font-size:11px;">Excluir</button>' : '')+
+        '</div>'+
       '</div>';
     }).join('');
+    lista.querySelectorAll('.btn-pdf-relatorio').forEach(function(btn){
+      btn.onclick = function(){
+        var r = state.relatoriosVisita.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        if(r) mostrarPdfRelatorioVisita(r);
+      };
+    });
     lista.querySelectorAll('.rel-foto-abrir').forEach(function(img){
       img.onclick = function(){
         var overlay = document.getElementById('diaModalOverlay');
