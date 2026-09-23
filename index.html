@@ -2216,7 +2216,7 @@
             var elT = document.querySelector('.rel-item-titulo[data-id="'+it.id+'"]');
             var titulo = elT ? elT.value.trim() : '';
             return '<option value="'+it.id+'">'+(idx+1)+'. '+escapeHtml(titulo || '(sem nome)')+'</option>';
-          }).join('');
+          }).join('') + '</select>';
       } else {
         campoHtml = '<input type="text" id="pinLabelInput" placeholder="O que tem aqui?">';
       }
