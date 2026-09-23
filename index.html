@@ -162,11 +162,12 @@
   .anexos-area{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
   .planta-scroll{position:relative; max-height:60vh; overflow:auto; margin-top:6px; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--paper);}
   .planta-wrap{position:relative; display:inline-block; cursor:crosshair;}
-  .planta-wrap img{display:block; user-select:none; -webkit-user-drag:none; max-width:none;}
+  .planta-wrap img{display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none;}
   .planta-svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
   .planta-svg .planta-pin-clique{pointer-events:auto; cursor:pointer;}
   .planta-svg .planta-pin-clique:hover{filter:brightness(1.2);}
-  .planta-zoom-controles{display:flex; gap:6px; align-items:center; margin-top:6px;}
+  .planta-zoom-controles{display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap;}
+  .planta-zoom-controles .planta-hint-instrucao{flex-basis:100%;}
   .planta-pin-popup{position:absolute; z-index:20; background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-sm); box-shadow:var(--shadow-lg); padding:10px; width:220px; font-size:12.5px;}
   .planta-pin-popup select, .planta-pin-popup input{width:100%; margin-bottom:8px;}
   .planta-legenda{margin-top:8px; font-size:11.5px; color:var(--ink-soft);}
@@ -2273,7 +2274,7 @@
           '<button type="button" class="btn small secondary planta-zoom-out" data-id="'+plantaId+'">− Zoom</button>'+
           '<span class="hint">'+Math.round(planta._zoom*100)+'%</span>'+
           '<button type="button" class="btn small secondary planta-zoom-in" data-id="'+plantaId+'">+ Zoom</button>'+
-          '<span class="hint">clique 1: onde você estava · clique 2: pra onde apontou</span>'+
+          '<span class="hint planta-hint-instrucao">clique 1: onde você estava · clique 2: pra onde apontou</span>'+
         '</div>';
       var wrapEl = container.querySelector('.planta-wrap');
       var svgEl = container.querySelector('.planta-svg');
