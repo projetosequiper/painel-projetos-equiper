@@ -370,6 +370,7 @@
   <div id="importarStatus" class="hint" style="margin:-8px 0 12px;"></div>
   <div id="backupsAutoPanel" style="display:none;"></div>
   <div id="avisoEnvioPendente" style="display:none;"></div>
+  <div id="avisoReuniaoHoje" style="display:none;"></div>
 
   <div class="team-row apenas-gerente">
     <span class="label" id="lblEquipe" style="cursor:pointer; user-select:none;">▸ Equipe:</span>
@@ -457,6 +458,14 @@
       </div>
     </div>
     <div id="resumoLista"></div>
+  </section>
+
+  <section id="secRegistrosArt" style="display:none;">
+    <h2><span id="lblRegistrosArt" style="cursor:pointer; user-select:none;">▸ ART</span> <button class="btn small" id="btnNovoRegistroArt">+ Nova ART</button></h2>
+    <div id="registrosArtConteudo" style="display:none; margin-top:10px;">
+      <input type="text" id="registrosArtBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
+      <div id="registrosArtLista"></div>
+    </div>
   </section>
 
   <section id="secConsideracoesIniciais" style="display:none;">
@@ -726,7 +735,7 @@
   var LOCALIDADE_PADRAO = {"ana cristina franke (principal)": "Leblon", "ana cristina frankee (caseiro)": "Jardim Botânico", "bruno medeiros (principal)": "Petrópolis", "bruno medeiros (caseiro)": "Minas Gerais", "jorge nóbrega (as-built principal)": "Lagoa", "jorge nóbrega (as-built caseiro)": "Ipanema", "jorge nóbrega (as-built filhos)": "Barra da Tijuca", "jorge nóbrega (as-built spa)": "Mangaratiba", "jorge nóbrega (as-built lazer)": "Angra dos Reis", "jorge nóbrega (as-built situação)": "Humaitá", "luis henrique fraga": "São Paulo", "mauricio e denise": "São Conrado", "oi - são gonçalo": "Botafogo", "oi - boulevard": "Copacabana", "oi - via brasil": "Búzios", "oi - nova friburgo": "Niterói", "oi - caxias": "Recreio", "paolo dal pino": "Paraty", "patrimóvel - jardim botânico": "Flamengo", "zé elias": "Gávea", "marcelo carpenter 1": "Centro do Rio", "marcelo carpenter (jardim) 1": "Teresópolis", "antônio felipe harboe": "Campo Grande", "paulo barreto (as-built)": "Itanhangá", "leandro jaider": "Barra da Tijuca", "pousada da alcobaça": "Petrópolis", "luiz carlos santos": "Petrópolis", "kleber khayat": "Leblon", "anna lemman": "Leblon", "sergio blank": "Leblon", "eduardo bartolomeu - (valéria bartolomeu) - asbuilt": "Leblon", "roberto carneiro": "Jardim Botânico", "marcello campos": "Petrópolis", "márcio albuquerque": "Gávea", "ivan botelho": "Copacabana", "vânia marinho": "Jardim Botânico", "alexandre chequer": "Barra da Tijuca", "serrano football club": "Petrópolis", "nelson tanure": "Leblon", "cláudio daniel": "Itanhangá", "sítio cachoeirinha capela - (sítio santo antônio)": "Petrópolis", "casa do colono - (sítio santo antônio)": "Petrópolis", "complexo cocheiras - (sítio santo antônio)": "Petrópolis", "marcus vinícius": "Niterói", "willie correio": "Petrópolis", "rogério blanc": "Petrópolis", "carlos eduardo ramos": "Leblon", "patricia de alencar": "Gávea", "evandro mota": "Leblon", "cond. mansões (casa linear)": "Barra", "cond. do ed. guilhermina": "Leblon", "leonardo caserta": "Leblon", "guilhermo reid": "Leblon", "elisabete floris": "Ipanema", "cássia bomeny - alterações": "Jardim Botânico", "josé evandro lopes - (bim) *": "Mangaratiba", "brudani": "Petrópolis", "alessandro horta - (bim)": "Petrópolis", "clovis torres": "Ipanema", "bruno pandolfi": "Ipanema", "paulo fernando oliveira - (bim)": "Petrópolis", "bulus brothers participações s/a": "Lagoa", "mathias guedes (bim)": "Ipanema", "marcelo bahia (bim)": "Leblon", "vista capital": "Jardim Botânico", "eduardo navarro (bim)": "Botafogo", "marcelo orberg (bim)": "Leblon", "wilson scot": "Angra dos Reis", "carlos alves (kadu)": "Leblon", "charles vasconcelos (004942) dwg": "Petrópolis", "estela mariane (004921) bim": "Jardim Botânico", "romulo gonçalves (004640) bim": "Petrópolis", "armando e julia (004690) bim": "Leblon", "andre barreto (004951)": "Petrópolis", "raimundo oliveira (005069)": "Ipanema", "ítalo ignácio (005075)": "Barra da Tijuca", "dimensional (casa cave) (004702)": "Barra da Tijuca", "bruno barreto (005135) bim": "Petrópolis", "luiz eduardo leite (005193) bim": "Petrópolis", "gabriela ezcurra (005022) bim": "Copacabana", "fabio strutzel (005113) bim": "Leblon", "jose carlos ramos (005003) dwg": "Leblon", "danielle giancomazzi membeca (005379) bim": "Petrópolis", "paulo cezar antunes (005202)": "Minas gerais", "casa tua (005279) bim": "Barra da Tijuca", "bruno rapparini (005594) bim": "Ipanema", "rodrigo dias (005510) bim": "Ilha do Governador", "sítio santa rita (005572) bim": "Petrópolis", "fábio camarinha (005276) bim": "Petrópolis", "josé ziltemann anexo (005586) bim": "Petrópolis", "ivan guetta - hig (005365) bim": "Ipanema", "maíra torres": "Petrópolis", "joão henrique moraes (005686) bim": "Petrópolis", "augusto ferreira lima (005621) bim": "Bahia", "marcelo brandão annechino (005402)": "Petrópolis", "humberto mota (005636) bim": "Humaitá", "felipe oliveira (005689) bim": "Petrópolis", "marcelo carpenter (005013) bim": "Jardim Botânico", "leonardo grosso (005724) cad": "Barra da Tijuca", "teresa rossi (005752) bim": "Leblon", "hisc - campo grande (005838) bim": "Campo Grande", "rosemarie klien vega (005110) bim": "Petrópolis", "rodrigo farias vasconcellos bim": "Gávea", "isg - instituto stella goulart (005577) bim": "Petrópolis", "gustavo mendes (008533) bim": "Petrópolis", "lincoln rumenos (005866) bim": "Petrópolis", "joão mansur (005931) bim": "Ipanema", "tania e andré marinho (005868) bim": "Flamengo", "mariana sochaczewski simoes (005881) bim": "Jardim Botânico", "roberto ermel (005926) bim": "Joá", "thamine leta (005733) bim": "Mangaratiba", "vânia marinho (005903) bim": "Leblon", "fiotec": "Manguinhos", "richard klien (006104) bim": "Pequiri", "tatiana e gregor (006094) bim": "Mangaratiba", "cristina mendes (006026) bim": "Leblon", "cláudia levinsohn (006116) bim": "Leblon", "fabio vassel (006144) bim": "São Paulo", "ailson e lúcia (005509) bim": "Petrópolis", "aniuta e christoph (006059) bim": "Barra da Tijuca", "giovani loss (006230) bim": "Lagoa", "hugh lionel strange (005957) bim": "Leblon", "marcio roberto correa (006199) bim": "Angra dos Reis", "gustavo binenbojm (006211) bim": "Leblon", "marcelo salmon (006170) bim": "Petrópolis", "diego ribas (006115) bim": "Barra da Tijuca", "marco antônio (006171) bim": "Petrópolis", "constança e thierry (006049) bim": "Leblon", "paula andrade (006294 e 006308) bim": "Leblon", "eduardo tkacz": "Jardim Botânico", "michel elia (006337) bim": "Flamengo", "hugh lionel strange (006441) bim": "Leblon", "orlando soares (006292) bim": "Angra dos Reis", "charles vasconcelos (006415) dwg": "Petrópolis", "emerson marietto (006239) bim": "Angra dos Reis", "maria jakurski (006514) bim": "Flamengo", "patricia andrade (006499) bim": "Petrópolis", "flavia camanho (006582) bim": "Petrópolis", "ser cidadão (006293) bim": "Santa Cruz", "lior messer (006578) bim": "Areal", "luiza lopes (006567) bim": "Barra da Tijuca", "camila vianna (006650) bim": "Petrópolis", "marcelo carmpenter (006452) bim": "Petrópolis", "ana maria braga (006623) bim": "Petrópolis", "guilli chor (006677) bim": "Petrópolis", "patricia andrade (006802) bim": "Petrópolis", "richard klien vega (006819) - delfim moreira bim": "Leblon", "villa locanda (006700) - bim": "Petrópolis", "walcyr carrasco (006530) - bim": "Leblon", "vania marinho (006829) - bim": "Jardim Botânico", "carlos e isabela peixoto (006584) - bim": "Petrópolis", "vitoria taborda (006874) - bim": "Petrópolis", "patricia ransi (006818) - bim": "São Conrado", "brenda borges (006737) - bim": "Humaitá", "tatiana e gregor (006843) bim": "Mangaratiba", "juliana corrignan (006882) bim": "Petrópolis", "marcelo lajchter (006856) bim": "Lagoa", "marcelo lajchter (006906) bim": "Lagoa", "vânia marinho (006911) bim": "Jardim Botânico", "christian lorentzen (006366) bim": "Paraiba so Sul", "rosemarie klien (006731) bim - revisão itaipava": "Petrópolis", "murilo rosa (005464) - bim": "Paraiba so Sul", "roberto pestana (006672) - bim": "São Paulo", "marcus mathiezen (006853) - bim": "Petrópolis", "ylan adler e jessica kimelblat (006784) - bim": "Leblon", "bruno evora (007057) - bim": "São Paulo", "roberto thompson (006965) - bim": "Paraty", "leonardo yamamoto (006951) - bim": "Leblon", "thomas simon (007116) - bim": "São Conrado", "daniela miranda (006971) - bim": "Ipanema", "heleno palmieri (007030) - bim": "Jardim Botânico", "gisela e hugo neto (007053) - bim": "Petrópolis", "roberto kreimer (007094) - bim": "Leblon", "andrea vaz (007139) - bim": "São Conrado", "alex murad (006454) - bim": "Santa Catarina", "emerson mello (007084) - bim": "Leblon", "emerson mello (007158) - bim": "Leblon", "juliana hammes (006738) - bim": "Petrópolis", "leonardo hammes (006739) - bim": "Petrópolis", "aniuta e christoph - gatil + orquidario (007023) bim": "Barra da Tijuca", "carol e miguel (007135) - bim": "Leblon", "lucia faria (007337) - bim": "São Paulo", "emerson marietto": "Angra dos Reis", "patricia andrade (007423) - bim": "Petrópolis", "thiago fernandes (007097) - bim": "Leblon", "bruna nahoum (007272) - bim": "Leblon", "tomás champalimaud (007411) - bim": "Urca", "hospital santa teresa (007394)": "Petrópolis", "agnaldo marchi (007539) - bim": "Ipanema", "marcelo salmon - barracão (007592) - bim": "Petrópolis", "eduardo tkacz - revisão (007587) - bim": "Jardim Botânico", "renan saad (007620) - bim": "Petrópolis", "camila vianna - barracão (007619) bim": "Petrópolis", "taís araujo": "Flamengo", "otto schubck (007560)": "Petrópolis", "roberto moreno (007557)": "São Paulo", "luis dias (007668)": "São Paulo", "catarina façanha - niterói (007572)": "Niterói", "johan mathias bernuth (007588)": "Paraty", "albino pinho (007664)": "Barra da Tijuca", "eduardo castro (007742)": "Gávea", "axess - casa botafogo (007485)": "Botafogo", "casa amarela (007899)": "Centro", "antônio bindi (007898)": "Gávea", "gula gula": "Leblon", "linox (007821)": "Petrópolis", "bete floris (007985)": "Ipanema", "ricardo lutz (008027)": "Petrópolis", "alfredo faveret (008036)": "Leblon", "cedric wavelet (008029)": "Copacabana", "marco freire (007926)": "Barra da Tijuca", "guilherme pacheco (007983)": "Petrópolis", "pedro ivo (006988)": "Jardim Botânico", "josé carlos queiroz (008050)": "Petrópolis", "cristiano buerguer (006472)": "Santa Catarina", "felipe campos (006762)": "Mangaratiba", "felipe campos (008082)": "Mangaratiba", "flavio zveiter (008195)": "Leblon", "alexandre assed (008238)": "Leblon", "cnc (008229)": "centro", "guareô (008135)": "São Paulo", "clara flaksman (008276)": "Jardim Botânico", "victor hara (008133)": "São Paulo", "katia barros (008196)": "Jardim Botânico", "rosemarie klien (008043)": "Petrópolis", "paulo fernando - anexos (008275)": "Petrópolis", "fabrizzia telles (008291)": "Ipanema", "beatriz paiva (008446)": "Santa Teresa", "jayme (008423)": "Itanhangá", "marco freire (0084": "Barra da Tijuca", "wolff klabim (008428)": "Ipanema", "dorivaldo (007924)": "Barra da Tijuca", "isa graell (008541)": "Ipanema", "leandro monteiro (008508)": "Areal", "mathias bernuth (008601)": "Paraty", "camila vianna (008489)": "Petrópolis", "mayene e eric (008107)": "Itanhangá", "bruno navega (008349)": "Leblon", "leonhard ammon (008484)": "Barra da Tijuca", "matilde pereira (008259)": "Búzios", "bruno coutinho (008249)": "Búzios", "henrique bezerra (008466)": "Ipanema", "mayene e eric (008659)": "Itanhangá", "roberto kaplan (007713)": "Ipanema", "juarez de queiroz (008688)": "Leblon", "bruno gagliasso (008741)": "Itanhangá", "alberto cacciola (008384)": "São Conrado", "josemar - itaquena (008787)": "Bahia", "clarice gravioli (007254)": "Petrópolis", "spe piratininga rua 17 (008738)": "Niterói", "ana maria braga (008455) bim": "São Paulo", "cond. do ed. são conrado (008756)": "São Conrado", "jaime rodrigues (008727)": "Paraíba do Sul", "pierre rodrigues (008879)": "Gavea", "kika e edu (008836)": "São Paulo", "ana flávia e murilo (008828)": "Leblon", "lara mello - itiquira 23 (008913)": "Leblon", "denise e roberto (009004)": "Jardim Botânico", "celi elisabete (009001)": "Leblon", "marcelo marques (008994)": "Petrópolis", "marcelo fortes (008762)": "Leblon", "aline da mata (009010)": "Petrópolis", "sergio santos (009048)": "Teresópolis", "studio velocity (008982)": "Lagoa", "henrique bezerra (009050)": "Ipanema", "pedro marques (009098)": "São Conrado", "cond. linneo de paula machado (008979)": "Centro", "ivan lima (009066)": "Leblon", "marcos pitanga (009129)": "Lagoa", "roberta bittencourt (009012)": "Leblon", "renata e kevin (008875)": "Gavea", "marcelo lopes (009104)": "Leblon", "marcelo simas (009174)": "Copacabana", "rodrigo de moraes (009199)": "Brasília", "paula bulhosa (009261)": "Ipanema", "rogerio e thais (008804)": "Ipanema", "ney marinho (009135)": "Paraiba so Sul", "babyc (009257)": "Lagoa", "pedro vilella (008818)": "Joá", "escritório laer": "Leblon", "rosemarie klien - gazebo (009336)": "Petrópolis", "mauricio cacchione (009256)": "Areal", "marcelo zimet (009421)": "Ipanema", "vincent cassel (009144)": "Ipanema", "instituto yby (009429)": "Maranhão", "fábio villaça (009432)": "Petrópolis", "gabriel martins (009422)": "Jacarepagua", "lays castro (009511)": "Ipanema", "rafael levy (009297)": "Ipanema", "fabrizzia telles (009630)": "Ipanema", "helena e rafael (009258)": "Itaipava", "elkeson (009395)": "Leblon", "victor hara (009620)": "São Paulo", "irene e bruno ambar (009597)": "Leblon", "roberto kreimer - revisão (009419)": "Leblon", "paulo bandeira de mello (009608)": "Botafogo", "leonel pereira pittzer (008881)": "Paraíba do Sul", "lays castro (009764)": "Ipanema", "luiz azevedo / orion (009551)": "Flamengo", "pedro bulcão (009833)": "Petrópolis", "júlio cápua (009776)": "Leblon", "júlio cápua (009777)": "Leblon", "isabel taunay (009859)": "Leblon", "guilherme gonçalves (009829)": "Ipanema", "ana lúcia (009870)": "Ipanema", "antônio - casa concha (009701)": "Angra dos Reis", "eskill peter (009268)": "Copacabana", "andre de botton (009920)": "Ipanema", "victor hara - revisão (009974)": "São Paulo", "carlos lucchetti (009269)": "Leblon", "bruno bareto - revisão (009880)": "Itaipava", "marcelo camargo (010017)": "Bahia", "maria isabel gordilho (010048)": "São Conrado", "willer tomaz (009864)": "Angra dos Reis", "victória empreendimentos (009945)": "Angra dos Reis", "josé castroneves (010090)": "Jardim Botânico", "heloisa bertol (010177)": "Petrópolis", "rodrigo fux (010049)": "Leblon", "brudani (010294)": "Angra dos Reis", "rogério pessoa (010241)": "Ipanema", "tasso araripe (010275)": "Leblon", "cachoeiras de macacu (009980)": "Cachoeiras de Macacu", "paulo jacobsen (010332)": "São Conrado", "eduardo amaro (009735)": "Leblon", "maria josé jakurski (010334)": "Petrópolis", "marcelo trindade (010012)": "Flamengo", "joaquim monteiro (009835)": "Ipanema", "thiago gomes (010508)": "São Conrado", "regina e aluísio (010422)": "Copacabana", "marcos pinheiro (010571)": "Ipanema", "ana maria braga (010438 e 010519)": "São Paulo", "ana flávia e murilo (010596)": "Leblon", "josemo de mello jr (010631)": "Petrópolis", "joana e daian (010564)": "Petrópolis", "lucas montichel (010447)": "Barra da Tijuca", "rosangela de souza (010529)": "Mangaratiba"};
   var MESES_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   var STATUSES = ["A fazer","Em andamento","Concluído"];
-  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [], ferias: [], reunioes: [], senhasProjetistas: {}, usuariosFinanceiro: [], senhasFinanceiroInd: {}, permissoesProjetista: {}, relatoriosVisita: [], consideracoesIniciais: [] };
+  var state = { projetos: [], tarefas: [], equipe: [], tipos: [], linkPainel: '', financeiro: [], ferias: [], reunioes: [], senhasProjetistas: {}, usuariosFinanceiro: [], senhasFinanceiroInd: {}, permissoesProjetista: {}, relatoriosVisita: [], consideracoesIniciais: [], registrosArt: [] };
   var financeiroHashAtual = null;
   var desenhistaHashAtual = null;
   var financeiroDesbloqueado = false;
@@ -1020,6 +1029,7 @@
   async function savePermissoesProjetista(){ try{ await window.storage.set('clm-permissoes-projetista', JSON.stringify(state.permissoesProjetista), true); }catch(e){} }
   async function saveRelatoriosVisita(){ try{ await window.storage.set('clm-relatorios-visita', JSON.stringify(state.relatoriosVisita), true); }catch(e){} }
   async function saveConsideracoesIniciais(){ try{ await window.storage.set('clm-consideracoes-iniciais', JSON.stringify(state.consideracoesIniciais), true); }catch(e){} }
+  async function saveRegistrosArt(){ try{ await window.storage.set('clm-registros-art', JSON.stringify(state.registrosArt), true); }catch(e){} }
 
   var CONSIDERACAO_ESQUEMA = [
     { chave:'esgoto', titulo:'Esgoto Sanitário', campos:[
@@ -1172,6 +1182,7 @@
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-reuniao" data-nome="'+escapeHtml(nome)+'" '+(perm.reunioes?'checked':'')+'> Pode criar reuniões</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-relatorio" data-nome="'+escapeHtml(nome)+'" '+(perm.relatorioVisita?'checked':'')+'> Pode criar relatório de visita</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-consideracao" data-nome="'+escapeHtml(nome)+'" '+(perm.consideracaoInicial?'checked':'')+'> Pode criar consideração inicial</label>'+
+          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-art" data-nome="'+escapeHtml(nome)+'" '+(perm.art?'checked':'')+'> Pode criar ART</label>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1204,6 +1215,14 @@
         var nome = chk.getAttribute('data-nome');
         if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
         state.permissoesProjetista[nome].consideracaoInicial = chk.checked;
+        savePermissoesProjetista();
+      };
+    });
+    lista.querySelectorAll('.chk-perm-art').forEach(function(chk){
+      chk.onchange = function(){
+        var nome = chk.getAttribute('data-nome');
+        if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
+        state.permissoesProjetista[nome].art = chk.checked;
         savePermissoesProjetista();
       };
     });
@@ -1285,7 +1304,7 @@
   function renderProjetosList(){
     var el = document.getElementById('projetosList');
     el.innerHTML = '';
-    var lista = state.projetos.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
+    var lista = state.projetos.filter(function(pj){ return !pj.avulso; }).sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
     if(buscaProjetoTexto){
       var q = buscaProjetoTexto.toLowerCase();
       lista = lista.filter(function(pj){ return pj.nome.toLowerCase().indexOf(q) !== -1; });
@@ -1983,7 +2002,7 @@
         var errEl = document.getElementById('formError');
         if(!cliente){ errEl.textContent = 'Preencha o nome do cliente.'; errEl.style.display='block'; return; }
         if(editing){ editing.nome = cliente; editing.cliente = cliente; }
-        else { state.projetos.unshift({ id: uid('pj'), nome:cliente, cliente:cliente }); }
+        else { state.projetos.unshift({ id: uid('pj'), nome:cliente, cliente:cliente, avulso:true }); }
         saveProjetos(); closeForm(); render();
       };
       return;
@@ -2201,6 +2220,125 @@
           state.relatoriosVisita = state.relatoriosVisita.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
           saveRelatoriosVisita();
           renderRelatoriosVisitaLista();
+        });
+      };
+    });
+  }
+
+  function podeUsarArt(){
+    return !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{}).art;
+  }
+  function atualizarVisibilidadeArt(){
+    var sec = document.getElementById('secRegistrosArt');
+    if(sec) sec.style.display = podeUsarArt() ? 'block' : 'none';
+  }
+
+  async function abrirFormRegistroArt(existenteId){
+    if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
+      try{
+        var rf = await window.storage.get('clm-financeiro', true);
+        if(rf && rf.value){ state.financeiro = JSON.parse(rf.value); }
+      }catch(e){}
+    }
+    var existente = existenteId ? state.registrosArt.find(function(x){ return x.id === existenteId; }) : null;
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    var clientesOrdenados = (state.financeiro||[]).slice().sort(function(a,b){ return a.cliente.localeCompare(b.cliente,'pt-BR',{sensitivity:'base'}); });
+    var opcoesClientes = clientesOrdenados.map(function(f){ return '<option value="'+f.id+'"'+((existente&&existente.clienteId===f.id)?' selected':'')+'>'+escapeHtml(f.cliente)+'</option>'; }).join('');
+
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'+
+        '<h3 style="margin:0;">📐 '+(existente?'Editar':'Nova')+' ART</h3>'+
+        '<button class="btn small secondary" id="btnFecharFormArt">Fechar</button>'+
+      '</div>'+
+      '<div class="form-grid">'+
+        '<div class="full"><label>Cliente</label><select id="artClienteSelect"><option value="">— Selecionar cliente —</option>'+opcoesClientes+'</select></div>'+
+        '<div class="full" id="artDadosPuxados" style="display:none; background:var(--paper); border-radius:var(--r-sm); padding:10px 12px; font-size:12.5px; color:var(--ink-soft);"></div>'+
+        '<div><label>Número da ART</label><input type="text" id="artNumero" value="'+escapeHtml(existente?existente.numeroArt:'')+'" placeholder="Ex: RJ20260012345"></div>'+
+        '<div><label>Data de emissão</label><input type="date" id="artDataEmissao" value="'+((existente&&existente.dataEmissao)||'')+'"></div>'+
+        '<div class="full error" id="artErro" style="display:none"></div>'+
+        '<div class="form-actions"><button class="btn" id="btnSalvarArt">Salvar ART</button></div>'+
+      '</div>';
+    overlay.style.display = 'flex';
+
+    function mostrarDadosCliente(f){
+      var box2 = document.getElementById('artDadosPuxados');
+      if(!f){ box2.style.display = 'none'; return; }
+      box2.style.display = 'block';
+      box2.innerHTML =
+        '<div><b>Número da proposta:</b> '+escapeHtml(f.numeroProposta||'—')+'</div>'+
+        '<div><b>Área:</b> '+(f.areaM2 ? f.areaM2+' m²' : '—')+'</div>'+
+        '<div><b>Pavimentos:</b> '+(f.qtdPavimentos || '—')+'</div>'+
+        '<div><b>Endereço:</b> '+escapeHtml(f.enderecoCompleto||'—')+'</div>'+
+        '<div><b>Valor total fechado:</b> '+formatarMoeda(f.valorTotal||0)+'</div>';
+    }
+    if(existente){
+      var fExistente = (state.financeiro||[]).find(function(f){ return f.id === existente.clienteId; });
+      mostrarDadosCliente(fExistente || existente.snapshot);
+    }
+    document.getElementById('artClienteSelect').addEventListener('change', function(){
+      var f = (state.financeiro||[]).find(function(x){ return x.id === document.getElementById('artClienteSelect').value; });
+      mostrarDadosCliente(f);
+    });
+
+    document.getElementById('btnFecharFormArt').onclick = fecharDiaModal;
+    document.getElementById('btnSalvarArt').onclick = function(){
+      var clienteId = document.getElementById('artClienteSelect').value;
+      var erroEl = document.getElementById('artErro');
+      if(!clienteId){ erroEl.textContent = 'Selecione um cliente.'; erroEl.style.display = 'block'; return; }
+      var f = (state.financeiro||[]).find(function(x){ return x.id === clienteId; });
+      var registro = {
+        id: existente ? existente.id : uid('art'),
+        clienteId: clienteId,
+        clienteNome: f ? f.cliente : (existente ? existente.clienteNome : ''),
+        numeroArt: document.getElementById('artNumero').value.trim(),
+        dataEmissao: document.getElementById('artDataEmissao').value || null,
+        snapshot: f ? { numeroProposta: f.numeroProposta, areaM2: f.areaM2, qtdPavimentos: f.qtdPavimentos, enderecoCompleto: f.enderecoCompleto, valorTotal: f.valorTotal } : (existente ? existente.snapshot : {}),
+        autor: nomeProjetistaAtual || 'Gerente',
+        criadoEm: existente ? existente.criadoEm : Date.now()
+      };
+      if(existente){
+        var idx = state.registrosArt.findIndex(function(x){ return x.id === existente.id; });
+        state.registrosArt[idx] = registro;
+      } else {
+        state.registrosArt.push(registro);
+      }
+      saveRegistrosArt();
+      fecharDiaModal();
+      renderRegistrosArtLista();
+    };
+  }
+
+  function renderRegistrosArtLista(){
+    var lista = document.getElementById('registrosArtLista');
+    if(!lista) return;
+    var buscaEl = document.getElementById('registrosArtBusca');
+    var busca = (buscaEl ? buscaEl.value : '').toLowerCase();
+    var itens = (state.registrosArt||[]).filter(function(r){ return !busca || r.clienteNome.toLowerCase().indexOf(busca) !== -1; })
+      .slice().sort(function(a,b){ return (b.criadoEm||0) - (a.criadoEm||0); });
+    if(itens.length === 0){
+      lista.innerHTML = '<div class="empty-hint">Nenhuma ART registrada ainda.</div>';
+      return;
+    }
+    lista.innerHTML = itens.map(function(r){
+      var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
+      return '<div class="projeto-row" style="padding:8px 10px;">'+
+        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">ART '+escapeHtml(r.numeroArt||'(sem número)')+(r.dataEmissao?' · '+fmtDate(r.dataEmissao):'')+' · '+escapeHtml(r.autor)+'</span></div>'+
+        '<div class="acts">'+
+          '<button type="button" class="btn-editar-art" data-id="'+r.id+'">Ver/editar</button>'+
+          (podeExcluir ? '<button type="button" class="btn-remover-art" data-id="'+r.id+'" style="color:var(--red);">Excluir</button>' : '')+
+        '</div>'+
+      '</div>';
+    }).join('');
+    lista.querySelectorAll('.btn-editar-art').forEach(function(btn){
+      btn.onclick = function(){ abrirFormRegistroArt(btn.getAttribute('data-id')); };
+    });
+    lista.querySelectorAll('.btn-remover-art').forEach(function(btn){
+      btn.onclick = function(){
+        armConfirm(btn, 'Confirmar?', function(){
+          state.registrosArt = state.registrosArt.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
+          saveRegistrosArt();
+          renderRegistrosArtLista();
         });
       };
     });
@@ -2597,6 +2735,30 @@
     return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
   }
 
+  function renderAvisoReuniaoHoje(){
+    var el = document.getElementById('avisoReuniaoHoje');
+    if(!el) return;
+    var hojeStr = todayISO();
+    var podeReuniao = !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{}).reunioes;
+    var doDia = !podeReuniao ? [] : (state.reunioes||[]).filter(function(r){
+      if(r.data !== hojeStr) return false;
+      if(modoDesenhista && r.criador !== nomeProjetistaAtual) return false;
+      return true;
+    }).sort(function(a,b){ return (a.horario||'').localeCompare(b.horario||''); });
+    if(doDia.length === 0){
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    var lista = doDia.map(function(r){ return (r.horario||'') + ' — ' + r.descricao; }).join(' · ');
+    el.style.display = 'block';
+    el.innerHTML =
+      '<div style="background:var(--amber-soft); border:2px solid var(--amber); border-radius:var(--r-md); padding:12px 16px; margin-bottom:14px; color:var(--ink);">'+
+        '<b>📅 '+doDia.length+' reunião(ões) marcada(s) para hoje:</b>'+
+        '<div style="margin-top:4px; font-size:12.5px;">'+escapeHtml(lista)+'</div>'+
+      '</div>';
+  }
+
   function render(){
     renderTeam();
     renderTipos();
@@ -2606,6 +2768,8 @@
     renderRelatoriosVisitaLista();
     atualizarVisibilidadeConsideracoes();
     renderConsideracoesIniciaisLista();
+    atualizarVisibilidadeArt();
+    renderRegistrosArtLista();
     renderProjetosList();
     renderFilters();
     renderBoard();
@@ -2613,6 +2777,7 @@
     renderCalendario();
     renderResumo();
     renderAvisoEnvioPendente();
+    renderAvisoReuniaoHoje();
   }
 
   function classeStatusDisciplina(status){
@@ -2881,10 +3046,12 @@
     var header = document.createElement('div');
     header.className = 'fin-cliente-header';
     var temCobrar = temCobrarBorda;
+    var temArt = !!rec.artEmitidaManual || (state.registrosArt||[]).some(function(a){ return a.clienteId === rec.id; });
     header.innerHTML =
       '<div class="nome">'+(isColapsado?'▸ ':'▾ ')+escapeHtml(rec.cliente)+
         (temCobrar?' <span style="color:#fff;background:var(--red);font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;letter-spacing:0.2px;">💰 COBRAR</span>':'')+
         (temCobrancaEnviada?' <span style="color:var(--ink);background:var(--paper);border:1px solid var(--border);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;">✉ Cobrança enviada</span>':'')+
+        (!temArt?' <span style="color:var(--ink);background:var(--amber-soft);border:1px solid var(--amber);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;">📐 ART pendente</span>':'')+
       '</div>'+
       '<div class="valores">'+
         '<span>Total: '+formatarMoeda(rec.valorTotal||0)+'</span>'+
@@ -2908,6 +3075,18 @@
         renderFinanceiroLista();
       });
       body.appendChild(secQuitado);
+
+      // ART emitida
+      var secArt = document.createElement('div');
+      secArt.className = 'fin-secao';
+      secArt.style.marginTop = '6px';
+      secArt.innerHTML = '<label class="envio-row '+(rec.artEmitidaManual?'enviado':'')+'" style="cursor:pointer;"><input type="checkbox" class="fin-art-check" '+(rec.artEmitidaManual?'checked':'')+'> ✓ ART já emitida (marcar manualmente para clientes antigos)</label>';
+      secArt.querySelector('.fin-art-check').addEventListener('change', function(e){
+        rec.artEmitidaManual = e.target.checked;
+        saveFinanceiro();
+        renderFinanceiroLista();
+      });
+      body.appendChild(secArt);
 
       // Parcelas
       var secParcelas = document.createElement('div');
@@ -3528,6 +3707,10 @@
       '<div class="panel"><h3>Novo cliente fechado</h3>'+
       '<div class="form-grid">'+
         '<div class="full"><label>Cliente</label><input type="text" id="fnCliente" placeholder="Nome do cliente"></div>'+
+        '<div><label>Número da proposta</label><input type="text" id="fnNumeroProposta" placeholder="Ex: 010571"></div>'+
+        '<div><label>Área (m²)</label><input type="number" step="0.01" id="fnAreaM2" placeholder="0"></div>'+
+        '<div><label>Quantidade de pavimentos</label><input type="number" step="1" id="fnQtdPavimentos" placeholder="0"></div>'+
+        '<div class="full"><label>Endereço completo</label><input type="text" id="fnEnderecoCompleto" placeholder="Rua, número, bairro, cidade"></div>'+
         '<div>'+
           '<label>Desconto</label>'+
           '<div style="display:flex; gap:4px; margin-bottom:4px;">'+
@@ -3709,7 +3892,11 @@
       });
       var novo = {
         id: 'fin_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
-        cliente: nome,
+        cliente: nome + (document.getElementById('fnNumeroProposta').value.trim() ? ' (' + document.getElementById('fnNumeroProposta').value.trim() + ')' : ''),
+        numeroProposta: document.getElementById('fnNumeroProposta').value.trim(),
+        areaM2: parseFloat(document.getElementById('fnAreaM2').value) || null,
+        qtdPavimentos: parseInt(document.getElementById('fnQtdPavimentos').value, 10) || null,
+        enderecoCompleto: document.getElementById('fnEnderecoCompleto').value.trim(),
         valorTotal: 0,
         totalRecebido: null,
         descontoTipo: fnDescTipo,
@@ -4484,6 +4671,15 @@
   document.getElementById('resPrev').onclick = function(){ resMes--; if(resMes<0){resMes=11; resAno--;} renderResumo(); };
   document.getElementById('resNext').onclick = function(){ resMes++; if(resMes>11){resMes=0; resAno++;} renderResumo(); };
   document.getElementById('resHoje').onclick = function(){ var h = new Date(); resAno = h.getFullYear(); resMes = h.getMonth(); renderResumo(); };
+  document.getElementById('lblRegistrosArt').onclick = function(){
+    var content = document.getElementById('registrosArtConteudo');
+    var visible = content.style.display !== 'none';
+    content.style.display = visible ? 'none' : 'block';
+    document.getElementById('lblRegistrosArt').textContent = (visible ? '▸ ' : '▾ ') + 'ART';
+    if(!visible) renderRegistrosArtLista();
+  };
+  document.getElementById('btnNovoRegistroArt').onclick = function(){ abrirFormRegistroArt(); };
+  document.getElementById('registrosArtBusca').addEventListener('input', function(){ renderRegistrosArtLista(); });
   document.getElementById('lblConsideracoesIniciais').onclick = function(){
     var content = document.getElementById('consideracoesIniciaisConteudo');
     var visible = content.style.display !== 'none';
@@ -4679,8 +4875,6 @@
   var nomeFinanceiroAtual = null;
   function mostrarGateFinanceiroIndividual(containerId, aoVoltar){
     var gate = document.getElementById(containerId);
-    var passo = 'nome';
-    var nomeSelecionado = null;
     var linkVoltar = aoVoltar ? '<p style="margin-top:16px;"><a href="#" class="fn-voltar-raiz" style="font-size:12.5px; color:var(--ink-soft); text-decoration:none;">‹ voltar</a></p>' : '';
 
     function ligarVoltarRaiz(){
@@ -4688,105 +4882,102 @@
       if(el) el.onclick = function(e){ e.preventDefault(); aoVoltar(); };
     }
 
-    function montar(){
-      if(passo === 'nome'){
-        if((state.usuariosFinanceiro||[]).length === 0){
-          gate.innerHTML =
-            '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-              '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-              '<h2>Acesso financeiro</h2>'+
-              '<p>Nenhum usuário foi cadastrado ainda. Digite seu nome pra criar o primeiro acesso:</p>'+
-              '<input type="text" id="fnPrimeiroNome" placeholder="Seu nome" autofocus>'+
-              '<button class="btn" id="fnBtnPrimeiroNome" style="width:100%;">Continuar</button>'+
-              linkVoltar+
-            '</div>';
-          ligarVoltarRaiz();
-          document.getElementById('fnBtnPrimeiroNome').onclick = function(){
-            var nome = document.getElementById('fnPrimeiroNome').value.trim();
-            if(!nome) return;
-            state.usuariosFinanceiro.push(nome);
-            saveUsuariosFinanceiro();
-            nomeSelecionado = nome;
-            passo = 'criarSenha';
-            montar();
-          };
-          return;
-        }
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Quem é você?</h2>'+
-            '<select id="fnSelectNome" style="width:100%; font-size:15px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-md); margin:14px 0; background:var(--paper); color:var(--ink);">'+
-              '<option value="" disabled selected>Escolha seu nome…</option>'+
-              state.usuariosFinanceiro.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
-            '</select>'+
-            '<button class="btn" id="fnBtnContinuar" style="width:100%;">Continuar</button>'+
-            linkVoltar+
-          '</div>';
-        ligarVoltarRaiz();
-        document.getElementById('fnBtnContinuar').onclick = function(){
-          var nome = document.getElementById('fnSelectNome').value;
-          if(!nome) return;
-          nomeSelecionado = nome;
-          passo = state.senhasFinanceiroInd[nomeSelecionado] ? 'senha' : 'criarSenha';
-          montar();
-        };
-      } else if(passo === 'criarSenha'){
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
-            '<p>É o seu primeiro acesso. Crie sua senha:</p>'+
-            '<input type="password" id="fnNovaSenha" placeholder="Nova senha">'+
-            '<input type="password" id="fnNovaSenhaConfirma" placeholder="Confirme a senha">'+
-            '<button class="btn" id="fnBtnCriarSenha">Criar senha e entrar</button>'+
-            '<div class="gate-erro" id="fnGateErro2"></div>'+
-            '<p style="margin-top:10px;"><a href="#" id="fnVoltarNome" style="font-size:12px; color:var(--ink-soft);">‹ voltar</a></p>'+
-          '</div>';
-        document.getElementById('fnVoltarNome').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
-        document.getElementById('fnBtnCriarSenha').onclick = async function(){
-          var s1 = document.getElementById('fnNovaSenha').value;
-          var s2 = document.getElementById('fnNovaSenhaConfirma').value;
-          if(s1.length < 4){ document.getElementById('fnGateErro2').textContent = 'A senha precisa ter 4+ caracteres.'; return; }
-          if(s1 !== s2){ document.getElementById('fnGateErro2').textContent = 'As senhas não coincidem.'; return; }
-          var hash = await hashTexto(s1);
-          state.senhasFinanceiroInd[nomeSelecionado] = hash;
-          await saveSenhasFinanceiroInd();
-          nomeFinanceiroAtual = nomeSelecionado;
-          entrarEmFinanceiro();
-        };
-      } else if(passo === 'senha'){
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
-            '<input type="password" id="fnSenha" placeholder="Sua senha" autofocus>'+
-            '<button class="btn" id="fnBtnEntrar">Entrar</button>'+
-            '<div class="gate-erro" id="fnGateErro2"></div>'+
-            '<p style="margin-top:10px;"><a href="#" id="fnVoltarNome2" style="font-size:12px; color:var(--ink-soft);">‹ voltar</a></p>'+
-          '</div>';
-        document.getElementById('fnVoltarNome2').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
-        var tentar = async function(){
-          var valor = document.getElementById('fnSenha').value;
-          var hash = await hashTexto(valor);
-          if(hash === state.senhasFinanceiroInd[nomeSelecionado]){
-            nomeFinanceiroAtual = nomeSelecionado;
-            entrarEmFinanceiro();
-          } else {
-            document.getElementById('fnGateErro2').textContent = 'Senha incorreta.';
-          }
-        };
-        document.getElementById('fnBtnEntrar').onclick = tentar;
-        document.getElementById('fnSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
+    if((state.usuariosFinanceiro||[]).length === 0){
+      gate.innerHTML =
+        '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+          '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+          '<h2>Acesso financeiro</h2>'+
+          '<p>Nenhum usuário foi cadastrado ainda. Digite seu nome e crie sua senha:</p>'+
+          '<input type="text" id="fnPrimeiroNome" placeholder="Seu nome">'+
+          '<input type="password" id="fnPrimeiraSenha" placeholder="Crie uma senha">'+
+          '<input type="password" id="fnPrimeiraSenhaConfirma" placeholder="Confirme a senha">'+
+          '<button class="btn" id="fnBtnPrimeiroNome" style="width:100%;">Criar acesso e entrar</button>'+
+          '<div class="gate-erro" id="fnGateErro2"></div>'+
+          linkVoltar+
+        '</div>';
+      ligarVoltarRaiz();
+      document.getElementById('fnBtnPrimeiroNome').onclick = async function(){
+        var nome = document.getElementById('fnPrimeiroNome').value.trim();
+        var s1 = document.getElementById('fnPrimeiraSenha').value;
+        var s2 = document.getElementById('fnPrimeiraSenhaConfirma').value;
+        var erroEl = document.getElementById('fnGateErro2');
+        if(!nome){ erroEl.textContent = 'Digite seu nome.'; return; }
+        if(s1.length < 4){ erroEl.textContent = 'A senha precisa ter 4+ caracteres.'; return; }
+        if(s1 !== s2){ erroEl.textContent = 'As senhas não coincidem.'; return; }
+        state.usuariosFinanceiro.push(nome);
+        saveUsuariosFinanceiro();
+        var hash = await hashTexto(s1);
+        state.senhasFinanceiroInd[nome] = hash;
+        await saveSenhasFinanceiroInd();
+        nomeFinanceiroAtual = nome;
+        entrarEmFinanceiro();
+      };
+      return;
+    }
+
+    gate.innerHTML =
+      '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+        '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+        '<h2>Acesso financeiro</h2>'+
+        '<select id="fnSelectNome" style="width:100%; font-size:15px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:10px; background:var(--paper); color:var(--ink);">'+
+          '<option value="" disabled selected>Escolha seu nome…</option>'+
+          state.usuariosFinanceiro.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
+        '</select>'+
+        '<input type="password" id="fnSenha" placeholder="Sua senha">'+
+        '<input type="password" id="fnSenhaConfirma" placeholder="Confirme a senha" style="display:none;">'+
+        '<div class="hint" id="fnDica" style="margin:-6px 0 10px; min-height:14px;"></div>'+
+        '<button class="btn" id="fnBtnEntrar" style="width:100%;">Entrar</button>'+
+        '<div class="gate-erro" id="fnGateErro2"></div>'+
+        linkVoltar+
+      '</div>';
+    ligarVoltarRaiz();
+
+    function atualizarDica(){
+      var nome = document.getElementById('fnSelectNome').value;
+      var confirmaEl = document.getElementById('fnSenhaConfirma');
+      var dicaEl = document.getElementById('fnDica');
+      if(nome && !state.senhasFinanceiroInd[nome]){
+        confirmaEl.style.display = 'block';
+        dicaEl.textContent = 'Primeiro acesso — essa será sua senha a partir de agora.';
+      } else {
+        confirmaEl.style.display = 'none';
+        dicaEl.textContent = '';
       }
     }
-    montar();
+    document.getElementById('fnSelectNome').addEventListener('change', atualizarDica);
+
+    var tentar = async function(){
+      var nome = document.getElementById('fnSelectNome').value;
+      var senha = document.getElementById('fnSenha').value;
+      var erroEl = document.getElementById('fnGateErro2');
+      if(!nome){ erroEl.textContent = 'Escolha seu nome.'; return; }
+      if(!senha){ erroEl.textContent = 'Digite a senha.'; return; }
+      if(!state.senhasFinanceiroInd[nome]){
+        var senhaConfirma = document.getElementById('fnSenhaConfirma').value;
+        if(senha.length < 4){ erroEl.textContent = 'A senha precisa ter 4+ caracteres.'; return; }
+        if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
+        var hashNovo = await hashTexto(senha);
+        state.senhasFinanceiroInd[nome] = hashNovo;
+        await saveSenhasFinanceiroInd();
+        nomeFinanceiroAtual = nome;
+        entrarEmFinanceiro();
+      } else {
+        var hash = await hashTexto(senha);
+        if(hash === state.senhasFinanceiroInd[nome]){
+          nomeFinanceiroAtual = nome;
+          entrarEmFinanceiro();
+        } else {
+          erroEl.textContent = 'Senha incorreta.';
+        }
+      }
+    };
+    document.getElementById('fnBtnEntrar').onclick = tentar;
+    document.getElementById('fnSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
+    document.getElementById('fnSenhaConfirma').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
   }
 
   function mostrarGateProjetistaIndividual(containerId, aoVoltar){
     var gate = document.getElementById(containerId);
-    var passo = 'nome';
-    var nomeSelecionado = null;
     var linkVoltar = aoVoltar ? '<p style="margin-top:16px;"><a href="#" class="pj-voltar-raiz" style="font-size:12.5px; color:var(--ink-soft); text-decoration:none;">‹ voltar</a></p>' : '';
 
     function ligarVoltarRaiz(){
@@ -4794,88 +4985,77 @@
       if(el) el.onclick = function(e){ e.preventDefault(); aoVoltar(); };
     }
 
-    function montar(){
-      if(passo === 'nome'){
-        if((state.equipe||[]).length === 0){
-          gate.innerHTML =
-            '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-              '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-              '<h2>Acesso projetista</h2>'+
-              '<p>Nenhum projetista foi cadastrado ainda. Peça ao gerente para adicionar seu nome em "Equipe" (dentro de Projetos).</p>'+
-              linkVoltar+
-            '</div>';
-          ligarVoltarRaiz();
-          return;
-        }
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Quem é você?</h2>'+
-            '<select id="pjSelectNome" style="width:100%; font-size:15px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-md); margin:14px 0; background:var(--paper); color:var(--ink);">'+
-              '<option value="" disabled selected>Escolha seu nome…</option>'+
-              state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
-            '</select>'+
-            '<button class="btn" id="pjBtnContinuar" style="width:100%;">Continuar</button>'+
-            linkVoltar+
-          '</div>';
-        ligarVoltarRaiz();
-        document.getElementById('pjBtnContinuar').onclick = function(){
-          var nome = document.getElementById('pjSelectNome').value;
-          if(!nome) return;
-          nomeSelecionado = nome;
-          passo = state.senhasProjetistas[nomeSelecionado] ? 'senha' : 'criarSenha';
-          montar();
-        };
-      } else if(passo === 'criarSenha'){
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
-            '<p>É o seu primeiro acesso. Crie sua senha:</p>'+
-            '<input type="password" id="pjNovaSenha" placeholder="Nova senha">'+
-            '<input type="password" id="pjNovaSenhaConfirma" placeholder="Confirme a senha">'+
-            '<button class="btn" id="pjBtnCriarSenha">Criar senha e entrar</button>'+
-            '<div class="gate-erro" id="pjGateErro"></div>'+
-            '<p style="margin-top:10px;"><a href="#" id="pjVoltarNome" style="font-size:12px;">‹ voltar</a></p>'+
-          '</div>';
-        document.getElementById('pjVoltarNome').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
-        document.getElementById('pjBtnCriarSenha').onclick = async function(){
-          var s1 = document.getElementById('pjNovaSenha').value;
-          var s2 = document.getElementById('pjNovaSenhaConfirma').value;
-          if(s1.length < 4){ document.getElementById('pjGateErro').textContent = 'A senha precisa ter 4+ caracteres.'; return; }
-          if(s1 !== s2){ document.getElementById('pjGateErro').textContent = 'As senhas não coincidem.'; return; }
-          var hash = await hashTexto(s1);
-          state.senhasProjetistas[nomeSelecionado] = hash;
-          await saveSenhasProjetistas();
-          nomeProjetistaAtual = nomeSelecionado;
-          entrarEmProjetos(true);
-        };
-      } else if(passo === 'senha'){
-        gate.innerHTML =
-          '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
-            '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
-            '<h2>Olá, '+escapeHtml(nomeSelecionado)+'!</h2>'+
-            '<input type="password" id="pjSenha" placeholder="Sua senha" autofocus>'+
-            '<button class="btn" id="pjBtnEntrar">Entrar</button>'+
-            '<div class="gate-erro" id="pjGateErro"></div>'+
-            '<p style="margin-top:10px;"><a href="#" id="pjVoltarNome2" style="font-size:12px;">‹ voltar</a></p>'+
-          '</div>';
-        document.getElementById('pjVoltarNome2').onclick = function(e){ e.preventDefault(); passo = 'nome'; montar(); };
-        var tentar = async function(){
-          var valor = document.getElementById('pjSenha').value;
-          var hash = await hashTexto(valor);
-          if(hash === state.senhasProjetistas[nomeSelecionado]){
-            nomeProjetistaAtual = nomeSelecionado;
-            entrarEmProjetos(true);
-          } else {
-            document.getElementById('pjGateErro').textContent = 'Senha incorreta.';
-          }
-        };
-        document.getElementById('pjBtnEntrar').onclick = tentar;
-        document.getElementById('pjSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
+    if((state.equipe||[]).length === 0){
+      gate.innerHTML =
+        '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+          '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+          '<h2>Acesso projetista</h2>'+
+          '<p>Nenhum projetista foi cadastrado ainda. Peça ao gerente para adicionar seu nome em "Equipe" (dentro de Projetos).</p>'+
+          linkVoltar+
+        '</div>';
+      ligarVoltarRaiz();
+      return;
+    }
+
+    gate.innerHTML =
+      '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+        '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo">'+
+        '<h2>Acesso projetista</h2>'+
+        '<select id="pjSelectNome" style="width:100%; font-size:15px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:10px; background:var(--paper); color:var(--ink);">'+
+          '<option value="" disabled selected>Escolha seu nome…</option>'+
+          state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
+        '</select>'+
+        '<input type="password" id="pjSenha" placeholder="Sua senha">'+
+        '<input type="password" id="pjSenhaConfirma" placeholder="Confirme a senha" style="display:none;">'+
+        '<div class="hint" id="pjDica" style="margin:-6px 0 10px; min-height:14px;"></div>'+
+        '<button class="btn" id="pjBtnEntrar" style="width:100%;">Entrar</button>'+
+        '<div class="gate-erro" id="pjGateErro"></div>'+
+        linkVoltar+
+      '</div>';
+    ligarVoltarRaiz();
+
+    function atualizarDica(){
+      var nome = document.getElementById('pjSelectNome').value;
+      var confirmaEl = document.getElementById('pjSenhaConfirma');
+      var dicaEl = document.getElementById('pjDica');
+      if(nome && !state.senhasProjetistas[nome]){
+        confirmaEl.style.display = 'block';
+        dicaEl.textContent = 'Primeiro acesso — essa será sua senha a partir de agora.';
+      } else {
+        confirmaEl.style.display = 'none';
+        dicaEl.textContent = '';
       }
     }
-    montar();
+    document.getElementById('pjSelectNome').addEventListener('change', atualizarDica);
+
+    var tentar = async function(){
+      var nome = document.getElementById('pjSelectNome').value;
+      var senha = document.getElementById('pjSenha').value;
+      var erroEl = document.getElementById('pjGateErro');
+      if(!nome){ erroEl.textContent = 'Escolha seu nome.'; return; }
+      if(!senha){ erroEl.textContent = 'Digite a senha.'; return; }
+      if(!state.senhasProjetistas[nome]){
+        var senhaConfirma = document.getElementById('pjSenhaConfirma').value;
+        if(senha.length < 4){ erroEl.textContent = 'A senha precisa ter 4+ caracteres.'; return; }
+        if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
+        var hashNovo = await hashTexto(senha);
+        state.senhasProjetistas[nome] = hashNovo;
+        await saveSenhasProjetistas();
+        nomeProjetistaAtual = nome;
+        entrarEmProjetos(true);
+      } else {
+        var hash = await hashTexto(senha);
+        if(hash === state.senhasProjetistas[nome]){
+          nomeProjetistaAtual = nome;
+          entrarEmProjetos(true);
+        } else {
+          erroEl.textContent = 'Senha incorreta.';
+        }
+      }
+    };
+    document.getElementById('pjBtnEntrar').onclick = tentar;
+    document.getElementById('pjSenha').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
+    document.getElementById('pjSenhaConfirma').addEventListener('keydown', function(e){ if(e.key === 'Enter') tentar(); });
   }
 
   function bloquearProjetos(){
@@ -5065,6 +5245,10 @@
     try{
       var rCi = await window.storage.get('clm-consideracoes-iniciais', true);
       if(rCi && rCi.value){ state.consideracoesIniciais = JSON.parse(rCi.value); }
+    }catch(e){}
+    try{
+      var rArt = await window.storage.get('clm-registros-art', true);
+      if(rArt && rArt.value){ state.registrosArt = JSON.parse(rArt.value); }
     }catch(e){}
     try{
       var rEq = await window.storage.get('clm-equipe', true);
