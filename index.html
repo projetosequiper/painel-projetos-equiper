@@ -211,6 +211,10 @@
     .sem-impressao{ display:none !important; }
   }
   .dia-modal-box{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-lg); max-width:440px; width:100%; max-height:80vh; overflow:auto; padding:22px; box-shadow:var(--shadow-lg); animation:popIn .22s cubic-bezier(.2,.9,.3,1);}
+  .dia-modal-box.dia-modal-grande{max-width:900px; max-height:92vh;}
+  @media (max-width:900px){
+    .dia-modal-box.dia-modal-grande{max-width:96vw;}
+  }
   @media (max-width:640px){
     .dia-modal-overlay{align-items:flex-end; padding:0;}
     .dia-modal-box{max-width:100%; border-radius:22px 22px 0 0; max-height:88vh; animation:sheetUp .25s cubic-bezier(.2,.9,.3,1); padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
@@ -258,6 +262,29 @@
   .pdf-tabela th{text-align:left; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; font-size:9.5px; color:#5B5F55; padding:5px 8px; border-bottom:1px solid #D8D3C4;}
   .pdf-tabela td{padding:5px 8px; border-bottom:1px solid #EDEBE3;}
   .pdf-rodape{margin-top:24px; font-size:10px; color:#8A8778; font-family:'IBM Plex Mono',monospace; border-top:1px solid #D8D3C4; padding-top:8px;}
+
+  .pdf-ci-cabecalho{display:flex; align-items:center; gap:16px; border-bottom:4px solid #C8202B; padding-bottom:16px; margin-bottom:20px;}
+  .pdf-ci-cabecalho img{height:56px; width:auto;}
+  .pdf-ci-cabecalho .titulos h1{margin:0; font-family:'Inter',sans-serif; font-weight:800; font-size:20px; color:#1C1C1E;}
+  .pdf-ci-cabecalho .titulos p{margin:3px 0 0; font-size:12px; color:#6E6E73; font-family:'Inter',sans-serif;}
+  .pdf-ci-dados{display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; background:#F5F5F7; border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:12.5px;}
+  .pdf-ci-dados .full{grid-column:1 / -1;}
+  .pdf-ci-dados b{color:#1C1C1E;}
+  .pdf-ci-secao{margin-bottom:18px; page-break-inside:avoid;}
+  .pdf-ci-secao h2{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; padding:8px 14px; margin:0 0 10px; border-radius:6px;}
+  .pdf-ci-campo{font-size:12px; padding:3px 0; border-bottom:1px solid #EAEAEA;}
+  .pdf-ci-campo b{color:#1C1C1E; margin-right:6px;}
+  .pdf-ci-check-lista{font-size:12px; margin:4px 0 8px;}
+  .pdf-ci-check-lista div{padding:2px 0;}
+  .pdf-ci-tabela{width:100%; border-collapse:collapse; font-size:11px; margin:6px 0 10px;}
+  .pdf-ci-tabela th{text-align:center; font-family:'Inter',sans-serif; font-size:9.5px; text-transform:uppercase; color:#6E6E73; padding:4px 6px; border-bottom:2px solid #1C1C1E;}
+  .pdf-ci-tabela th:first-child{text-align:left;}
+  .pdf-ci-tabela td{text-align:center; padding:4px 6px; border-bottom:1px solid #EAEAEA;}
+  .pdf-ci-tabela td:first-child{text-align:left;}
+  .pdf-ci-obs{font-size:12px; background:#FBEAEB; border-left:3px solid #C8202B; padding:6px 10px; margin-top:6px; white-space:pre-wrap;}
+  .pdf-ci-fotos{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+  .pdf-ci-fotos img{width:140px; height:140px; object-fit:cover; border-radius:6px; border:1px solid #E5E5EA;}
+  .pdf-ci-rodape{margin-top:26px; font-size:10px; color:#8A8778; font-family:'Inter',sans-serif; border-top:1px solid #E5E5EA; padding-top:8px; display:flex; justify-content:space-between;}
   .lightbox-overlay img{max-width:100%; max-height:85vh; border-radius:4px;}
 
   .nav-tabs{display:flex; gap:4px; margin-bottom:20px; background:var(--sheet); border-radius:var(--r-md); padding:5px; box-shadow:var(--shadow-sm); border:1px solid var(--border);}
@@ -1033,77 +1060,77 @@
 
   var CONSIDERACAO_ESQUEMA = [
     { chave:'esgoto', titulo:'Esgoto Sanitário', campos:[
-      {chave:'tipoTratamento', label:'Tipo de Tratamento', tipo:'texto'},
-      {chave:'lancamentoEfluente', label:'Lançamento Efluente', tipo:'texto'},
-      {chave:'tipoVaso', label:'Tipo de vaso sanitário', tipo:'texto', def:'convencional'},
-      {chave:'tipoRalo', label:'Tipo de ralo de banho', tipo:'texto', def:'grelha fina (oculto)'},
+      {chave:'tipoTratamento', label:'Tipo de Tratamento', tipo:'select', opcoes:['fossa-filtro','biodigestor','sem tratamento','prédio existente']},
+      {chave:'lancamentoEfluente', label:'Lançamento Efluente', tipo:'select', opcoes:['sumidouro','vala de infiltração','rede pública','outros...']},
+      {chave:'tipoVaso', label:'Tipo de vaso sanitário', tipo:'select', opcoes:['convencional','suspenso','saída horizontal','outros...']},
+      {chave:'tipoRalo', label:'Tipo de ralo de banho', tipo:'select', opcoes:['sifonado 15','grelha larga','grelha fina (oculto)','grelha fina','outros...']},
       {chave:'restricaoCaixas', label:'Restrição locais das caixas de inspeção', tipo:'texto', def:'não pertinente'},
       {chave:'equipamentos', tipo:'tabelaCheck', titulo:'Equipamentos que existirão', linhas:['Área de serviço','Cozinha','Cozinha Gourmet'], colunas:['MLR','MSR','MG','MLL','Triturador','Ralos de piso']}
     ]},
     { chave:'pluviais', titulo:'Águas Pluviais', campos:[
-      {chave:'itens', tipo:'grupoCheck', opcoes:['ralo sótão','extravasor em calhas embutidas','extravasor nos pátios','reaproveitamento e acumulação de água para jardim','restrição quanto à localização das caixas de areia']},
+      {chave:'itens', tipo:'grupoCheck', opcoes:['ralo sótão','extravasor em calhas embutidas','extravasor nos pátios','reaproveitamento e acumulação de água para jardim','restrição quanto á localização das caixas de areia']},
       {chave:'outros', label:'Outros', tipo:'texto'}
     ]},
     { chave:'hidraulica', titulo:'Hidráulica', campos:[
-      {chave:'padraoConforto', label:'Padrão conforto', tipo:'texto'},
-      {chave:'filtroEntrada', label:'Filtro de entrada', tipo:'texto'},
-      {chave:'tipoDescargas', label:'Tipo de Descargas', tipo:'texto'},
+      {chave:'padraoConforto', label:'Padrão conforto', tipo:'select', opcoes:['máximo possível','Alto','médio','baixo']},
+      {chave:'filtroEntrada', label:'Filtro de entrada', tipo:'select', opcoes:['Não terá filtro de entrada','Filtro pequeno (Big 10")','Filtro Grande (Big 20")']},
+      {chave:'tipoDescargas', label:'Tipo de Descargas', tipo:'select', opcoes:['Válvula de descarga','Caixa acoplada','Caixa descarga embutida','mais de um tipo, ver arquitetura','Outra, especificar:']},
       {tipo:'titulo', label:'Misturadores'},
-      {chave:'mistBanheiroMaster', label:'Banheiro Master', tipo:'texto', def:'separados AQ e AF'},
-      {chave:'mistBanheirosSociais', label:'Banheiros Sociais', tipo:'texto', def:'Separados AQ e AF'},
-      {chave:'mistBanheiroServico', label:'Banheiro de serviço', tipo:'texto', def:'Separados AQ e AF'},
-      {chave:'mistCozinha', label:'Cozinha', tipo:'texto', def:'Monocomando'},
+      {chave:'mistBanheiroMaster', label:'Banheiro Master', tipo:'select', opcoes:['separados AQ e AF','Monocomando']},
+      {chave:'mistBanheirosSociais', label:'Banheiros Sociais', tipo:'select', opcoes:['Separados AQ e AF','Monocomando']},
+      {chave:'mistBanheiroServico', label:'Banheiro de serviço', tipo:'select', opcoes:['Separados AQ e AF','Monocomando']},
+      {chave:'mistCozinha', label:'Cozinha', tipo:'select', opcoes:['Separados AQ e AF','Monocomando']},
       {tipo:'titulo', label:'Alimentação de água fria'},
-      {chave:'aguaFria', tipo:'grupoCheck', opcoes:['terá cisterna inferior','terá caixa d’água superior da casa marcada em arq.','terá pressurização']},
+      {chave:'aguaFria', tipo:'grupoCheck', opcoes:['terá cisterna inferior','terá caixa d´água superior do prédio','terá pressurização']},
       {chave:'aguaFriaOutros', label:'Outros', tipo:'texto'},
       {chave:'localizacaoCisterna', label:'Localização da cisterna, caixa e pressurização se houver', tipo:'texto'},
       {tipo:'titulo', label:'Aquecimento de água'},
-      {chave:'aqSuiteMaster', label:'Suíte Master', tipo:'texto'},
-      {chave:'aqBanheirosSociais', label:'Banheiros sociais', tipo:'texto', def:'idem'},
-      {chave:'aqLavabo', label:'Lavabo', tipo:'texto', def:'idem'},
-      {chave:'aqCozinha', label:'Cozinha', tipo:'texto', def:'idem'},
-      {chave:'aqAreaServico', label:'Área de serviço', tipo:'texto', def:'idem'},
-      {chave:'aqBanheiroServico', label:'Banheiro de serviço', tipo:'texto', def:'idem'},
+      {chave:'aqSuiteMaster', label:'Suíte Master', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','gás cascata condensing','gás direto condensing']},
+      {chave:'aqBanheirosSociais', label:'Banheiros sociais', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','idem'], def:'idem'},
+      {chave:'aqLavabo', label:'Lavabo', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','idem'], def:'idem'},
+      {chave:'aqCozinha', label:'Cozinha', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','idem'], def:'idem'},
+      {chave:'aqAreaServico', label:'Área de serviço', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','idem'], def:'idem'},
+      {chave:'aqBanheiroServico', label:'Banheiro de serviço', tipo:'select', opcoes:['Solar','Solar conjugado gás','gás direto','gás cascata','chuveiro elétrico','idem'], def:'idem'},
       {chave:'localizacaoAquecedoresGas', label:'Localização dos aquecedores à gás se houver', tipo:'texto'},
-      {chave:'torneirasJardim', label:'Torneiras de jardim', tipo:'texto', def:'ver arquitetura'},
+      {chave:'localizacaoAreaTecnica', label:'Localização da área técnica (demais equipamentos de aquecimento)', tipo:'texto'},
+      {chave:'sistemaConforto', label:'Sistema de conforto', tipo:'select', opcoes:['não instalar','deixar previsão','com programador horário','com pulsador nos banheiros','com boiler elétrico de apoio']},
       {tipo:'titulo', label:'Sauna'},
-      {chave:'saunaTipo', label:'Sauna', tipo:'texto'},
+      {chave:'saunaTipo', label:'Sauna', tipo:'select', opcoes:['Vapor','Seca','Não tem'], def:'Não tem'},
       {chave:'saunaItens', tipo:'grupoCheck', opcoes:['caso não tenha ducha dentro e sendo vapor, colocar ducha higiênica dentro','ducha AF simples','Duchão AF','AF e AQ']},
       {chave:'saunaOutro', label:'Outro', tipo:'texto'},
       {chave:'localizacaoMaquinaSauna', label:'Localização da máquina de sauna', tipo:'texto'},
       {tipo:'titulo', label:'Ducha higiênica Manual'},
-      {chave:'duchaSuiteMaster', label:'Suíte Master', tipo:'texto', def:'somente AF'},
-      {chave:'duchaBanheirosSociais', label:'Banheiros sociais', tipo:'texto', def:'idem'},
-      {chave:'duchaLavabo', label:'Lavabo', tipo:'texto', def:'idem'},
-      {chave:'duchaBanheiroServico', label:'Banheiro de serviço', tipo:'texto', def:'idem'},
-      {chave:'duchaManualBanheiros', label:'Ducha manual nos banheiros', tipo:'texto'},
+      {chave:'duchaSuiteMaster', label:'Suíte Master', tipo:'select', opcoes:['somente AF','AF e AQ ver modelos compatíveis']},
+      {chave:'duchaBanheirosSociais', label:'Banheiros sociais', tipo:'select', opcoes:['somente AF','AF e AQ ver modelos compatíveis','idem'], def:'idem'},
+      {chave:'duchaLavabo', label:'Lavabo', tipo:'select', opcoes:['somente AF','AF e AQ ver modelos compatíveis','idem'], def:'idem'},
+      {chave:'duchaBanheiroServico', label:'Banheiro de serviço', tipo:'select', opcoes:['somente AF','AF e AQ ver modelos compatíveis','idem'], def:'idem'},
       {chave:'diversos', tipo:'tabelaRadio', titulo:'Diversos', linhas:['Geladeira','Filtro','Tanque','Torneira jardim','Torneira varanda'], colunas:['Ponto AF','AF e AQ','Não terá']},
-      {chave:'duchasEconomicas', label:'Usar duchas econômicas ou redutor de vazão', tipo:'texto'}
+      {chave:'duchasEconomicas', label:'Usar duchas econômicas ou redutor de vazão', tipo:'select', opcoes:['todos os banheiros','todos os banheiros, menos o principal','somente no de serviço','nenhum banheiro']}
     ]},
     { chave:'eletrica', titulo:'Elétrica', campos:[
       {chave:'localizacaoQuadros', label:'Localização dos quadros de proteção', tipo:'texto'},
-      {chave:'distribuicaoCircuitos', label:'Distribuição de circuitos', tipo:'texto'},
-      {tipo:'nota', texto:'Criar independência de circuitos internos e externos; iluminação jardim separada; não misturar DR externos com internos.'},
+      {chave:'distribuicaoCircuitos', label:'Distribuição de circuitos', tipo:'select', opcoes:['padrão alto separando por cômodo e funcionamento','Funcional, juntaremos alguns circuitos para minimizar o quadro','econônico']},
+      {tipo:'titulo', label:'Caso o cliente já possua algum equipamento informar a tensão'},
       {chave:'maquinaLavarAQ', label:'Máquina de Lavar roupa precisa de AQ', tipo:'check'},
       {chave:'maquinaSecarGas', label:'Máquina de secar roupa é a gás', tipo:'check'},
-      {chave:'aquecimentoAmbiente', label:'Aquecimento de ambiente', tipo:'texto', def:'não terá'},
+      {chave:'aquecimentoAmbiente', label:'Aquecimento de ambiente', tipo:'select', opcoes:['total casa','parcial alto','parcial médio','local']},
       {tipo:'titulo', label:'Diversos'},
-      {chave:'eletricaItens', tipo:'grupoCheck', opcoes:['terá secador elétrico de toalhas nos banheiros','prever tomadas 220V (marcar em planta – cozinha e churrasqueira)','coifa cozinha','prever tomada e iluminação sótão','terá projeto luminotécnico interno','terá projeto luminotécnico jardim/paisagismo','terá controlador de cenas em estudo','prever comando elétrico persianas','campainha','alimentação elétrica dos portões','Previsão Sistema Fotovoltaico','Carregador de carro elétrico','Alimentação para DJ (tomada externa 127V e 220V)','Anti-embaçante']},
+      {chave:'eletricaItens', tipo:'grupoCheck', opcoes:['terá secador elétrico de toalhas nos banheiros menos serviço (marcar em planta) (dois no banheiro master provavelmente)','prever tomadas 220V (marcar em planta)','coifa cozinha','prever tomada e iluminação sótão','terá projeto luminotécnico interno','terá projeto luminotécnico jardim/paisagismo','terá controlador de cenas em estudo','prever comando elétrico persianas','campainha','alimentação elétrica portão','Previsão Sistema Fotovoltaico','Carregador de carro elétrico','Alimentação para DJ (ver potência)','Anti-embaçante','desumidificador nos armários']},
       {tipo:'titulo', label:'Sistemas de emergência'},
-      {chave:'gerador', label:'Gerador', tipo:'texto'},
-      {chave:'nobreak', label:'No-break individualizado por equipamentos se preciso', tipo:'texto'},
-      {chave:'iluminacaoExclusiva', label:'Iluminação exclusiva', tipo:'texto', def:'não terá'}
+      {chave:'gerador', label:'Gerador', tipo:'select', opcoes:['marcado em planta','não terá','individualizado por equipamentos se preciso']},
+      {chave:'nobreak', label:'No-break', tipo:'select', opcoes:['geral para rede estabilizada','não terá']},
+      {chave:'iluminacaoExclusiva', label:'Iluminação exclusiva', tipo:'select', opcoes:['marcar planta luminárias especiais','abajures com baterias estratégicos','não terá']}
     ]},
     { chave:'gas', titulo:'Gás', campos:[
-      {chave:'tipoGas', label:'Tipo de gás', tipo:'texto', def:'GN'},
-      {chave:'gasItens', tipo:'grupoCheck', opcoes:['prever ponto para churrasqueira – inclusive churrasqueira é a gás','prever alimentação para o gerador']},
+      {chave:'tipoGas', label:'Tipo de gás', tipo:'select', opcoes:['GN','GLP','não terá'], def:'GN'},
+      {chave:'gasItens', tipo:'grupoCheck', opcoes:['prever ponto para churrasqueira','prever alimentação para o gerador']},
       {chave:'localizacaoMedidor', label:'Localização do medidor e registros internos', tipo:'texto'}
     ]},
     { chave:'piscina', titulo:'Piscina', campos:[
       {chave:'localizacaoCasaMaquinas', label:'Localização casa de máquinas', tipo:'texto'},
-      {chave:'tipoAquecimento', label:'Tipo aquecimento', tipo:'texto'},
-      {chave:'bordaPiscina', label:'Borda piscina', tipo:'texto'},
-      {chave:'piscinaItens', tipo:'grupoCheck', opcoes:['Terá hidromassagem na piscina superior (prever)','Terá cascata','Terá nado contra corrente','Quadro com programação horária automática para filtração','Prever bombeador reserva','Equipamentos de alto rendimento','Robô de limpeza da piscina']},
+      {chave:'tipoAquecimento', label:'Tipo aquecimento', tipo:'select', opcoes:['Solar','gás','Bomba de Calor']},
+      {chave:'bordaPiscina', label:'Borda piscina', tipo:'select', opcoes:['seca','infinita']},
+      {chave:'piscinaItens', tipo:'grupoCheck', opcoes:['Terá hidromassagem','Terá cascata','Terá nado contra corrente','Quadro com programação horária automática para filtração','Prever bombeador reserva','Equipamentos de alto rendimento','Robô de limpeza da piscina']},
       {chave:'numBicos', label:'Se tiver hidromassagem, nº de bicos e marcar em planta', tipo:'texto'}
     ]}
   ];
@@ -2124,12 +2151,15 @@
         '<div class="full"><label>Fotos</label>'+
           '<div id="relFotosArea" class="anexos-area"></div>'+
           '<button type="button" class="btn small secondary" id="btnAddFotoRelatorio">📷 Adicionar foto</button>'+
+          ' <span class="hint" style="font-size:11px;">ou cole (Ctrl+V) um print</span>'+
           '<input type="file" id="relFotoInput" accept="image/*" multiple style="display:none">'+
         '</div>'+
         '<div class="form-actions"><button class="btn" id="btnSalvarRelatorio">Salvar relatório</button></div>'+
       '</div>';
     overlay.style.display = 'flex';
+    box.classList.add('dia-modal-grande');
     var fotos = [];
+    fotoPasteAlvo = { adicionar: function(dataUrl){ fotos.push(dataUrl); renderFotosPreview(); } };
     function renderFotosPreview(){
       document.getElementById('relFotosArea').innerHTML = fotos.map(function(f, i){
         return '<span class="anexo-chip anexo-img"><img src="'+f+'" data-idx="'+i+'" class="rel-foto-ver"><button type="button" class="anexo-remove" data-idx="'+i+'">×</button></span>';
@@ -2260,6 +2290,7 @@
         '<div class="form-actions"><button class="btn" id="btnSalvarArt">Salvar ART</button></div>'+
       '</div>';
     overlay.style.display = 'flex';
+    box.classList.add('dia-modal-grande');
 
     function mostrarDadosCliente(f){
       var box2 = document.getElementById('artDadosPuxados');
@@ -2364,6 +2395,12 @@
       var valor = (dadosSec && dadosSec[campo.chave] !== undefined) ? dadosSec[campo.chave] : (campo.def || '');
       return '<div><label>'+escapeHtml(campo.label)+'</label><input type="text" id="'+id+'" value="'+escapeHtml(valor)+'"></div>';
     }
+    if(campo.tipo === 'select'){
+      var valorSel = (dadosSec && dadosSec[campo.chave] !== undefined && dadosSec[campo.chave] !== '') ? dadosSec[campo.chave] : (campo.def || '');
+      var opcoesHtml = '<option value=""'+(!valorSel?' selected':'')+'>— Escolher um item —</option>' +
+        campo.opcoes.map(function(op){ return '<option value="'+escapeHtml(op)+'"'+(op===valorSel?' selected':'')+'>'+escapeHtml(op)+'</option>'; }).join('');
+      return '<div><label>'+escapeHtml(campo.label)+'</label><select id="'+id+'">'+opcoesHtml+'</select></div>';
+    }
     if(campo.tipo === 'check'){
       var marcado = dadosSec && dadosSec[campo.chave];
       return '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin:5px 0;"><input type="checkbox" id="'+id+'" '+(marcado?'checked':'')+'> '+escapeHtml(campo.label)+'</label>';
@@ -2399,7 +2436,7 @@
 
   function coletarCampoConsideracao(secaoChave, campo){
     var id = 'ci_'+secaoChave+'_'+campo.chave;
-    if(campo.tipo === 'texto'){
+    if(campo.tipo === 'texto' || campo.tipo === 'select'){
       var el = document.getElementById(id);
       return el ? el.value.trim() : '';
     }
@@ -2451,12 +2488,13 @@
     var htmlSecoes = CONSIDERACAO_ESQUEMA.map(function(sec){
       var dadosSec = (existente && existente.dados[sec.chave]) || {};
       var camposHtml = sec.campos.map(function(campo){ return renderCampoConsideracao(sec.chave, campo, dadosSec); }).join('');
-      return '<div style="border-top:1px solid var(--border); padding-top:14px; margin-top:14px;">'+
+      return '<div data-secao-bloco="'+sec.chave+'" style="border-top:1px solid var(--border); padding-top:14px; margin-top:14px;">'+
         '<h3 style="margin:0 0 8px; font-size:14px;">'+escapeHtml(sec.titulo)+'</h3>'+
         camposHtml+
         '<div><label>Obs.</label><textarea id="ci_'+sec.chave+'_obs" rows="2">'+escapeHtml(dadosSec.obs||'')+'</textarea></div>'+
         '<div style="margin-top:8px;"><label>Fotos</label><div id="ciFotos_'+sec.chave+'" class="anexos-area"></div>'+
         '<button type="button" class="btn small secondary btn-add-foto-ci" data-secao="'+sec.chave+'">📷 Adicionar foto</button>'+
+        ' <span class="hint" style="font-size:11px;">ou clique aqui e cole (Ctrl+V) um print</span>'+
         '<input type="file" class="ci-foto-input" data-secao="'+sec.chave+'" accept="image/*" multiple style="display:none">'+
         '</div>'+
       '</div>';
@@ -2480,6 +2518,16 @@
       '<div class="form-actions" style="margin-top:16px;"><button class="btn" id="btnSalvarCI">Salvar consideração inicial</button></div>';
 
     overlay.style.display = 'flex';
+    box.classList.add('dia-modal-grande');
+
+    function definirAlvoColagem(secaoChave){
+      fotoPasteAlvo = { adicionar: function(dataUrl){ fotosPorSecao[secaoChave].push(dataUrl); renderFotosPreviewSecao(secaoChave); } };
+    }
+    box.querySelectorAll('[data-secao-bloco]').forEach(function(bloco){
+      bloco.addEventListener('focusin', function(){ definirAlvoColagem(bloco.getAttribute('data-secao-bloco')); });
+      bloco.addEventListener('click', function(){ definirAlvoColagem(bloco.getAttribute('data-secao-bloco')); });
+    });
+    if(CONSIDERACAO_ESQUEMA[0]) definirAlvoColagem(CONSIDERACAO_ESQUEMA[0].chave);
 
     function renderFotosPreviewSecao(secaoChave){
       document.getElementById('ciFotos_'+secaoChave).innerHTML = fotosPorSecao[secaoChave].map(function(f, i){
@@ -2561,6 +2609,84 @@
     };
   }
 
+  function renderCampoConsideracaoPdf(secaoChave, campo, dadosSec){
+    if(campo.tipo === 'titulo') return '<div style="font-weight:700;font-size:11px;margin:8px 0 4px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.3px;">'+escapeHtml(campo.label)+'</div>';
+    if(campo.tipo === 'nota') return '';
+    if(campo.tipo === 'texto' || campo.tipo === 'select'){
+      var v = (dadosSec && dadosSec[campo.chave] !== undefined && dadosSec[campo.chave] !== '') ? dadosSec[campo.chave] : (campo.def || '');
+      if(!v) return '';
+      return '<div class="pdf-ci-campo"><b>'+escapeHtml(campo.label)+':</b>'+escapeHtml(v)+'</div>';
+    }
+    if(campo.tipo === 'check'){
+      var marcado = dadosSec && dadosSec[campo.chave];
+      if(!marcado) return '';
+      return '<div class="pdf-ci-campo">☑ '+escapeHtml(campo.label)+'</div>';
+    }
+    if(campo.tipo === 'grupoCheck'){
+      var vals = (dadosSec && dadosSec[campo.chave]) || [];
+      var marcados = campo.opcoes.filter(function(op,i){ return vals[i]; });
+      if(marcados.length === 0) return '';
+      return '<div class="pdf-ci-check-lista">'+marcados.map(function(op){ return '<div>☑ '+escapeHtml(op)+'</div>'; }).join('')+'</div>';
+    }
+    if(campo.tipo === 'tabelaCheck' || campo.tipo === 'tabelaRadio'){
+      var valsT = (dadosSec && dadosSec[campo.chave]) || {};
+      var temAlgo = campo.linhas.some(function(l,li){
+        if(campo.tipo === 'tabelaCheck'){ return valsT[li] && campo.colunas.some(function(c,ci){ return valsT[li][ci]; }); }
+        return valsT[li] !== undefined && valsT[li] !== null;
+      });
+      if(!temAlgo) return '';
+      var html = '<table class="pdf-ci-tabela"><thead><tr><th>'+escapeHtml(campo.titulo)+'</th>'+campo.colunas.map(function(c){return '<th>'+escapeHtml(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+      campo.linhas.forEach(function(linha,li){
+        html += '<tr><td>'+escapeHtml(linha)+'</td>';
+        campo.colunas.forEach(function(col,ci){
+          var marcado = campo.tipo === 'tabelaCheck' ? (valsT[li]&&valsT[li][ci]) : (valsT[li]===ci);
+          html += '<td>'+(marcado?'✓':'')+'</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+    return '';
+  }
+
+  function mostrarPdfConsideracaoInicial(registro){
+    var secoesHtml = CONSIDERACAO_ESQUEMA.map(function(sec){
+      var dadosSec = registro.dados[sec.chave] || {};
+      var camposHtml = sec.campos.map(function(campo){ return renderCampoConsideracaoPdf(sec.chave, campo, dadosSec); }).join('');
+      var obsHtml = dadosSec.obs ? '<div class="pdf-ci-obs">'+escapeHtml(dadosSec.obs)+'</div>' : '';
+      var fotosHtml = (dadosSec.fotos && dadosSec.fotos.length) ? '<div class="pdf-ci-fotos">'+dadosSec.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
+      if(!camposHtml && !obsHtml && !fotosHtml) return '';
+      return '<div class="pdf-ci-secao"><h2>'+escapeHtml(sec.titulo)+'</h2>'+camposHtml+obsHtml+fotosHtml+'</div>';
+    }).join('');
+
+    var html = '<div class="pdf-ci-cabecalho">'+
+      '<img src="'+LOGO_EQUIPER+'" alt="Equiper">'+
+      '<div class="titulos"><h1>Considerações Iniciais</h1><p>Cliente: '+escapeHtml(registro.clienteNome)+'</p></div>'+
+      '</div>'+
+      '<div class="pdf-ci-dados">'+
+        '<div><b>Data de preenchimento:</b> '+(registro.dataPreenchimento?fmtDate(registro.dataPreenchimento):'—')+'</div>'+
+        '<div><b>Equiper:</b> '+escapeHtml((registro.participantes&&registro.participantes.equiper)||'—')+'</div>'+
+        '<div><b>Cliente (reunião):</b> '+escapeHtml((registro.participantes&&registro.participantes.cliente)||'—')+'</div>'+
+        '<div><b>Arquitetura:</b> '+escapeHtml((registro.participantes&&registro.participantes.arquitetura)||'—')+'</div>'+
+        '<div><b>Construtora:</b> '+escapeHtml((registro.participantes&&registro.participantes.construtora)||'—')+'</div>'+
+      '</div>'+
+      secoesHtml+
+      '<div class="pdf-ci-rodape"><span>Gerado em '+new Date().toLocaleString('pt-BR')+'</span><span>Painel de Projetos Equiper</span></div>';
+
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
+    box.innerHTML =
+      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<span style="background:var(--amber-soft);color:var(--ink);border:1px solid var(--amber);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;">💡 Aperte <b>Ctrl+P</b> (ou <b>Cmd+P</b> no Mac) agora e escolha "Salvar como PDF" no destino da impressão.</span>'+
+        '<button class="btn small secondary" id="btnFecharPdfCI">Fechar</button>'+
+      '</div>'+
+      html;
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharPdfCI').onclick = fecharDiaModal;
+  }
+
   function renderConsideracoesIniciaisLista(){
     var lista = document.getElementById('consideracoesIniciaisLista');
     if(!lista) return;
@@ -2578,12 +2704,19 @@
         '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.dataPreenchimento)+' · '+escapeHtml(r.autor)+'</span></div>'+
         '<div class="acts">'+
           '<button type="button" class="btn-editar-ci" data-id="'+r.id+'">Ver/editar</button>'+
+          '<button type="button" class="btn-pdf-ci" data-id="'+r.id+'">📄 PDF</button>'+
           (podeExcluir ? '<button type="button" class="btn-remover-ci" data-id="'+r.id+'" style="color:var(--red);">Excluir</button>' : '')+
         '</div>'+
       '</div>';
     }).join('');
     lista.querySelectorAll('.btn-editar-ci').forEach(function(btn){
       btn.onclick = function(){ abrirFormConsideracaoInicial(btn.getAttribute('data-id')); };
+    });
+    lista.querySelectorAll('.btn-pdf-ci').forEach(function(btn){
+      btn.onclick = function(){
+        var r = state.consideracoesIniciais.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        if(r) mostrarPdfConsideracaoInicial(r);
+      };
     });
     lista.querySelectorAll('.btn-remover-ci').forEach(function(btn){
       btn.onclick = function(){
@@ -4084,6 +4217,8 @@
   }
   function fecharDiaModal(){
     document.getElementById('diaModalOverlay').style.display = 'none';
+    document.getElementById('diaModalBox').classList.remove('dia-modal-grande');
+    fotoPasteAlvo = null;
   }
 
   var calDragState = null;
@@ -5275,6 +5410,26 @@
     if(btn) btn.textContent = escuro ? '☀️ Claro' : '🌙 Escuro';
   }
   aplicarTemaSalvo();
+
+  var fotoPasteAlvo = null;
+  document.addEventListener('paste', function(e){
+    var overlay = document.getElementById('diaModalOverlay');
+    if(!overlay || overlay.style.display !== 'flex' || !fotoPasteAlvo) return;
+    var items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return;
+    for(var i=0; i<items.length; i++){
+      if(items[i].type && items[i].type.indexOf('image') !== -1){
+        var blob = items[i].getAsFile();
+        if(blob){
+          e.preventDefault();
+          redimensionarImagem(blob, 900, 0.72, function(dataUrl){
+            if(fotoPasteAlvo) fotoPasteAlvo.adicionar(dataUrl);
+          });
+        }
+        break;
+      }
+    }
+  });
 
   var promptInstalacaoAdiado = null;
   window.addEventListener('beforeinstallprompt', function(e){
