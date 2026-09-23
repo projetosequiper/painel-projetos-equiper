@@ -2145,7 +2145,13 @@
     if(sec) sec.style.display = podeUsarRelatorios() ? 'block' : 'none';
   }
 
-  function desenharConePin(pin, idx){
+  function desenharConePin(pin, idx, opts){
+    opts = opts || {};
+    var raio = opts.raio || 7;
+    var stroke = opts.stroke || 2.2;
+    var strokeCirc = opts.strokeCirc || 2;
+    var fonte = opts.fonte || 15;
+    var strokeTexto = opts.strokeTexto || 3;
     var x1=pin.x1, y1=pin.y1, x2=pin.x2, y2=pin.y2;
     var ang = Math.atan2(y2-y1, x2-x1);
     var meio = 26 * Math.PI/180;
@@ -2153,11 +2159,11 @@
     var ax = x1 + len*Math.cos(ang-meio), ay = y1 + len*Math.sin(ang-meio);
     var bx = x1 + len*Math.cos(ang+meio), by = y1 + len*Math.sin(ang+meio);
     return '<g>'+
-      '<line x1="'+x1+'" y1="'+y1+'" x2="'+ax+'" y2="'+ay+'" style="stroke:var(--red); stroke-width:2.2;"></line>'+
-      '<line x1="'+x1+'" y1="'+y1+'" x2="'+bx+'" y2="'+by+'" style="stroke:var(--red); stroke-width:2.2;"></line>'+
-      '<path d="M '+ax+' '+ay+' A '+len+' '+len+' 0 0 1 '+bx+' '+by+'" style="fill:none; stroke:var(--red); stroke-width:2.2;"></path>'+
-      '<circle class="planta-pin-clique" data-pin-id="'+pin.id+'" cx="'+x1+'" cy="'+y1+'" r="7" style="fill:var(--red); stroke:#fff; stroke-width:2;"></circle>'+
-      '<text x="'+((ax+bx)/2)+'" y="'+((ay+by)/2)+'" text-anchor="middle" style="fill:var(--red); font-size:15px; font-weight:800; font-family:Inter,sans-serif; paint-order:stroke; stroke:#fff; stroke-width:3px;">'+(idx+1)+'</text>'+
+      '<line x1="'+x1+'" y1="'+y1+'" x2="'+ax+'" y2="'+ay+'" style="stroke:var(--red); stroke-width:'+stroke+';"></line>'+
+      '<line x1="'+x1+'" y1="'+y1+'" x2="'+bx+'" y2="'+by+'" style="stroke:var(--red); stroke-width:'+stroke+';"></line>'+
+      '<path d="M '+ax+' '+ay+' A '+len+' '+len+' 0 0 1 '+bx+' '+by+'" style="fill:none; stroke:var(--red); stroke-width:'+stroke+';"></path>'+
+      '<circle class="planta-pin-clique" data-pin-id="'+pin.id+'" cx="'+x1+'" cy="'+y1+'" r="'+raio+'" style="fill:var(--red); stroke:#fff; stroke-width:'+strokeCirc+';"></circle>'+
+      '<text x="'+((ax+bx)/2)+'" y="'+((ay+by)/2)+'" text-anchor="middle" style="fill:var(--red); font-size:'+fonte+'px; font-weight:800; font-family:Inter,sans-serif; paint-order:stroke; stroke:#fff; stroke-width:'+strokeTexto+'px;">'+(idx+1)+'</text>'+
     '</g>';
   }
 
@@ -2440,6 +2446,15 @@
       });
     }
 
+    function sincronizarItensDoDom(){
+      itens.forEach(function(it){
+        var elT = document.querySelector('.rel-item-titulo[data-id="'+it.id+'"]');
+        var elX = document.querySelector('.rel-item-texto[data-id="'+it.id+'"]');
+        if(elT) it.titulo = elT.value;
+        if(elX) it.texto = elX.value;
+      });
+    }
+
     function renderItensLista(){
       var lista = document.getElementById('relItensLista');
       lista.innerHTML = itens.map(function(it, idx){
@@ -2477,6 +2492,7 @@
       });
       lista.querySelectorAll('.rel-item-remover').forEach(function(btn){
         btn.onclick = function(){
+          sincronizarItensDoDom();
           itens = itens.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
           renderItensLista();
         };
@@ -2484,6 +2500,7 @@
     }
 
     document.getElementById('btnAddItemRelatorio').onclick = function(){
+      sincronizarItensDoDom();
       var novo = criarItemVazio();
       itens.push(novo);
       renderItensLista();
@@ -2564,7 +2581,7 @@
     }
     var plantasHtml = (registro.plantas && registro.plantas.length) ? registro.plantas.map(function(p, idxP){
       var pinsHtml = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">'+
-        (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx); }).join('') +
+        (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx, {raio:1.8, stroke:0.6, strokeCirc:0.6, fonte:3.2, strokeTexto:0.8}); }).join('') +
       '</svg>';
       var legendaHtml = (p.pins||[]).map(function(pin, idx){
         var label = pin.texto;
@@ -2631,7 +2648,7 @@
       }
       var plantasListHtml = (r.plantas && r.plantas.length) ? r.plantas.map(function(p, idxP){
         var pinsHtml = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">'+
-          (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx); }).join('') +
+          (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx, {raio:1.8, stroke:0.6, strokeCirc:0.6, fonte:3.2, strokeTexto:0.8}); }).join('') +
         '</svg>';
         var legendaHtml = (p.pins||[]).map(function(pin, idx){
           var label = pin.texto;
