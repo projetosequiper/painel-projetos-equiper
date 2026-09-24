@@ -547,6 +547,7 @@
     <span class="label" id="lblStatusClientes" style="cursor:pointer; user-select:none;">▸ Status de projeto por cliente</span>
     <div id="statusClientesConteudo" style="display:none; margin-top:10px;">
       <input type="text" id="statusClientesBusca" placeholder="Buscar cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
+      <button class="btn small secondary" id="btnStatusClientesFinal" style="margin-bottom:10px;">⬇ Ir para o final</button>
       <div id="statusClientesLista"></div>
     </div>
   </section>
@@ -1254,6 +1255,7 @@
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-relatorio" data-nome="'+escapeHtml(nome)+'" '+(perm.relatorioVisita?'checked':'')+'> Pode criar relatório de visita</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-consideracao" data-nome="'+escapeHtml(nome)+'" '+(perm.consideracaoInicial?'checked':'')+'> Pode criar consideração inicial</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-art" data-nome="'+escapeHtml(nome)+'" '+(perm.art?'checked':'')+'> Pode criar ART</label>'+
+          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-comissao" data-nome="'+escapeHtml(nome)+'" '+(perm.verComissao?'checked':'')+'> Pode ver comissão</label>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1295,6 +1297,15 @@
         if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
         state.permissoesProjetista[nome].art = chk.checked;
         savePermissoesProjetista();
+      };
+    });
+    lista.querySelectorAll('.chk-perm-comissao').forEach(function(chk){
+      chk.onchange = function(){
+        var nome = chk.getAttribute('data-nome');
+        if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
+        state.permissoesProjetista[nome].verComissao = chk.checked;
+        savePermissoesProjetista();
+        renderNavProjetos();
       };
     });
     lista.querySelectorAll('.btn-resetar-projetista').forEach(function(btn){
@@ -3239,7 +3250,6 @@
     }
     var busca = (document.getElementById('statusClientesBusca').value || '').toLowerCase();
     var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
-    lista = lista.slice().sort(function(a,b){ return a.cliente.localeCompare(b.cliente,'pt-BR',{sensitivity:'base'}); });
     var html = '';
     lista.forEach(function(f){
       var disciplinas = DISCIPLINAS_FINANCEIRO.filter(function(d){
@@ -3257,6 +3267,17 @@
       '</div>';
     });
     el.innerHTML = html || '<div class="empty-hint">Nenhum cliente com disciplinas ativas encontrado.</div>';
+    if(html){
+      var btnInicioStatus = document.createElement('button');
+      btnInicioStatus.type = 'button';
+      btnInicioStatus.className = 'btn small secondary';
+      btnInicioStatus.textContent = '⬆ Ir para o início';
+      btnInicioStatus.style.marginTop = '14px';
+      btnInicioStatus.onclick = function(){
+        document.getElementById('lblStatusClientes').scrollIntoView({ behavior:'smooth', block:'start' });
+      };
+      el.appendChild(btnInicioStatus);
+    }
   }
 
   function renderResumo(){
@@ -3394,7 +3415,7 @@
   var TOPICOS_PROJETOS = [
     { id:'quadro', label:'Quadro de tarefas', icone:'🗂️' },
     { id:'calendario', label:'Calendário', icone:'📅' },
-    { id:'comissao', label:'Comissão', icone:'💰' },
+    { id:'comissao', label:'Comissão', icone:'💰', permissao:'verComissao' },
     { id:'clientes', label:'Clientes', icone:'👥', gerente:true },
     { id:'consideracoes', label:'Considerações iniciais', icone:'📋', permissao:'consideracaoInicial' },
     { id:'relatorios', label:'Relatórios de visita', icone:'📝', permissao:'relatorioVisita' },
@@ -5427,6 +5448,10 @@
     content.style.display = visible ? 'none' : 'block';
     document.getElementById('lblStatusClientes').textContent = (visible ? '▸ ' : '▾ ') + 'Status de projeto por cliente';
     if(!visible){ renderStatusClientes(); }
+  };
+  document.getElementById('btnStatusClientesFinal').onclick = function(){
+    var lista = document.getElementById('statusClientesLista');
+    lista.scrollIntoView({ behavior:'smooth', block:'end' });
   };
   document.getElementById('statusClientesBusca').addEventListener('input', function(){ renderStatusClientes(); });
   document.getElementById('lblLinkPainel').onclick = function(){
