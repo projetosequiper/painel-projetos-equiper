@@ -160,6 +160,21 @@
   .card select.inline-edit, .card input.inline-edit{font-size:11px; padding:2px 4px; border:1px solid var(--border); border-radius:3px; background:#fff; width:100%; font-family:'Inter',sans-serif; color:var(--ink);}
   .card textarea.inline-edit-obs{font-size:11px; padding:3px 5px; border:1px solid var(--border); border-radius:3px; width:100%; font-family:'Inter',sans-serif; resize:vertical; color:var(--ink);}
   .anexos-area{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .topico-nav-wrap{display:flex; gap:20px; align-items:flex-start;}
+  .topico-nav{display:flex; flex-direction:column; gap:2px; min-width:220px; max-width:220px; background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-md); padding:8px; position:sticky; top:74px;}
+  .topico-nav-item{display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:var(--r-sm); cursor:pointer; font-size:13.5px; font-weight:500; color:var(--ink); transition:background .12s ease;}
+  .topico-nav-item:hover{background:var(--paper);}
+  .topico-nav-item.active{background:var(--red); color:#fff; font-weight:600;}
+  .topico-conteudo-wrap{flex:1; min-width:0;}
+  .topico-voltar-mobile{display:none; margin-bottom:14px;}
+  @media (max-width:900px){
+    .topico-nav-wrap{flex-direction:column; gap:0;}
+    .topico-nav{width:100%; max-width:100%; position:static; border:none; background:none; padding:0; box-shadow:none;}
+    .topico-nav-item{background:var(--sheet); border:1px solid var(--border); margin-bottom:6px; box-shadow:var(--shadow-sm);}
+    .topico-nav-wrap.mostrando-conteudo .topico-nav{display:none;}
+    .topico-nav-wrap:not(.mostrando-conteudo) .topico-conteudo-wrap{display:none;}
+    .topico-nav-wrap.mostrando-conteudo .topico-voltar-mobile{display:inline-flex;}
+  }
   .planta-scroll{position:relative; max-height:60vh; overflow:auto; margin-top:6px; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--paper);}
   .planta-wrap{position:relative; display:inline-block; cursor:crosshair;}
   .planta-wrap img{display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none;}
@@ -411,7 +426,12 @@
   <div id="avisoEnvioPendente" style="display:none;"></div>
   <div id="avisoReuniaoHoje" style="display:none;"></div>
 
-  <div class="team-row apenas-gerente">
+  <div class="topico-nav-wrap" id="topicoNavWrapProjetos">
+    <div class="topico-nav" id="topicoNavProjetos"></div>
+    <div class="topico-conteudo-wrap">
+    <div class="topico-voltar-mobile"><button class="btn small secondary" id="btnVoltarTopicoProjetos">‹ Voltar ao menu</button></div>
+
+  <div class="team-row apenas-gerente" data-topico="config">
     <span class="label" id="lblEquipe" style="cursor:pointer; user-select:none;">▸ Equipe:</span>
     <div id="teamContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
       <div id="teamChips"></div>
@@ -420,7 +440,7 @@
     </div>
   </div>
 
-  <div class="team-row apenas-gerente">
+  <div class="team-row apenas-gerente" data-topico="config">
     <span class="label" id="lblTipos" style="cursor:pointer; user-select:none;">▸ Disciplinas:</span>
     <div id="tiposContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
       <div id="tipoChips"></div>
@@ -429,7 +449,7 @@
     </div>
   </div>
 
-  <div class="team-row apenas-gerente" style="align-items:flex-start;">
+  <div class="team-row apenas-gerente" style="align-items:flex-start;" data-topico="config">
     <span class="label" id="lblProjetistasContas" style="cursor:pointer; user-select:none;">▸ Senhas dos projetistas:</span>
     <div id="projetistasContasContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
       <div class="hint">O nome de cada um vem direto da lista "Equipe" abaixo — não precisa cadastrar de novo aqui.</div>
@@ -437,7 +457,7 @@
     </div>
   </div>
 
-  <div class="team-row apenas-gerente" style="align-items:flex-start;">
+  <div class="team-row apenas-gerente" style="align-items:flex-start;" data-topico="config">
     <span class="label" id="lblFerias" style="cursor:pointer; user-select:none;">▸ Férias:</span>
     <div id="feriasContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -450,14 +470,14 @@
     </div>
   </div>
 
-  <section class="apenas-gerente">
+  <section class="apenas-gerente" data-topico="clientes">
     <h2><span id="lblProjetos" style="cursor:pointer; user-select:none;">▸ Projetos</span> <button class="btn small" id="btnSincronizarFinanceiro">🔄 Sincronizar com Financeiro</button> <button class="btn small secondary" id="btnNovoProjetoAvulso">+ Tarefa avulsa (sem cliente)</button></h2>
     <input type="text" id="buscaProjeto" placeholder="Pesquisar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:8px; width:100%; max-width:320px;" />
     <div id="formPanelProjeto"></div>
     <div class="projetos-list" id="projetosList" style="display:none;"></div>
   </section>
 
-  <section>
+  <section data-topico="quadro">
     <h2>Quadro de tarefas</h2>
     <div id="formPanelTarefa"></div>
     <div class="toolbar">
@@ -470,7 +490,7 @@
     <div class="board" id="board"></div>
   </section>
 
-  <section>
+  <section data-topico="calendario">
     <h2>Calendário</h2>
     <div class="cal-header">
       <div class="cal-nav">
@@ -486,7 +506,7 @@
     <div class="cal-legend" id="calLegend"></div>
   </section>
 
-  <section>
+  <section data-topico="comissao">
     <h2>Resumo mensal (comissão)</h2>
     <div class="cal-header">
       <div class="cal-nav">
@@ -499,7 +519,7 @@
     <div id="resumoLista"></div>
   </section>
 
-  <section id="secRegistrosArt" style="display:none;">
+  <section id="secRegistrosArt" style="display:none;" data-topico="art">
     <h2><span id="lblRegistrosArt" style="cursor:pointer; user-select:none;">▸ ART</span> <button class="btn small" id="btnNovoRegistroArt">+ Nova ART</button></h2>
     <div id="registrosArtConteudo" style="display:none; margin-top:10px;">
       <input type="text" id="registrosArtBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -507,7 +527,7 @@
     </div>
   </section>
 
-  <section id="secConsideracoesIniciais" style="display:none;">
+  <section id="secConsideracoesIniciais" style="display:none;" data-topico="consideracoes">
     <h2><span id="lblConsideracoesIniciais" style="cursor:pointer; user-select:none;">▸ Considerações iniciais</span> <button class="btn small" id="btnNovaConsideracaoInicial">+ Nova consideração inicial</button></h2>
     <div id="consideracoesIniciaisConteudo" style="display:none; margin-top:10px;">
       <input type="text" id="consideracoesIniciaisBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -515,7 +535,7 @@
     </div>
   </section>
 
-  <section id="secRelatoriosVisita" style="display:none;">
+  <section id="secRelatoriosVisita" style="display:none;" data-topico="relatorios">
     <h2><span id="lblRelatoriosVisita" style="cursor:pointer; user-select:none;">▸ Relatórios de visita</span> <button class="btn small" id="btnNovoRelatorioVisita">+ Novo relatório</button></h2>
     <div id="relatoriosVisitaConteudo" style="display:none; margin-top:10px;">
       <input type="text" id="relatoriosVisitaBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -523,7 +543,7 @@
     </div>
   </section>
 
-  <section class="apenas-gerente">
+  <section class="apenas-gerente" data-topico="status">
     <span class="label" id="lblStatusClientes" style="cursor:pointer; user-select:none;">▸ Status de projeto por cliente</span>
     <div id="statusClientesConteudo" style="display:none; margin-top:10px;">
       <input type="text" id="statusClientesBusca" placeholder="Buscar cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -531,7 +551,7 @@
     </div>
   </section>
 
-  <div class="team-row apenas-gerente" style="margin-top:20px; opacity:0.85;">
+  <div class="team-row apenas-gerente" style="margin-top:20px; opacity:0.85;" data-topico="config">
     <span class="label" id="lblLinkPainel" style="cursor:pointer; user-select:none;">▸ Link do painel:</span>
     <div id="linkPainelContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
       <input type="text" id="inLinkPainel" placeholder="Cole aqui o link público do painel" style="width:340px; max-width:100%;" />
@@ -540,13 +560,16 @@
     </div>
   </div>
 
-  <div class="team-row apenas-gerente" style="opacity:0.85;">
+  <div class="team-row apenas-gerente" style="opacity:0.85;" data-topico="config">
     <span class="label" id="lblSenha" style="cursor:pointer; user-select:none;">▸ Trocar senha:</span>
     <div id="senhaContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
       <input type="password" id="inSenhaAtual" placeholder="Senha mestra" style="width:140px;">
       <input type="password" id="inSenhaNova" placeholder="Nova senha do painel" style="width:160px;">
       <button class="btn small secondary" id="btnSalvarSenha">Salvar</button>
       <span class="hint" id="senhaStatus"></span>
+    </div>
+  </div>
+
     </div>
   </div>
   </div>
@@ -563,7 +586,13 @@
       <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
         <button class="btn secondary small" id="btnBloquearFinanceiro">🔒 Bloquear financeiro</button>
       </div>
-      <div class="team-row" style="align-items:flex-start;">
+
+      <div class="topico-nav-wrap" id="topicoNavWrapFinanceiro">
+        <div class="topico-nav" id="topicoNavFinanceiro"></div>
+        <div class="topico-conteudo-wrap">
+        <div class="topico-voltar-mobile"><button class="btn small secondary" id="btnVoltarTopicoFinanceiro">‹ Voltar ao menu</button></div>
+
+      <div class="team-row" style="align-items:flex-start;" data-topico-fin="usuarios">
         <span class="label" id="lblUsuariosFin" style="cursor:pointer; user-select:none;">▸ Usuários com acesso:</span>
         <div id="usuariosFinContent" style="display:none; flex-direction:column; gap:8px; width:100%;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -573,21 +602,21 @@
           <div id="usuariosFinLista"></div>
         </div>
       </div>
-      <div class="toolbar">
+      <div class="toolbar" data-topico-fin="clientes">
         <input type="text" id="finBusca" placeholder="Buscar cliente ou localidade" style="min-width:220px" />
         <button class="btn small secondary" id="btnIrParaFinal">⬇ Ir para o final</button>
         <button class="btn small" id="btnNovoClienteFin">+ Novo cliente fechado</button>
       </div>
-      <div id="finFormPanel"></div>
-      <div class="letra-header" id="lblFinLista" style="cursor:pointer; user-select:none; margin-bottom:8px;">▸ Clientes</div>
-      <div id="finLista" style="display:none;"></div>
+      <div id="finFormPanel" data-topico-fin="clientes"></div>
+      <div class="letra-header" id="lblFinLista" style="cursor:pointer; user-select:none; margin-bottom:8px;" data-topico-fin="clientes">▸ Clientes</div>
+      <div id="finLista" style="display:none;" data-topico-fin="clientes"></div>
 
-      <div style="margin-top:32px; padding-top:18px; border-top:3px double var(--border);">
+      <div style="margin-top:32px; padding-top:18px; border-top:3px double var(--border);" data-topico-fin="resumo">
         <span class="label" id="lblFinResumo" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Resumo geral (clientes e valores)</span>
         <div class="fin-resumo" id="finResumo" style="display:none; margin-top:10px;"></div>
       </div>
 
-      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);" data-topico-fin="fechamentos">
         <span class="label" id="lblFinFechamentos" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Fechamentos por mês (data do sinal)</span>
         <div id="finFechamentosConteudo" style="display:none; margin-top:10px;">
           <div class="cal-header">
@@ -602,7 +631,7 @@
         </div>
       </div>
 
-      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);" data-topico-fin="recebido">
         <span class="label" id="lblFinRecebido" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Valor líquido recebido por mês</span>
         <div id="finRecebidoConteudo" style="display:none; margin-top:10px;">
           <div class="cal-header">
@@ -617,7 +646,7 @@
         </div>
       </div>
 
-      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);" data-topico-fin="comissao">
         <span class="label" id="lblFinComissao" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Comissão dos desenhistas (10% por disciplina concluída)</span>
         <div id="finComissaoConteudo" style="display:none; margin-top:10px;">
           <div class="cal-header">
@@ -633,7 +662,7 @@
         </div>
       </div>
 
-      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);" data-topico-fin="calendario">
         <span class="label" id="lblFinCalendario" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Calendário de pagamentos e cobranças</span>
         <div id="finCalendarioConteudo" style="display:none; margin-top:10px;">
           <div class="cal-header">
@@ -649,7 +678,7 @@
         </div>
       </div>
 
-      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+      <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);" data-topico-fin="graficos">
         <span class="label" id="lblFinGraficos" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▸ Gráficos e visão macro</span>
         <div id="finGraficosConteudo" style="display:none; margin-top:14px;">
           <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
@@ -661,6 +690,9 @@
             <div class="fin-cliente" style="padding:14px;"><div class="fin-secao-titulo">Fechamentos por mês (evolução)</div><div id="graficoEvolucao"></div></div>
             <div class="fin-cliente" style="padding:14px;"><div class="fin-secao-titulo">Status das parcelas</div><div id="graficoParcelas"></div></div>
           </div>
+        </div>
+      </div>
+
         </div>
       </div>
     </div>
@@ -2167,20 +2199,21 @@
     '</g>';
   }
 
-  function abrirFormRelatorioVisita(){
+  function abrirFormRelatorioVisita(existenteId){
+    var existente = existenteId ? state.relatoriosVisita.find(function(x){ return x.id === existenteId; }) : null;
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
     var opcoesClientes = state.projetos.map(function(p){ return '<option value="'+p.id+'">'+escapeHtml(p.nome)+'</option>'; }).join('');
     box.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'+
-        '<h3 style="margin:0;">📝 Novo relatório de visita</h3>'+
+        '<h3 style="margin:0;">📝 '+(existente?'Editar':'Novo')+' relatório de visita</h3>'+
         '<button class="btn small secondary" id="btnFecharFormRelatorio">Fechar</button>'+
       '</div>'+
       '<div class="form-grid">'+
         '<div class="full"><label>Cliente</label>'+
           '<select id="relClienteSelect"><option value="">— Selecionar cliente cadastrado —</option>'+opcoesClientes+'<option value="__avulso__">Outro (não cadastrado)</option></select>'+
         '</div>'+
-        '<div class="full" id="relClienteAvulsoWrap" style="display:none;"><label>Nome do cliente</label><input type="text" id="relClienteAvulso" placeholder="Nome do cliente"></div>'+
+        '<div class="full" id="relClienteAvulsoWrap" style="display:none;"><label>Nome do cliente</label><input type="text" id="relClienteAvulso" placeholder="Nome do cliente" value="'+escapeHtml((existente&&!existente.projetoId)?existente.clienteNome:'')+'"></div>'+
         '<div class="full">'+
           '<label>Como você quer preencher?</label>'+
           '<div style="display:flex; gap:6px; margin:4px 0 10px;">'+
@@ -2189,7 +2222,7 @@
           '</div>'+
         '</div>'+
         '<div class="full" id="relBlocoLivre">'+
-          '<label>Observações</label><textarea id="relTexto" rows="6" placeholder="Descreva o que foi observado na visita..."></textarea>'+
+          '<label>Observações</label><textarea id="relTexto" rows="6" placeholder="Descreva o que foi observado na visita...">'+escapeHtml((existente&&existente.texto)||'')+'</textarea>'+
           '<div style="margin-top:8px;"><label>Fotos</label>'+
             '<div id="relFotosArea" class="anexos-area"></div>'+
             '<button type="button" class="btn small secondary" id="btnAddFotoRelatorio">📷 Adicionar foto</button>'+
@@ -2211,11 +2244,15 @@
       '</div>';
     overlay.style.display = 'flex';
     box.classList.add('dia-modal-grande');
+    if(existente){
+      document.getElementById('relClienteSelect').value = existente.projetoId || '__avulso__';
+      if(!existente.projetoId) document.getElementById('relClienteAvulsoWrap').style.display = 'block';
+    }
 
-    var modo = 'livre';
-    var fotos = [];
-    var itens = [];
-    var plantas = [];
+    var modo = (existente && existente.modo) || 'livre';
+    var fotos = (existente && existente.modo !== 'itens' && existente.fotos) ? existente.fotos.slice() : [];
+    var itens = (existente && existente.modo === 'itens' && existente.itens) ? existente.itens.map(function(it){ return { id: it.id, titulo: it.titulo, texto: it.texto, fotos: (it.fotos||[]).slice() }; }) : [];
+    var plantas = (existente && existente.plantas) ? existente.plantas.map(function(p){ return { id: uid('planta'), nome: p.nome, imagem: p.imagem, pins: (p.pins||[]).slice(), _zoom: 1 }; }) : [];
 
     function criarItemVazio(){ return { id: uid('itemrel'), fotos: [] }; }
     function criarPlantaVazia(){ return { id: uid('planta'), nome: '', imagem: null, pins: [], _zoom: 1 }; }
@@ -2414,8 +2451,9 @@
       if(modo === 'livre'){
         fotoPasteAlvo = { adicionar: function(dataUrl){ fotos.push(dataUrl); renderFotosPreview(); } };
       } else {
-        if(itens.length === 0){ itens.push(criarItemVazio()); renderItensLista(); }
-        else { definirAlvoColagemItem(itens[itens.length-1].id); }
+        if(itens.length === 0){ itens.push(criarItemVazio()); }
+        renderItensLista();
+        definirAlvoColagemItem(itens[itens.length-1].id);
       }
     }
     document.getElementById('relModoLivre').onclick = function(){ ativarModo('livre'); };
@@ -2507,7 +2545,9 @@
       definirAlvoColagemItem(novo.id);
     };
 
-    ativarModo('livre');
+    ativarModo(modo);
+    if(fotos.length){ renderFotosPreview(); }
+    renderPlantasLista();
 
     document.getElementById('relClienteSelect').addEventListener('change', function(){
       document.getElementById('relClienteAvulsoWrap').style.display = (this.value === '__avulso__') ? 'block' : 'none';
@@ -2527,13 +2567,13 @@
       if(clienteSel === '__avulso__' && !clienteAvulso){ alert('Digite o nome do cliente.'); return; }
       var pj = clienteSel !== '__avulso__' ? state.projetos.find(function(p){ return p.id === clienteSel; }) : null;
       var registro = {
-        id: uid('relv'),
+        id: existente ? existente.id : uid('relv'),
         projetoId: pj ? pj.id : null,
         clienteNome: pj ? pj.nome : clienteAvulso,
         modo: modo,
-        autor: nomeProjetistaAtual || 'Gerente',
-        data: todayISO(),
-        criadoEm: Date.now()
+        autor: existente ? existente.autor : (nomeProjetistaAtual || 'Gerente'),
+        data: existente ? existente.data : todayISO(),
+        criadoEm: existente ? existente.criadoEm : Date.now()
       };
       if(modo === 'livre'){
         var texto = document.getElementById('relTexto').value.trim();
@@ -2554,7 +2594,12 @@
         return { nome: elNome ? elNome.value.trim() : '', imagem: p.imagem, pins: p.pins };
       }).filter(function(p){ return p.imagem; });
       if(plantasValidas.length){ registro.plantas = plantasValidas; }
-      state.relatoriosVisita.push(registro);
+      if(existente){
+        var idxExistente = state.relatoriosVisita.findIndex(function(x){ return x.id === existente.id; });
+        state.relatoriosVisita[idxExistente] = registro;
+      } else {
+        state.relatoriosVisita.push(registro);
+      }
       saveRelatoriosVisita();
       fecharDiaModal();
       renderRelatoriosVisitaLista();
@@ -2612,13 +2657,14 @@
     var box = document.getElementById('diaModalBox');
     box.classList.add('dia-modal-grande');
     box.innerHTML =
-      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<span style="background:var(--amber-soft);color:var(--ink);border:1px solid var(--amber);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;">💡 Aperte <b>Ctrl+P</b> (ou <b>Cmd+P</b> no Mac) agora e escolha "Salvar como PDF" no destino da impressão.</span>'+
-        '<button class="btn small secondary" id="btnFecharPdfRV">Fechar</button>'+
+      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; gap:8px; flex-wrap:wrap;">'+
+        '<span class="hint">Toque em "🖨️ Imprimir / PDF" — no celular abre a opção de salvar/compartilhar como PDF.</span>'+
+        '<div style="display:flex; gap:6px;"><button class="btn small" id="btnImprimirRV">🖨️ Imprimir / PDF</button><button class="btn small secondary" id="btnFecharPdfRV">Fechar</button></div>'+
       '</div>'+
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfRV').onclick = fecharDiaModal;
+    document.getElementById('btnImprimirRV').onclick = function(){ window.print(); };
   }
 
   function renderRelatoriosVisitaLista(){
@@ -2672,11 +2718,15 @@
         conteudoHtml+
         plantasListHtml+
         '<div class="acts">'+
+          '<button type="button" class="btn-editar-relatorio" data-id="'+r.id+'">Ver/editar</button>'+
           '<button type="button" class="btn-pdf-relatorio" data-id="'+r.id+'">📄 PDF</button>'+
           (podeExcluir ? '<button type="button" class="btn-remover-relatorio" data-id="'+r.id+'" style="color:var(--red); font-size:11px;">Excluir</button>' : '')+
         '</div>'+
       '</div>';
     }).join('');
+    lista.querySelectorAll('.btn-editar-relatorio').forEach(function(btn){
+      btn.onclick = function(){ abrirFormRelatorioVisita(btn.getAttribute('data-id')); };
+    });
     lista.querySelectorAll('.btn-pdf-relatorio').forEach(function(btn){
       btn.onclick = function(){
         var r = state.relatoriosVisita.find(function(x){ return x.id === btn.getAttribute('data-id'); });
@@ -3126,13 +3176,14 @@
     var box = document.getElementById('diaModalBox');
     box.classList.add('dia-modal-grande');
     box.innerHTML =
-      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<span style="background:var(--amber-soft);color:var(--ink);border:1px solid var(--amber);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;">💡 Aperte <b>Ctrl+P</b> (ou <b>Cmd+P</b> no Mac) agora e escolha "Salvar como PDF" no destino da impressão.</span>'+
-        '<button class="btn small secondary" id="btnFecharPdfCI">Fechar</button>'+
+      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; gap:8px; flex-wrap:wrap;">'+
+        '<span class="hint">Toque em "🖨️ Imprimir / PDF" — no celular abre a opção de salvar/compartilhar como PDF.</span>'+
+        '<div style="display:flex; gap:6px;"><button class="btn small" id="btnImprimirCI">🖨️ Imprimir / PDF</button><button class="btn small secondary" id="btnFecharPdfCI">Fechar</button></div>'+
       '</div>'+
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfCI').onclick = fecharDiaModal;
+    document.getElementById('btnImprimirCI').onclick = function(){ window.print(); };
   }
 
   function renderConsideracoesIniciaisLista(){
@@ -3340,17 +3391,63 @@
       '</div>';
   }
 
+  var TOPICOS_PROJETOS = [
+    { id:'quadro', label:'Quadro de tarefas', icone:'🗂️' },
+    { id:'calendario', label:'Calendário', icone:'📅' },
+    { id:'comissao', label:'Comissão', icone:'💰' },
+    { id:'clientes', label:'Clientes', icone:'👥', gerente:true },
+    { id:'consideracoes', label:'Considerações iniciais', icone:'📋', permissao:'consideracaoInicial' },
+    { id:'relatorios', label:'Relatórios de visita', icone:'📝', permissao:'relatorioVisita' },
+    { id:'art', label:'ART', icone:'📐', permissao:'art' },
+    { id:'status', label:'Status por cliente', icone:'🔍', gerente:true },
+    { id:'config', label:'Configurações', icone:'⚙️', gerente:true }
+  ];
+  var topicoProjetosAtivo = 'quadro';
+
+  function podeVerTopicoProjetos(t){
+    if(t.gerente) return !modoDesenhista;
+    if(t.permissao) return !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{})[t.permissao];
+    return true;
+  }
+
+  function aplicarTopicoProjetos(){
+    document.querySelectorAll('#projetosConteudo [data-topico]').forEach(function(el){
+      el.style.display = (el.getAttribute('data-topico') === topicoProjetosAtivo) ? '' : 'none';
+    });
+  }
+
+  function ativarTopicoProjetos(id){
+    topicoProjetosAtivo = id;
+    var wrap = document.getElementById('topicoNavWrapProjetos');
+    if(wrap) wrap.classList.add('mostrando-conteudo');
+    renderNavProjetos();
+  }
+
+  function renderNavProjetos(){
+    var nav = document.getElementById('topicoNavProjetos');
+    if(!nav) return;
+    var visiveis = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos);
+    if(!visiveis.some(function(t){ return t.id === topicoProjetosAtivo; })){
+      topicoProjetosAtivo = visiveis[0] ? visiveis[0].id : 'quadro';
+    }
+    nav.innerHTML = visiveis.map(function(t){
+      return '<div class="topico-nav-item'+(t.id===topicoProjetosAtivo?' active':'')+'" data-topico-nav="'+t.id+'">'+t.icone+' '+escapeHtml(t.label)+'</div>';
+    }).join('');
+    nav.querySelectorAll('[data-topico-nav]').forEach(function(el){
+      el.onclick = function(){ ativarTopicoProjetos(el.getAttribute('data-topico-nav')); };
+    });
+    aplicarTopicoProjetos();
+  }
+
   function render(){
     renderTeam();
     renderTipos();
     renderFerias();
     renderProjetistasContas();
-    atualizarVisibilidadeRelatorios();
     renderRelatoriosVisitaLista();
-    atualizarVisibilidadeConsideracoes();
     renderConsideracoesIniciaisLista();
-    atualizarVisibilidadeArt();
     renderRegistrosArtLista();
+    renderNavProjetos();
     renderProjetosList();
     renderFilters();
     renderBoard();
@@ -3547,10 +3644,48 @@
     });
   }
 
+  var TOPICOS_FINANCEIRO = [
+    { id:'usuarios', label:'Usuários com acesso', icone:'👥' },
+    { id:'clientes', label:'Clientes', icone:'💳' },
+    { id:'resumo', label:'Resumo geral', icone:'📊' },
+    { id:'fechamentos', label:'Fechamentos por mês', icone:'📅' },
+    { id:'recebido', label:'Valor recebido', icone:'💵' },
+    { id:'comissao', label:'Comissão', icone:'🎯' },
+    { id:'calendario', label:'Calendário', icone:'🗓️' },
+    { id:'graficos', label:'Gráficos', icone:'📈' }
+  ];
+  var topicoFinanceiroAtivo = 'clientes';
+
+  function aplicarTopicoFinanceiro(){
+    document.querySelectorAll('#financeiroConteudo [data-topico-fin]').forEach(function(el){
+      el.style.display = (el.getAttribute('data-topico-fin') === topicoFinanceiroAtivo) ? '' : 'none';
+    });
+  }
+
+  function ativarTopicoFinanceiro(id){
+    topicoFinanceiroAtivo = id;
+    var wrap = document.getElementById('topicoNavWrapFinanceiro');
+    if(wrap) wrap.classList.add('mostrando-conteudo');
+    renderNavFinanceiro();
+  }
+
+  function renderNavFinanceiro(){
+    var nav = document.getElementById('topicoNavFinanceiro');
+    if(!nav) return;
+    nav.innerHTML = TOPICOS_FINANCEIRO.map(function(t){
+      return '<div class="topico-nav-item'+(t.id===topicoFinanceiroAtivo?' active':'')+'" data-topico-nav-fin="'+t.id+'">'+t.icone+' '+escapeHtml(t.label)+'</div>';
+    }).join('');
+    nav.querySelectorAll('[data-topico-nav-fin]').forEach(function(el){
+      el.onclick = function(){ ativarTopicoFinanceiro(el.getAttribute('data-topico-nav-fin')); };
+    });
+    aplicarTopicoFinanceiro();
+  }
+
   function renderFinanceiro(){
     renderUsuariosFin();
     renderFinanceiroResumo();
     renderFinanceiroLista();
+    renderNavFinanceiro();
   }
 
   function renderFinanceiroResumo(){
@@ -4964,6 +5099,10 @@
     }
   };
   document.getElementById('btnBloquearFinanceiro').onclick = function(){ bloquearFinanceiro(); };
+  document.getElementById('btnVoltarTopicoFinanceiro').onclick = function(){
+    var wrap = document.getElementById('topicoNavWrapFinanceiro');
+    if(wrap) wrap.classList.remove('mostrando-conteudo');
+  };
   document.getElementById('lblUsuariosFin').onclick = function(){
     var content = document.getElementById('usuariosFinContent');
     var visible = content.style.display !== 'none';
@@ -5065,13 +5204,14 @@
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
     box.innerHTML =
-      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<span style="background:var(--amber-soft);color:var(--ink);border:1px solid var(--amber);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;">💡 Aperte <b>Ctrl+P</b> (ou <b>Cmd+P</b> no Mac) agora e escolha "Salvar como PDF" no destino da impressão.</span>'+
-        '<button class="btn small secondary" id="btnFecharPdfModal">Fechar</button>'+
+      '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; gap:8px; flex-wrap:wrap;">'+
+        '<span class="hint">Toque em "🖨️ Imprimir / PDF" — no celular abre a opção de salvar/compartilhar como PDF.</span>'+
+        '<div style="display:flex; gap:6px;"><button class="btn small" id="btnImprimirComissao">🖨️ Imprimir / PDF</button><button class="btn small secondary" id="btnFecharPdfModal">Fechar</button></div>'+
       '</div>'+
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfModal').onclick = fecharDiaModal;
+    document.getElementById('btnImprimirComissao').onclick = function(){ window.print(); };
   }
 
   document.getElementById('finComBaixarPdf').onclick = function(){
@@ -5326,6 +5466,10 @@
     statusEl.style.color = 'var(--green)'; statusEl.textContent = 'Senha alterada ✓';
     document.getElementById('inSenhaAtual').value = '';
     document.getElementById('inSenhaNova').value = '';
+  };
+  document.getElementById('btnVoltarTopicoProjetos').onclick = function(){
+    var wrap = document.getElementById('topicoNavWrapProjetos');
+    if(wrap) wrap.classList.remove('mostrando-conteudo');
   };
   document.getElementById('lblEquipe').onclick = function(){
     var content = document.getElementById('teamContent');
