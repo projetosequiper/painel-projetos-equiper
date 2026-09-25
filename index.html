@@ -3369,9 +3369,11 @@
               var d2 = new Date(t.dataConclusao+'T00:00:00');
               dias = Math.round((d2-d1)/86400000);
             }
+            var recFin = (state.financeiro||[]).find(function(f){ return f.cliente === t.cliente; });
+            var valorDisc = recFin ? (recFin.valorPorDisciplina||{})[t.tipo] : null;
             item.innerHTML =
               '<div class="proj">'+escapeHtml(t.projetoNome)+' — '+escapeHtml(t.cliente)+' <span style="color:var(--ink-soft);font-weight:400;">('+escapeHtml(t.tipo)+')</span></div>'+
-              '<div class="desc">Início: '+fmtDate(dataInicio)+' · Concluído: '+fmtDate(t.dataConclusao)+(dias!==null?' · '+dias+(dias===1?' dia':' dias'):'')+'</div>';
+              '<div class="desc">Início: '+fmtDate(dataInicio)+' · Concluído: '+fmtDate(t.dataConclusao)+(dias!==null?' · '+dias+(dias===1?' dia':' dias'):'')+(typeof valorDisc === 'number' ? ' · <b style="color:var(--ink);">'+formatarMoeda(valorDisc)+'</b>' : '')+'</div>';
             corpo.appendChild(item);
           });
         }
