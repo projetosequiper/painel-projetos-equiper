@@ -220,6 +220,8 @@
   .cal-nav{display:flex; align-items:center; gap:8px;}
   .cal-label{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; min-width:150px; text-align:center; color:var(--blue-deep); text-transform:uppercase; letter-spacing:0.5px;}
   .calendar-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; background:transparent; border:none; border-radius:0; overflow:visible;}
+  .cal-zoom-scroll{overflow:auto; -webkit-overflow-scrolling:touch; margin-bottom:6px;}
+  .cal-zoom-controles{display:flex; gap:6px; align-items:center; margin:10px 0;}
   .cal-daylabel{background:transparent; text-align:center; font-family:'Inter',sans-serif; font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); padding:6px 0;}
   .cal-cell{background:var(--sheet); min-height:130px; padding:8px; border-radius:var(--r-sm); border:1px solid var(--border);}
   .cal-cell.tem-tarefa{cursor:pointer;}
@@ -507,7 +509,14 @@
       </div>
       <select id="calFiltroResp"><option value="">Todos os responsáveis</option></select>
     </div>
-    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="cal-zoom-controles">
+      <button class="btn small secondary" id="calZoomOut">− Zoom</button>
+      <span class="hint" id="calZoomLabel">100%</span>
+      <button class="btn small secondary" id="calZoomIn">+ Zoom</button>
+    </div>
+    <div class="cal-zoom-scroll">
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
     <div class="cal-legend" id="calLegend"></div>
   </section>
 
@@ -846,6 +855,14 @@
   var hojeD = new Date();
   var calAno = hojeD.getFullYear();
   var calMes = hojeD.getMonth();
+  var calZoom = (window.innerWidth <= 720) ? 0.62 : 1;
+
+  function aplicarZoomCalendario(){
+    var grid = document.getElementById('calendarGrid');
+    if(grid) grid.style.zoom = calZoom;
+    var label = document.getElementById('calZoomLabel');
+    if(label) label.textContent = Math.round(calZoom*100) + '%';
+  }
   var calFiltroResp = "";
   var resAno = hojeD.getFullYear();
   var resMes = hojeD.getMonth();
@@ -5063,6 +5080,7 @@
     }).join('') +
       '<span><span class="dot" style="background:rgba(0,0,0,0.25);"></span>Fim de semana</span>'+
       '<span><span class="dot" style="background:var(--red);"></span>Feriado (não é possível agendar prazo)</span>';
+    aplicarZoomCalendario();
   }
 
   document.getElementById('btnSincronizarFinanceiro').onclick = async function(){
@@ -5441,6 +5459,8 @@
   document.getElementById('calPrev').onclick = function(){ calMes--; if(calMes<0){calMes=11; calAno--;} renderCalendario(); };
   document.getElementById('calNext').onclick = function(){ calMes++; if(calMes>11){calMes=0; calAno++;} renderCalendario(); };
   document.getElementById('calHoje').onclick = function(){ var h = new Date(); calAno = h.getFullYear(); calMes = h.getMonth(); renderCalendario(); };
+  document.getElementById('calZoomIn').onclick = function(){ calZoom = Math.min(2, Math.round((calZoom + 0.12)*100)/100); aplicarZoomCalendario(); };
+  document.getElementById('calZoomOut').onclick = function(){ calZoom = Math.max(0.4, Math.round((calZoom - 0.12)*100)/100); aplicarZoomCalendario(); };
   document.getElementById('btnNovaReuniao').onclick = function(){ abrirFormReuniao(); };
   document.getElementById('calFiltroResp').addEventListener('change', function(e){ calFiltroResp = e.target.value; renderCalendario(); });
   document.getElementById('diaModalOverlay').addEventListener('click', function(e){
