@@ -1079,48 +1079,27 @@
 
   var projetosFoiCarregadoAlgumaVez = false;
   async function loadAll(){
-    try{
-      var r = await window.storage.get('clm-projetos', true);
-      if(r && r.value){ state.projetos = JSON.parse(r.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; } }
-    try{
-      var r2 = await window.storage.get('clm-tarefas', true);
-      if(r2 && r2.value){ state.tarefas = JSON.parse(r2.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; } }
-    try{
-      var r3 = await window.storage.get('clm-equipe', true);
-      if(r3 && r3.value){ state.equipe = JSON.parse(r3.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; } }
+    function buscarChave(chave){
+      return window.storage.get(chave, true).then(function(r){ return r ? r.value : null; }).catch(function(){ return null; });
+    }
+    var res = await Promise.all([
+      buscarChave('clm-projetos'), buscarChave('clm-tarefas'), buscarChave('clm-equipe'),
+      buscarChave('clm-tipos'), buscarChave('clm-ferias'), buscarChave('clm-reunioes'),
+      buscarChave('clm-emails-projetistas'), buscarChave('clm-link-painel')
+    ]);
+    var vProjetos=res[0], vTarefas=res[1], vEquipe=res[2], vTipos=res[3], vFerias=res[4], vReunioes=res[5], vEmailsProj=res[6], vLink=res[7];
+
+    if(vProjetos){ try{ state.projetos = JSON.parse(vProjetos); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; }
+    if(vTarefas){ try{ state.tarefas = JSON.parse(vTarefas); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; }
+    if(vEquipe){ try{ state.equipe = JSON.parse(vEquipe); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; }
     if(!state.equipe || state.equipe.length === 0){ state.equipe = EQUIPE_PADRAO.slice(); saveEquipe(); }
-    try{
-      var r4 = await window.storage.get('clm-tipos', true);
-      if(r4 && r4.value){ state.tipos = JSON.parse(r4.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); } }
+    if(vTipos){ try{ state.tipos = JSON.parse(vTipos); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); }
     if(!state.tipos || state.tipos.length === 0){ state.tipos = TIPOS_PADRAO.slice(); }
-    try{
-      var r6 = await window.storage.get('clm-ferias', true);
-      if(r6 && r6.value){ state.ferias = JSON.parse(r6.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; } }
-    try{
-      var r7 = await window.storage.get('clm-reunioes', true);
-      if(r7 && r7.value){ state.reunioes = JSON.parse(r7.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; } }
-    try{
-      var r8 = await window.storage.get('clm-emails-projetistas', true);
-      if(r8 && r8.value){ state.emailsProjetistas = JSON.parse(r8.value); }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.emailsProjetistas = {}; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.emailsProjetistas = {}; } }
-    try{
-      var r5 = await window.storage.get('clm-link-painel', true);
-      if(r5 && r5.value){ state.linkPainel = r5.value; }
-      else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
-    }catch(e){ if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; } }
+    if(vFerias){ try{ state.ferias = JSON.parse(vFerias); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; }
+    if(vReunioes){ try{ state.reunioes = JSON.parse(vReunioes); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; }
+    if(vEmailsProj){ try{ state.emailsProjetistas = JSON.parse(vEmailsProj); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.emailsProjetistas = {}; }
+    if(vLink){ state.linkPainel = vLink; } else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
+
     projetosFoiCarregadoAlgumaVez = true;
     reindexAtivos();
     if(financeiroCarregado){ sincronizarProjetosComFinanceiro(); }
@@ -6205,72 +6184,34 @@
 
   async function prepararHashesEIniciar(){
     var usuarioAutenticado = await prontoAuth;
-    var hashProj = null;
-    try{ var r = await window.storage.get('clm-senha-hash', true); hashProj = r ? r.value : null; }catch(e){ hashProj = null; }
-    if(!hashProj){
-      hashProj = await hashTexto(SENHA_PADRAO);
-      try{ await window.storage.set('clm-senha-hash', hashProj, true); }catch(e){}
-    }
-    senhaHashAtual = hashProj;
 
-    var hashFin = null;
-    try{ var r2 = await window.storage.get('clm-senha-financeiro-hash', true); hashFin = r2 ? r2.value : null; }catch(e){ hashFin = null; }
-    if(!hashFin){
-      hashFin = await hashTexto(SENHA_PADRAO_FINANCEIRO);
-      try{ await window.storage.set('clm-senha-financeiro-hash', hashFin, true); }catch(e){}
-    } else {
-      var hashAntigaEsperada = await hashTexto(SENHA_ANTIGA_FINANCEIRO);
-      if(hashFin === hashAntigaEsperada){
-        hashFin = await hashTexto(SENHA_PADRAO_FINANCEIRO);
-        try{ await window.storage.set('clm-senha-financeiro-hash', hashFin, true); }catch(e){}
-      }
+    function buscarChave(chave){
+      return window.storage.get(chave, true).then(function(r){ return r ? r.value : null; }).catch(function(){ return null; });
     }
-    financeiroHashAtual = hashFin;
 
-    var hashDes = null;
-    try{ var r3 = await window.storage.get('clm-senha-desenhista-hash', true); hashDes = r3 ? r3.value : null; }catch(e){ hashDes = null; }
-    if(!hashDes){
-      hashDes = await hashTexto(SENHA_PADRAO_DESENHISTA);
-      try{ await window.storage.set('clm-senha-desenhista-hash', hashDes, true); }catch(e){}
-    }
-    desenhistaHashAtual = hashDes;
+    var resultados = await Promise.all([
+      buscarChave('clm-emails-projetistas'),
+      buscarChave('clm-email-gerente'),
+      buscarChave('clm-permissoes-projetista'),
+      buscarChave('clm-relatorios-visita'),
+      buscarChave('clm-consideracoes-iniciais'),
+      buscarChave('clm-registros-art'),
+      buscarChave('clm-equipe'),
+      buscarChave('clm-usuarios-financeiro'),
+      buscarChave('clm-emails-financeiro-ind')
+    ]);
+    var vProj = resultados[0], vGer = resultados[1], vPerm = resultados[2], vRel = resultados[3],
+        vCi = resultados[4], vArt = resultados[5], vEq = resultados[6], vUF = resultados[7], vSF = resultados[8];
 
-    try{
-      var rProj = await window.storage.get('clm-emails-projetistas', true);
-      if(rProj && rProj.value){ state.emailsProjetistas = JSON.parse(rProj.value); }
-    }catch(e){}
-    try{
-      var rGer = await window.storage.get('clm-email-gerente', true);
-      if(rGer && rGer.value){ state.emailGerente = rGer.value; }
-    }catch(e){}
-    try{
-      var rPerm = await window.storage.get('clm-permissoes-projetista', true);
-      if(rPerm && rPerm.value){ state.permissoesProjetista = JSON.parse(rPerm.value); }
-    }catch(e){}
-    try{
-      var rRel = await window.storage.get('clm-relatorios-visita', true);
-      if(rRel && rRel.value){ state.relatoriosVisita = JSON.parse(rRel.value); }
-    }catch(e){}
-    try{
-      var rCi = await window.storage.get('clm-consideracoes-iniciais', true);
-      if(rCi && rCi.value){ state.consideracoesIniciais = JSON.parse(rCi.value); }
-    }catch(e){}
-    try{
-      var rArt = await window.storage.get('clm-registros-art', true);
-      if(rArt && rArt.value){ state.registrosArt = JSON.parse(rArt.value); }
-    }catch(e){}
-    try{
-      var rEq = await window.storage.get('clm-equipe', true);
-      if(rEq && rEq.value){ state.equipe = JSON.parse(rEq.value); }
-    }catch(e){}
-    try{
-      var rUF = await window.storage.get('clm-usuarios-financeiro', true);
-      if(rUF && rUF.value){ state.usuariosFinanceiro = JSON.parse(rUF.value); }
-    }catch(e){}
-    try{
-      var rSF = await window.storage.get('clm-emails-financeiro-ind', true);
-      if(rSF && rSF.value){ state.emailsFinanceiroInd = JSON.parse(rSF.value); }
-    }catch(e){}
+    if(vProj){ try{ state.emailsProjetistas = JSON.parse(vProj); }catch(e){} }
+    if(vGer){ state.emailGerente = vGer; }
+    if(vPerm){ try{ state.permissoesProjetista = JSON.parse(vPerm); }catch(e){} }
+    if(vRel){ try{ state.relatoriosVisita = JSON.parse(vRel); }catch(e){} }
+    if(vCi){ try{ state.consideracoesIniciais = JSON.parse(vCi); }catch(e){} }
+    if(vArt){ try{ state.registrosArt = JSON.parse(vArt); }catch(e){} }
+    if(vEq){ try{ state.equipe = JSON.parse(vEq); }catch(e){} }
+    if(vUF){ try{ state.usuariosFinanceiro = JSON.parse(vUF); }catch(e){} }
+    if(vSF){ try{ state.emailsFinanceiroInd = JSON.parse(vSF); }catch(e){} }
 
     if(usuarioAutenticado && !usuarioAutenticado.isAnonymous && usuarioAutenticado.email){
       var emailAtual = usuarioAutenticado.email;
