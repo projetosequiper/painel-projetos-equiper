@@ -170,14 +170,14 @@
   .topico-nav-item:hover{background:var(--paper);}
   .topico-nav-item.active{background:var(--red); color:#fff; font-weight:600;}
   .topico-conteudo-wrap{flex:1; min-width:0;}
-  .topico-voltar-mobile{display:none; margin-bottom:14px;}
+  .topico-voltar-mobile{display:none;}
   @media (max-width:900px){
-    .topico-nav-wrap{flex-direction:column; gap:0;}
-    .topico-nav{width:100%; max-width:100%; position:static; border:none; background:none; padding:0; box-shadow:none;}
-    .topico-nav-item{background:var(--sheet); border:1px solid var(--border); margin-bottom:6px; box-shadow:var(--shadow-sm);}
-    .topico-nav-wrap.mostrando-conteudo .topico-nav{display:none;}
-    .topico-nav-wrap:not(.mostrando-conteudo) .topico-conteudo-wrap{display:none;}
-    .topico-nav-wrap.mostrando-conteudo .topico-voltar-mobile{display:inline-flex;}
+    .topico-nav-wrap{flex-direction:column; gap:10px;}
+    .topico-nav{width:100%; max-width:100%; flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:2px; position:sticky; top:0; z-index:400; box-shadow:var(--shadow-sm);}
+    .topico-nav-item{flex-direction:column; flex:0 0 auto; padding:7px 12px; gap:2px; text-align:center;}
+    .topico-nav-item .topico-nav-label{font-size:9px; white-space:nowrap;}
+    .topico-nav-item .topico-nav-icone{font-size:19px; line-height:1;}
+    .topico-voltar-mobile{display:none !important;}
   }
   .planta-scroll{position:relative; max-height:60vh; overflow:auto; margin-top:6px; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--paper);}
   .planta-wrap{position:relative; display:inline-block; cursor:crosshair;}
@@ -475,7 +475,7 @@
     </div>
   </div>
 
-  <section class="apenas-gerente" data-topico="clientes">
+  <section class="apenas-gerente" data-topico="quadro">
     <h2><span id="lblProjetos" style="cursor:pointer; user-select:none;">▸ Projetos</span> <button class="btn small" id="btnSincronizarFinanceiro">🔄 Sincronizar com Financeiro</button> <button class="btn small secondary" id="btnNovoProjetoAvulso">+ Tarefa avulsa (sem cliente)</button></h2>
     <input type="text" id="buscaProjeto" placeholder="Pesquisar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:8px; width:100%; max-width:320px;" />
     <div id="formPanelProjeto"></div>
@@ -3447,7 +3447,6 @@
     { id:'quadro', label:'Quadro de tarefas', icone:'🗂️' },
     { id:'calendario', label:'Calendário', icone:'📅' },
     { id:'comissao', label:'Comissão', icone:'💰', permissao:'verComissao' },
-    { id:'clientes', label:'Clientes', icone:'👥', gerente:true },
     { id:'consideracoes', label:'Considerações iniciais', icone:'📋', permissao:'consideracaoInicial' },
     { id:'relatorios', label:'Relatórios de visita', icone:'📝', permissao:'relatorioVisita' },
     { id:'art', label:'ART', icone:'📐', permissao:'art' },
@@ -3483,7 +3482,7 @@
       topicoProjetosAtivo = visiveis[0] ? visiveis[0].id : 'quadro';
     }
     nav.innerHTML = visiveis.map(function(t){
-      return '<div class="topico-nav-item'+(t.id===topicoProjetosAtivo?' active':'')+'" data-topico-nav="'+t.id+'">'+t.icone+' '+escapeHtml(t.label)+'</div>';
+      return '<div class="topico-nav-item'+(t.id===topicoProjetosAtivo?' active':'')+'" data-topico-nav="'+t.id+'"><span class="topico-nav-icone">'+t.icone+'</span><span class="topico-nav-label">'+escapeHtml(t.label)+'</span></div>';
     }).join('');
     nav.querySelectorAll('[data-topico-nav]').forEach(function(el){
       el.onclick = function(){ ativarTopicoProjetos(el.getAttribute('data-topico-nav')); };
@@ -3729,7 +3728,7 @@
     var nav = document.getElementById('topicoNavFinanceiro');
     if(!nav) return;
     nav.innerHTML = TOPICOS_FINANCEIRO.map(function(t){
-      return '<div class="topico-nav-item'+(t.id===topicoFinanceiroAtivo?' active':'')+'" data-topico-nav-fin="'+t.id+'">'+t.icone+' '+escapeHtml(t.label)+'</div>';
+      return '<div class="topico-nav-item'+(t.id===topicoFinanceiroAtivo?' active':'')+'" data-topico-nav-fin="'+t.id+'"><span class="topico-nav-icone">'+t.icone+'</span><span class="topico-nav-label">'+escapeHtml(t.label)+'</span></div>';
     }).join('');
     nav.querySelectorAll('[data-topico-nav-fin]').forEach(function(el){
       el.onclick = function(){ ativarTopicoFinanceiro(el.getAttribute('data-topico-nav-fin')); };
