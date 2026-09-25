@@ -173,12 +173,8 @@
   .topico-voltar-mobile{display:none;}
   @media (max-width:900px){
     .topico-nav-wrap{flex-direction:column; gap:0;}
-    .topico-nav{width:auto; max-width:none; flex-direction:row; align-items:center; height:58px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; gap:2px; position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); z-index:5400; box-shadow:var(--shadow-lg);}
-    .topico-nav-item{flex-direction:column; flex:0 0 auto; align-self:center; height:auto; padding:6px 11px; gap:1px; text-align:center;}
-    .topico-nav-item .topico-nav-label{font-size:8.5px; white-space:nowrap;}
-    .topico-nav-item .topico-nav-icone{font-size:17px; line-height:1;}
+    .topico-nav{display:none;}
     .topico-voltar-mobile{display:none !important;}
-    .topico-conteudo-wrap{padding-bottom:60px;}
   }
   .planta-scroll{position:relative; max-height:60vh; overflow:auto; margin-top:6px; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--paper);}
   .planta-wrap{position:relative; display:inline-block; cursor:crosshair;}
@@ -331,11 +327,27 @@
     body.tema-escuro .nav-tabs{background:rgba(28,28,30,0.85);}
   }
   @media (max-width:900px){
-    .nav-tabs{position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); margin-bottom:0; z-index:5500; box-shadow:var(--shadow-lg);}
-    .app{padding-bottom:calc(134px + env(safe-area-inset-bottom, 0px)); padding-top:calc(20px + env(safe-area-inset-top, 0px));}
+    .nav-tabs{display:none;}
+    .app{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)); padding-top:calc(20px + env(safe-area-inset-top, 0px));}
     #botaoTema{top:calc(14px + env(safe-area-inset-top, 0px));}
     input:not([type=checkbox]):not([type=radio]), select, textarea{ font-size:16px !important; }
     .toolbar input[type=text], .toolbar select{ font-size:16px !important; }
+  }
+  .barra-inferior-mobile{display:none;}
+  @media (max-width:900px){
+    .barra-inferior-mobile{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:6000;
+      background:var(--sheet); border-top:1px solid var(--border);
+      padding-bottom:env(safe-area-inset-bottom, 0px);
+      box-shadow:0 -2px 12px rgba(0,0,0,0.08);
+    }
+    .barra-item{flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px 2px 7px; cursor:pointer; color:var(--ink-soft); min-width:0;}
+    .barra-item .barra-icone{font-size:21px; line-height:1;}
+    .barra-item .barra-label{font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+    .barra-item.active{color:var(--red);}
+    .menu-mais-item{padding:12px 8px; font-size:14.5px; cursor:pointer; border-bottom:1px solid var(--border);}
+    .menu-mais-item:last-child{border-bottom:none;}
+    .menu-mais-item:active{background:var(--paper);}
   }
   html{ -webkit-text-size-adjust:100%; }
   html{ color-scheme: light; }
@@ -399,6 +411,7 @@
 <button id="botaoFaceId" type="button" style="display:none;">🔓 Ativar Face ID</button>
 
 <div id="senhaGate"></div>
+<div id="barraInferiorMobile" class="barra-inferior-mobile"></div>
 <div class="app" id="appContainer" style="display:none;">
   <div class="nav-tabs">
     <button class="nav-tab active" id="navProjetos">📋 Projetos</button>
@@ -3514,6 +3527,7 @@
       el.onclick = function(){ ativarTopicoProjetos(el.getAttribute('data-topico-nav')); };
     });
     aplicarTopicoProjetos();
+    renderBarraInferiorMobile();
   }
 
   function render(){
@@ -3760,6 +3774,7 @@
       el.onclick = function(){ ativarTopicoFinanceiro(el.getAttribute('data-topico-nav-fin')); };
     });
     aplicarTopicoFinanceiro();
+    renderBarraInferiorMobile();
   }
 
   function renderFinanceiro(){
@@ -6103,6 +6118,71 @@
     telaLoginUnificado();
   }
 
+  function renderBarraInferiorMobile(){
+    var barra = document.getElementById('barraInferiorMobile');
+    if(!barra) return;
+    var navFinEl = document.getElementById('navFinanceiro');
+    var ehFinanceiro = navFinEl && navFinEl.classList.contains('active');
+    var topicos, ativo;
+    if(ehFinanceiro){
+      topicos = TOPICOS_FINANCEIRO;
+      ativo = topicoFinanceiroAtivo;
+    } else {
+      topicos = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos);
+      ativo = topicoProjetosAtivo;
+    }
+    var principais = topicos.slice(0,4);
+    var resto = topicos.slice(4);
+    var htmlPrincipais = principais.map(function(t){
+      return '<div class="barra-item'+(t.id===ativo?' active':'')+'" data-barra-topico="'+t.id+'"><span class="barra-icone">'+t.icone+'</span><span class="barra-label">'+escapeHtml(t.label)+'</span></div>';
+    }).join('');
+    var maisAtivo = resto.some(function(t){ return t.id === ativo; });
+    var htmlMais = '<div class="barra-item'+(maisAtivo?' active':'')+'" id="barraBtnMais"><span class="barra-icone">⋯</span><span class="barra-label">Mais</span></div>';
+    barra.innerHTML = htmlPrincipais + htmlMais;
+    barra.querySelectorAll('[data-barra-topico]').forEach(function(el){
+      el.onclick = function(){
+        var id = el.getAttribute('data-barra-topico');
+        if(ehFinanceiro){ ativarTopicoFinanceiro(id); } else { ativarTopicoProjetos(id); }
+      };
+    });
+    document.getElementById('barraBtnMais').onclick = function(){ abrirMenuMais(resto, ehFinanceiro); };
+  }
+
+  function abrirMenuMais(resto, ehFinanceiro){
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    box.classList.remove('dia-modal-grande');
+    var htmlResto = resto.map(function(t){
+      return '<div class="menu-mais-item" data-id="'+t.id+'">'+t.icone+' '+escapeHtml(t.label)+'</div>';
+    }).join('');
+    var htmlAreas =
+      '<div class="menu-mais-item" data-area="projetos">📋 Projetos</div>'+
+      '<div class="menu-mais-item" data-area="projetista">👷 Projetista</div>'+
+      '<div class="menu-mais-item" data-area="financeiro">💰 Financeiro</div>';
+    box.innerHTML =
+      '<h3 style="margin:0 0 10px;">Mais opções</h3>'+
+      (resto.length ? '<div>'+htmlResto+'</div><div style="border-top:1px solid var(--border); margin:12px 0;"></div>' : '')+
+      '<div class="hint" style="margin-bottom:6px;">Trocar de área</div>'+
+      htmlAreas;
+    overlay.style.display = 'flex';
+    box.querySelectorAll('.menu-mais-item[data-id]').forEach(function(el){
+      el.onclick = function(){
+        fecharDiaModal();
+        var id = el.getAttribute('data-id');
+        if(ehFinanceiro){ ativarTopicoFinanceiro(id); } else { ativarTopicoProjetos(id); }
+      };
+    });
+    box.querySelectorAll('.menu-mais-item[data-area]').forEach(function(el){
+      el.onclick = function(){
+        fecharDiaModal();
+        var area = el.getAttribute('data-area');
+        if(area === 'projetos'){ document.getElementById('navProjetos').click(); }
+        else if(area === 'projetista'){ document.getElementById('navProjetista').click(); }
+        else { document.getElementById('navFinanceiro').click(); }
+      };
+    });
+  }
+
   function ativarAba(nomeAba){
     var abas = { projetos: 'navProjetos', projetista: 'navProjetista', financeiro: 'navFinanceiro' };
     Object.keys(abas).forEach(function(k){
@@ -6110,6 +6190,7 @@
     });
     document.getElementById('viewProjetos').style.display = (nomeAba === 'projetos' || nomeAba === 'projetista') ? 'block' : 'none';
     document.getElementById('viewFinanceiro').style.display = (nomeAba === 'financeiro') ? 'block' : 'none';
+    renderBarraInferiorMobile();
   }
   function ativarAbaProjetos(){ ativarAba('projetos'); }
   function ativarAbaProjetista(){ ativarAba('projetista'); }
