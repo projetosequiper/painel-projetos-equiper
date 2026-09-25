@@ -172,12 +172,13 @@
   .topico-conteudo-wrap{flex:1; min-width:0;}
   .topico-voltar-mobile{display:none;}
   @media (max-width:900px){
-    .topico-nav-wrap{flex-direction:column; gap:10px;}
-    .topico-nav{width:100%; max-width:100%; flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:2px; position:sticky; top:0; z-index:400; box-shadow:var(--shadow-sm);}
-    .topico-nav-item{flex-direction:column; flex:0 0 auto; padding:7px 12px; gap:2px; text-align:center;}
-    .topico-nav-item .topico-nav-label{font-size:9px; white-space:nowrap;}
-    .topico-nav-item .topico-nav-icone{font-size:19px; line-height:1;}
+    .topico-nav-wrap{flex-direction:column; gap:0;}
+    .topico-nav{width:auto; max-width:none; flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:2px; position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); z-index:5400; box-shadow:var(--shadow-lg);}
+    .topico-nav-item{flex-direction:column; flex:0 0 auto; padding:6px 11px; gap:1px; text-align:center;}
+    .topico-nav-item .topico-nav-label{font-size:8.5px; white-space:nowrap;}
+    .topico-nav-item .topico-nav-icone{font-size:17px; line-height:1;}
     .topico-voltar-mobile{display:none !important;}
+    .topico-conteudo-wrap{padding-bottom:60px;}
   }
   .planta-scroll{position:relative; max-height:60vh; overflow:auto; margin-top:6px; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--paper);}
   .planta-wrap{position:relative; display:inline-block; cursor:crosshair;}
@@ -331,7 +332,7 @@
   }
   @media (max-width:900px){
     .nav-tabs{position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); margin-bottom:0; z-index:5500; box-shadow:var(--shadow-lg);}
-    .app{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)); padding-top:calc(20px + env(safe-area-inset-top, 0px));}
+    .app{padding-bottom:calc(134px + env(safe-area-inset-bottom, 0px)); padding-top:calc(20px + env(safe-area-inset-top, 0px));}
     #botaoTema{top:calc(14px + env(safe-area-inset-top, 0px));}
     input:not([type=checkbox]):not([type=radio]), select, textarea{ font-size:16px !important; }
     .toolbar input[type=text], .toolbar select{ font-size:16px !important; }
@@ -3463,11 +3464,40 @@
     });
   }
 
+  var relatoriosCarregados = false, consideracoesCarregadas = false, artCarregado = false;
+  async function garantirDadosDoTopico(id){
+    if(id === 'relatorios' && !relatoriosCarregados){
+      relatoriosCarregados = true;
+      try{
+        var r = await window.storage.get('clm-relatorios-visita', true);
+        if(r && r.value){ state.relatoriosVisita = JSON.parse(r.value); }
+      }catch(e){}
+      renderRelatoriosVisitaLista();
+    }
+    if(id === 'consideracoes' && !consideracoesCarregadas){
+      consideracoesCarregadas = true;
+      try{
+        var rc = await window.storage.get('clm-consideracoes-iniciais', true);
+        if(rc && rc.value){ state.consideracoesIniciais = JSON.parse(rc.value); }
+      }catch(e){}
+      renderConsideracoesIniciaisLista();
+    }
+    if(id === 'art' && !artCarregado){
+      artCarregado = true;
+      try{
+        var ra = await window.storage.get('clm-registros-art', true);
+        if(ra && ra.value){ state.registrosArt = JSON.parse(ra.value); }
+      }catch(e){}
+      renderRegistrosArtLista();
+    }
+  }
+
   function ativarTopicoProjetos(id){
     topicoProjetosAtivo = id;
     var wrap = document.getElementById('topicoNavWrapProjetos');
     if(wrap) wrap.classList.add('mostrando-conteudo');
     renderNavProjetos();
+    garantirDadosDoTopico(id);
   }
 
   function renderNavProjetos(){
@@ -6193,22 +6223,16 @@
       buscarChave('clm-emails-projetistas'),
       buscarChave('clm-email-gerente'),
       buscarChave('clm-permissoes-projetista'),
-      buscarChave('clm-relatorios-visita'),
-      buscarChave('clm-consideracoes-iniciais'),
-      buscarChave('clm-registros-art'),
       buscarChave('clm-equipe'),
       buscarChave('clm-usuarios-financeiro'),
       buscarChave('clm-emails-financeiro-ind')
     ]);
-    var vProj = resultados[0], vGer = resultados[1], vPerm = resultados[2], vRel = resultados[3],
-        vCi = resultados[4], vArt = resultados[5], vEq = resultados[6], vUF = resultados[7], vSF = resultados[8];
+    var vProj = resultados[0], vGer = resultados[1], vPerm = resultados[2],
+        vEq = resultados[3], vUF = resultados[4], vSF = resultados[5];
 
     if(vProj){ try{ state.emailsProjetistas = JSON.parse(vProj); }catch(e){} }
     if(vGer){ state.emailGerente = vGer; }
     if(vPerm){ try{ state.permissoesProjetista = JSON.parse(vPerm); }catch(e){} }
-    if(vRel){ try{ state.relatoriosVisita = JSON.parse(vRel); }catch(e){} }
-    if(vCi){ try{ state.consideracoesIniciais = JSON.parse(vCi); }catch(e){} }
-    if(vArt){ try{ state.registrosArt = JSON.parse(vArt); }catch(e){} }
     if(vEq){ try{ state.equipe = JSON.parse(vEq); }catch(e){} }
     if(vUF){ try{ state.usuariosFinanceiro = JSON.parse(vUF); }catch(e){} }
     if(vSF){ try{ state.emailsFinanceiroInd = JSON.parse(vSF); }catch(e){} }
