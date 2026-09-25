@@ -173,8 +173,8 @@
   .topico-voltar-mobile{display:none;}
   @media (max-width:900px){
     .topico-nav-wrap{flex-direction:column; gap:0;}
-    .topico-nav{width:auto; max-width:none; flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:2px; position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); z-index:5400; box-shadow:var(--shadow-lg);}
-    .topico-nav-item{flex-direction:column; flex:0 0 auto; padding:6px 11px; gap:1px; text-align:center;}
+    .topico-nav{width:auto; max-width:none; flex-direction:row; align-items:center; height:58px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; gap:2px; position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); z-index:5400; box-shadow:var(--shadow-lg);}
+    .topico-nav-item{flex-direction:column; flex:0 0 auto; align-self:center; height:auto; padding:6px 11px; gap:1px; text-align:center;}
     .topico-nav-item .topico-nav-label{font-size:8.5px; white-space:nowrap;}
     .topico-nav-item .topico-nav-icone{font-size:17px; line-height:1;}
     .topico-voltar-mobile{display:none !important;}
