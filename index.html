@@ -393,7 +393,7 @@
 
 <button id="botaoTema" type="button">🌙 Escuro</button>
 <button id="botaoInstalar" type="button" style="display:none;">⬇ Baixar app</button>
-<button id="botaoFaceId" type="button" style="display:none;" onclick="ativarFaceIdNesteAparelho()">🔓 Ativar Face ID</button>
+<button id="botaoFaceId" type="button" style="display:none;">🔓 Ativar Face ID</button>
 
 <div id="senhaGate"></div>
 <div class="app" id="appContainer" style="display:none;">
@@ -6328,6 +6328,8 @@
       btnInstalarEl.style.display = 'none';
     };
   }
+  var btnFaceIdEl = document.getElementById('botaoFaceId');
+  if(btnFaceIdEl){ btnFaceIdEl.onclick = ativarFaceIdNesteAparelho; }
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js').catch(function(){});
   }
