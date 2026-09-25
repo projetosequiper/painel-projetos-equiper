@@ -5656,6 +5656,18 @@
     montar(false);
   }
 
+  async function criarOuVincularConta(email, senha){
+    try{
+      await _fbAuth.createUserWithEmailAndPassword(email, senha);
+      return { ok:true };
+    }catch(err){
+      if(err && err.code === 'auth/email-already-in-use' && _fbAuth.currentUser && _fbAuth.currentUser.email === email){
+        return { ok:true, vinculado:true };
+      }
+      return { ok:false, erro: traduzErroFirebaseAuth(err) };
+    }
+  }
+
   function traduzErroFirebaseAuth(err){
     var codigo = (err && err.code) || '';
     var mapa = {
@@ -5753,14 +5765,11 @@
         if(!email || email.indexOf('@') === -1){ erroEl.textContent = 'Digite um email válido.'; return; }
         if(s1.length < 6){ erroEl.textContent = 'A senha precisa ter 6+ caracteres.'; return; }
         if(s1 !== s2){ erroEl.textContent = 'As senhas não coincidem.'; return; }
-        try{
-          await _fbAuth.createUserWithEmailAndPassword(email, s1);
-          state.emailGerente = email;
-          await saveEmailGerente();
-          entrarEmProjetos();
-        }catch(err){
-          erroEl.textContent = traduzErroFirebaseAuth(err);
-        }
+        var resultadoPM = await criarOuVincularConta(email, s1);
+        if(!resultadoPM.ok){ erroEl.textContent = resultadoPM.erro; return; }
+        state.emailGerente = email;
+        await saveEmailGerente();
+        entrarEmProjetos();
       };
       return;
     }
@@ -5840,17 +5849,14 @@
         if(!email || email.indexOf('@') === -1){ erroEl.textContent = 'Digite um email válido.'; return; }
         if(s1.length < 6){ erroEl.textContent = 'A senha precisa ter 6+ caracteres.'; return; }
         if(s1 !== s2){ erroEl.textContent = 'As senhas não coincidem.'; return; }
-        try{
-          await _fbAuth.createUserWithEmailAndPassword(email, s1);
-          state.usuariosFinanceiro.push(nome);
-          saveUsuariosFinanceiro();
-          state.emailsFinanceiroInd[nome] = email;
-          await saveEmailsFinanceiroInd();
-          nomeFinanceiroAtual = nome;
-          entrarEmFinanceiro();
-        }catch(err){
-          erroEl.textContent = traduzErroFirebaseAuth(err);
-        }
+        var resultadoFn1 = await criarOuVincularConta(email, s1);
+        if(!resultadoFn1.ok){ erroEl.textContent = resultadoFn1.erro; return; }
+        state.usuariosFinanceiro.push(nome);
+        saveUsuariosFinanceiro();
+        state.emailsFinanceiroInd[nome] = email;
+        await saveEmailsFinanceiroInd();
+        nomeFinanceiroAtual = nome;
+        entrarEmFinanceiro();
       };
       return;
     }
@@ -5921,15 +5927,12 @@
         if(!email || email.indexOf('@') === -1){ erroEl.textContent = 'Digite um email válido.'; return; }
         if(senha.length < 6){ erroEl.textContent = 'A senha precisa ter 6+ caracteres.'; return; }
         if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
-        try{
-          await _fbAuth.createUserWithEmailAndPassword(email, senha);
-          state.emailsFinanceiroInd[nome] = email;
-          await saveEmailsFinanceiroInd();
-          nomeFinanceiroAtual = nome;
-          entrarEmFinanceiro();
-        }catch(err){
-          erroEl.textContent = traduzErroFirebaseAuth(err);
-        }
+        var resultadoFn2 = await criarOuVincularConta(email, senha);
+        if(!resultadoFn2.ok){ erroEl.textContent = resultadoFn2.erro; return; }
+        state.emailsFinanceiroInd[nome] = email;
+        await saveEmailsFinanceiroInd();
+        nomeFinanceiroAtual = nome;
+        entrarEmFinanceiro();
       } else {
         try{
           await _fbAuth.signInWithEmailAndPassword(state.emailsFinanceiroInd[nome], senha);
@@ -6032,15 +6035,12 @@
         if(!email || email.indexOf('@') === -1){ erroEl.textContent = 'Digite um email válido.'; return; }
         if(senha.length < 6){ erroEl.textContent = 'A senha precisa ter 6+ caracteres.'; return; }
         if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
-        try{
-          await _fbAuth.createUserWithEmailAndPassword(email, senha);
-          state.emailsProjetistas[nome] = email;
-          await saveEmailsProjetistas();
-          nomeProjetistaAtual = nome;
-          entrarEmProjetos(true);
-        }catch(err){
-          erroEl.textContent = traduzErroFirebaseAuth(err);
-        }
+        var resultadoPj = await criarOuVincularConta(email, senha);
+        if(!resultadoPj.ok){ erroEl.textContent = resultadoPj.erro; return; }
+        state.emailsProjetistas[nome] = email;
+        await saveEmailsProjetistas();
+        nomeProjetistaAtual = nome;
+        entrarEmProjetos(true);
       } else {
         try{
           await _fbAuth.signInWithEmailAndPassword(state.emailsProjetistas[nome], senha);
