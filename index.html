@@ -322,9 +322,30 @@
   .nav-tab.active{color:#fff; background:var(--red); box-shadow:var(--shadow-sm);}
   .nav-tab:hover:not(.active){background:var(--paper); color:var(--ink);}
   .nav-tab:active{transform:scale(0.97);}
+  .sidebar-desktop{display:none;}
   @media (min-width:901px){
-    .nav-tabs{position:sticky; top:10px; z-index:40; backdrop-filter:blur(8px); background:rgba(255,255,255,0.85);}
-    body.tema-escuro .nav-tabs{background:rgba(28,28,30,0.85);}
+    .nav-tabs{display:none;}
+    .topico-nav{display:none;}
+    body{padding-left:236px;}
+    .sidebar-desktop{
+      display:flex; flex-direction:column; position:fixed; left:0; top:0; bottom:0; width:216px;
+      background:var(--sheet); border-right:1px solid var(--border); padding:22px 14px 14px; z-index:100;
+    }
+    .sidebar-desktop-logo{max-width:100%; height:auto; margin-bottom:22px; padding:0 6px;}
+    .sidebar-desktop-nav{display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto;}
+    .sidebar-desktop-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r-sm); cursor:pointer; font-size:13.5px; font-weight:500; color:var(--ink); transition:background .12s ease;}
+    .sidebar-desktop-item:hover{background:var(--paper);}
+    .sidebar-desktop-item.active{background:var(--red); color:#fff; font-weight:600;}
+    .sidebar-desktop-item .sidebar-desktop-icone{font-size:16px; width:20px; text-align:center;}
+    .sidebar-desktop-separador{height:1px; background:var(--border); margin:10px 4px;}
+    .sidebar-desktop-titulo-grupo{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); padding:10px 12px 4px;}
+    .sidebar-desktop-rodape{border-top:1px solid var(--border); padding-top:12px; margin-top:10px;}
+    .sidebar-desktop-usuario{display:flex; align-items:center; gap:10px; padding:6px 8px; margin-bottom:8px;}
+    .sidebar-desktop-avatar{width:34px; height:34px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;}
+    .sidebar-desktop-usuario-info{min-width:0;}
+    .sidebar-desktop-usuario-nome{font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .sidebar-desktop-usuario-papel{font-size:11px; color:var(--ink-soft);}
+    .sidebar-desktop-rodape .btn{width:100%;}
   }
   @media (max-width:900px){
     .nav-tabs{display:none;}
@@ -412,6 +433,11 @@
 
 <div id="senhaGate"></div>
 <div id="barraInferiorMobile" class="barra-inferior-mobile"></div>
+<div id="sidebarDesktop" class="sidebar-desktop">
+  <img src="" alt="Equiper" class="sidebar-desktop-logo" id="sidebarDesktopLogo">
+  <div class="sidebar-desktop-nav" id="sidebarDesktopNav"></div>
+  <div class="sidebar-desktop-rodape" id="sidebarDesktopRodape"></div>
+</div>
 <div class="app" id="appContainer" style="display:none;">
   <div class="nav-tabs">
     <button class="nav-tab active" id="navProjetos">📋 Projetos</button>
@@ -3528,6 +3554,7 @@
     });
     aplicarTopicoProjetos();
     renderBarraInferiorMobile();
+    renderSidebarDesktop();
   }
 
   function render(){
@@ -3775,6 +3802,7 @@
     });
     aplicarTopicoFinanceiro();
     renderBarraInferiorMobile();
+    renderSidebarDesktop();
   }
 
   function renderFinanceiro(){
@@ -6118,6 +6146,65 @@
     telaLoginUnificado();
   }
 
+  function renderSidebarDesktop(){
+    var sidebar = document.getElementById('sidebarDesktop');
+    if(!sidebar) return;
+    var logoEl = document.getElementById('sidebarDesktopLogo');
+    if(logoEl && !logoEl.src) logoEl.src = LOGO_EQUIPER;
+
+    var navFinEl = document.getElementById('navFinanceiro');
+    var ehFinanceiro = navFinEl && navFinEl.classList.contains('active');
+    var ehProjetista = !ehFinanceiro && modoDesenhista;
+
+    var htmlAreas =
+      '<div class="sidebar-desktop-item'+((!ehFinanceiro && !ehProjetista)?' active':'')+'" data-area="projetos"><span class="sidebar-desktop-icone">📋</span><span>Projetos</span></div>'+
+      '<div class="sidebar-desktop-item'+(ehProjetista?' active':'')+'" data-area="projetista"><span class="sidebar-desktop-icone">👷</span><span>Projetista</span></div>'+
+      '<div class="sidebar-desktop-item'+(ehFinanceiro?' active':'')+'" data-area="financeiro"><span class="sidebar-desktop-icone">💰</span><span>Financeiro</span></div>';
+
+    var topicos, ativo;
+    if(ehFinanceiro){ topicos = TOPICOS_FINANCEIRO; ativo = topicoFinanceiroAtivo; }
+    else { topicos = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos); ativo = topicoProjetosAtivo; }
+
+    var htmlTopicos = topicos.map(function(t){
+      return '<div class="sidebar-desktop-item'+(t.id===ativo?' active':'')+'" data-topico="'+t.id+'"><span class="sidebar-desktop-icone">'+t.icone+'</span><span>'+escapeHtml(t.label)+'</span></div>';
+    }).join('');
+
+    document.getElementById('sidebarDesktopNav').innerHTML =
+      htmlAreas +
+      '<div class="sidebar-desktop-separador"></div>'+
+      '<div class="sidebar-desktop-titulo-grupo">Nesta área</div>'+
+      htmlTopicos;
+
+    sidebar.querySelectorAll('[data-area]').forEach(function(el){
+      el.onclick = function(){
+        var area = el.getAttribute('data-area');
+        if(area === 'projetos'){ document.getElementById('navProjetos').click(); }
+        else if(area === 'projetista'){ document.getElementById('navProjetista').click(); }
+        else { document.getElementById('navFinanceiro').click(); }
+      };
+    });
+    sidebar.querySelectorAll('[data-topico]').forEach(function(el){
+      el.onclick = function(){
+        var id = el.getAttribute('data-topico');
+        if(ehFinanceiro){ ativarTopicoFinanceiro(id); } else { ativarTopicoProjetos(id); }
+      };
+    });
+
+    var nomeAtual, papelAtual, funcaoBloquear;
+    if(ehFinanceiro){ nomeAtual = nomeFinanceiroAtual || 'Financeiro'; papelAtual = 'Financeiro'; funcaoBloquear = bloquearFinanceiro; }
+    else if(ehProjetista){ nomeAtual = nomeProjetistaAtual || 'Projetista'; papelAtual = 'Projetista'; funcaoBloquear = bloquearProjetos; }
+    else { nomeAtual = 'Gerente'; papelAtual = 'Projetos'; funcaoBloquear = bloquearProjetos; }
+    var inicial = (nomeAtual||'?').trim().charAt(0).toUpperCase();
+
+    document.getElementById('sidebarDesktopRodape').innerHTML =
+      '<div class="sidebar-desktop-usuario">'+
+        '<div class="sidebar-desktop-avatar">'+escapeHtml(inicial)+'</div>'+
+        '<div class="sidebar-desktop-usuario-info"><div class="sidebar-desktop-usuario-nome">'+escapeHtml(nomeAtual)+'</div><div class="sidebar-desktop-usuario-papel">'+escapeHtml(papelAtual)+'</div></div>'+
+      '</div>'+
+      '<button class="btn secondary small" id="sidebarDesktopBloquear">🔒 Bloquear</button>';
+    document.getElementById('sidebarDesktopBloquear').onclick = funcaoBloquear;
+  }
+
   function renderBarraInferiorMobile(){
     var barra = document.getElementById('barraInferiorMobile');
     if(!barra) return;
@@ -6191,6 +6278,7 @@
     document.getElementById('viewProjetos').style.display = (nomeAba === 'projetos' || nomeAba === 'projetista') ? 'block' : 'none';
     document.getElementById('viewFinanceiro').style.display = (nomeAba === 'financeiro') ? 'block' : 'none';
     renderBarraInferiorMobile();
+    renderSidebarDesktop();
   }
   function ativarAbaProjetos(){ ativarAba('projetos'); }
   function ativarAbaProjetista(){ ativarAba('projetista'); }
