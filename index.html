@@ -5092,9 +5092,10 @@
     textareaExp.addEventListener('input', function(){
       var real = state.tarefas.find(function(x){ return x.id === taskId; });
       if(!real) return;
+      var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
       var valor = textareaExp.value;
       real.obs = valor;
-      aplicarNaTarefaTransacional(taskId, function(tarefa){ tarefa.obs = valor; });
+      aplicarNaTarefaTransacional(taskId, function(tarefa){ tarefa.obs = valor; }, snapshotAntes);
     });
     document.getElementById('btnFecharObsExpandida').onclick = function(){
       fecharDiaModal();
