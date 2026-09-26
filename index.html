@@ -6301,6 +6301,11 @@
     document.body.classList.toggle('modo-desenhista', modoDesenhista);
     document.getElementById('projetosGate').style.display = 'none';
     document.getElementById('projetosConteudo').style.display = 'block';
+    try{
+      var rPerm = await window.storage.get('clm-permissoes-projetista', true);
+      if(rPerm && rPerm.value){ state.permissoesProjetista = JSON.parse(rPerm.value); }
+    }catch(e){}
+    if(!modoDesenhista){ criarBackupAutomaticoSeNecessario(); }
     if(!projetosCarregado){ loadAll(); projetosCarregado = true; } else { render(); }
   }
 
@@ -6391,17 +6396,15 @@
     var resultados = await Promise.all([
       buscarChave('clm-emails-projetistas'),
       buscarChave('clm-email-gerente'),
-      buscarChave('clm-permissoes-projetista'),
       buscarChave('clm-equipe'),
       buscarChave('clm-usuarios-financeiro'),
       buscarChave('clm-emails-financeiro-ind')
     ]);
-    var vProj = resultados[0], vGer = resultados[1], vPerm = resultados[2],
-        vEq = resultados[3], vUF = resultados[4], vSF = resultados[5];
+    var vProj = resultados[0], vGer = resultados[1],
+        vEq = resultados[2], vUF = resultados[3], vSF = resultados[4];
 
     if(vProj){ try{ state.emailsProjetistas = JSON.parse(vProj); }catch(e){} }
     if(vGer){ state.emailGerente = vGer; }
-    if(vPerm){ try{ state.permissoesProjetista = JSON.parse(vPerm); }catch(e){} }
     if(vEq){ try{ state.equipe = JSON.parse(vEq); }catch(e){} }
     if(vUF){ try{ state.usuariosFinanceiro = JSON.parse(vUF); }catch(e){} }
     if(vSF){ try{ state.emailsFinanceiroInd = JSON.parse(vSF); }catch(e){} }
@@ -6503,6 +6506,5 @@
   };
 
   prepararHashesEIniciar();
-  criarBackupAutomaticoSeNecessario();
 })();
 </script>
