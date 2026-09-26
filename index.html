@@ -6150,7 +6150,7 @@
     var sidebar = document.getElementById('sidebarDesktop');
     if(!sidebar) return;
     var logoEl = document.getElementById('sidebarDesktopLogo');
-    if(logoEl && !logoEl.src) logoEl.src = LOGO_EQUIPER;
+    if(logoEl){ logoEl.src = LOGO_EQUIPER; }
 
     var navFinEl = document.getElementById('navFinanceiro');
     var ehFinanceiro = navFinEl && navFinEl.classList.contains('active');
