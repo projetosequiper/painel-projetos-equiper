@@ -972,15 +972,21 @@
     if(dragState && dragState.moved && dragState.overStatus){
       var draggedMudarStatus = state.tarefas.find(function(x){ return x.id === dragState.taskId; });
       if(draggedMudarStatus){
+        var snapshotAntesStatus = JSON.parse(JSON.stringify(state.tarefas));
         aplicarStatus(draggedMudarStatus, dragState.overStatus);
         reindexAtivos();
-        saveTarefas();
         renderBoard();
+        moverTarefaTransacional(dragState.taskId, { novoStatus: dragState.overStatus }, snapshotAntesStatus);
       }
     } else if(dragState && dragState.moved && dragState.overId){
       var dragged = state.tarefas.find(function(x){ return x.id === dragState.taskId; });
       var alvo = state.tarefas.find(function(x){ return x.id === dragState.overId; });
-      if(dragged && alvo) reordenarArrasto(dragged, alvo, dragState.overPos);
+      if(dragged && alvo){
+        var snapshotAntesReordenar = JSON.parse(JSON.stringify(state.tarefas));
+        reordenarArrasto(dragged, alvo, dragState.overPos);
+        renderBoard();
+        moverTarefaTransacional(dragState.taskId, { tarefaAlvoId: dragState.overId, posicao: dragState.overPos }, snapshotAntesReordenar);
+      }
     }
     if(dragState && dragState.moved){
       justDragged = true;
@@ -1068,9 +1074,132 @@
     var insertIdx = (posicao === 'depois') ? targetIdx + 1 : targetIdx;
     lista.splice(insertIdx, 0, draggedTask);
     lista.forEach(function(t, i){ t.ordem = i; });
-    saveTarefas(); renderBoard();
   }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  // ===== Proteção de concorrência (Grupos A+B+C) via Firebase Transaction real =====
+  // Núcleo: recebe o valor ATUAL do servidor a cada tentativa (inclusive em retries
+  // automáticos do Firebase quando há conflito), nunca uma cópia local antiga.
+  function transacionarTarefas(funcaoDeMudanca){
+    return _fbDb.ref('storage/clm-tarefas').transaction(function(valorAtual){
+      var lista;
+      if(valorAtual === null || valorAtual === undefined || valorAtual === ''){ lista = []; }
+      else { try{ lista = JSON.parse(valorAtual); }catch(e){ return undefined; } }
+      var resultado = funcaoDeMudanca(lista);
+      if(resultado === undefined) return undefined; // aborta a transaction (ex: tarefa não existe mais)
+      return JSON.stringify(resultado);
+    });
+  }
+
+  // Grupos A e C: acha a tarefa pelo id no array vindo do servidor e aplica uma
+  // mudança pontual nela (um campo, ou push/filter num array dela como anexos).
+  // A função de campo NUNCA deve ler state.tarefas nem mexer no DOM — só o
+  // objeto da tarefa que recebe como parâmetro (precisa ser segura pra rodar
+  // mais de uma vez, caso o Firebase precise repetir por conflito).
+  async function aplicarNaTarefaTransacional(taskId, funcaoDeCampo, snapshotParaReverter){
+    var abortadaPorExclusao = false;
+    var res, erro = null;
+    try{
+      res = await transacionarTarefas(function(lista){
+        var idx = lista.findIndex(function(t){ return t.id === taskId; });
+        if(idx === -1){ abortadaPorExclusao = true; return undefined; }
+        funcaoDeCampo(lista[idx]);
+        return lista;
+      });
+    }catch(e){ erro = e; }
+
+    if(erro){
+      if(snapshotParaReverter){ state.tarefas = snapshotParaReverter; }
+      renderBoard();
+      mostrarErroSalvamento('tarefas', function(){ aplicarNaTarefaTransacional(taskId, funcaoDeCampo, snapshotParaReverter); });
+      return;
+    }
+    if(abortadaPorExclusao){
+      if(snapshotParaReverter){ state.tarefas = snapshotParaReverter.filter(function(t){ return t.id !== taskId; }); }
+      renderBoard();
+      mostrarErroSalvamento('essa tarefa foi removida por outra pessoa', null);
+      return;
+    }
+    if(res && res.committed && res.snapshot && res.snapshot.exists()){
+      try{ state.tarefas = JSON.parse(res.snapshot.val()); }catch(e){}
+      renderBoard();
+      return;
+    }
+    if(snapshotParaReverter){ state.tarefas = snapshotParaReverter; }
+    renderBoard();
+    mostrarErroSalvamento('tarefas', function(){ aplicarNaTarefaTransacional(taskId, funcaoDeCampo, snapshotParaReverter); });
+  }
+
+  // Versões de reindexOrdem/reordenarArrasto que operam sobre um array RECEBIDO
+  // (o que vier do servidor a cada tentativa da transaction), nunca sobre
+  // state.tarefas — é isso que garante que a ordem final considera qualquer
+  // mudança concorrente que outra pessoa já tenha gravado.
+  function reindexOrdemNaLista(listaCompleta, status){
+    var sub = listaCompleta.filter(function(t){ return t.status === status; });
+    sub.sort(function(a,b){
+      var oa = (typeof a.ordem === 'number') ? a.ordem : Infinity;
+      var ob = (typeof b.ordem === 'number') ? b.ordem : Infinity;
+      if(oa !== ob) return oa - ob;
+      var byResp = (a.responsavel||'zzz').localeCompare(b.responsavel||'zzz');
+      if(byResp !== 0) return byResp;
+      return (a.prazo||'9999').localeCompare(b.prazo||'9999');
+    });
+    sub.forEach(function(t, i){ t.ordem = i; });
+  }
+  function reordenarNaLista(listaCompleta, tarefaMovida, tarefaAlvoId, posicao){
+    var mesmoStatus = listaCompleta.filter(function(t){ return t.status === tarefaMovida.status; })
+      .sort(function(a,b){ return (a.ordem||0) - (b.ordem||0); });
+    var fromIdx = mesmoStatus.indexOf(tarefaMovida);
+    if(fromIdx !== -1) mesmoStatus.splice(fromIdx, 1);
+    var alvo = mesmoStatus.find(function(t){ return t.id === tarefaAlvoId; });
+    var targetIdx = alvo ? mesmoStatus.indexOf(alvo) : mesmoStatus.length;
+    var insertIdx = (posicao === 'depois') ? targetIdx + 1 : targetIdx;
+    mesmoStatus.splice(insertIdx, 0, tarefaMovida);
+    mesmoStatus.forEach(function(t, i){ t.ordem = i; });
+  }
+
+  // Grupo B: muda o status (mudança de coluna) e/ou reordena dentro da coluna,
+  // sempre recalculando em cima do array vindo do servidor na tentativa atual.
+  async function moverTarefaTransacional(taskId, opcoes, snapshotParaReverter){
+    var abortadaPorExclusao = false;
+    var res, erro = null;
+    try{
+      res = await transacionarTarefas(function(lista){
+        var idx = lista.findIndex(function(t){ return t.id === taskId; });
+        if(idx === -1){ abortadaPorExclusao = true; return undefined; }
+        var tarefa = lista[idx];
+        if(opcoes.novoStatus){
+          aplicarStatus(tarefa, opcoes.novoStatus);
+          reindexOrdemNaLista(lista, 'A fazer');
+          reindexOrdemNaLista(lista, 'Em andamento');
+        } else if(opcoes.tarefaAlvoId){
+          reordenarNaLista(lista, tarefa, opcoes.tarefaAlvoId, opcoes.posicao);
+        }
+        return lista;
+      });
+    }catch(e){ erro = e; }
+
+    if(erro){
+      if(snapshotParaReverter){ state.tarefas = snapshotParaReverter; }
+      renderBoard();
+      mostrarErroSalvamento('tarefas', function(){ moverTarefaTransacional(taskId, opcoes, snapshotParaReverter); });
+      return;
+    }
+    if(abortadaPorExclusao){
+      if(snapshotParaReverter){ state.tarefas = snapshotParaReverter.filter(function(t){ return t.id !== taskId; }); }
+      renderBoard();
+      mostrarErroSalvamento('essa tarefa foi removida por outra pessoa', null);
+      return;
+    }
+    if(res && res.committed && res.snapshot && res.snapshot.exists()){
+      try{ state.tarefas = JSON.parse(res.snapshot.val()); }catch(e){}
+      renderBoard();
+      return;
+    }
+    if(snapshotParaReverter){ state.tarefas = snapshotParaReverter; }
+    renderBoard();
+    mostrarErroSalvamento('tarefas', function(){ moverTarefaTransacional(taskId, opcoes, snapshotParaReverter); });
+  }
 
   var PALETA_CORES = ['#2E6F95','#B5502D','#3F7D4F','#7D4E96','#B5972F','#A13F63','#3D8A82','#6B6B4F'];
   function corDesenhista(nome){
@@ -1817,9 +1946,15 @@
     redimensionarImagem(file, 900, 0.72, function(dataUrl){
       var real = state.tarefas.find(function(x){ return x.id === taskId; });
       if(!real) return;
+      var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
       if(!real.anexos) real.anexos = [];
-      real.anexos.push({ id: uid('anx'), nome: file.name || 'imagem.jpg', tipo:'imagem', dataUrl: dataUrl });
-      saveTarefas(); renderBoard();
+      var novoAnexo = { id: uid('anx'), nome: file.name || 'imagem.jpg', tipo:'imagem', dataUrl: dataUrl };
+      real.anexos.push(novoAnexo);
+      renderBoard();
+      aplicarNaTarefaTransacional(taskId, function(tarefa){
+        if(!tarefa.anexos) tarefa.anexos = [];
+        tarefa.anexos.push(novoAnexo);
+      }, snapshotAntes);
     });
   }
   function adicionarAnexoArquivo(taskId, file){
@@ -1830,9 +1965,15 @@
     reader.onload = function(e){
       var real = state.tarefas.find(function(x){ return x.id === taskId; });
       if(!real) return;
+      var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
       if(!real.anexos) real.anexos = [];
-      real.anexos.push({ id: uid('anx'), nome: file.name, tipo: 'arquivo', dataUrl: e.target.result });
-      saveTarefas(); renderBoard();
+      var novoAnexo = { id: uid('anx'), nome: file.name, tipo: 'arquivo', dataUrl: e.target.result };
+      real.anexos.push(novoAnexo);
+      renderBoard();
+      aplicarNaTarefaTransacional(taskId, function(tarefa){
+        if(!tarefa.anexos) tarefa.anexos = [];
+        tarefa.anexos.push(novoAnexo);
+      }, snapshotAntes);
     };
     reader.readAsDataURL(file);
     return null;
@@ -1888,8 +2029,11 @@
         el.addEventListener('change', function(){
           var real = state.tarefas.find(function(x){ return x.id === t.id; });
           if(!real) return;
-          real.enviado = el.checked;
-          saveTarefas(); renderBoard();
+          var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+          var valor = el.checked;
+          real.enviado = valor;
+          renderBoard();
+          aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.enviado = valor; }, snapshotAntes);
         });
       });
       card.querySelectorAll('.check-comissao-mini').forEach(function(el){
@@ -1910,8 +2054,11 @@
               return;
             }
           }
-          real.comissaoLiberada = el.checked;
-          saveTarefas(); renderBoard();
+          var snapshotAntesCom = JSON.parse(JSON.stringify(state.tarefas));
+          var valorCom = el.checked;
+          real.comissaoLiberada = valorCom;
+          renderBoard();
+          aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.comissaoLiberada = valorCom; }, snapshotAntesCom);
         });
       });
       card.onclick = function(){ if(justDragged) return; minimizados[t.id] = false; renderBoard(); };
@@ -1959,8 +2106,11 @@
       checkEnviado.addEventListener('change', function(){
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
-        real.enviado = checkEnviado.checked;
-        saveTarefas(); renderBoard();
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var valor = checkEnviado.checked;
+        real.enviado = valor;
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.enviado = valor; }, snapshotAntes);
       });
     }
     var checkComissao = card.querySelector('.check-comissao');
@@ -1983,8 +2133,11 @@
             return;
           }
         }
-        real.comissaoLiberada = checkComissao.checked;
-        saveTarefas(); renderBoard();
+        var snapshotAntesCom2 = JSON.parse(JSON.stringify(state.tarefas));
+        var valorCom2 = checkComissao.checked;
+        real.comissaoLiberada = valorCom2;
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.comissaoLiberada = valorCom2; }, snapshotAntesCom2);
       });
     }
     var checkFecharQuadro = card.querySelector('.check-fechar-quadro');
@@ -1994,9 +2147,11 @@
         if(!checkFecharQuadro.checked) return;
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
         real.status = 'Fechar quadro';
         real.quadroFechado = false;
-        saveTarefas(); renderBoard();
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.status = 'Fechar quadro'; tarefa.quadroFechado = false; }, snapshotAntes);
         abrirWhatsAppFecharQuadro(t);
       });
     }
@@ -2006,8 +2161,11 @@
       checkQuadroFechado.addEventListener('change', function(){
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
-        real.quadroFechado = checkQuadroFechado.checked;
-        saveTarefas(); renderBoard();
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var valor = checkQuadroFechado.checked;
+        real.quadroFechado = valor;
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.quadroFechado = valor; }, snapshotAntes);
       });
     }
     var btnWhatsapp = card.querySelector('.btn-whatsapp-quadro');
@@ -2020,8 +2178,10 @@
         e.stopPropagation();
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
         real.status = 'Concluído';
-        saveTarefas(); renderBoard();
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.status = 'Concluído'; }, snapshotAntes);
       });
     }
     card.querySelectorAll('select, input, textarea, button').forEach(function(el){ el.draggable = false; });
@@ -2029,8 +2189,12 @@
       el.addEventListener('change', function(){
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
-        real[el.getAttribute('data-field')] = el.value;
-        saveTarefas(); renderBoard();
+        var campo = el.getAttribute('data-field');
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var valor = el.value;
+        real[campo] = valor;
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa[campo] = valor; }, snapshotAntes);
       });
       el.addEventListener('click', function(e){ e.stopPropagation(); });
     });
@@ -2039,8 +2203,10 @@
       el.addEventListener('blur', function(){
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real) return;
-        real.obs = el.value.trim();
-        saveTarefas();
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var valor = el.value.trim();
+        real.obs = valor;
+        aplicarNaTarefaTransacional(t.id, function(tarefa){ tarefa.obs = valor; }, snapshotAntes);
       });
       el.addEventListener('paste', function(e){
         var items = (e.clipboardData || window.clipboardData).items;
@@ -2094,20 +2260,38 @@
         var anexoId = btn.getAttribute('data-remover-anexo');
         var real = state.tarefas.find(function(x){ return x.id === t.id; });
         if(!real || !real.anexos) return;
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
         real.anexos = real.anexos.filter(function(a){ return a.id !== anexoId; });
-        saveTarefas(); renderBoard();
+        renderBoard();
+        aplicarNaTarefaTransacional(t.id, function(tarefa){
+          if(tarefa.anexos){ tarefa.anexos = tarefa.anexos.filter(function(a){ return a.id !== anexoId; }); }
+        }, snapshotAntes);
       });
     });
     var actions = document.createElement('div'); actions.className = 'actions';
     var idx = STATUSES.indexOf(t.status);
     if(idx > 0){
       var back = document.createElement('button'); back.textContent = '← ' + STATUSES[idx-1];
-      back.onclick = function(){ var real = state.tarefas.find(function(x){return x.id===t.id;}); aplicarStatus(real, STATUSES[idx-1]); reindexAtivos(); saveTarefas(); renderBoard(); };
+      back.onclick = function(){
+        var real = state.tarefas.find(function(x){return x.id===t.id;});
+        if(!real) return;
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var novoStatus = STATUSES[idx-1];
+        aplicarStatus(real, novoStatus); reindexAtivos(); renderBoard();
+        moverTarefaTransacional(t.id, { novoStatus: novoStatus }, snapshotAntes);
+      };
       actions.appendChild(back);
     }
     if(idx !== -1 && idx < STATUSES.length-1){
       var fwd = document.createElement('button'); fwd.textContent = STATUSES[idx+1] + ' →';
-      fwd.onclick = function(){ var real = state.tarefas.find(function(x){return x.id===t.id;}); aplicarStatus(real, STATUSES[idx+1]); reindexAtivos(); saveTarefas(); renderBoard(); };
+      fwd.onclick = function(){
+        var real = state.tarefas.find(function(x){return x.id===t.id;});
+        if(!real) return;
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var novoStatus = STATUSES[idx+1];
+        aplicarStatus(real, novoStatus); reindexAtivos(); renderBoard();
+        moverTarefaTransacional(t.id, { novoStatus: novoStatus }, snapshotAntes);
+      };
       actions.appendChild(fwd);
     }
     var del = document.createElement('button'); del.textContent = 'Excluir'; del.style.color = 'var(--red)';
@@ -4908,8 +5092,9 @@
     textareaExp.addEventListener('input', function(){
       var real = state.tarefas.find(function(x){ return x.id === taskId; });
       if(!real) return;
-      real.obs = textareaExp.value;
-      saveTarefas();
+      var valor = textareaExp.value;
+      real.obs = valor;
+      aplicarNaTarefaTransacional(taskId, function(tarefa){ tarefa.obs = valor; });
     });
     document.getElementById('btnFecharObsExpandida').onclick = function(){
       fecharDiaModal();
@@ -4996,10 +5181,12 @@
     if(calDragState && calDragState.moved && calDragState.overDate){
       var tarefa = state.tarefas.find(function(x){ return x.id === calDragState.taskId; });
       if(tarefa && tarefa.prazo !== calDragState.overDate){
-        tarefa.prazo = calDragState.overDate;
-        saveTarefas();
+        var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
+        var novoPrazo = calDragState.overDate;
+        tarefa.prazo = novoPrazo;
         renderCalendario();
         renderBoard();
+        aplicarNaTarefaTransacional(calDragState.taskId, function(t2){ t2.prazo = novoPrazo; }, snapshotAntes);
       }
     }
     if(calDragState && calDragState.moved){
