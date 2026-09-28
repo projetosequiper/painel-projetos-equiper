@@ -1082,11 +1082,16 @@
   // automáticos do Firebase quando há conflito), nunca uma cópia local antiga.
   function transacionarTarefas(funcaoDeMudanca){
     return _fbDb.ref('storage/clm-tarefas').transaction(function(valorAtual){
+      // O SDK chama esta função primeiro com o cache local, que costuma ser null
+      // (não é o dado real do servidor). Nesse caso não decidimos nada: devolvemos
+      // um valor válido para o SDK conferir com o servidor e chamar de novo com o dado real.
+      if(valorAtual === null || valorAtual === undefined || valorAtual === ''){ return '[]'; }
       var lista;
-      if(valorAtual === null || valorAtual === undefined || valorAtual === ''){ lista = []; }
-      else { try{ lista = JSON.parse(valorAtual); }catch(e){ return undefined; } }
+      try{ lista = JSON.parse(valorAtual); }catch(e){ return undefined; }
       var resultado = funcaoDeMudanca(lista);
-      if(resultado === undefined) return undefined; // aborta a transaction (ex: tarefa não existe mais)
+      // "Tarefa não encontrada": devolve o valor recebido sem mudança (o servidor confere
+      // se ele estava desatualizado e o SDK repete) em vez de abortar às cegas.
+      if(resultado === undefined) return valorAtual;
       return JSON.stringify(resultado);
     });
   }
@@ -1101,6 +1106,7 @@
     var res, erro = null;
     try{
       res = await transacionarTarefas(function(lista){
+        abortadaPorExclusao = false;
         var idx = lista.findIndex(function(t){ return t.id === taskId; });
         if(idx === -1){ abortadaPorExclusao = true; return undefined; }
         funcaoDeCampo(lista[idx]);
@@ -1165,6 +1171,7 @@
     var res, erro = null;
     try{
       res = await transacionarTarefas(function(lista){
+        abortadaPorExclusao = false;
         var idx = lista.findIndex(function(t){ return t.id === taskId; });
         if(idx === -1){ abortadaPorExclusao = true; return undefined; }
         var tarefa = lista[idx];
