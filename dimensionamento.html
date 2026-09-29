@@ -237,14 +237,33 @@ svg.diag{display:block;max-width:none}
 .gas-edit{touch-action:none;user-select:none;-webkit-user-select:none}
 .g-ferr{margin-bottom:8px}
 
-.nav-grupo{display:flex;align-items:center;gap:10px;margin:0;padding:10px 10px 4px;font-weight:600;font-size:15px}
+.nav-grupo{display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:10px 10px;font-weight:600;font-size:15px;background:none;border:0;border-radius:4px;cursor:pointer;text-align:left;color:var(--preto)}
+.nav-grupo:hover{background:var(--cinza-1)}
+.nav-seta{margin-left:auto;color:var(--cinza-3);font-size:12px;transition:transform .15s}
+.nav-g.fechado .nav-seta{transform:rotate(-90deg)}
+.nav-g.fechado .nav-sub{display:none}
+.nav-g.fechado.ativo .nav-grupo{background:var(--preto);color:var(--branco)}
+.nav-g.fechado.ativo .nav-grupo i{background:var(--vermelho);color:var(--branco)}
 .nav-grupo i{font-style:normal;font-family:var(--cond);font-weight:700;font-size:12px;min-width:34px;text-align:center;padding:2px 0;border-radius:3px;background:var(--cinza-1);color:var(--cinza-4)}
-.nav-it.sub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
-.nav-it.sub.on{font-weight:600}
-@media(max-width:900px){.nav-grupo{display:none}.nav-it.sub{padding:8px 10px}.nav-it.sub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.sub[data-mod="est"]::before{content:"Esgoto · "}}
+.nav-it.nsub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
+.nav-it.nsub.on{font-weight:600}
+@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}}
 #es-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 #es-canvas[data-modo="caixa"],#es-canvas[data-modo="saida"]{cursor:crosshair}#es-canvas[data-modo="ligar"]{cursor:alias}#es-canvas[data-modo="apagar"]{cursor:not-allowed}
 .es-item{grid-template-columns:1fr 60px 34px}
+
+.el-cab{padding:12px;display:grid;gap:10px;grid-template-columns:1.3fr 1.5fr 40px;align-items:end}
+.el-cond{padding:0 12px 12px;display:grid;gap:6px;grid-template-columns:1fr 1fr}
+@media(min-width:900px){.el-cond{grid-template-columns:repeat(4,1fr)}}
+.el-lin{display:grid;grid-template-columns:auto 64px 1fr;gap:6px;align-items:center;background:var(--cinza-1);border-radius:4px;padding:6px 8px}
+.el-lin > span{font-size:13px;font-weight:600;color:var(--cinza-4);min-width:44px}
+.el-lin .campo input,.el-lin .campo select{padding:7px 6px;font-size:15px}
+@media(max-width:620px){.el-cab{grid-template-columns:1fr 40px}.el-cab .campo:nth-child(2){grid-column:1/-1;grid-row:2}}
+
+#el-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#el-canvas[data-modo="qd"],#el-canvas[data-modo="cx"]{cursor:crosshair}#el-canvas[data-modo="ligar"]{cursor:alias}#el-canvas[data-modo="apagar"]{cursor:not-allowed}
+.ec-cond{display:grid;gap:6px;margin-bottom:6px}
+.el-de{font-size:13px;color:var(--cinza-4);grid-column:1/-1;margin-top:-4px}
 
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
@@ -502,11 +521,16 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
     <p class="lat-sec">Disciplinas</p>
     <button class="nav-it" type="button" data-mod="hid"><i aria-hidden="true">HID</i>Hidráulica</button>
-    <p class="nav-grupo"><i aria-hidden="true">ESG</i>Esgoto sanitário</p>
-    <button class="nav-it sub" type="button" data-mod="esgoto">Tratamento</button>
-    <button class="nav-it sub" type="button" data-mod="est">Tubulação</button>
+    <div class="nav-g" data-g="esg">
+      <button class="nav-grupo" type="button" data-toggle-g="esg" aria-expanded="true"><i aria-hidden="true">ESG</i>Esgoto sanitário<span class="nav-seta" aria-hidden="true">▾</span></button>
+      <div class="nav-sub">
+        <button class="nav-it nsub" type="button" data-mod="esgoto">Tratamento</button>
+        <button class="nav-it nsub" type="button" data-mod="est">Tubulação</button>
+      </div>
+    </div>
     <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás</button>
     <button class="nav-it" type="button" data-mod="plu"><i aria-hidden="true">PLU</i>Água pluvial</button>
+    <button class="nav-it" type="button" data-mod="ele"><i aria-hidden="true">ELE</i>Elétrica</button>
   </nav>
   <div class="lat-obra" id="lat-obra"></div>
   <div class="lat-arq">
@@ -655,6 +679,64 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Nº do documento<input id="t-doc" autocomplete="off" placeholder="Ex.: MC-ESG-002"></label>
         <label class="campo c2">Revisão<input id="t-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="t-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= ELÉTRICA ================= -->
+  <section class="modulo" id="mod-ele" hidden>
+    <h1>Elétrica · eletrodutos</h1>
+    <p class="sub">Diâmetro dos eletrodutos de alimentação pela quantidade e bitola dos cabos e pela taxa de ocupação.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="ele"> Esta obra não terá dimensionamento de eletrodutos</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Dados de projeto</h2>
+      <div class="grade">
+        <label class="campo c3">Cabo padrão<select id="el-cabo"><option value="Gsette">Gsette Easy 0,6/1 kV (usar normalmente)</option><option value="Superastic">Superastic Flex 450/750 V</option><option value="Sintenax_Flex">Sintenax Flex 1 kV</option><option value="Afumex_Flex">Afumex Flex 0,6/1 kV</option></select></label>
+        <label class="campo c3">Taxa de ocupação<select id="el-taxa"><option value="planilha">Planilha Equiper: 40% (mais de 3 cabos) · 33% (até 3)</option><option value="nbr">NBR 5410: 53% (1 cabo) · 31% (2) · 40% (3 ou mais)</option></select></label>
+      </div>
+    </section>
+    <div class="params p4" id="el-params"></div>
+    <section class="etapas">
+      <h2>Rede</h2>
+      <p>Marque os quadros e as caixas no desenho e ligue um no outro; em cada ligação (eletroduto) informe a quantidade e a bitola dos fios.</p>
+      <article class="etapa">
+        <div class="num">1</div>
+        <div>
+          <div class="etapa-cab"><h3>Desenho</h3><span class="nbr">atalhos: V selecionar · Q quadro · C caixa · L ligar · A apagar</span></div>
+          <div class="pl-ferr ec-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+            <button type="button" data-modo="sel">↖ Selecionar</button>
+            <button type="button" data-modo="qd">◩ Quadro de distribuição</button>
+            <button type="button" data-modo="cx">⊠ Caixa de passagem</button>
+            <button type="button" data-modo="ligar">— Ligar (eletroduto)</button>
+            <button type="button" data-modo="apagar">✕ Apagar</button>
+          </div>
+          <p class="pl-modo" id="ec-modo-dica"></p>
+          <div class="pl-tela-env"><div class="pl-tela" id="ec-tela"><svg id="el-canvas" xmlns="http://www.w3.org/2000/svg"></svg></div><div class="pl-pop hd-pop" id="ec-pop" hidden></div></div>
+        </div>
+      </article>
+      <article class="etapa">
+        <div class="num">2</div>
+        <div><div class="etapa-cab"><h3>Condutores por eletroduto</h3><span class="nbr">os trechos do desenho aparecem aqui; dá para lançar outros sem desenho</span></div>
+          <div class="lista" id="el-lista"></div>
+          <button class="add" type="button" id="el-add">Adicionar alimentador</button></div>
+      </article>
+      <article class="etapa">
+        <div class="num">3</div>
+        <div><div class="etapa-cab"><h3>Quadro de eletrodutos</h3></div><div class="rolar" id="el-quadro"></div></div>
+      </article>
+      <article class="etapa">
+        <div class="num">4</div>
+        <div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="el-memorial"></div></div>
+      </article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="l-resp"></select></label>
+        <label class="campo c2">Nº do documento<input id="l-doc" autocomplete="off" placeholder="Ex.: MC-ELE-001"></label>
+        <label class="campo c2">Revisão<input id="l-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="l-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
     </section>
   </section>
@@ -966,7 +1048,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <button class="btn" id="cli-novo-ok" type="button">Criar cliente</button>
     </div>
     <p class="fonte" id="cli-conta"></p>
-    <p class="cli-legenda"><span class="abrev">HID</span> Hidráulica <span class="abrev">ESG</span> Esgoto (tratamento e tubulação) <span class="abrev">GÁS</span> Gás <span class="abrev">PLU</span> Pluvial · <span class="abrev">ok</span> feito <span class="abrev falha">!</span> revisar <span class="abrev pend">…</span> não iniciado <span class="abrev na">n/a</span> não se aplica</p>
+    <p class="cli-legenda"><span class="abrev">HID</span> Hidráulica <span class="abrev">ESG</span> Esgoto (tratamento e tubulação) <span class="abrev">GÁS</span> Gás <span class="abrev">PLU</span> Pluvial <span class="abrev">ELE</span> Elétrica · <span class="abrev">ok</span> feito <span class="abrev falha">!</span> revisar <span class="abrev pend">…</span> não iniciado <span class="abrev na">n/a</span> não se aplica</p>
   </div>
   <div id="cli-lista"></div>
 </main>
@@ -1092,7 +1174,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false},
+    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, ele:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1100,6 +1182,7 @@ function estadoNovo(){
     gas:{gas:"GN", material:"cobre", classe:"E", L:20,
       pontos:[], trechos:[], modelo:2, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    ele:{cabo:"Gsette", taxa:"planilha", els:[], alims:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     est:{decl:1, dmin:100, caixas:[], saidas:[], ligacoes:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     plu:{I:250, i:1, n:0.011, lamina:"23", dmin:100, caixas:[], saidas:[], ligacoes:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""}
   };
@@ -1119,10 +1202,11 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","est"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","est","ele"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     plu:{...b.plu, ...lim(o.plu)},
     est:{...b.est, ...lim(o.est)},
+    ele:{...b.ele, ...lim(o.ele)},
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
         if(e.tipo!=="pt") return e;
@@ -1952,8 +2036,9 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele";
   if(m==="est") renderEst();
+  if(m==="ele") atualizarEle();
   if(m==="plu") renderPluvial();
   if(m==="hid") renderHid();
   aplicarNA();
@@ -1963,6 +2048,11 @@ function trocarModulo(m){
 function resumo(){
   if(S.naoAplica?.[S.modulo]){ $("resumo").innerHTML = `<span class="pilula">Não se aplica</span>`; return; }
   let itens;
+  if(S.modulo==="ele"){
+    const R = S.ele.alims.map(calcAlim), f = R.filter(r=>r.erro||!r.rig?.ok||!r.kan?.ok).length;
+    $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${R.length} alimentador${R.length!==1?"es":""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.length ? "Todos dimensionados" : ""}</span>`;
+    return;
+  }
   if(S.modulo==="est"){
     const R = calcEst(), f = R.trechos.filter(t=>t.erro).length + R.semSaida.length;
     $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${S.est.caixas.length} caixa${S.est.caixas.length!==1?"s":""} · ${R.trechos.length} trecho${R.trechos.length!==1?"s":""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.trechos.length ? "Todos dimensionados" : ""}</span>`;
@@ -1991,20 +2081,20 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","plu","hid"].forEach(m=>{
+  ["esgoto","est","gas","plu","hid","ele"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco","local"]) $(k).value = O[k] ?? "";
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.est, S.gas, S.plu, S.hid].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); aplicarNA();
 }
 
 let avisoT;
@@ -2053,7 +2143,7 @@ function ligar(){
   // Obra
   for(const k of ["cliente","endereco","local"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","est"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","est","ele"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2175,14 +2265,14 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : relEsgoto());
     window.print();
   });
   $("novo").addEventListener("click", ()=>{
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -2193,7 +2283,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -2201,9 +2291,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU"};
-const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Gás", plu:"Água pluvial"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}];
+const ABREV = {hid:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE"};
+const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Gás", plu:"Água pluvial", ele:"Elétrica · eletrodutos"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -2255,6 +2345,10 @@ function resumoObra(dados){
       const res = calcRede(), a = res.find(r=>r.tipo==="principal");
       out.push({mod:"gas", det:`${S.gas.gas} · ${S.gas.trechos.length} trecho(s), ${S.gas.pontos.length} ponto(s)${a && !a.erro ? ` · saída do medidor ${rotDiam(a.d)}` : ""}`, ok: res.length>0 && !res.some(r=>r.erro)});
     }
+    if(S.ele.alims.length){
+      const R = S.ele.alims.map(calcAlim);
+      out.push({mod:"ele", det:`${R.length} alimentador(es) · maior ${(()=>{ const m = R.filter(r=>r.rig?.ok).sort((a,b)=>b.rig.maxP-a.rig.maxP)[0]; return m?`rígido ${m.rig.txt}`:"—"; })()}`, ok: R.every(r=>!r.erro && r.rig?.ok && r.kan?.ok)});
+    }
     if(S.est.caixas.length){
       const R = calcEst(), fim = [...R.trechos].sort((a,b)=>b.uhc-a.uhc)[0];
       out.push({mod:"est", det:`${S.est.caixas.length} caixa(s), ${R.trechos.length} trecho(s)${fim&&fim.dn?` · coletor DN ${fim.dn} (${fmt(fim.uhc,0)} UHC)`:""}`, ok: R.trechos.length>0 && !R.trechos.some(t=>t.erro) && !R.semSaida.length});
@@ -2296,12 +2390,21 @@ function statusCliente(lista){                      // lista de statusObra das o
   return {st: out, cont};
 }
 /* ---------- Navegação ---------- */
+function ligarGruposNav(){
+  let fech = []; try{ fech = JSON.parse(localStorage.getItem("equiper-nav-fechados")) || []; }catch(e){}
+  document.querySelectorAll(".nav-g").forEach(g=>{ g.classList.toggle("fechado", fech.includes(g.dataset.g)); g.querySelector(".nav-grupo").setAttribute("aria-expanded", !fech.includes(g.dataset.g)); });
+  document.querySelectorAll("[data-toggle-g]").forEach(b=>b.addEventListener("click", ()=>{
+    const g = b.closest(".nav-g"), f = !g.classList.contains("fechado"); g.classList.toggle("fechado", f); b.setAttribute("aria-expanded", !f);
+    try{ localStorage.setItem("equiper-nav-fechados", JSON.stringify([...document.querySelectorAll(".nav-g.fechado")].map(x=>x.dataset.g))); }catch(e){}
+  }));
+}
 function marcarNav(){
   const cli = !$("tela-clientes").hidden;
   document.querySelectorAll(".nav-it").forEach(b=>{
     const on = cli ? b.dataset.view==="clientes" : b.dataset.mod===S.modulo;
     b.classList.toggle("on", on); b.setAttribute("aria-current", on ? "page" : "false");
   });
+  document.querySelectorAll(".nav-g").forEach(g=>g.classList.toggle("ativo", !cli && !!g.querySelector(`[data-mod="${S.modulo}"]`)));
 }
 function abrirClientes(){
   $("tela-clientes").hidden = false; document.querySelector(".app").hidden = true;
@@ -2324,7 +2427,7 @@ function abrirObraBib(id, mod){
 }
 function novaObraCliente(nome, mod){
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -2455,7 +2558,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
 }
@@ -3811,6 +3914,333 @@ function relEst(){
 }
 
 /* =====================================================================
+   ELÉTRICA · ELETRODUTOS (planilha "Tabela dimensionamento duto")
+   ===================================================================== */
+// Diâmetro nominal externo (mm) por seção (mm²), conforme catálogos da planilha
+const CABOS = {
+  Gsette:        {t:"Gsette Easy 0,6/1 kV", d:{1.5:4.8,2.5:5.2,4:5.7,6:6.3,10:7.4,16:9,25:10.3,35:12.4,50:13.8,70:15.7,95:17.6,120:19.2,150:21.8,185:23.6,240:26.6,300:30.6,400:34,500:38.3}},
+  Superastic:    {t:"Superastic Flex 450/750 V", d:{1:2.5,1.5:2.9,2.5:3.5,4:4,6:4.6,10:5.9,16:7.5,25:8.6,35:10.6,50:12,70:13.7,95:15.8,120:17.3,150:19.6,185:21.5,240:24.4,300:29.2}},
+  Sintenax_Flex: {t:"Sintenax Flex 1 kV", d:{1.5:5,2.5:5.4,4:6.5,6:7.1,10:8,16:9.6,25:11,35:13.1,50:14.7,70:16.4,95:18.7,120:21.1,150:22.7,185:24.8,240:29.1}},
+  Afumex_Flex:   {t:"Afumex Flex 0,6/1 kV", d:{1.5:4.8,2.5:5.2,4:5.7,6:6.2,10:7.4,16:9,25:10.3,35:12.4,50:13.8,70:15.7,95:17.5,120:19.2,150:21.7,185:23.6,240:26.6,300:30.6,400:34.3,500:38.6}}
+};
+// Eletrodutos: bitola (polegadas) e diâmetro interno (mm) — aba "Dutos"
+const DUTOS = {
+  rigido:   {t:"Eletroduto rígido roscável (Tigre)", l:[[0.5,16.4],[0.75,21.3],[1,27.5],[1.25,36.1],[1.5,41.4],[2,52.8],[2.5,67.1],[3,79.6],[4,103.1]]},
+  kanaflex: {t:"Kanaflex (PEAD corrugado)",           l:[[1.25,31.5],[1.5,43],[2,50.8],[3,75],[4,103],[5,128],[6,155],[7,176],[8,205]]}
+};
+const POL = {0.5:'1/2"',0.75:'3/4"',1:'1"',1.25:'1.1/4"',1.5:'1.1/2"',2:'2"',2.5:'2.1/2"',3:'3"',4:'4"',5:'5"',6:'6"',7:'7"',8:'8"'};
+const areaCirc = d => Math.PI*d*d/4;
+const LINHAS_ELE = [{k:"fase", t:"Fase"},{k:"neutro", t:"Neutro"},{k:"terra", t:"Terra"},{k:"outros", t:"Outros"}];
+function taxaOcup(n){
+  if(S.ele.taxa==="nbr") return n<=1 ? 0.53 : n===2 ? 0.31 : 0.40;
+  return n>3 ? 0.40 : 0.33;
+}
+function calcAlim(a){
+  const cabo = CABOS[a.cabo || S.ele.cabo] || CABOS.Gsette, linhas = [];
+  let area = 0, n = 0, erro = null;
+  LINHAS_ELE.forEach(L=>{
+    const q = Math.max(0, Math.round(num(a[L.k]?.q))), b = num(a[L.k]?.b); if(!q) return;
+    const d = cabo.d[b]; if(d==null){ erro = `Bitola ${fmt(b,1)} mm² não existe no ${cabo.t}`; return; }
+    const ar = areaCirc(d)*q; area += ar; n += q; linhas.push({...L, q, b, d, ar});
+  });
+  const taxa = taxaOcup(n), nec = n ? area/taxa : 0;
+  const individuais = linhas.flatMap(l=>Array.from({length:l.q}, ()=>({ar:areaCirc(l.d), b:l.b, t:l.t})));
+  const esc = tipo => escDuto(tipo, individuais, nec);
+  return {a, cabo, linhas, area, n, taxa, nec, rig: n?esc("rigido"):null, kan: n?esc("kanaflex"):null, erro: erro || (!n ? "Sem cabos" : null), nome: nomeAlim(a)};
+}
+const nomeAlim = a => a.nome || (a.de && a.para ? `${nomeEc(a.de)} → ${nomeEc(a.para)}` : "Alimentador");
+// Escolhe o eletroduto; se os fios não couberem no maior, completa o maior e acrescenta outra tubulação para o excedente
+function escDuto(tipo, cabos, necTotal){
+  const l = DUTOS[tipo].l.map(([p,di])=>({p, di, A:areaCirc(di)})), maior = l[l.length-1];
+  const nec = g => g.reduce((s,c)=>s+c.ar,0) / taxaOcup(g.length);
+  const mk = (duto, g) => { const area = g.reduce((s,c)=>s+c.ar,0); return {duto, cabos:g, n:g.length, area, taxa:taxaOcup(g.length), nec:nec(g), ocup:area/duto.A}; };
+  let resto = [...cabos].sort((a,b)=>b.ar-a.ar); const tubos = []; let erro = null;
+  while(resto.length){
+    const cabe = l.find(x=>x.A >= nec(resto) - 1e-9);
+    if(cabe){ tubos.push(mk(cabe, resto)); break; }
+    const g = [], sobra = [];
+    resto.forEach(c=>{ if(nec([...g, c]) <= maior.A + 1e-9) g.push(c); else sobra.push(c); });
+    if(!g.length){ erro = "cabo maior que o maior eletroduto"; break; }
+    tubos.push(mk(maior, g)); resto = sobra;
+  }
+  if(!tubos.length) return {ok:null, tubos, erro: erro || "sem cabos"};
+  const cont = {}; tubos.forEach(t=>{ cont[t.duto.p] = (cont[t.duto.p]||0) + 1; });
+  const txt = Object.keys(cont).map(Number).sort((a,b)=>b-a).map(p=>`${cont[p]>1?cont[p]+"× ":""}${POL[p]}`).join(" + ");
+  const abaixo = tubos.length===1 ? [...l].reverse().find(x=>x.A < necTotal) : null;
+  return {ok: erro ? null : tubos[0].duto, tubos, txt, multi: tubos.length>1, erro, abaixo, ocup: tubos[0].ocup,
+    ocupTxt: tubos.map(t=>`${fmt(t.ocup*100,0)}%`).join(" / "), maxP: Math.max(...tubos.map(t=>t.duto.p))};
+}
+function opcoesBitola(cabo, sel){ const c = CABOS[cabo] || CABOS.Gsette; return Object.keys(c.d).map(Number).sort((x,y)=>x-y).map(b=>`<option value="${b}" ${num(sel)===b?"selected":""}>${fmt(b,b<10&&b%1?1:0)} mm²</option>`).join(""); }
+function renderEleLista(){
+  const E = S.ele;
+  $("el-lista").innerHTML = E.alims.length ? E.alims.map((a,i)=>{ const cab = a.cabo || E.cabo; return `
+    <div class="trecho el-al" data-id="${a.id}">
+      <div class="el-cab">
+        <label class="campo">Alimentador / trecho<input data-ef="nome" value="${esc(a.nome)}" placeholder="${a.de&&a.para?esc(`${nomeEc(a.de)} → ${nomeEc(a.para)}`):"Ex.: QDG → QD1"}"></label>
+        <label class="campo">Cabo<select data-ef="cabo"><option value="">Padrão (${CABOS[E.cabo].t})</option>${Object.entries(CABOS).map(([k,v])=>`<option value="${k}" ${a.cabo===k?"selected":""}>${v.t}</option>`).join("")}</select></label>
+        <button class="x" type="button" data-rm aria-label="Remover alimentador">×</button>
+      </div>
+      <div class="el-cond">${LINHAS_ELE.map(L=>`<div class="el-lin" data-k="${L.k}"><span>${L.t}</span>
+        <label class="campo"><span class="sr">Quantidade de ${L.t}</span><input data-q type="number" min="0" step="1" inputmode="numeric" value="${esc(a[L.k]?.q ?? "")}" placeholder="0"></label>
+        <label class="campo"><span class="sr">Bitola de ${L.t}</span><select data-b>${opcoesBitola(cab, a[L.k]?.b)}</select></label></div>`).join("")}</div>
+      <div class="tr-res" data-res></div>
+    </div>`; }).join("") : `<p class="vazio">Nenhum alimentador. Use “Adicionar alimentador”.</p>`;
+  atualizarEle();
+}
+function atualizarEle(){
+  const E = S.ele, R = E.alims.map(calcAlim);
+  if($("el-canvas")) renderEcCanvas();
+  document.querySelectorAll("#el-lista .el-al").forEach(el=>{
+    const r = R.find(x=>x.a.id===el.dataset.id); if(!r) return;
+    const bloco = (t, d) => `<div class="tr-diam ${!d||!d.ok?"falha":""}"><small>${t}</small><strong>${d&&d.ok?d.txt:"—"}</strong><em>${d&&d.ok?`${d.ocupTxt} ocupado${d.multi?` · ${d.tubos.length} tubulações`:""}`:(r.erro||d?.erro||"excesso de cabos")}</em></div>`;
+    el.querySelector("[data-res]").innerHTML = `<div><small>Cabos</small><strong>${r.n}</strong></div>
+      <div><small>Área dos cabos</small><strong>${fmt(r.area,0)}</strong><em>mm²</em></div>
+      <div><small>Taxa · área necessária</small><strong>${fmt(r.taxa*100,0)}%</strong><em>${fmt(r.nec,0)} mm²</em></div>
+      ${bloco("Eletroduto rígido", r.rig)}${bloco("Kanaflex", r.kan)}`;
+  });
+  $("el-quadro").innerHTML = R.length ? `<table class="quadro"><thead><tr><th>Alimentador</th><th>Condutores</th><th class="n">Área (mm²)</th><th class="n">Taxa</th><th class="n">Necessária (mm²)</th><th>Rígido</th><th>Kanaflex</th></tr></thead><tbody>
+    ${R.map(r=>`<tr><td>${esc(r.nome)}</td><td>${r.linhas.map(l=>`${l.q}×${fmt(l.b,l.b%1?1:0)}`).join(" + ")||"—"} <span style="color:var(--cinza-4)">mm²</span></td><td class="n">${fmt(r.area,0)}</td><td class="n">${fmt(r.taxa*100,0)}%</td><td class="n">${fmt(r.nec,0)}</td>
+      <td class="d ${r.rig?.ok?"":"falha"}">${r.rig?.ok?r.rig.txt:"—"}</td><td class="d ${r.kan?.ok?"":"falha"}">${r.kan?.ok?r.kan.txt:"—"}</td></tr>`).join("")}</tbody></table>
+    <p class="fonte">Área de cada cabo = π·D²/4 com o diâmetro externo do catálogo. Área necessária = área dos cabos ÷ taxa de ocupação. Eletroduto = menor diâmetro interno com área igual ou maior que a necessária; se os fios passarem do maior eletroduto, o maior é preenchido e outra tubulação é acrescentada para o excedente.</p>` : `<p class="vazio">Adicione alimentadores para ver o quadro.</p>`;
+  $("el-memorial").innerHTML = memorialEle(R);
+  $("el-params").innerHTML = [["Cabo padrão", CABOS[E.cabo].t.split(" ")[0], ""], ["Alimentadores", String(E.alims.length), ""], ["Regra de ocupação", E.taxa==="nbr"?"NBR":"Equiper", ""], ["Pendências", String(R.filter(r=>r.erro||!r.rig?.ok||!r.kan?.ok).length), ""]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  return R;
+}
+function memorialEle(R){
+  const E = S.ele; if(!R.length) return `<p class="vazio">Adicione alimentadores para ver o memorial.</p>`;
+  let h = `<div class="mc-bloco"><h4>Critério</h4><p class="mc-l">Área ocupada = Σ (quantidade × π × D<sub>ext</sub>² / 4) · Área necessária = área ocupada ÷ taxa de ocupação</p>
+    <p class="mc-l">Taxa de ocupação: ${E.taxa==="nbr" ? "53% para 1 cabo, 31% para 2 cabos e 40% para 3 ou mais (NBR 5410)" : "40% para mais de 3 cabos e 33% para até 3 cabos (planilha Equiper)"}</p></div>`;
+  h += R.map(r=>`<div class="mc-bloco"><h4>${esc(r.nome)}<span>${esc(r.cabo.t)}</span></h4>
+    ${r.linhas.map(l=>`<p class="mc-l">${l.t}: ${l.q} × π × ${fmt(l.d,1)}² / 4 = ${fmt(l.ar,1)} mm² <em>(${fmt(l.b,l.b%1?1:0)} mm², Ø ext. ${fmt(l.d,1)} mm)</em></p>`).join("")}
+    <p class="mc-l"><b>1.</b> Área ocupada = <b>${fmt(r.area,1)} mm²</b> · ${r.n} cabo(s) → taxa ${fmt(r.taxa*100,0)}%</p>
+    <p class="mc-l"><b>2.</b> Área necessária = ${fmt(r.area,1)} / ${fmt(r.taxa,2)} = <b>${fmt(r.nec,1)} mm²</b></p>
+    ${["rigido","kanaflex"].map((k,ix)=>{ const d = k==="rigido"?r.rig:r.kan; if(!d) return ""; const nn = ix ? "4" : "3";
+      if(!d.ok) return `<p class="mc-l"><b>${nn}.</b> ${DUTOS[k].t}: <span class="mc-aviso">${esc(d.erro||"sem eletroduto")}</span></p>`;
+      if(!d.multi) return `<p class="mc-l"><b>${nn}.</b> ${DUTOS[k].t}: ${d.abaixo?`${POL[d.abaixo.p]} (Di ${fmt(d.abaixo.di,1)} mm, ${fmt(d.abaixo.A,0)} mm²) não atende; `:""}adotado <b>${POL[d.ok.p]}</b> (Di ${fmt(d.ok.di,1)} mm, ${fmt(d.ok.A,0)} mm² ≥ ${fmt(r.nec,0)} mm², ocupação real ${fmt(d.ocup*100,0)}%)</p>`;
+      return `<p class="mc-l"><b>${nn}.</b> ${DUTOS[k].t}: a área necessária passa do maior eletroduto (${POL[DUTOS[k].l[DUTOS[k].l.length-1][0]]}); os fios foram divididos em <b>${d.tubos.length} tubulações (${d.txt})</b>:</p>
+        ${d.tubos.map((t,j)=>{ const g = {}; t.cabos.forEach(c=>{ const key = `${c.t} ${fmt(c.b,c.b%1?1:0)}`; g[key] = (g[key]||0)+1; });
+          return `<p class="mc-l" style="padding-left:18px">Tubo ${j+1}: ${Object.entries(g).map(([kk,v])=>`${v}× ${kk}`).join(" + ")} mm² → ${fmt(t.area,0)} mm² ÷ ${fmt(t.taxa*100,0)}% = ${fmt(t.nec,0)} mm² → <b>${POL[t.duto.p]}</b> (${fmt(t.duto.A,0)} mm², ocupação ${fmt(t.ocup*100,0)}%)</p>`; }).join("")}`; }).join("")}
+    ${r.erro&&r.n?`<p class="mc-l mc-aviso">${esc(r.erro)}</p>`:""}</div>`).join("");
+  return h;
+}
+function preencherEle(){ const E = S.ele; E.els = E.els || []; EC.sel = null; EC.origem = null; ecFecharPop(); $("el-cabo").value = E.cabo; $("el-taxa").value = E.taxa; $("l-doc").value = E.doc; $("l-rev").value = E.rev; $("l-obs").value = E.obs; renderEleLista(); }
+function ligarEle(){
+  const E = () => S.ele;
+  $("el-cabo").addEventListener("change", e=>{ E().cabo = e.target.value; renderEleLista(); resumo(); salvar(); });
+  $("el-taxa").addEventListener("change", e=>{ E().taxa = e.target.value; atualizarEle(); resumo(); salvar(); });
+  for(const k of ["doc","rev","obs"]) $("l-"+k).addEventListener("input", e=>{ E()[k]=e.target.value; salvar(); });
+  $("el-add").addEventListener("click", ()=>{
+    const ult = E().alims[E().alims.length-1];
+    E().alims.push({id:uid(), nome:`Alimentador ${E().alims.length+1}`, cabo: ult?.cabo||"", fase:{q:3,b:ult?.fase?.b||10}, neutro:{q:1,b:ult?.neutro?.b||10}, terra:{q:1,b:ult?.terra?.b||10}, outros:{q:0,b:2.5}});
+    renderEleLista(); resumo(); salvar();
+    const ins = document.querySelectorAll('#el-lista [data-ef="nome"]'); ins[ins.length-1]?.select();
+  });
+  const lista = $("el-lista");
+  const upd = e=>{
+    const el = e.target.closest(".el-al"); if(!el) return; const a = E().alims.find(x=>x.id===el.dataset.id); if(!a) return;
+    const t = e.target;
+    if(t.dataset.ef){ a[t.dataset.ef] = t.value; if(t.dataset.ef==="cabo"){ renderEleLista(); resumo(); salvar(); return; } }
+    const lin = t.closest(".el-lin");
+    if(lin){ const k = lin.dataset.k; a[k] = a[k] || {q:0,b:2.5}; if(t.hasAttribute("data-q")) a[k].q = t.value; if(t.hasAttribute("data-b")) a[k].b = num(t.value); }
+    atualizarEle(); resumo(); salvar();
+  };
+  lista.addEventListener("input", upd); lista.addEventListener("change", e=>{ if(e.target.tagName==="SELECT") upd(e); });
+  lista.addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; const id = e.target.closest(".el-al").dataset.id;
+    E().alims = E().alims.filter(x=>x.id!==id); renderEleLista(); resumo(); salvar(); });
+}
+/* ---------- Elétrica: desenho (quadros e caixas; cada ligação é um eletroduto) ---------- */
+let EC = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null, pop:null, k:null};
+const EC_SNAP = 20;
+const MODOS_EC = {
+  sel:"Clique num quadro, caixa ou eletroduto para editar; arraste para mover. Delete apaga o selecionado.",
+  qd:"Clique no desenho para colocar um quadro de distribuição.",
+  cx:"Clique no desenho para colocar uma caixa de passagem.",
+  ligar:"Clique num quadro ou caixa e depois no outro para criar o eletroduto entre eles. Clicando no vazio, uma caixa é criada na ponta.",
+  apagar:"Clique num quadro, caixa ou eletroduto para apagar."
+};
+function ecPonto(ev){ const svg = $("el-canvas"), p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return {x:q.x, y:q.y, sx:Math.round(q.x/EC_SNAP)*EC_SNAP, sy:Math.round(q.y/EC_SNAP)*EC_SNAP}; }
+function ecProxNome(tipo){ const E = S.ele, pre = tipo==="qd" ? (E.els.some(e=>e.tipo==="qd") ? "QD" : "QDG") : "CP"; if(pre==="QDG") return "QDG";
+  let k=1; const n = new Set(E.els.map(e=>e.nome)); while(n.has(`${pre}-${k}`)) k++; return `${pre}-${k}`; }
+const nomeEc = id => S.ele.els.find(e=>e.id===id)?.nome || "?";
+const condTxt = r => r.linhas.map(l=>`${l.q}×${fmt(l.b,l.b%1?1:0)}`).join(" + ");
+function ecDesenho(interativo){
+  const E = S.ele, els = E.els, out = [], selId = EC.sel && EC.sel.id;
+  const W = Math.max(900, ...els.map(e=>e.x+220)), H = Math.max(480, ...els.map(e=>e.y+160));
+  const raio = e => e.tipo==="qd" ? 34 : 18;
+  E.alims.filter(a=>a.de && a.para).forEach(a=>{
+    const A = els.find(e=>e.id===a.de), B = els.find(e=>e.id===a.para); if(!A||!B) return;
+    const r = calcAlim(a), err = !!r.erro || !r.rig?.ok, sel = selId===a.id;
+    const dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L;
+    const x1=A.x+ux*raio(A), y1=A.y+uy*raio(A), x2=B.x-ux*raio(B), y2=B.y-uy*raio(B), mx=(x1+x2)/2, my=(y1+y2)/2;
+    let ang = Math.atan2(dy,dx)*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
+    const longo = Math.hypot(x2-x1,y2-y1) >= 150;
+    out.push(`<g class="ec-tb ${err?"err":""} ${sel?"sel":""}" data-tipo="alim" data-id="${a.id}">
+      ${interativo?`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="hit"/>`:""}
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tb"/>
+      <g transform="translate(${mx} ${my}) rotate(${ang})">
+        <text y="-8" class="tdm" text-anchor="middle">${r.rig?.ok?`Ø ${r.rig.txt}`:"Ø ?"}${longo&&r.kan?.ok?` · K ${r.kan.txt}`:""}</text>
+        ${longo?`<text y="16" class="tar" text-anchor="middle">${condTxt(r)||"sem cabos"} mm²</text>`:""}</g></g>`);
+  });
+  els.forEach(e=>{
+    const sel = selId===e.id, ori = EC.origem===e.id;
+    if(e.tipo==="qd") out.push(`<g class="ec-el ${sel?"sel":""} ${ori?"ori":""}" data-tipo="el" data-id="${e.id}" transform="translate(${e.x} ${e.y})">
+      <rect x="-34" y="-20" width="68" height="40" class="qd"/><path d="M-34 20 L34 -20" class="qd2"/><path d="M-34 20 L34 -20 L34 20 Z" class="qd3"/>
+      <text y="-28" class="cn" text-anchor="middle">${esc(e.nome)}</text></g>`);
+    else out.push(`<g class="ec-el ${sel?"sel":""} ${ori?"ori":""}" data-tipo="el" data-id="${e.id}" transform="translate(${e.x} ${e.y})">
+      <rect x="-16" y="-16" width="32" height="32" class="cxe"/><path d="M-16 -16 L16 16 M16 -16 L-16 16" class="cxe2"/>
+      <text x="22" y="-10" class="cn">${esc(e.nome)}</text></g>`);
+  });
+  if(interativo && EC.modo==="ligar" && EC.origem && EC.mouse){ const o = els.find(e=>e.id===EC.origem); if(o) out.push(`<line x1="${o.x}" y1="${o.y}" x2="${EC.mouse.x}" y2="${EC.mouse.y}" class="elast"/>`); }
+  let vb = `0 0 ${W} ${H}`;
+  if(!interativo && els.length){ const xs = els.map(e=>e.x), ys = els.map(e=>e.y); const x0=Math.min(...xs)-110, y0=Math.min(...ys)-60, x1=Math.max(...xs)+110, y1=Math.max(...ys)+60; vb = `${x0} ${y0} ${x1-x0} ${y1-y0}`; }
+  const grade = interativo ? `<defs><pattern id="ec-grade" width="${EC_SNAP}" height="${EC_SNAP}" patternUnits="userSpaceOnUse"><circle cx="0" cy="0" r="1" fill="#cfcfcf"/></pattern></defs><rect x="0" y="0" width="${W}" height="${H}" fill="url(#ec-grade)" data-tipo="fundo"/>` : "";
+  return {vb, W, H, svg:`${grade}<style>.tb{stroke:#000;stroke-width:2.2}.ec-tb.err .tb{stroke:#d10a1e;stroke-dasharray:6 4}.ec-tb.sel .tb{stroke:#d10a1e;stroke-width:3.5}
+    .hit{stroke:transparent;stroke-width:16;cursor:pointer}.tdm{font:700 16px 'Barlow Condensed',Arial,sans-serif;fill:#000}.ec-tb.err .tdm{fill:#d10a1e}.tar{font:500 13px Barlow,Arial,sans-serif;fill:#555}
+    .qd{fill:#fff;stroke:#000;stroke-width:2}.qd2{stroke:#000;stroke-width:1}.qd3{fill:#000}.cxe{fill:#fff;stroke:#000;stroke-width:2}.cxe2{stroke:#000;stroke-width:1}
+    .ec-el.sel .qd,.ec-el.sel .cxe{stroke:#d10a1e;stroke-width:3}.ec-el.ori .qd,.ec-el.ori .cxe{fill:#fde7ea;stroke:#d10a1e}
+    .cn{font:700 17px 'Barlow Condensed',Arial,sans-serif;fill:#d10a1e}.cn,.tdm,.tar{paint-order:stroke;stroke:#fafafa;stroke-width:4px;stroke-linejoin:round}
+    .elast{stroke:#d10a1e;stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none}.ec-el{cursor:pointer}</style>${out.join("")}`};
+}
+function renderEcCanvas(){
+  const d = ecDesenho(true), svg = $("el-canvas");
+  svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
+  const larg = svg.parentElement.clientWidth; if(larg>0) EC.k = Math.min(1.2, (larg-2)/900);
+  svg.style.width = `${d.W*(EC.k||1)}px`; svg.innerHTML = d.svg; svg.dataset.modo = EC.modo;
+  $("ec-modo-dica").textContent = MODOS_EC[EC.modo] + (EC.modo==="ligar" && EC.origem ? ` Origem: ${nomeEc(EC.origem)}. Esc cancela.` : "");
+  document.querySelectorAll(".ec-ferr [data-modo]").forEach(b=>b.classList.toggle("on", b.dataset.modo===EC.modo));
+  ecPosPop();
+}
+function htmlPopEc(){
+  const E = S.ele, a = EC.pop; if(!a) return "";
+  const fechar = `<button class="x" type="button" data-cp-fechar aria-label="Fechar">×</button>`;
+  if(a.tipo==="el"){ const e = E.els.find(x=>x.id===a.id); if(!e) return "";
+    const ligs = E.alims.filter(x=>x.de===e.id||x.para===e.id);
+    return `<div class="pl-pop-cab"><label class="campo">${e.tipo==="qd"?"Quadro de distribuição":"Caixa de passagem"}<input data-ce="nome" value="${esc(e.nome)}"></label>${fechar}</div>
+      <p class="dica" style="margin:0">${ligs.length ? `Eletrodutos: ${ligs.map(x=>esc(x.nome||`${nomeEc(x.de)} → ${nomeEc(x.para)}`)).join(", ")}.` : "Nenhum eletroduto ligado. Use a ferramenta Ligar."}</p>
+      <div class="pl-pop-rod"><button class="btn peq" type="button" data-cp-fechar>Concluir</button></div>`; }
+  const al = E.alims.find(x=>x.id===a.id); if(!al) return "";
+  const cab = al.cabo || E.cabo;
+  return `<div class="pl-pop-cab"><label class="campo">Eletroduto ${esc(nomeEc(al.de))} → ${esc(nomeEc(al.para))}<input data-cf="nome" value="${esc(al.nome)}" placeholder="Identificação"></label>${fechar}</div>
+    <label class="campo">Cabo<select data-cf="cabo"><option value="">Padrão (${CABOS[E.cabo].t})</option>${Object.entries(CABOS).map(([k,v])=>`<option value="${k}" ${al.cabo===k?"selected":""}>${v.t}</option>`).join("")}</select></label>
+    <p class="hp-sub">Fios neste trecho</p>
+    <div class="ec-cond">${LINHAS_ELE.map(L=>`<div class="el-lin" data-k="${L.k}"><span>${L.t}</span>
+      <label class="campo"><span class="sr">Quantidade</span><input data-q type="number" min="0" step="1" inputmode="numeric" value="${esc(al[L.k]?.q ?? "")}" placeholder="0"></label>
+      <label class="campo"><span class="sr">Bitola</span><select data-b>${opcoesBitola(cab, al[L.k]?.b)}</select></label></div>`).join("")}</div>
+    <dl class="pl-tot" data-cres></dl>
+    <div class="pl-pop-rod"><button class="btn peq" type="button" data-cp-fechar>Concluir</button></div>`;
+}
+function ecResPop(){
+  const dl = $("ec-pop").querySelector("[data-cres]"); if(!dl || EC.pop?.tipo!=="alim") return;
+  const al = S.ele.alims.find(x=>x.id===EC.pop.id); if(!al) return; const r = calcAlim(al);
+  dl.innerHTML = `<dt>Cabos · área</dt><dd>${r.n} · ${fmt(r.area,0)} mm²</dd><dt>Taxa · necessária</dt><dd>${fmt(r.taxa*100,0)}% · ${fmt(r.nec,0)} mm²</dd>
+    <dt>Eletroduto rígido</dt><dd class="${r.rig?.ok?"":"mc-aviso"}"><b style="font-size:18px">${r.rig?.ok?r.rig.txt:"—"}</b>${r.rig?.ok?` · ${r.rig.ocupTxt}`:""}</dd>
+    <dt>Kanaflex</dt><dd class="${r.kan?.ok?"":"mc-aviso"}"><b>${r.kan?.ok?r.kan.txt:"—"}</b>${r.kan?.ok?` · ${r.kan.ocupTxt}`:""}</dd>${r.erro&&r.n?`<dt></dt><dd class="mc-aviso">${esc(r.erro)}</dd>`:""}`;
+}
+function ecAbrirPop(tipo, id, focar){
+  EC.pop = {tipo, id}; EC.sel = {tipo, id}; renderEcCanvas();
+  const pop = $("ec-pop"); pop.innerHTML = htmlPopEc(); pop.hidden = false; ecResPop(); ecPosPop();
+  if(focar) setTimeout(()=>{ const i = pop.querySelector('[data-k="fase"] [data-q],[data-ce="nome"]'); i?.focus(); i?.select?.(); }, 30);
+}
+function ecFecharPop(){ EC.pop = null; const p = $("ec-pop"); if(p){ p.hidden = true; p.innerHTML = ""; } }
+function ecPosPop(){
+  const pop = $("ec-pop"); if(!EC.pop || pop.hidden) return;
+  const g = document.querySelector(`#el-canvas [data-id="${EC.pop.id}"]`), env = pop.parentElement; if(!g) return;
+  const rg = g.getBoundingClientRect(), re = env.getBoundingClientRect();
+  let left = rg.right - re.left + 12; if(left + pop.offsetWidth > re.width) left = rg.left - re.left - pop.offsetWidth - 12;
+  pop.style.left = Math.max(8, Math.min(left, re.width - pop.offsetWidth - 8))+"px"; pop.style.top = Math.max(8, rg.top - re.top - 20)+"px";
+}
+function ecAlterou(){ renderEleLista(); resumo(); salvar(); }
+function ecApagar(tipo, id){
+  const E = S.ele;
+  if(tipo==="el"){ const n = E.alims.filter(a=>a.de===id||a.para===id).length;
+    if(n && !confirm(`Apagar ${nomeEc(id)} e ${n} eletroduto${n>1?"s":""} ligado${n>1?"s":""} a ele?`)) return;
+    E.els = E.els.filter(e=>e.id!==id); E.alims = E.alims.filter(a=>a.de!==id && a.para!==id); }
+  if(tipo==="alim") E.alims = E.alims.filter(a=>a.id!==id);
+  if(EC.sel?.id===id) EC.sel = null; if(EC.origem===id) EC.origem = null; if(EC.pop?.id===id) ecFecharPop();
+  ecAlterou();
+}
+function novoAlim(de, para){
+  const E = S.ele, ult = [...E.alims].reverse().find(a=>a.fase);
+  const a = {id:uid(), nome:"", de, para, cabo: ult?.cabo||"", fase:{q:ult?.fase?.q ?? 3, b:ult?.fase?.b||10}, neutro:{q:ult?.neutro?.q ?? 1, b:ult?.neutro?.b||10}, terra:{q:ult?.terra?.q ?? 1, b:ult?.terra?.b||10}, outros:{q:0,b:2.5}};
+  E.alims.push(a); return a;
+}
+function ligarEleCanvas(){
+  const E = () => S.ele;
+  document.querySelectorAll(".ec-ferr [data-modo]").forEach(b=>b.addEventListener("click", ()=>{ EC.modo = b.dataset.modo; EC.origem = null; if(EC.modo!=="sel") ecFecharPop(); renderEcCanvas(); }));
+  addEventListener("keydown", e=>{
+    if(S.modulo!=="ele" || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
+    const mapa = {v:"sel", q:"qd", c:"cx", l:"ligar", a:"apagar"};
+    if(e.key==="Escape"){ EC.origem = null; EC.sel = null; ecFecharPop(); renderEcCanvas(); return; }
+    if((e.key==="Delete"||e.key==="Backspace") && EC.sel){ e.preventDefault(); ecApagar(EC.sel.tipo, EC.sel.id); return; }
+    if(mapa[e.key.toLowerCase()] && !e.ctrlKey && !e.metaKey){ EC.modo = mapa[e.key.toLowerCase()]; EC.origem = null; renderEcCanvas(); }
+  });
+  const svg = $("el-canvas");
+  const novoEl = (tipo, pt) => { const e = {id:uid(), tipo, nome:ecProxNome(tipo), x:pt.sx, y:pt.sy}; E().els.push(e); return e; };
+  svg.addEventListener("pointerdown", ev=>{
+    const alvo = ev.target.closest("[data-tipo]"), tipo = alvo?.dataset.tipo, id = alvo?.dataset.id, pt = ecPonto(ev);
+    if(EC.modo==="qd" || EC.modo==="cx"){
+      if(tipo==="el"||tipo==="alim"){ ecAbrirPop(tipo, id, true); return; }
+      ecFecharPop(); const e = novoEl(EC.modo, pt); ecAlterou(); ecAbrirPop("el", e.id, true); return;
+    }
+    if(EC.modo==="ligar"){
+      if(!EC.origem){ if(tipo==="el"){ EC.origem = id; EC.mouse = pt; renderEcCanvas(); } return; }
+      let dest = id;
+      if(tipo!=="el"){ if(tipo==="alim"){ EC.origem = null; renderEcCanvas(); return; } dest = novoEl("cx", pt).id; }
+      if(dest===EC.origem) return;
+      let a = E().alims.find(x=>(x.de===EC.origem&&x.para===dest)||(x.de===dest&&x.para===EC.origem));
+      if(!a) a = novoAlim(EC.origem, dest);
+      EC.origem = dest; ecAlterou(); ecAbrirPop("alim", a.id, true); return;
+    }
+    if(EC.modo==="apagar"){ if(tipo==="el"||tipo==="alim") ecApagar(tipo, id); return; }
+    if(!tipo || tipo==="fundo"){ EC.sel = null; ecFecharPop(); renderEcCanvas(); return; }
+    if(tipo==="alim"){ ecAbrirPop("alim", id, false); return; }
+    const obj = E().els.find(x=>x.id===id); EC.sel = {tipo, id};
+    EC.arrasto = {obj, dx: obj.x-pt.x, dy: obj.y-pt.y, moveu:false}; svg.setPointerCapture(ev.pointerId); renderEcCanvas();
+  });
+  svg.addEventListener("pointermove", ev=>{
+    const pt = ecPonto(ev);
+    if(EC.modo==="ligar" && EC.origem){ EC.mouse = pt; renderEcCanvas(); return; }
+    if(EC.arrasto){ const a = EC.arrasto, nx = Math.max(EC_SNAP*2, Math.round((pt.x+a.dx)/EC_SNAP)*EC_SNAP), ny = Math.max(EC_SNAP*2, Math.round((pt.y+a.dy)/EC_SNAP)*EC_SNAP);
+      if(nx!==a.obj.x || ny!==a.obj.y){ a.obj.x = nx; a.obj.y = ny; a.moveu = true; renderEcCanvas(); } }
+  });
+  const soltar = ()=>{ if(EC.arrasto){ const a = EC.arrasto; EC.arrasto = null; if(a.moveu){ salvar(); ecPosPop(); } else ecAbrirPop("el", a.obj.id, false); } };
+  svg.addEventListener("pointerup", soltar); svg.addEventListener("pointercancel", soltar);
+  const pop = $("ec-pop");
+  const upd = ev=>{
+    const t = ev.target, a = EC.pop; if(!a) return;
+    if(a.tipo==="el"){ const e = E().els.find(x=>x.id===a.id); if(e && t.dataset.ce) e.nome = t.value; renderEcCanvas(); renderEleLista(); salvar(); return; }
+    const al = E().alims.find(x=>x.id===a.id); if(!al) return;
+    if(t.dataset.cf){ al[t.dataset.cf] = t.value; if(t.dataset.cf==="cabo"){ const pop2 = $("ec-pop"); pop2.innerHTML = htmlPopEc(); } }
+    const lin = t.closest(".el-lin"); if(lin){ const k = lin.dataset.k; al[k] = al[k]||{q:0,b:2.5}; if(t.hasAttribute("data-q")) al[k].q = t.value; if(t.hasAttribute("data-b")) al[k].b = num(t.value); }
+    renderEcCanvas(); ecResPop(); renderEleLista(); resumo(); salvar();
+  };
+  pop.addEventListener("input", upd); pop.addEventListener("change", ev=>{ if(ev.target.tagName==="SELECT") upd(ev); });
+  pop.addEventListener("click", ev=>{ if(ev.target.closest("[data-cp-fechar]")){ ecFecharPop(); renderEcCanvas(); } });
+  pop.addEventListener("keydown", ev=>{ if(ev.key==="Escape"){ ecFecharPop(); renderEcCanvas(); } if(ev.key==="Enter" && ev.target.tagName==="INPUT"){ ev.preventDefault(); ecFecharPop(); renderEcCanvas(); } });
+  $("ec-tela").addEventListener("scroll", ecPosPop);
+  addEventListener("resize", ()=>{ if(S.modulo==="ele") renderEcCanvas(); });
+}
+
+function relEle(){
+  const MREL = S.ele, E = S.ele, R = E.alims.map(calcAlim), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
+  const S2 = secoes(), sec = S2.sec, ok = R.length>0 && R.every(r=>!r.erro && r.rig?.ok && r.kan?.ok);
+  const obs = ["Diâmetros externos dos cabos conforme catálogos dos fabricantes indicados.", "Diâmetros internos dos eletrodutos conforme tabela de dutos (eletroduto rígido roscável e Kanaflex).", ...linhasObs(E.obs)];
+  return `<div class="r">${relCarimbo("Dimensionamento de eletrodutos de alimentação", E.doc, E.rev, "Instalações elétricas")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Objetivo", `<p>Apresentar o dimensionamento dos eletrodutos dos alimentadores da edificação, a partir da quantidade, da bitola e do diâmetro externo dos cabos e da taxa máxima de ocupação.</p>`)}
+    ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 5410</b><span>Instalações elétricas de baixa tensão</span></li></ul>`)}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Cabo padrão", CABOS[E.cabo].t)}${td("Taxa de ocupação", E.taxa==="nbr"?"53% (1 cabo) · 31% (2 cabos) · 40% (3 ou mais)":"40% (mais de 3 cabos) · 33% (até 3 cabos)")}</tbody></table>`)}
+    ${E.els.length ? sec("Diagrama", `<div class="diag-r">${(d=>`<svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg>`)(ecDesenho(false))}<p>Esquema sem escala. Nos eletrodutos: diâmetro do eletroduto rígido (Ø) e do Kanaflex (K) e fios (quantidade × seção em mm²).</p></div>`) : ""}
+    ${sec("Quadro de eletrodutos", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Alimentador</th><th>Condutores (mm²)</th><th class="n">Área (mm²)</th><th class="n">Taxa</th><th class="n">Necessária (mm²)</th><th>Rígido</th><th>Kanaflex</th></tr></thead><tbody>
+      ${R.map(r=>`<tr><td>${esc(r.nome)}</td><td>${r.linhas.map(l=>`${l.q}×${fmt(l.b,l.b%1?1:0)}`).join(" + ")||"—"}</td><td class="n">${fmt(r.area,0)}</td><td class="n">${fmt(r.taxa*100,0)}%</td><td class="n">${fmt(r.nec,0)}</td><td>${r.rig?.ok?`<b>${r.rig.txt}</b>`:`<span class="r-no">—</span>`}</td><td>${r.kan?.ok?`<b>${r.kan.txt}</b>`:`<span class="r-no">—</span>`}</td></tr>`).join("")}</tbody></table>
+      <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os alimentadores têm eletroduto dimensionado dentro da taxa de ocupação.":"há alimentadores sem eletroduto válido. Revisar antes da emissão."}</div></div>`)}
+    ${sec("Memorial de cálculo", memorialEle(R))}
+    ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
    RESPONSÁVEIS TÉCNICOS (cadastro neste computador)
    ===================================================================== */
 const CHAVE_RESP = "equiper-responsaveis";
@@ -3845,6 +4275,7 @@ function renderResp(){
   $("p-resp").innerHTML = opcoesResp(S.plu.respId);
   $("h-resp").innerHTML = opcoesResp(S.hid.respId);
   $("t-resp").innerHTML = opcoesResp(S.est.respId);
+  $("l-resp").innerHTML = opcoesResp(S.ele.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -3853,8 +4284,8 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  ["e","g","p","h","t"].forEach(pre=>{
-    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(pre==="g"?S.gas:pre==="p"?S.plu:pre==="h"?S.hid:pre==="t"?S.est:S.esg, e.target.value); salvar(); });
+  ["e","g","p","h","t","l"].forEach(pre=>{
+    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(pre==="g"?S.gas:pre==="p"?S.plu:pre==="h"?S.hid:pre==="t"?S.est:pre==="l"?S.ele:S.esg, e.target.value); salvar(); });
   });
   $("resp-add").addEventListener("click", ()=>{
     RESP.push({id:uid(), nome:"", crea:""}); salvarResp(); renderResp();
@@ -3863,7 +4294,7 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.est, S.gas, S.plu, S.hid].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
     $("e-resp").innerHTML = opcoesResp(S.esg.respId); $("g-resp").innerHTML = opcoesResp(S.gas.respId); $("p-resp").innerHTML = opcoesResp(S.plu.respId); $("h-resp").innerHTML = opcoesResp(S.hid.respId);
     salvar();
   });
@@ -3883,10 +4314,13 @@ ligar();
 ligarPluvial();
 ligarHid();
 ligarEst();
+ligarEle();
+ligarEleCanvas();
+ligarGruposNav();
 ligarClientes();
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","est"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","est","ele"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
 
 /* =====================================================================
    PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
