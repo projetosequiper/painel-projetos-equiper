@@ -234,6 +234,18 @@ svg.diag{display:block;max-width:none}
 .quadro .falha{color:var(--vermelho)}
 .hd-q{font-size:14px}
 
+.gas-edit{touch-action:none;user-select:none;-webkit-user-select:none}
+.g-ferr{margin-bottom:8px}
+
+.nav-grupo{display:flex;align-items:center;gap:10px;margin:0;padding:10px 10px 4px;font-weight:600;font-size:15px}
+.nav-grupo i{font-style:normal;font-family:var(--cond);font-weight:700;font-size:12px;min-width:34px;text-align:center;padding:2px 0;border-radius:3px;background:var(--cinza-1);color:var(--cinza-4)}
+.nav-it.sub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
+.nav-it.sub.on{font-weight:600}
+@media(max-width:900px){.nav-grupo{display:none}.nav-it.sub{padding:8px 10px}.nav-it.sub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.sub[data-mod="est"]::before{content:"Esgoto · "}}
+#es-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#es-canvas[data-modo="caixa"],#es-canvas[data-modo="saida"]{cursor:crosshair}#es-canvas[data-modo="ligar"]{cursor:alias}#es-canvas[data-modo="apagar"]{cursor:not-allowed}
+.es-item{grid-template-columns:1fr 60px 34px}
+
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
 @media(max-width:560px){.so-lg{display:none}}
@@ -490,7 +502,9 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
     <p class="lat-sec">Disciplinas</p>
     <button class="nav-it" type="button" data-mod="hid"><i aria-hidden="true">HID</i>Hidráulica</button>
-    <button class="nav-it" type="button" data-mod="esgoto"><i aria-hidden="true">ESG</i>Esgoto sanitário</button>
+    <p class="nav-grupo"><i aria-hidden="true">ESG</i>Esgoto sanitário</p>
+    <button class="nav-it sub" type="button" data-mod="esgoto">Tratamento</button>
+    <button class="nav-it sub" type="button" data-mod="est">Tubulação</button>
     <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás</button>
     <button class="nav-it" type="button" data-mod="plu"><i aria-hidden="true">PLU</i>Água pluvial</button>
   </nav>
@@ -588,9 +602,66 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </section>
   </section>
 
+  <!-- ================= ESGOTO · TUBULAÇÃO ================= -->
+  <section class="modulo" id="mod-est" hidden>
+    <h1>Esgoto · tubulação</h1>
+    <p class="sub">Unidades Hunter de contribuição (UHC) por caixa e diâmetro dos subcoletores e do coletor predial pela declividade (NBR 8160).</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="est"> Esta obra não terá dimensionamento da tubulação de esgoto</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+
+    <section class="bloco-dados">
+      <h2>Dados de projeto</h2>
+      <div class="grade">
+        <label class="campo c3">Declividade padrão<select id="es-decl"><option value="0.5">0,5%</option><option value="1">1%</option><option value="2">2%</option><option value="4">4%</option></select></label>
+        <label class="campo c3">Diâmetro mínimo<select id="es-dmin"><option value="100">DN 100</option><option value="150">DN 150</option></select></label>
+      </div>
+      <p class="fonte" style="margin-top:10px">Cada trecho pode ter a sua própria declividade (clique no tubo no desenho).</p>
+    </section>
+    <div class="params p4" id="es-params"></div>
+    <div class="rolar" id="es-tab" style="margin-top:10px"></div>
+
+    <section class="etapas">
+      <h2>Rede</h2>
+      <p>Coloque as caixas, lance os aparelhos que chegam em cada uma e ligue no sentido do escoamento até a saída.</p>
+      <article class="etapa">
+        <div class="num">1</div>
+        <div>
+          <div class="etapa-cab"><h3>Desenho da rede</h3><span class="nbr">atalhos: V selecionar · C caixa · L ligar · S saída · A apagar</span></div>
+          <div class="pl-ferr es-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+            <button type="button" data-modo="sel">↖ Selecionar</button>
+            <button type="button" data-modo="caixa">▣ Caixa</button>
+            <button type="button" data-modo="ligar">⟶ Ligar</button>
+            <button type="button" data-modo="saida">◉ Saída</button>
+            <button type="button" data-modo="apagar">✕ Apagar</button>
+          </div>
+          <p class="pl-modo" id="es-modo-dica"></p>
+          <div class="pl-tela-env"><div class="pl-tela" id="es-tela"><svg id="es-canvas" class="cv-es" xmlns="http://www.w3.org/2000/svg"></svg></div><div class="pl-pop hd-pop" id="es-pop" hidden></div></div>
+        </div>
+      </article>
+      <article class="etapa">
+        <div class="num">2</div>
+        <div><div class="etapa-cab"><h3>Quadro de tubulações</h3></div><div class="rolar" id="es-quadro"></div></div>
+      </article>
+      <article class="etapa">
+        <div class="num">3</div>
+        <div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="es-memorial"></div></div>
+      </article>
+    </section>
+
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="t-resp"></select></label>
+        <label class="campo c2">Nº do documento<input id="t-doc" autocomplete="off" placeholder="Ex.: MC-ESG-002"></label>
+        <label class="campo c2">Revisão<input id="t-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="t-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
   <!-- ================= ESGOTO ================= -->
   <section class="modulo" id="mod-esgoto">
-    <h1>Tratamento de esgoto</h1>
+    <h1>Esgoto · tratamento</h1>
     <p class="sub">Caixa de gordura, fossa séptica, filtro anaeróbio e sumidouro conforme NBR 8160, NBR 7229 e NBR 13969.</p>
     <div class="mod-na"><label class="chave"><input type="checkbox" data-na="esgoto"> Esta obra não terá esgoto sanitário</label>
       <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
@@ -717,8 +788,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Diagrama da rede</h3><span class="nbr">esquema sem escala, atualizado em tempo real</span></div>
+          <div class="pl-ferr g-ferr" role="toolbar" aria-label="Ferramentas do diagrama">
+            <button type="button" data-gmodo="mover" class="on">↖ Selecionar / mover</button>
+            <button type="button" data-gmodo="apagar">✕ Apagar</button>
+            <button type="button" data-gmodo="auto">⟲ Organizar automaticamente</button>
+          </div>
           <div class="diag-caixa"><div class="diag-rolar" id="g-diagrama"></div><div class="no-menu" id="no-menu" hidden></div></div>
-          <p class="fonte">Clique numa letra do diagrama para seguir o trecho, subir ou descer de pavimento, ou ligar um ponto de consumo.</p>
+          <p class="fonte">Clique numa letra para seguir o trecho, subir ou descer de pavimento, ligar um ponto de consumo ou remover. Arraste letras e equipamentos para mover (os equipamentos acompanham a letra). Com a ferramenta Apagar, clique no que quer remover.</p>
         </div>
       </article>
 
@@ -890,7 +966,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <button class="btn" id="cli-novo-ok" type="button">Criar cliente</button>
     </div>
     <p class="fonte" id="cli-conta"></p>
-    <p class="cli-legenda"><span class="abrev">HID</span> Hidráulica <span class="abrev">ESG</span> Esgoto <span class="abrev">GÁS</span> Gás <span class="abrev">PLU</span> Pluvial · <span class="abrev">ok</span> feito <span class="abrev falha">!</span> revisar <span class="abrev pend">…</span> não iniciado <span class="abrev na">n/a</span> não se aplica</p>
+    <p class="cli-legenda"><span class="abrev">HID</span> Hidráulica <span class="abrev">ESG</span> Esgoto (tratamento e tubulação) <span class="abrev">GÁS</span> Gás <span class="abrev">PLU</span> Pluvial · <span class="abrev">ok</span> feito <span class="abrev falha">!</span> revisar <span class="abrev pend">…</span> não iniciado <span class="abrev na">n/a</span> não se aplica</p>
   </div>
   <div id="cli-lista"></div>
 </main>
@@ -1016,7 +1092,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, gas:false, plu:false, hid:false},
+    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1024,6 +1100,7 @@ function estadoNovo(){
     gas:{gas:"GN", material:"cobre", classe:"E", L:20,
       pontos:[], trechos:[], modelo:2, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    est:{decl:1, dmin:100, caixas:[], saidas:[], ligacoes:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     plu:{I:250, i:1, n:0.011, lamina:"23", dmin:100, caixas:[], saidas:[], ligacoes:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""}
   };
 }
@@ -1042,9 +1119,10 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","plu","hid"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","est"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     plu:{...b.plu, ...lim(o.plu)},
+    est:{...b.est, ...lim(o.est)},
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
         if(e.tipo!=="pt") return e;
@@ -1303,6 +1381,7 @@ function preencherNovoTrecho(deSel){
   $("g-add-trecho").disabled = de==null;
 }
 function criarTrecho(de, dir, L){
+  if(S.gas.pos && Object.keys(S.gas.pos).length) S.gas.pos["n"+(S.gas.trechos.length+1)] = gasPosNovoNo(de, dir);
   S.gas.trechos.push({id:uid(), de, dir, L: L??""});
   renderGasListas(); resumo(); salvar();
 }
@@ -1372,7 +1451,7 @@ function atualizarGas(){
     </tbody></table><p class="fonte">↳ = ramal em T até o ponto de consumo; ↑ ↓ = prumada entre pavimentos. Pc e Pa em kcal/min. L de cálculo = soma de todos os trechos e ramais (${fmt(Ltotal(),1)} m), arredondada para a linha imediatamente superior da tabela de diâmetros.</p>`
     : `<p class="vazio">Cadastre trechos para ver o quadro.</p>`;
   $("g-memorial").innerHTML = memorialGas(res);
-  $("g-diagrama").innerHTML = diagramaGas(res, true);
+  $("g-diagrama").innerHTML = diagramaGasLivre(res, true);
   return {res, total};
 }
 
@@ -1409,13 +1488,14 @@ function diagramaGas(res, interativo){
   const pavsUsados = new Set();
   function no(i, x, y){
     const n = nos[i]; pavsUsados.add(n.pav);
+    if(GREC) GREC["n"+i] = {x, y};
     abre(); add(x,y);                                         // tudo que sai na vertical deste ponto
     // pontos de consumo em T (verticais)
     n.pts.forEach(p=>{
       const s = p._lado, r = porId.get(p.id); if(!s || !r) return;
       const ey = y + V(s)*VSEG;
       linha(x,y,x,ey, r.erro?"ln err":"ln"); el.push(`<circle cx="${x}" cy="${ey}" r="2.8" class="no"/>`);
-      rotV(x,y,ey,r); linha(x,ey,x,ey+V(s)*STUB/2); caixa(x, ey + V(s)*(STUB/2+BH/2), p);
+      rotV(x,y,ey,r); linha(x,ey,x,ey+V(s)*STUB/2); caixa(x, ey + V(s)*(STUB/2+BH/2), p); if(GREC) GREC["p"+p.id] = {x, y: ey + V(s)*(STUB/2+BH/2)};
     });
     // prumadas (sobem/descem) primeiro, para a linha do pavimento atual passar depois delas
     ["u","d"].forEach(s=>{
@@ -1502,6 +1582,7 @@ function abrirMenuNo(i, ev){
   if(livres.includes("u")) op.push(`<button type="button" data-acao="u">↑ Subir para ${nomePav(n.pav+1)} (${nomeNo(i)}-${prox})</button>`);
   if(livres.includes("d")) op.push(`<button type="button" data-acao="d">↓ Descer para ${nomePav(n.pav-1)} (${nomeNo(i)}-${prox})</button>`);
   if(vagaPonto) op.push(`<button type="button" data-acao="p">＋ Ligar ponto de consumo em ${nomeNo(i)}</button>`);
+  if(i>0) op.push(`<button type="button" data-gacao="rmt">✕ Remover trecho ${rotTr(S.gas.trechos[i-1], i-1)}</button>`);
   m.innerHTML = `<div class="nm-cab"><b>Ponto ${nomeNo(i)}</b><span>${i===0?"medidor · ":""}${nomePav(n.pav)}</span></div>` +
     (op.length ? `<div class="nm-op">${op.join("")}</div>` : `<p class="nm-vazio">Sem saída livre neste ponto.</p>`) +
     `<div class="nm-form" hidden></div>`;
@@ -1538,6 +1619,172 @@ function confirmarMenuNo(acao){
   } else {
     fecharMenuNo(); criarTrecho(i, acao, f.querySelector('[data-nm="L"]').value);
   }
+}
+
+/* ---------- Diagrama de gás editável (mover, apagar) ---------- */
+let GREC = null, GD = {modo:"mover", arr:null};
+const GSNAP = 10;
+function gasSemearPos(res){                                // posições que faltam vêm do arranjo automático
+  const G = S.gas; G.pos = G.pos || {};
+  const faltam = () => { const nT = G.trechos.length; for(let i=0;i<=nT;i++) if(!G.pos["n"+i]) return true; return G.pontos.some(p=>p._lado && !G.pos["p"+p.id]); };
+  rede();                                                  // atualiza os lados (_lado) dos pontos
+  if(!faltam()) return;
+  if(!Object.keys(G.pos).length){                          // primeira vez: arranjo automático completo
+    GREC = {}; diagramaGas(res, false); const rec = GREC; GREC = null;
+    Object.entries(rec).forEach(([k,v])=>{ G.pos[k] = {x:Math.round(v.x), y:Math.round(v.y)}; });
+  }
+  if(!G.pos.n0) G.pos.n0 = {x:19, y:0};
+  G.trechos.forEach((t,k)=>{ if(!G.pos["n"+(k+1)]) G.pos["n"+(k+1)] = gasPosNovoNo(num(t.de), t.dir||"h"); });
+  G.pontos.forEach(p=>{ if(p._lado && !G.pos["p"+p.id]) G.pos["p"+p.id] = gasPosPonto(p); });
+}
+function gasPosNovoNo(de, dir){                            // novo nó a partir da posição real do nó de origem
+  const G = S.gas; G.pos = G.pos || {}; const o = G.pos["n"+de] || {x:19,y:0};
+  let p = dir==="h" ? {x:o.x+160, y:o.y} : dir==="u" ? {x:o.x, y:o.y-250} : {x:o.x, y:o.y+250};
+  const ocupado = q => Object.values(G.pos).some(v=>Math.abs(v.x-q.x)<60 && Math.abs(v.y-q.y)<40);
+  let n = 0; while(ocupado(p) && n++<20) p = dir==="h" ? {x:p.x+60, y:p.y} : {x:p.x+60, y:p.y};
+  return p;
+}
+function gasPosPonto(p){
+  const G = S.gas; G.pos = G.pos || {}; const nos = rede(), o = G.pos["n"+noPonto(p)] || {x:0,y:0};
+  return {x:o.x, y:o.y + (p._lado==="d" ? 1 : -1)*155};
+}
+function removerTrechoGas(k){                              // remove o trecho k (termina no nó k+1), renumerando as letras seguintes
+  const G = S.gas, fim = k+1, nos = rede();
+  if(G.trechos.some(t=>num(t.de)===fim)){ aviso(`Remova antes os trechos que saem de ${nomeNo(fim)}.`, true); return false; }
+  const pts = G.pontos.filter(p=>noPonto(p)===fim);
+  if(!confirm(`Remover o trecho ${rotTr(G.trechos[k],k)}${pts.length?` e ${pts.length===1?"o ponto":"os pontos"} ${pts.map(p=>p.nome||"—").join(", ")}`:""}?`)) return false;
+  G.pontos = G.pontos.filter(p=>noPonto(p)!==fim);
+  pts.forEach(p=>{ delete G.pos?.["p"+p.id]; });
+  G.trechos.splice(k,1);
+  G.trechos.forEach(t=>{ if(num(t.de)>fim) t.de = num(t.de)-1; });
+  G.pontos.forEach(p=>{ if(num(p.no)>fim) p.no = num(p.no)-1; });
+  if(G.pos){ const np = {}; Object.entries(G.pos).forEach(([key,v])=>{ const m = /^n(\d+)$/.exec(key); if(!m){ np[key]=v; return; } const i=+m[1]; if(i===fim) return; np["n"+(i>fim?i-1:i)] = v; }); G.pos = np; }
+  return true;
+}
+function removerPontoGas(id){
+  const G = S.gas, p = G.pontos.find(x=>x.id===id); if(!p) return false;
+  if(!confirm(`Remover o ponto de consumo ${p.nome||"—"}?`)) return false;
+  G.pontos = G.pontos.filter(x=>x.id!==id); delete G.pos?.["p"+id]; return true;
+}
+function diagramaGasLivre(res, interativo){
+  const G = S.gas, nT = G.trechos.length;
+  if(!nT) return diagramaGas(res, interativo);
+  gasSemearPos(res);
+  const nos = rede(), porId = new Map(res.map(r=>[r.id,r])), P = G.pos;
+  const BW=104, BH=58, MR=19, el=[];
+  const bb = {x0:Infinity,x1:-Infinity,y0:Infinity,y1:-Infinity}, add=(x,y)=>{ bb.x0=Math.min(bb.x0,x); bb.x1=Math.max(bb.x1,x); bb.y0=Math.min(bb.y0,y); bb.y1=Math.max(bb.y1,y); };
+  const txt = (x,y,s,cls,extra="") => el.push(`<text x="${x}" y="${y}" class="${cls}" ${extra}>${s}</text>`);
+  const rotD = r => r.erro ? "?" : "ø" + (G.material==="multicamada" ? EQUIV[r.d].mc : r.d);
+  const rotulos = (x1,y1,x2,y2,r) => {
+    const mx=(x1+x2)/2, my=(y1+y2)/2, vert = Math.abs(y2-y1) > Math.abs(x2-x1);
+    if(vert){ txt(mx-9, my, rotD(r), r.erro?"dm err":"dm", `text-anchor="middle" transform="rotate(-90 ${mx-9} ${my})"`); txt(mx+7, my-2, `Pc=${fmt(r.pc)}`, "pp ps"); txt(mx+7, my+12, `Pa=${fmt(r.pa)}`, "pp ps"); add(mx+72,my); }
+    else { txt(mx, my-9, rotD(r), r.erro?"dm err":"dm", `text-anchor="middle"`); txt(mx, my+19, `Pc=${fmt(r.pc)}`, "pp", `text-anchor="middle"`); txt(mx, my+34, `Pa=${fmt(r.pa)}`, "pp", `text-anchor="middle"`); add(mx,my+40); add(mx,my-26); }
+  };
+  // linhas de pavimento: abaixo dos nós de cada pavimento
+  const pavs = [...new Set(nos.map(n=>n.pav))].sort((a,b)=>b-a);
+  if(pavs.length>1 || pavs[0]!==0){
+    pavs.forEach(pv=>{ const ys = nos.filter(n=>n.pav===pv).map(n=>P["n"+n.i]?.y).filter(v=>v!=null); if(!ys.length) return;
+      const y = Math.max(...ys) + 52; el.push(`<line x1="__X0__" y1="${y}" x2="__X1__" y2="${y}" class="pv"/><text x="__XT__" y="${y+5}" class="pvt" text-anchor="end">${nomePav(pv)}</text>`); add(0,y); });
+  }
+  // trechos
+  G.trechos.forEach((t,k)=>{
+    const a = P["n"+num(t.de)], b = P["n"+(k+1)], r = porId.get(t.id); if(!a||!b||!r) return;
+    const x1 = a.x, y1 = a.y;
+    el.push(`<g data-gtr="${k}"><line x1="${x1}" y1="${y1}" x2="${b.x}" y2="${b.y}" class="ln ${r.erro?"err":""}"/>${interativo?`<line x1="${x1}" y1="${y1}" x2="${b.x}" y2="${b.y}" class="ghit"/>`:""}</g>`);
+    rotulos(x1,y1,b.x,b.y,r); add(x1,y1); add(b.x,b.y);
+  });
+  // ramais e equipamentos
+  G.pontos.forEach(p=>{
+    const r = porId.get(p.id), o = P["n"+noPonto(p)], c = P["p"+p.id] || gasPosPonto(p); if(!r || !o) return;
+    const baixo = c.y > o.y, ey = c.y + (baixo ? -BH/2 : BH/2);
+    const pts = Math.abs(c.x-o.x)<2 ? `${o.x},${o.y} ${c.x},${ey}` : `${o.x},${o.y} ${o.x},${(o.y+ey)/2} ${c.x},${(o.y+ey)/2} ${c.x},${ey}`;
+    el.push(`<polyline points="${pts}" fill="none" class="ln ${r.erro?"err":""}"/>`);
+    rotulos(o.x, o.y, o.x, (o.y+ey)/2 + (Math.abs(c.x-o.x)<2 ? (ey-o.y)/2 : 0), r);
+    el.push(`<g class="gpt" data-gpt="${p.id}" transform="translate(${c.x} ${c.y})"><rect x="${-BW/2}" y="${-BH/2}" width="${BW}" height="${BH}" class="bx"/>
+      <text y="-4" class="bn" text-anchor="middle">${esc(p.nome||"—")}${num(p.qtd)!==1?` ×${fmt(num(p.qtd))}`:""}</text><text y="17" class="bv" text-anchor="middle">${fmt(kTot(p))}</text></g>`);
+    add(c.x-BW/2, c.y-BH/2); add(c.x+BW/2, c.y+BH/2);
+  });
+  // nós (letras) e medidor
+  nos.forEach(n=>{
+    const q = P["n"+n.i]; if(!q) return;
+    if(n.i===0){ el.push(`<g class="gno" data-gno="0"><circle cx="${q.x-MR}" cy="${q.y}" r="${MR}" class="md"/><text x="${q.x-MR}" y="${q.y+7}" class="mt" text-anchor="middle">M</text><text x="${q.x+8}" y="${q.y-9}" class="nd">A</text>${interativo?`<circle cx="${q.x}" cy="${q.y}" r="12" class="alvo2"/>`:""}</g>`); add(q.x-2*MR,q.y-MR); add(q.x,q.y+MR); return; }
+    el.push(`<g class="gno" data-gno="${n.i}"><circle cx="${q.x}" cy="${q.y}" r="3" class="no"/><text x="${q.x+7}" y="${q.y-9}" class="nd">${nomeNo(n.i)}</text>${interativo?`<circle cx="${q.x}" cy="${q.y}" r="12" class="alvo2"/>`:""}</g>`);
+    add(q.x,q.y);
+  });
+  const Pd = 24, x0 = bb.x0 - 90, w = Math.ceil(bb.x1 - x0 + Pd), y0 = bb.y0 - Pd, h = Math.ceil(bb.y1 - bb.y0 + 2*Pd);
+  const corpo = el.join("").replace(/__X0__/g, x0+80).replace(/__X1__/g, bb.x1+10).replace(/__XT__/g, x0+74);
+  return `<svg class="diag ${interativo?"gas-edit":""}" data-modo="${GD.modo}" xmlns="http://www.w3.org/2000/svg" viewBox="${Math.floor(x0)} ${Math.floor(y0)} ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Diagrama esquemático da rede de gás">
+    <style>.ln{stroke:#000;stroke-width:1.6}.ln.err{stroke:#d10a1e;stroke-dasharray:5 4}.no{fill:#000}
+    .bx{fill:#fff;stroke:#000;stroke-width:1.4}.bn{font:600 14px Barlow,Arial,sans-serif;fill:#000}.bv{font:500 16px 'Barlow Condensed',Arial,sans-serif;fill:#000}
+    .dm{font:700 15px 'Barlow Condensed',Arial,sans-serif;fill:#000}.dm.err{fill:#d10a1e}.pp{font:500 12.5px Barlow,Arial,sans-serif;fill:#555}.ps{font-size:11.5px}
+    .nd{font:700 17px 'Barlow Condensed',Arial,sans-serif;fill:#d10a1e}.md{fill:#fff;stroke:#000;stroke-width:1.6}.mt{font:600 19px Barlow,Arial,sans-serif;fill:#000}
+    .pv{stroke:#8c8c8c;stroke-width:1;stroke-dasharray:7 5}.pvt{font:500 15px Barlow,Arial,sans-serif;fill:#555}
+    .dm,.pp,.nd{paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+    .alvo2{fill:transparent;cursor:grab}.alvo2:hover{fill:rgba(209,10,30,.12);stroke:#d10a1e;stroke-width:1.5}.gpt{cursor:grab}.gpt:hover .bx{stroke:#d10a1e}
+    .ghit{stroke:transparent;stroke-width:14;cursor:pointer}.gas-edit[data-modo="apagar"] .gno,.gas-edit[data-modo="apagar"] .gpt,.gas-edit[data-modo="apagar"] .ghit{cursor:not-allowed}
+    .arrastando .bx{stroke:#d10a1e;stroke-width:2.5}</style>
+    ${corpo}</svg>`;
+}
+function menuPontoGas(id, ev){
+  const G = S.gas, p = G.pontos.find(x=>x.id===id); if(!p) return;
+  const m = $("no-menu"), caixa = document.querySelector(".diag-caixa");
+  m.innerHTML = `<div class="nm-cab"><b>${esc(p.nome||"Ponto")}</b><span>ligado em ${nomeNo(noPonto(p))}</span></div>
+    <div class="nm-op"><button type="button" data-gacao="editar">✎ Editar na lista de pontos</button><button type="button" data-gacao="rmp">✕ Remover ponto de consumo</button></div>`;
+  m.dataset.pt = id; m.hidden = false;
+  const rc = caixa.getBoundingClientRect(); let left = ev.clientX - rc.left + 10; left = Math.min(left, rc.width - 290);
+  m.style.left = Math.max(8,left)+"px"; m.style.top = (ev.clientY - rc.top + 10)+"px";
+}
+function gasPtSvg(svg, ev){ const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function ligarGasLivre(){
+  const cont = $("g-diagrama");
+  cont.addEventListener("pointerdown", e=>{
+    const svg = e.target.closest("svg.gas-edit"); if(!svg) return;
+    const gno = e.target.closest("[data-gno]"), gpt = e.target.closest("[data-gpt]"), gtr = e.target.closest("[data-gtr]");
+    if(!gno && !gpt && !gtr) return;
+    e.preventDefault(); e.stopPropagation(); fecharMenuNo();
+    if(GD.modo==="apagar"){
+      let ok = false;
+      if(gpt) ok = removerPontoGas(gpt.dataset.gpt);
+      else if(gno && +gno.dataset.gno>0) ok = removerTrechoGas(+gno.dataset.gno-1);
+      else if(gtr) ok = removerTrechoGas(+gtr.dataset.gtr);
+      if(ok){ renderGasListas(); resumo(); salvar(); }
+      GD.t = Date.now(); return;
+    }
+    if(gtr && !gno && !gpt){ const k = +gtr.dataset.gtr; GD.t = Date.now(); abrirMenuNo(k+1, e); return; }
+    const chave = gpt ? "p"+gpt.dataset.gpt : "n"+gno.dataset.gno, q = S.gas.pos[chave], pt = gasPtSvg(svg, e);
+    GD.arr = {chave, dx:q.x-pt.x, dy:q.y-pt.y, moveu:false, svg, alvo: gpt ? {tipo:"p", id:gpt.dataset.gpt} : {tipo:"n", i:+gno.dataset.gno}, ev:e};
+    // ao mover um nó, os pontos ligados nele vão junto
+    if(gno){ const i = +gno.dataset.gno; GD.arr.filhos = S.gas.pontos.filter(p=>noPonto(p)===i && S.gas.pos["p"+p.id]).map(p=>({k:"p"+p.id, ox:S.gas.pos["p"+p.id].x-q.x, oy:S.gas.pos["p"+p.id].y-q.y})); }
+    svg.setPointerCapture?.(e.pointerId);
+  });
+  cont.addEventListener("pointermove", e=>{
+    const a = GD.arr; if(!a) return;
+    const pt = gasPtSvg(a.svg, e), q = S.gas.pos[a.chave];
+    const nx = Math.round((pt.x+a.dx)/GSNAP)*GSNAP, ny = Math.round((pt.y+a.dy)/GSNAP)*GSNAP;
+    if(nx===q.x && ny===q.y) return;
+    q.x = nx; q.y = ny; a.moveu = true;
+    (a.filhos||[]).forEach(f=>{ S.gas.pos[f.k] = {x:nx+f.ox, y:ny+f.oy}; });
+    // redesenha sem trocar o elemento svg de lugar (mantém a captura do ponteiro)
+    const novo = diagramaGasLivre(calcRede(), true), tmp = document.createElement("div"); tmp.innerHTML = novo;
+    const ns = tmp.firstElementChild; a.svg.setAttribute("viewBox", ns.getAttribute("viewBox")); a.svg.setAttribute("width", ns.getAttribute("width")); a.svg.setAttribute("height", ns.getAttribute("height")); a.svg.innerHTML = ns.innerHTML;
+  });
+  const soltar = e=>{
+    const a = GD.arr; if(!a) return; GD.arr = null; GD.t = Date.now();
+    if(a.moveu){ salvar(); atualizarGas(); return; }
+    if(a.alvo.tipo==="p") menuPontoGas(a.alvo.id, a.ev); else abrirMenuNo(a.alvo.i, a.ev);
+  };
+  cont.addEventListener("pointerup", soltar); cont.addEventListener("pointercancel", ()=>{ GD.arr = null; });
+  $("no-menu").addEventListener("click", e=>{
+    const b = e.target.closest("[data-gacao]"); if(!b) return; e.stopPropagation();
+    const m = $("no-menu"), id = m.dataset.pt;
+    if(b.dataset.gacao==="rmp"){ fecharMenuNo(); if(removerPontoGas(id)){ renderGasListas(); resumo(); salvar(); } }
+    if(b.dataset.gacao==="editar"){ fecharMenuNo(); const el = document.querySelector(`#g-pontos .ponto[data-id="${id}"] [data-f="nome"]`); el?.scrollIntoView({block:"center"}); el?.focus(); }
+    if(b.dataset.gacao==="rmt"){ fecharMenuNo(); if(removerTrechoGas(+m.dataset.no-1)){ renderGasListas(); resumo(); salvar(); } }
+  });
+  document.querySelectorAll(".g-ferr [data-gmodo]").forEach(b=>b.addEventListener("click", ()=>{
+    if(b.dataset.gmodo==="auto"){ if(confirm("Reorganizar o diagrama automaticamente? As posições que você ajustou serão perdidas.")){ S.gas.pos = {}; atualizarGas(); salvar(); } return; }
+    GD.modo = b.dataset.gmodo; document.querySelectorAll(".g-ferr [data-gmodo]").forEach(x=>x.classList.toggle("on", x.dataset.gmodo===GD.modo)); atualizarGas();
+  }));
 }
 
 function preencherGas(){
@@ -1687,7 +1934,7 @@ function relGas(){
     ${sec("Pontos de consumo", `<table class="r-t"><thead><tr><th>Ponto</th><th>Equipamento</th><th class="c">Qtd.</th><th class="n">Consumo unit. (kcal/min)</th><th class="n">Total (kcal/min)</th><th class="c">Ligado em</th><th class="n">Ramal (m)</th></tr></thead><tbody>
       ${G.pontos.map(p=>`<tr><td>${esc(p.nome)||"—"}</td><td>${esc(p.equip)||"Informado"}</td><td class="c">${fmt(num(p.qtd))}</td><td class="n">${fmt(kPonto(p),1)}</td><td class="n">${fmt(kTot(p))}</td><td class="c">${nomeNo(noPonto(p))} · ${nomePav(rede()[noPonto(p)]?.pav||0)}</td><td class="n">${num(p.ramal)>0?fmt(num(p.ramal),1):"—"}</td></tr>`).join("")}
       <tr class="tot"><td colspan="4">Potência instalada total</td><td class="n">${fmt(total)}</td><td colspan="2"></td></tr></tbody></table>`)}
-    ${sec("Diagrama esquemático da rede", `<div class="diag-r">${diagramaGas(res, false)}<p>Esquema sem escala. M = medidor (ponto A). Diâmetros em mm; Pc e Pa em kcal/min.</p></div>`)}
+    ${sec("Diagrama esquemático da rede", `<div class="diag-r">${diagramaGasLivre(res, false)}<p>Esquema sem escala. M = medidor (ponto A). Diâmetros em mm; Pc e Pa em kcal/min.</p></div>`)}
     ${sec("Metodologia", `<p>A rede parte do medidor (ponto A) e segue em trechos identificados por letras (A-B, B-C…), no mesmo pavimento ou em prumadas que sobem ou descem para outros pavimentos; cada ponto de consumo é ligado em T a uma letra por meio de um ramal. A potência computada (Pc) de um trecho da linha principal é a soma dos consumos de todos os pontos ligados a jusante dele; a de um ramal é o consumo do próprio ponto. A potência adotada (Pa) considera a simultaneidade de uso e é obtida na tabela de potência adotada no dimensionamento (para Pc &lt; 350 kcal/min, Pa = Pc; para Pc &gt; 70.000 kcal/min, Pa = 0,095 × Pc). O comprimento de cálculo L é a soma dos comprimentos de todos os trechos e ramais da rede e é o mesmo para todos. O diâmetro de cada trecho é o menor da tabela de dimensionamento cuja capacidade, para o comprimento L, seja igual ou superior à sua Pa.</p>`)}
     ${sec("Dimensionamento por trecho e ramal", calcTr || "<p>Nenhum trecho cadastrado.</p>")}
     ${sec("Quadro de diâmetros", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Trecho</th><th class="n">Compr. (m)</th><th class="n">Pc (kcal/min)</th><th class="n">Pa (kcal/min)</th><th class="n">L tab. (m)</th><th class="n">Capac. (kcal/min)</th><th>Diâmetro</th>${!mc?`<th>Tubo (mm)</th>`:""}</tr></thead><tbody>
@@ -1705,7 +1952,8 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est";
+  if(m==="est") renderEst();
   if(m==="plu") renderPluvial();
   if(m==="hid") renderHid();
   aplicarNA();
@@ -1715,6 +1963,11 @@ function trocarModulo(m){
 function resumo(){
   if(S.naoAplica?.[S.modulo]){ $("resumo").innerHTML = `<span class="pilula">Não se aplica</span>`; return; }
   let itens;
+  if(S.modulo==="est"){
+    const R = calcEst(), f = R.trechos.filter(t=>t.erro).length + R.semSaida.length;
+    $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${S.est.caixas.length} caixa${S.est.caixas.length!==1?"s":""} · ${R.trechos.length} trecho${R.trechos.length!==1?"s":""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.trechos.length ? "Todos dimensionados" : ""}</span>`;
+    return;
+  }
   if(S.modulo==="hid"){
     const R = calcHid(), f = R.pontos.filter(p=>!p.ok).length + R.tubos.filter(r=>r.erroV||r.semD).length;
     $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${R.pontos.length} ponto${R.pontos.length!==1?"s":""} · ${R.tubos.length} tubo${R.tubos.length!==1?"s":""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.tubos.length ? "Todos atendem" : ""}</span>`;
@@ -1738,20 +1991,20 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","gas","plu","hid"].forEach(m=>{
+  ["esgoto","est","gas","plu","hid"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco","local"]) $(k).value = O[k] ?? "";
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.gas, S.plu, S.hid].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); aplicarNA();
 }
 
 let avisoT;
@@ -1800,7 +2053,7 @@ function ligar(){
   // Obra
   for(const k of ["cliente","endereco","local"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","est"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -1875,14 +2128,17 @@ function ligar(){
   });
   $("g-trechos").addEventListener("click", e=>{
     if(!e.target.closest("[data-rm]")) return;
-    const k = G().trechos.length, t = G().trechos.pop(), volta = Math.max(1, num(t.de));
+    const k = G().trechos.length, t = G().trechos.pop(), volta = Math.max(1, num(t.de)); if(G().pos) delete G().pos["n"+k];
     G().pontos.forEach(p=>{ if(noPonto(p)>=k || num(p.no)>=k) p.no = Math.min(volta, Math.max(1,G().trechos.length)); });
     renderGasListas(); resumo(); salvar();
   });
   // Gás: menu das letras no diagrama
   $("g-diagrama").addEventListener("click", e=>{ const a = e.target.closest(".alvo"); if(!a) return; e.stopPropagation(); abrirMenuNo(+a.dataset.no, e); });
+  $("g-diagrama").addEventListener("click", e=>{ if(e.target.closest("[data-gno],[data-gpt],[data-gtr]") || Date.now()-(GD.t||0) < 500) e.stopPropagation(); });
+  ligarGasLivre();
   $("no-menu").addEventListener("click", e=>{
     e.stopPropagation();
+    if(e.target.closest("[data-gacao]")) return;
     const op = e.target.closest("[data-acao]"); if(op){ acaoMenuNo(op.dataset.acao); return; }
     if(e.target.closest("[data-nm-cancel]")){ fecharMenuNo(); return; }
     const ok = e.target.closest("[data-nm-ok]"); if(ok) confirmarMenuNo(ok.dataset.nmOk);
@@ -1919,14 +2175,14 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : relEsgoto());
     window.print();
   });
   $("novo").addEventListener("click", ()=>{
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -1937,7 +2193,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -1945,8 +2201,10 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", esgoto:"ESG", gas:"GÁS", plu:"PLU"};
-const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto sanitário", gas:"Gás", plu:"Água pluvial"};
+const ABREV = {hid:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU"};
+const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Gás", plu:"Água pluvial"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}];
+function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
   let b; try{ b = JSON.parse(localStorage.getItem(CHAVE_BIB)); }catch(e){}
@@ -1997,6 +2255,10 @@ function resumoObra(dados){
       const res = calcRede(), a = res.find(r=>r.tipo==="principal");
       out.push({mod:"gas", det:`${S.gas.gas} · ${S.gas.trechos.length} trecho(s), ${S.gas.pontos.length} ponto(s)${a && !a.erro ? ` · saída do medidor ${rotDiam(a.d)}` : ""}`, ok: res.length>0 && !res.some(r=>r.erro)});
     }
+    if(S.est.caixas.length){
+      const R = calcEst(), fim = [...R.trechos].sort((a,b)=>b.uhc-a.uhc)[0];
+      out.push({mod:"est", det:`${S.est.caixas.length} caixa(s), ${R.trechos.length} trecho(s)${fim&&fim.dn?` · coletor DN ${fim.dn} (${fmt(fim.uhc,0)} UHC)`:""}`, ok: R.trechos.length>0 && !R.trechos.some(t=>t.erro) && !R.semSaida.length});
+    }
     if(S.hid.els.length){
       const R = calcHid(), ok = R.tubos.length>0 && R.pontos.every(p=>p.ok) && !R.tubos.some(r=>r.erroV||r.semD) && !R.soltos.length;
       const pm = R.pontos.filter(p=>p.P!=null);
@@ -2019,8 +2281,10 @@ function statusObra(dados){
   return out;
 }
 function chipsStatus(st, contagem){
-  return Object.keys(ABREV).map(m=>{ const x = st[m], cls = {ok:"", rev:"falha", pend:"pend", na:"na"}[x.st];
-    return `<span class="abrev ${cls}" title="${NOME_MOD[m]} · ${TXT_ST[x.st]}">${ABREV[m]}${contagem && contagem[m]>1?` ×${contagem[m]}`:""}</span>`; }).join("");
+  return DISC.map(d=>{ const v = juntarSt(d.m.map(m=>st[m].st)), cls = {ok:"", rev:"falha", pend:"pend", na:"na"}[v];
+    const partes = d.m.length>1 ? " (" + d.m.map(m=>`${NOME_MOD[m].split(" · ")[1]}: ${TXT_ST[st[m].st]}`).join("; ") + ")" : "";
+    const n = contagem ? Math.max(...d.m.map(m=>contagem[m]||0)) : 0;
+    return `<span class="abrev ${cls}" title="${d.n} · ${TXT_ST[v]}${partes}">${d.s}${n>1?` ×${n}`:""}</span>`; }).join("");
 }
 function statusCliente(lista){                      // lista de statusObra das obras do cliente
   const out = {}, cont = {};
@@ -2060,7 +2324,7 @@ function abrirObraBib(id, mod){
 }
 function novaObraCliente(nome, mod){
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -2191,7 +2455,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
 }
@@ -2683,7 +2947,8 @@ const apar = id => APARELHOS.find(a=>a.id===id) || APARELHOS[0];
 /* ---------- Cálculo ---------- */
 function cotaEl(e){
   const H = S.hid;
-  if(e.tipo==="res") return num(e.nivel);
+  if(e.tipo==="res") return e.fundo!=null && e.fundo!=="" ? num(e.fundo) + num(e.lamina) : num(e.nivel);
+  if(e.tipo==="bomba" && e.cota!=null && e.cota!=="") return num(e.cota);
   const pv = H.pav.find(p=>p.id===e.pav) || H.pav[0];
   return (pv ? num(pv.cota) : 0) + num(e.alt);
 }
@@ -2749,8 +3014,9 @@ function yDoPav(id){ const o = pavOrdem(); const i = Math.max(0, o.findIndex(p=>
 function hdAjustarFaixas(){                                // cada elemento fica dentro da faixa do seu pavimento
   const H = S.hid, o = pavOrdem();
   H.els.forEach(e=>{
-    if(e.tipo==="res") return;
+    if(e.tipo==="res" || e.tipo==="vd" && e.amb) return;
     if(!o.some(p=>p.id===e.pav)) e.pav = o[o.length-1]?.id;
+    if(e.tipo==="bomba") return;                           // cota livre: não é puxada para a faixa
     const i = o.findIndex(p=>p.id===e.pav), t = faixaTopo(i);
     if(e.y < t+30 || e.y > t+HD_BANDA-30) e.y = Math.round((t+HD_BANDA/2)/HD_SNAP)*HD_SNAP;
   });
@@ -2796,7 +3062,15 @@ function hdAbaixo(id, alvo){                               // alvo está a jusan
   while(pilha.length){ const x = pilha.pop(); if(x===alvo) return true; if(vis.has(x)) continue; vis.add(x); H.tubos.filter(t=>t.de===x).forEach(t=>pilha.push(t.para)); }
   return false;
 }
+function hdEncaixarVDs(){                                 // válvula sempre colada ao lado direito do seu ambiente
+  const H = S.hid;
+  H.els.filter(a=>a.tipo==="amb").forEach(a=>{
+    H.els.filter(v=>v.tipo==="vd" && v.amb===a.id).forEach((v,i)=>{ v.x = a.x + 50 + 4 + 22 + i*48; v.y = a.y; v.pav = a.pav; });
+  });
+  H.els.forEach(v=>{ if(v.tipo==="vd" && v.amb && !H.els.some(a=>a.id===v.amb)) v.amb = null; });
+}
 function hdDesenho(R, interativo){
+  hdEncaixarVDs();
   const H = S.hid, els = H.els, out = [], selId = HD.sel && HD.sel.id;
   const ordemPav = pavOrdem();
   const W = Math.max(900, ...els.map(e=>e.x+220)), Hh = Math.max(HD_TOPO + ordemPav.length*HD_BANDA + 20, ...els.map(e=>e.y+160));
@@ -2807,6 +3081,20 @@ function hdDesenho(R, interativo){
     const x1=a.x+ux*raio(a), y1=a.y+uy*raio(a), x2=b.x-ux*(raio(b)+3), y2=b.y-uy*(raio(b)+3), mx=(x1+x2)/2, my=(y1+y2)/2;
     let ang = Math.atan2(dy,dx)*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
     const err = r.erroV || r.semD, sel = selId===r.t.id;
+    if(b.tipo==="vd" && b.amb){                              // válvula colada ao ambiente: chega por cima, em L
+      const outro = t => H.els.find(x=>x.id===(t.de===a.id ? t.para : t.de));
+      const ocupado = dir => H.tubos.some(t=>t.id!==r.t.id && (t.de===a.id||t.para===a.id) && (o=>o && Math.abs(o.x-a.x)<10 && Math.sign(o.y-a.y)===dir)(outro(t)));
+      const lado = ocupado(-1) && !ocupado(1) ? 1 : -1;       // chega por cima; se o nó já tem tubo subindo, chega por baixo
+      const yc = b.y + lado*60, xs = a.x + (b.x>a.x ? raio(a) : -raio(a));
+      const pts = Math.abs(a.y-yc) < 2 ? `${xs},${a.y} ${b.x},${yc} ${b.x},${b.y+lado*18}` : `${a.x},${a.y + (yc<a.y?-raio(a):raio(a))} ${a.x},${yc} ${b.x},${yc} ${b.x},${b.y+lado*18}`;
+      const lx = (a.x+b.x)/2;
+      out.push(`<g class="hd-tb ${err?"err":""} ${sel?"sel":""}" data-tipo="tubo" data-id="${r.t.id}">
+        ${interativo?`<polyline points="${pts}" class="hit" fill="none"/>`:""}
+        <polyline points="${pts}" class="tb" fill="none" marker-end="url(#hd-seta${err?"-err":""})"/>
+        <text x="${lx}" y="${yc-8}" class="tdm" text-anchor="middle">ø${r.tb.de}${r.t.dman?"*":""} · ${fmt(r.V,2)} m/s</text>
+        <text x="${lx}" y="${yc+16}" class="tar" text-anchor="middle">${fmt(r.Q,2)} L/s</text></g>`);
+      return;
+    }
     out.push(`<g class="hd-tb ${err?"err":""} ${sel?"sel":""}" data-tipo="tubo" data-id="${r.t.id}">
       ${interativo?`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="hit"/>`:""}
       <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tb" marker-end="url(#hd-seta${err?"-err":""})"/>
@@ -2822,7 +3110,8 @@ function hdDesenho(R, interativo){
         <rect x="-34" y="-24" width="68" height="48" class="rs"/><line x1="-30" y1="-8" x2="30" y2="-8" class="na"/>
         <text y="10" class="rsn" text-anchor="middle">${esc(e.nome)}</text>
         <text y="-32" class="cn" text-anchor="middle">Caixa d'água</text>
-        <text y="42" class="ca" text-anchor="middle">NA mín. ${fmt(num(e.nivel),2)} m</text></g>`);
+        <text y="42" class="ca" text-anchor="middle" style="font-weight:700;fill:#000">Cota ${fmt(num(e.fundo ?? e.nivel),2)} m</text>
+        ${num(e.lamina)>0 ? `<text y="57" class="ca" text-anchor="middle">NA mín. ${fmt(cotaEl(e),2)} m</text>` : ""}</g>`);
     } else if(e.tipo==="no"){
       out.push(`<g class="hd-el ${sel?"sel":""} ${ori?"ori":""}" data-tipo="el" data-id="${e.id}" transform="translate(${e.x} ${e.y})">
         <circle r="7" class="nd2"/><circle r="14" class="hitc"/>
@@ -2834,11 +3123,12 @@ function hdDesenho(R, interativo){
         ${blocoRotulo(quadranteLivre(e), 20, 20, [{t:esc(e.nome||"BP"), cls:"cn"}, {t:`${e.modo==="fixa"?"saída ":"+"}${fmt(num(e.pressao),1)} mca`, cls:"ca", st:"font-weight:700;fill:#000"}, {t:pe!=null?`${fmt(pe,1)} → ${fmt(R.P.get(e.id),1)} kPa`:(interativo?"sem ligação":""), cls:"ca"}])}</g>`);
     } else if(e.tipo==="vd"){
       const pr = R.pontos.find(x=>x.e.id===e.id), ruim = pr && !pr.ok;
+      const dono = e.amb && els.find(x=>x.id===e.amb);
       out.push(`<g class="hd-el ${sel?"sel":""} ${ori?"ori":""}" data-tipo="el" data-id="${e.id}" transform="translate(${e.x} ${e.y})">
         <rect x="-22" y="-15" width="44" height="30" rx="3" class="pt ${ruim&&interativo?"err":""}"/>
         <text y="6" class="pta" text-anchor="middle">VD</text>
         ${e.amb ? "" : `<text y="-22" class="cn" text-anchor="middle">${esc(e.nome||"VD")}</text>`}
-        <text y="30" class="ca ${ruim?"err":""}" text-anchor="middle">${pTxt}</text></g>`);
+        ${dono ? `<text x="27" y="5" class="ca ${ruim?"err":""}">${pTxt}</text>` : `<text y="30" class="ca ${ruim?"err":""}" text-anchor="middle">${pTxt}</text>`}</g>`);
     } else {
       const us = R.pontos.filter(x=>x.e.id===e.id), ruim = us.some(x=>!x.ok), min = us.filter(x=>x.P!=null);
       const abrevs = (e.itens||[]).filter(it=>it.ap&&it.ap!=="bs_vd").map(it=>{ const q = Math.max(1,num(it.qtd)||1); return apar(it.ap).ab+(q>1?`×${q}`:""); });
@@ -2902,16 +3192,18 @@ function htmlPopHid(R){
   }
   const e = H.els.find(x=>x.id===alvo.id); if(!e) return "";
   if(e.tipo==="res") return `<div class="pl-pop-cab"><label class="campo">Caixa d'água<input data-he="nome" value="${esc(e.nome)}"></label>${fechar}</div>
-      <label class="campo">Cota do nível mínimo da água<span class="unid"><input data-he="nivel" type="number" step="0.01" inputmode="decimal" value="${esc(e.nivel)}"><b>m</b></span></label>
-      <p class="dica" style="margin:0">Em relação ao piso do térreo (cota 0,00). A pressão parte de 0 kPa neste nível.</p>
+      <div class="hp-2">
+        <label class="campo">Cota da caixa (fundo)<span class="unid"><input data-he="fundo" type="number" step="0.01" inputmode="decimal" value="${esc(e.fundo ?? e.nivel)}"><b>m</b></span></label>
+        <label class="campo">Lâmina mínima de água<span class="unid"><input data-he="lamina" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(e.lamina ?? 0)}"><b>m</b></span></label>
+      </div>
+      <p class="dica" style="margin:0">Cotas em relação ao piso do térreo (0,00), livres, sem depender das faixas de pavimento. A pressão parte de 0 kPa na cota do fundo + lâmina mínima (use 0 para calcular pela saída da caixa).</p>
       <dl class="pl-tot" data-hres></dl>
       <div class="pl-pop-rod"><button class="btn peq" type="button" data-hp-fechar>Concluir</button></div>`;
   if(e.tipo==="bomba") return `<div class="pl-pop-cab"><label class="campo">Bomba de pressurização<input data-he="nome" value="${esc(e.nome)}" placeholder="BP"></label>${fechar}</div>
       <div class="hp-2">
         <label class="campo">Como informar<select data-he="modo"><option value="soma" ${e.modo!=="fixa"?"selected":""}>Acréscimo de pressão</option><option value="fixa" ${e.modo==="fixa"?"selected":""}>Pressão fixa na saída</option></select></label>
         <label class="campo">Pressão<span class="unid"><input data-he="pressao" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(e.pressao)}"><b>mca</b></span></label>
-        <label class="campo">Pavimento<select data-he="pav">${opcoesPav(e.pav)}</select></label>
-        <label class="campo">Altura<span class="unid"><input data-he="alt" type="number" step="0.01" inputmode="decimal" value="${esc(e.alt)}"><b>m</b></span></label>
+        <label class="campo">Cota da bomba<span class="unid"><input data-he="cota" type="number" step="0.01" inputmode="decimal" value="${esc(e.cota ?? cotaEl(e))}"><b>m</b></span></label>
       </div>
       <p class="dica" style="margin:0">Coloque a bomba no caminho da água: ligue a entrada vindo da caixa d'água e a saída para os nós ou ambientes. 1 mca = 10 kPa.</p>
       <dl class="pl-tot" data-hres></dl>
@@ -2969,7 +3261,7 @@ function hdResPop(R){
 function hdAbrirPop(tipo, id, focar){
   HD.pop = {tipo, id}; HD.sel = {tipo: tipo==="tubo"?"tubo":"el", id};
   const pop = $("hd-pop"); const R = renderHid(); pop.innerHTML = htmlPopHid(R); pop.hidden = false; hdResPop(R); hdPosPop();
-  if(focar) setTimeout(()=>{ const i = pop.querySelector('[data-ht="L"],[data-he="nivel"],[data-he="nome"]'); i?.focus(); i?.select?.(); }, 30);
+  if(focar) setTimeout(()=>{ const i = pop.querySelector('[data-ht="L"],[data-he="fundo"],[data-he="cota"],[data-he="nome"]'); i?.focus(); i?.select?.(); }, 30);
 }
 function hdRenderPop(){ const pop = $("hd-pop"); if(!HD.pop) return; const R = calcHid(); pop.innerHTML = htmlPopHid(R); hdResPop(R); hdPosPop(); }
 function hdFecharPop(){ HD.pop = null; const p = $("hd-pop"); if(p){ p.hidden = true; p.innerHTML = ""; } }
@@ -2996,7 +3288,7 @@ function renderHid(semPop){
   const ptsRuins = R.pontos.filter(p=>!p.ok), tubosRuins = R.tubos.filter(r=>r.erroV||r.semD);
   const res0 = H.els.find(e=>e.tipo==="res");
   $("hd-params").className = "params"; $("hd-params").innerHTML = [
-    ["Caixa d'água (NA mín.)", res0?fmt(num(res0.nivel),2):"—", "m"], ["Aparelhos", String(R.pontos.reduce((s,p)=>s+p.q,0)), ""],
+    ["Cota da caixa d'água", res0?fmt(num(res0.fundo ?? res0.nivel),2):"—", "m"], ["Aparelhos", String(R.pontos.reduce((s,p)=>s+p.q,0)), ""],
     ["Soma dos pesos", fmt(R.pontos.reduce((s,p)=>s+p.a.p*p.q,0),1), ""],
     ["Bombas", String(H.els.filter(e=>e.tipo==="bomba").length), ""], ["Menor pressão", R.pontos.some(p=>p.P!=null) ? fmt(Math.min(...R.pontos.filter(p=>p.P!=null).map(p=>p.P)),1) : "—", "kPa"]
   ].map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
@@ -3094,10 +3386,10 @@ function ligarHid(){
       hdFecharPop();
       const pav0 = pavDoY(pt.sy);
       let novo;
-      if(HD.modo==="res") novo = {id:uid(), tipo:"res", nome:hdProxNome("res"), x:pt.sx, y:pt.sy, nivel: +(num(H0.pav[H0.pav.length-1]?.cota)+3.5).toFixed(2)};
+      if(HD.modo==="res") novo = {id:uid(), tipo:"res", nome:hdProxNome("res"), x:pt.sx, y:pt.sy, fundo: +(Math.max(...H0.pav.map(p=>num(p.cota)))+3.5).toFixed(2), lamina: 0};
       if(HD.modo==="no")  novo = {id:uid(), tipo:"no", nome:hdProxNome("no"), x:pt.sx, y:pt.sy, pav: pav0, alt: 0.3};
       if(HD.modo==="amb") novo = {id:uid(), tipo:"amb", nome:`Ambiente ${H0.els.filter(x=>x.tipo==="amb").length+1}`, x:pt.sx, y:pt.sy, pav: pav0, alt: 0.6, itens:[]};
-      if(HD.modo==="bomba") novo = {id:uid(), tipo:"bomba", nome: H0.els.some(x=>x.tipo==="bomba") ? `BP${H0.els.filter(x=>x.tipo==="bomba").length+1}` : "BP", x:pt.sx, y:pt.sy, pav: pav0, alt: 0.3, modo:"soma", pressao: 15};
+      if(HD.modo==="bomba") novo = {id:uid(), tipo:"bomba", nome: H0.els.some(x=>x.tipo==="bomba") ? `BP${H0.els.filter(x=>x.tipo==="bomba").length+1}` : "BP", x:pt.sx, y:pt.sy, pav: pav0, cota: +(num(H0.pav.find(p=>p.id===pav0)?.cota)+0.3).toFixed(2), modo:"soma", pressao: 15};
       if(HD.modo==="vd")  novo = {id:uid(), tipo:"vd", nome:"VD", x:pt.sx, y:pt.sy, pav: pav0, alt: apar("bs_vd").h, pmin:""};
       H0.els.push(novo); hdAlterou(); hdAbrirPop("el", novo.id, true); return;
     }
@@ -3126,7 +3418,8 @@ function ligarHid(){
     if(HD.modo==="apagar"){ if(tipo==="el"||tipo==="tubo") hdApagar(tipo, id); return; }
     if(!tipo || tipo==="fundo"){ HD.sel = null; hdFecharPop(); renderHid(); return; }
     if(tipo==="tubo"){ hdAbrirPop("tubo", id, false); return; }
-    HD.sel = {tipo:"el", id}; HD.arrasto = {obj: el, dx: el.x-pt.x, dy: el.y-pt.y, moveu:false, vds: el.tipo==="amb" ? H0.els.filter(v=>v.tipo==="vd" && v.amb===el.id).map(v=>({v, ox:v.x-el.x, oy:v.y-el.y})) : []};
+    const alvoArr = el.tipo==="vd" && el.amb ? (H0.els.find(x=>x.id===el.amb) || el) : el;
+    HD.sel = {tipo:"el", id}; HD.arrasto = {obj: alvoArr, clicado: el, dx: alvoArr.x-pt.x, dy: alvoArr.y-pt.y, moveu:false, vds: []};
     svg.setPointerCapture(e.pointerId); renderHid();
   });
   svg.addEventListener("pointermove", e=>{
@@ -3136,8 +3429,8 @@ function ligarHid(){
       if(nx!==a.obj.x || ny!==a.obj.y){ a.obj.x = nx; a.obj.y = ny; a.vds.forEach(k=>{ k.v.x = nx+k.ox; k.v.y = ny+k.oy; }); a.moveu = true; renderHdCanvas(calcHid()); } }
   });
   const soltar = ()=>{ if(HD.arrasto){ const a = HD.arrasto; HD.arrasto = null;
-    if(a.moveu){ if(a.obj.tipo!=="res"){ a.obj.pav = pavDoY(a.obj.y); a.vds.forEach(k=>{ k.v.pav = pavDoY(k.v.y); }); } hdAlterou(); hdPosPop(); }
-    else hdAbrirPop("el", a.obj.id, true); } };
+    if(a.moveu){ if(a.obj.tipo!=="res" && a.obj.tipo!=="bomba"){ a.obj.pav = pavDoY(a.obj.y); a.vds.forEach(k=>{ k.v.pav = pavDoY(k.v.y); }); } hdAlterou(); hdPosPop(); }
+    else hdAbrirPop("el", a.clicado.id, true); } };
   svg.addEventListener("pointerup", soltar); svg.addEventListener("pointercancel", soltar);
   // janela
   const pop = $("hd-pop");
@@ -3167,9 +3460,9 @@ function ligarHid(){
     if(e.target.closest("[data-hi-rm]")){ el.itens.splice(+e.target.closest(".hp-item").dataset.j,1); hdRenderPop(); hdAlterou(); return; }
     if(e.target.closest("[data-hi-vd]")){
       const irmas = H().els.filter(v=>v.tipo==="vd" && v.amb===el.id).length;
-      const vd = {id:uid(), tipo:"vd", amb: el.id, nome:`VD ${el.nome||""}${irmas?" "+(irmas+1):""}`.trim(), x: el.x + 100 + irmas*60, y: el.y + 60, pav: el.pav, alt: apar("bs_vd").h, pmin:""};
+      const vd = {id:uid(), tipo:"vd", amb: el.id, nome:`VD ${el.nome||""}${irmas?" "+(irmas+1):""}`.trim(), x: el.x + 50 + 4 + 22 + irmas*48, y: el.y, pav: el.pav, alt: apar("bs_vd").h, pmin:""};
       H().els.push(vd); hdAlterou(); hdAbrirPop("el", vd.id, false);
-      aviso("Válvula criada ao lado do ambiente. Ligue-a por um tubo próprio (ferramenta Ligar)."); return;
+      aviso("Válvula criada colada ao ambiente. Ligue-a por um tubo próprio (ferramenta Ligar), de preferência por cima ou por baixo."); return;
     }
   });
   pop.addEventListener("keydown", e=>{ if(e.key==="Escape"){ hdFecharPop(); renderHid(); } if(e.key==="Enter" && e.target.tagName==="INPUT"){ e.preventDefault(); hdFecharPop(); renderHid(); } });
@@ -3190,7 +3483,7 @@ function relHid(){
     ${sec("Identificação", relIdent(MREL))}
     ${sec("Objetivo", `<p>Apresentar o dimensionamento da rede de distribuição de água fria da edificação, alimentada por reservatório superior, com verificação de velocidades e pressões nos pontos de utilização.</p>`)}
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 5626</b><span>Sistemas prediais de água fria e água quente: projeto, execução, operação e manutenção</span></li></ul>`)}
-    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Reservatório (nível mínimo)", res0?`${esc(res0.nome)} · cota ${fmt(num(res0.nivel),2)} m`:"—")}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Reservatório", res0?`${esc(res0.nome)} · cota ${fmt(num(res0.fundo ?? res0.nivel),2)} m${num(res0.lamina)>0?` · nível mínimo ${fmt(cotaEl(res0),2)} m`:""}`:"—")}
       ${td("Pavimentos", H.pav.map(p=>`${esc(p.nome)} (${fmt(num(p.cota),2)} m)`).join(" · "))}${H.els.filter(e=>e.tipo==="bomba").map(b=>td(`Bomba de pressurização ${esc(b.nome||"BP")}`, b.modo==="fixa"?`pressão de saída ${fmt(num(b.pressao),1)} mca (${fmt(10*num(b.pressao),0)} kPa)`:`acréscimo de ${fmt(num(b.pressao),1)} mca (${fmt(10*num(b.pressao),0)} kPa)`)).join("")}${td("Material", "Tubo de PVC soldável (tubo liso)")}
       ${td("Diâmetro de cálculo", H.dcalc==="nominal"?"Nominal (DE)":"Interno (DI)")}${td("Velocidade máxima", `${fmt(num(H.vmax),1)} m/s`)}${td("Pressão estática máxima", `${fmt(num(H.pmaxEst))} kPa`)}</tbody></table>`)}
     ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Nos tubos: diâmetro externo (mm), velocidade (m/s), soma dos pesos e vazão (L/s). Nos ambientes: aparelhos e menor pressão entre eles (kPa); VD = válvula de descarga com alimentação individual; BP = bomba de pressurização (entrada → saída, kPa).</p></div>`) : ""}
@@ -3200,6 +3493,319 @@ function relHid(){
       ${R.pontos.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(p.a.t)}${p.q>1?` ×${p.q}`:""}</td><td class="n">${fmt(p.z,2)}</td><td class="n">${p.P!=null?fmt(p.P,1):"—"}</td><td class="n">${fmt(p.pmin,0)}</td><td class="n">${p.est!=null?fmt(p.est,1):"—"}</td><td class="c">${sitTxt(p.ok)}</td></tr>`).join("")}</tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os trechos respeitam a velocidade máxima e todos os pontos de utilização têm pressão dinâmica igual ou superior à mínima.":"há trechos ou pontos que não atendem. Revisar antes da emissão."}</div></div>`)}
     ${sec("Memorial de cálculo", memorialHid(R))}
+    ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
+   ESGOTO · TUBULAÇÃO (planilha "Esgoto": UHC por caixa e tabela de coletores)
+   ===================================================================== */
+// Unidades Hunter de contribuição (aba "UHC")
+const APAR_UHC = [
+  {id:"banh_r", t:"Banheira de residência", u:3}, {id:"banh_g", t:"Banheira de uso geral", u:4}, {id:"banh_h", t:"Banheira hidroterápica", u:6},
+  {id:"bebed", t:"Bebedouro", u:0.5}, {id:"bide", t:"Bidê", u:2},
+  {id:"chuv_r", t:"Chuveiro de residência", u:2}, {id:"chuv_g", t:"Chuveiro de uso geral", u:4},
+  {id:"lav_r", t:"Lavatório de residência", u:1}, {id:"lav_g", t:"Lavatório de uso geral", u:2},
+  {id:"mic_v", t:"Mictório com válvula de descarga", u:6}, {id:"mic_c", t:"Mictório com caixa de descarga", u:5},
+  {id:"mic_a", t:"Mictório com descarga automática", u:2}, {id:"mic_l", t:"Mictório de calha (por metro)", u:2},
+  {id:"pia_r", t:"Pia de residência", u:3}, {id:"pia_g", t:"Pia de grandes cozinhas", u:4}, {id:"pia_d", t:"Pia de despejos", u:5},
+  {id:"ralo", t:"Ralo de piso", u:1}, {id:"tanque", t:"Tanque de lavar roupa", u:3}, {id:"vaso", t:"Vaso sanitário", u:6},
+  {id:"mlr30", t:"Máquina de lavar roupa até 30 kg", u:10}, {id:"mlr60", t:"Máquina de lavar roupa de 30 a 60 kg", u:12}
+];
+const aparU = id => APAR_UHC.find(a=>a.id===id) || APAR_UHC[0];
+// Subcoletores e coletor predial: número máximo de UHC por DN e declividade (aba "Dados"); null = não permitido
+const DECLS = [0.5, 1, 2, 4];
+const TAB_COL = [
+  {dn:100, m:[null,180,216,250]}, {dn:150, m:[null,700,840,1000]}, {dn:200, m:[1400,1600,1920,2300]},
+  {dn:250, m:[2500,2900,3500,4200]}, {dn:300, m:[3900,4600,5600,6700]}, {dn:400, m:[7000,8300,10000,12000]}
+];
+function calcEst(){
+  const E = S.est, porId = new Map([...E.caixas, ...E.saidas].map(x=>[x.id,x]));
+  const propria = c => (c.itens||[]).reduce((s,it)=>s + aparU(it.ap).u*Math.max(0,num(it.qtd)), 0);
+  const memo = new Map();
+  const acum = (id, pilha=new Set()) => {
+    if(memo.has(id)) return memo.get(id); if(pilha.has(id)) return 0; pilha.add(id);
+    const c = porId.get(id); let a = c && c.itens ? propria(c) : 0;
+    E.ligacoes.filter(l=>l.para===id).forEach(l=>{ a += acum(l.de, pilha); });
+    memo.set(id, a); return a;
+  };
+  // dimensiona de montante para jusante (o diâmetro não diminui no sentido do escoamento)
+  const res = new Map(), calc = l => {
+    if(res.has(l.id)) return res.get(l.id);
+    const de = porId.get(l.de), para = porId.get(l.para), uhc = acum(l.de);
+    const decl = num(l.decl) || num(E.decl), ci = DECLS.indexOf(decl);
+    const montante = E.ligacoes.filter(x=>x.para===l.de).map(calc).map(r=>r.dn||0);
+    const dnMin = Math.max(num(E.dmin), ...montante, 0);
+    const lin = TAB_COL.find(r=>r.dn>=dnMin && r.m[ci]!=null && r.m[ci] >= uhc);
+    const r = {l, de, para, uhc, decl, dn: lin?lin.dn:null, cap: lin?lin.m[ci]:null, porMontante: lin && montante.length && lin.dn===Math.max(...montante) && lin.dn>num(E.dmin) && !TAB_COL.some(x=>x.dn<lin.dn && x.dn>=num(E.dmin) && x.m[ci]!=null && x.m[ci]>=uhc) ? false : false,
+      erro: uhc<=0 ? "Sem contribuição" : !lin ? "Acima da tabela (DN 400)" : null, rot:`${de?.nome||"?"} → ${para?.nome||"?"}`};
+    r.subiuPorMontante = !!lin && dnMin>num(E.dmin) && !!TAB_COL.find(x=>x.dn>=num(E.dmin) && x.dn<dnMin && x.m[ci]!=null && x.m[ci]>=uhc);
+    res.set(l.id, r); return r;
+  };
+  const trechos = E.ligacoes.map(calc);
+  const semSaida = E.caixas.filter(c=>!E.ligacoes.some(l=>l.de===c.id));
+  return {trechos, semSaida, propria, acum, porId};
+}
+
+/* ---------- Editor ---------- */
+let ES = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null, pop:null, k:null};
+const ES_SNAP = 20, ES_CX = 22;
+const MODOS_ES = {
+  sel:"Clique numa caixa para lançar os aparelhos; arraste para mover. Delete apaga o selecionado.",
+  caixa:"Clique no desenho para colocar uma caixa; a janela de aparelhos abre em seguida.",
+  ligar:"Clique na caixa de origem e depois na que recebe o esgoto. Clicando no vazio, uma caixa nova é criada na ponta da seta.",
+  saida:"Clique no desenho para colocar a saída final (rede pública, fossa…).",
+  apagar:"Clique numa caixa, saída ou tubulação para apagar."
+};
+function esPonto(ev){ const svg = $("es-canvas"), p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return {x:q.x, y:q.y, sx:Math.round(q.x/ES_SNAP)*ES_SNAP, sy:Math.round(q.y/ES_SNAP)*ES_SNAP}; }
+function esProxNome(){ let k=1; const n = new Set(S.est.caixas.map(c=>c.nome)); while(n.has(`CP-${k}`)) k++; return `CP-${k}`; }
+function esAbaixo(id, alvo){ let a = id, n = 0; while(a && n++<500){ if(a===alvo) return true; const l = S.est.ligacoes.find(x=>x.de===a); a = l ? l.para : null; } return false; }
+function esDesenho(R, interativo){
+  const E = S.est, els = [], todos = [...E.caixas, ...E.saidas], selId = ES.sel && ES.sel.id;
+  const W = Math.max(900, ...todos.map(e=>e.x+220)), H = Math.max(500, ...todos.map(e=>e.y+160));
+  R.trechos.forEach(t=>{
+    const a = t.de, b = t.para; if(!a||!b) return;
+    const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L, rb = E.saidas.includes(b) ? 20 : ES_CX+3;
+    const x1=a.x+ux*(ES_CX+2), y1=a.y+uy*(ES_CX+2), x2=b.x-ux*rb, y2=b.y-uy*rb, mx=(x1+x2)/2, my=(y1+y2)/2, err=!!t.erro, sel=selId===t.l.id;
+    let ang = Math.atan2(dy,dx)*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
+    els.push(`<g class="pl-tubo ${err?"err":""} ${sel?"sel":""}" data-tipo="lig" data-id="${t.l.id}">
+      ${interativo?`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="hit"/>`:""}
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tb" marker-end="url(#es-seta${err?"-err":""})"/>
+      <g transform="translate(${mx} ${my}) rotate(${ang})"><text y="-8" class="tdm" text-anchor="middle">${t.dn?"DN "+t.dn:"?"}${Math.hypot(x2-x1,y2-y1)>=130?` · ${fmt(t.decl,1)}%`:""}</text>
+      ${Math.hypot(x2-x1,y2-y1)>=130?`<text y="16" class="tar" text-anchor="middle">${fmt(t.uhc,1)} UHC</text>`:""}</g></g>`);
+  });
+  E.caixas.forEach(c=>{
+    const sel = selId===c.id, ori = ES.origem===c.id, sem = R.semSaida.includes(c);
+    els.push(`<g class="pl-cx ${sel?"sel":""} ${ori?"ori":""}" data-tipo="caixa" data-id="${c.id}" transform="translate(${c.x} ${c.y})">
+      <rect x="${-ES_CX}" y="${-ES_CX}" width="${ES_CX*2}" height="${ES_CX*2}" class="cx"/><circle r="9" class="cx2"/>
+      <text y="${-ES_CX-8}" class="cn" text-anchor="middle">${esc(c.nome)}</text>
+      <text y="${ES_CX+17}" class="ca" text-anchor="middle">Contrib. ${fmt(R.propria(c),1)} UHC</text>
+      <text y="${ES_CX+33}" class="ct" text-anchor="middle">Total ${fmt(R.acum(c.id),1)} UHC</text>
+      ${sem&&interativo?`<text y="${ES_CX+49}" class="ca err" text-anchor="middle">sem saída</text>`:""}</g>`);
+  });
+  E.saidas.forEach(s=>{
+    const sel = selId===s.id;
+    els.push(`<g class="pl-sd ${sel?"sel":""}" data-tipo="saida" data-id="${s.id}" transform="translate(${s.x} ${s.y})">
+      <circle r="18" class="sd"/><path d="M-8 -4 L0 6 L8 -4" class="sd2"/>
+      <text y="-26" class="cn" text-anchor="middle">${esc(s.nome)}</text><text y="36" class="ct" text-anchor="middle">${fmt(R.acum(s.id),1)} UHC</text></g>`);
+  });
+  if(interativo && ES.modo==="ligar" && ES.origem && ES.mouse){ const o = E.caixas.find(c=>c.id===ES.origem); if(o) els.push(`<line x1="${o.x}" y1="${o.y}" x2="${ES.mouse.x}" y2="${ES.mouse.y}" class="elast"/>`); }
+  let vb = `0 0 ${W} ${H}`;
+  if(!interativo && todos.length){ const xs = todos.map(e=>e.x), ys = todos.map(e=>e.y); const x0=Math.min(...xs)-90, y0=Math.min(...ys)-60, x1=Math.max(...xs)+90, y1=Math.max(...ys)+80; vb = `${x0} ${y0} ${x1-x0} ${y1-y0}`; }
+  const grade = interativo ? `<defs><pattern id="es-grade" width="${ES_SNAP}" height="${ES_SNAP}" patternUnits="userSpaceOnUse"><circle cx="0" cy="0" r="1" fill="#cfcfcf"/></pattern></defs><rect x="0" y="0" width="${W}" height="${H}" fill="url(#es-grade)" data-tipo="fundo"/>` : "";
+  return {vb, W, H, svg:`${grade}<defs>
+    <marker id="es-seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#000"/></marker>
+    <marker id="es-seta-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#d10a1e"/></marker></defs>
+    <style>.tb{stroke:#000;stroke-width:2}.pl-tubo.err .tb{stroke:#d10a1e;stroke-dasharray:6 4}.pl-tubo.sel .tb{stroke:#d10a1e;stroke-width:3.5}
+    .hit{stroke:transparent;stroke-width:16;cursor:pointer}.tdm{font:700 16px 'Barlow Condensed',Arial,sans-serif;fill:#000}.pl-tubo.err .tdm{fill:#d10a1e}.tar{font:500 13px Barlow,Arial,sans-serif;fill:#555}
+    .cx{fill:#fff;stroke:#000;stroke-width:2}.cx2{fill:none;stroke:#000;stroke-width:1}.pl-cx.sel .cx,.pl-sd.sel .sd{stroke:#d10a1e;stroke-width:3}.pl-cx.ori .cx{fill:#fde7ea;stroke:#d10a1e}
+    .cn{font:700 17px 'Barlow Condensed',Arial,sans-serif;fill:#d10a1e}.ca{font:500 13px Barlow,Arial,sans-serif;fill:#555}.ca.err{fill:#d10a1e}.ct{font:700 13px Barlow,Arial,sans-serif;fill:#000}
+    .cn,.ca,.ct,.tdm,.tar{paint-order:stroke;stroke:#fafafa;stroke-width:4px;stroke-linejoin:round}
+    .sd{fill:#fff;stroke:#000;stroke-width:2}.sd2{fill:none;stroke:#000;stroke-width:2}.elast{stroke:#d10a1e;stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none}.pl-cx,.pl-sd{cursor:pointer}</style>${els.join("")}`};
+}
+function renderEsCanvas(R){
+  const d = esDesenho(R, true), svg = $("es-canvas");
+  svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
+  const larg = svg.parentElement.clientWidth; if(larg>0) ES.k = Math.min(1.2, (larg-2)/900);
+  svg.style.width = `${d.W*(ES.k||1)}px`; svg.innerHTML = d.svg; svg.dataset.modo = ES.modo;
+  esPosPop();
+}
+/* janela */
+function htmlPopEs(R){
+  const E = S.est, a = ES.pop; if(!a) return "";
+  const fechar = `<button class="x" type="button" data-ep-fechar aria-label="Fechar">×</button>`, rod = `<dl class="pl-tot" data-eres></dl><div class="pl-pop-rod"><button class="btn peq" type="button" data-ep-fechar>Concluir</button></div>`;
+  if(a.tipo==="lig"){
+    const t = R.trechos.find(x=>x.l.id===a.id); if(!t) return "";
+    return `<div class="pl-pop-cab"><h4 style="margin:0;flex:1">${esc(t.rot)}</h4>${fechar}</div>
+      <label class="campo">Declividade deste trecho<select data-et="decl"><option value="">Padrão (${fmt(num(E.decl),1)}%)</option>${DECLS.map(d=>`<option value="${d}" ${num(t.l.decl)===d?"selected":""}>${fmt(d,1)}%</option>`).join("")}</select></label>
+      <label class="campo">Comprimento (opcional)<span class="unid"><input data-et="L" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(t.l.L??"")}" placeholder="0"><b>m</b></span></label>
+      <p class="dica" style="margin:0"><button class="lnk" type="button" data-et-inv>Inverter sentido do escoamento</button></p>${rod}`;
+  }
+  if(a.tipo==="saida"){ const s = E.saidas.find(x=>x.id===a.id); if(!s) return "";
+    return `<div class="pl-pop-cab"><label class="campo">Saída final<input data-es="nome" value="${esc(s.nome)}"></label>${fechar}</div>${rod}`; }
+  const c = E.caixas.find(x=>x.id===a.id); if(!c) return "";
+  return `<div class="pl-pop-cab"><label class="campo">Caixa<input data-es="nome" value="${esc(c.nome)}"></label>${fechar}</div>
+    <p class="hp-sub">Aparelhos que chegam nesta caixa</p>
+    <div class="hp-itens">${(c.itens||[]).map((it,j)=>`<div class="hp-item es-item" data-j="${j}">
+      <label class="campo">Aparelho<select data-ei="ap">${APAR_UHC.map(x=>`<option value="${x.id}" ${x.id===it.ap?"selected":""}>${x.t} · ${String(x.u).replace(".",",")} UHC</option>`).join("")}</select></label>
+      <label class="campo">Qtd.<input data-ei="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.qtd)}"></label>
+      <button class="x" type="button" data-ei-rm aria-label="Remover aparelho">×</button></div>`).join("") || `<p class="vazio" style="font-size:14px;margin:4px 0">Nenhum aparelho.</p>`}</div>
+    <button class="add" type="button" data-ei-add style="margin-top:6px">Adicionar aparelho</button>${rod}`;
+}
+function esResPop(R){
+  const dl = $("es-pop").querySelector("[data-eres]"); if(!dl || !ES.pop) return;
+  if(ES.pop.tipo==="lig"){ const t = R.trechos.find(x=>x.l.id===ES.pop.id); if(!t) return;
+    dl.innerHTML = `<dt>UHC acumulada</dt><dd>${fmt(t.uhc,1)}</dd><dt>Diâmetro</dt><dd>${t.dn?`<b style="font-size:18px">DN ${t.dn}</b>`:`<span class="mc-aviso">${t.erro}</span>`}</dd>${t.cap?`<dt>Máximo (${fmt(t.decl,1)}%)</dt><dd>${fmt(t.cap)} UHC</dd>`:""}${t.subiuPorMontante?`<dt></dt><dd class="mc-aviso" style="font-size:12px">mantido igual ao trecho anterior</dd>`:""}`; return; }
+  const id = ES.pop.id, c = S.est.caixas.find(x=>x.id===id), sai = R.trechos.find(t=>t.l.de===id), ent = R.trechos.filter(t=>t.l.para===id);
+  dl.innerHTML = `${c?`<dt>Contribuição da caixa</dt><dd>${fmt(R.propria(c),1)} UHC</dd>`:""}${ent.length?`<dt>Recebe de</dt><dd>${ent.map(t=>`${esc(t.de.nome)} (${fmt(t.uhc,1)})`).join(", ")}</dd>`:""}
+    <dt>Total</dt><dd><b>${fmt(R.acum(id),1)} UHC</b></dd>${c?`<dt>Saída</dt><dd>${sai?`→ ${esc(sai.para?.nome||"?")} ${sai.dn?`<b>DN ${sai.dn}</b>`:`<span class="mc-aviso">${sai.erro}</span>`}`:`<span class="mc-aviso">sem saída</span>`}</dd>`:""}`;
+}
+function esAbrirPop(tipo, id, focar){
+  ES.pop = {tipo, id}; ES.sel = {tipo, id};
+  const R = renderEst(), pop = $("es-pop"); pop.innerHTML = htmlPopEs(R); pop.hidden = false; esResPop(R); esPosPop();
+  if(focar) setTimeout(()=>{ const i = pop.querySelector('[data-ei="qtd"],[data-et="decl"],[data-es="nome"]'); i?.focus(); }, 30);
+}
+function esRenderPop(focarUlt){ const pop = $("es-pop"); if(!ES.pop) return; const R = calcEst(); pop.innerHTML = htmlPopEs(R); esResPop(R); esPosPop();
+  if(focarUlt){ const s2 = pop.querySelectorAll('[data-ei="ap"]'); s2[s2.length-1]?.focus(); } }
+function esFecharPop(){ ES.pop = null; const p = $("es-pop"); if(p){ p.hidden = true; p.innerHTML = ""; } }
+function esPosPop(){
+  const pop = $("es-pop"); if(!ES.pop || pop.hidden) return;
+  const sel = ES.pop.tipo==="lig" ? `#es-canvas .pl-tubo[data-id="${ES.pop.id}"]` : `#es-canvas [data-id="${ES.pop.id}"]`;
+  const g = document.querySelector(sel), env = pop.parentElement; if(!g) return;
+  const rg = g.getBoundingClientRect(), re = env.getBoundingClientRect();
+  let left = rg.right - re.left + 12, top = rg.top - re.top - 20;
+  if(left + pop.offsetWidth > re.width) left = rg.left - re.left - pop.offsetWidth - 12;
+  pop.style.left = Math.max(8, Math.min(left, re.width - pop.offsetWidth - 8))+"px"; pop.style.top = Math.max(8, top)+"px";
+}
+/* tela */
+function renderEst(){
+  const E = S.est, R = calcEst();
+  const tot = R.trechos.length ? Math.max(...R.trechos.map(t=>t.uhc)) : E.caixas.reduce((s,c)=>s+R.propria(c),0);
+  $("es-params").innerHTML = [["Declividade padrão", fmt(num(E.decl),1), "%"], ["Caixas", String(E.caixas.length), ""], ["UHC total", fmt(tot,1), ""], ["Maior diâmetro", R.trechos.some(t=>t.dn) ? "DN "+Math.max(...R.trechos.map(t=>t.dn||0)) : "—", ""]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  $("es-tab").innerHTML = `<table class="quadro"><thead><tr><th>DN</th>${DECLS.map(d=>`<th class="n">${fmt(d,1)}%</th>`).join("")}</tr></thead><tbody>
+    ${TAB_COL.map(r=>`<tr${r.dn<num(E.dmin)?' style="color:var(--cinza-3)"':""}><td>${r.dn}</td>${r.m.map((v,i)=>`<td class="n" ${DECLS[i]===num(E.decl)?'style="font-weight:700"':""}>${v==null?"—":fmt(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+    <p class="fonte">Número máximo de UHC em subcoletores e coletor predial (NBR 8160). “—” = declividade não permitida para o diâmetro.</p>`;
+  renderEsCanvas(R); if(ES.pop) esResPop(R);
+  $("es-modo-dica").textContent = MODOS_ES[ES.modo] + (ES.modo==="ligar" && ES.origem ? ` Origem: ${E.caixas.find(c=>c.id===ES.origem)?.nome||""}. Esc cancela.` : "");
+  document.querySelectorAll(".es-ferr [data-modo]").forEach(b=>b.classList.toggle("on", b.dataset.modo===ES.modo));
+  const ord = [...R.trechos].sort((a,b)=>a.uhc-b.uhc);
+  $("es-quadro").innerHTML = ord.length ? `<table class="quadro"><thead><tr><th>Trecho</th><th class="n">UHC acumulada</th><th class="n">Declividade</th><th class="n">Compr.</th><th>Diâmetro</th><th class="n">Máximo</th></tr></thead><tbody>
+    ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.uhc,1)}</td><td class="n">${fmt(t.decl,1)}%</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1)+" m":"—"}</td>
+      <td class="d ${t.erro?"falha":""}">${t.dn?`DN ${t.dn}`:`<span style="font:600 14px var(--sans)">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap)+" UHC":"—"}</td></tr>`).join("")}</tbody></table>
+    <p class="fonte">Diâmetro = menor DN (a partir de ${num(E.dmin)}) cujo máximo de UHC na declividade do trecho atende à UHC acumulada, sem ser menor que o diâmetro dos trechos que chegam na caixa.</p>`
+    : `<p class="vazio">Ligue as caixas para ver o dimensionamento.</p>`;
+  $("es-memorial").innerHTML = memorialEst(R);
+  return R;
+}
+function memorialEst(R){
+  const E = S.est; if(!E.caixas.length) return `<p class="vazio">Coloque as caixas e lance os aparelhos para ver o memorial.</p>`;
+  let h = `<div class="mc-bloco"><h4>Contribuição por caixa</h4>` + E.caixas.map(c=>{
+    const partes = (c.itens||[]).filter(it=>num(it.qtd)>0).map(it=>`${fmt(num(it.qtd))} × ${String(aparU(it.ap).u).replace(".",",")} <em>(${esc(aparU(it.ap).t)})</em>`);
+    return `<p class="mc-l"><b>${esc(c.nome)}:</b> ${partes.join(" + ") || "0"} = <b>${fmt(R.propria(c),1)} UHC</b></p>`; }).join("") + `</div>`;
+  h += [...R.trechos].sort((a,b)=>a.uhc-b.uhc).map(t=>{
+    const ent = R.trechos.filter(x=>x.l.para===t.l.de), ci = DECLS.indexOf(t.decl);
+    const soma = [`${fmt(R.propria(t.de),1)} <em>(${esc(t.de.nome)})</em>`, ...ent.map(x=>`${fmt(x.uhc,1)} <em>(${esc(x.de.nome)})</em>`)].join(" + ");
+    const cand = TAB_COL.filter(r=>r.dn>=num(E.dmin));
+    return `<div class="mc-bloco"><h4>Trecho ${esc(t.rot)}<span>declividade ${fmt(t.decl,1)}%${num(t.l.L)>0?` · ${fmt(num(t.l.L),1)} m`:""}</span></h4>
+      <p class="mc-l"><b>1.</b> UHC acumulada = ${soma} = <b>${fmt(t.uhc,1)} UHC</b></p>
+      <p class="mc-l"><b>2.</b> Máximo de UHC para ${fmt(t.decl,1)}% <em>(✓ atende, ✗ não atende)</em>:</p>
+      <div class="mc-rolar"><table class="mc-tab"><tr><th>DN</th>${cand.map(r=>`<th style="text-align:right">${r.dn}</th>`).join("")}</tr>
+      <tr><th>UHC máx.</th>${cand.map(r=>{ const v = r.m[ci]; return `<td class="${r.dn===t.dn?"sel":(v==null||v<t.uhc)?"no":""}">${v==null?"—":fmt(v)} ${v!=null&&v>=t.uhc?"✓":"✗"}</td>`; }).join("")}</tr></table></div>
+      <p class="mc-l fim">${t.erro?`<span class="mc-aviso">${t.erro}</span>`:`Diâmetro adotado: <b>DN ${t.dn}</b>${t.subiuPorMontante?" <em>(mantido igual ao maior trecho que chega na caixa)</em>":""}`}</p></div>`;
+  }).join("");
+  return h;
+}
+function preencherEst(){
+  const E = S.est; $("es-decl").value = E.decl; $("es-dmin").value = E.dmin;
+  $("t-doc").value = E.doc; $("t-rev").value = E.rev; $("t-obs").value = E.obs;
+  ES.sel = null; ES.origem = null; esFecharPop(); renderEst();
+}
+function esAlterou(){ renderEst(); resumo(); salvar(); }
+function esApagar(tipo, id){
+  const E = S.est;
+  if(tipo==="caixa"){ E.caixas = E.caixas.filter(c=>c.id!==id); E.ligacoes = E.ligacoes.filter(l=>l.de!==id && l.para!==id); }
+  if(tipo==="saida"){ E.saidas = E.saidas.filter(c=>c.id!==id); E.ligacoes = E.ligacoes.filter(l=>l.para!==id); }
+  if(tipo==="lig") E.ligacoes = E.ligacoes.filter(l=>l.id!==id);
+  if(ES.sel?.id===id) ES.sel = null; if(ES.origem===id) ES.origem = null; if(ES.pop?.id===id) esFecharPop();
+  esAlterou();
+}
+function ligarEst(){
+  const E = () => S.est;
+  $("es-decl").addEventListener("input", e=>{ E().decl = num(e.target.value); esAlterou(); });
+  $("es-dmin").addEventListener("input", e=>{ E().dmin = num(e.target.value); esAlterou(); });
+  for(const k of ["doc","rev","obs"]) $("t-"+k).addEventListener("input", e=>{ E()[k]=e.target.value; salvar(); });
+  document.querySelectorAll(".es-ferr [data-modo]").forEach(b=>b.addEventListener("click", ()=>{ ES.modo = b.dataset.modo; ES.origem = null; if(!["sel","caixa"].includes(ES.modo)) esFecharPop(); renderEst(); }));
+  addEventListener("keydown", e=>{
+    if(S.modulo!=="est" || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
+    const mapa = {v:"sel", c:"caixa", l:"ligar", s:"saida", a:"apagar"};
+    if(e.key==="Escape"){ ES.origem = null; ES.sel = null; esFecharPop(); renderEst(); return; }
+    if((e.key==="Delete"||e.key==="Backspace") && ES.sel){ e.preventDefault(); esApagar(ES.sel.tipo, ES.sel.id); return; }
+    if(mapa[e.key.toLowerCase()] && !e.ctrlKey && !e.metaKey){ ES.modo = mapa[e.key.toLowerCase()]; ES.origem = null; renderEst(); }
+  });
+  const svg = $("es-canvas");
+  const novaCaixa = pt => { const c = {id:uid(), nome:esProxNome(), x:pt.sx, y:pt.sy, itens:[]}; E().caixas.push(c); return c; };
+  svg.addEventListener("pointerdown", e=>{
+    const alvo = e.target.closest("[data-tipo]"), tipo = alvo?.dataset.tipo, id = alvo?.dataset.id, pt = esPonto(e);
+    if(ES.modo==="caixa"){
+      if(tipo==="caixa"){ esAbrirPop("caixa", id, true); return; }
+      if(tipo==="saida"){ esAbrirPop("saida", id, true); return; }
+      esFecharPop(); const c = novaCaixa(pt); esAlterou(); esAbrirPop("caixa", c.id, false);
+      setTimeout(()=>$("es-pop").querySelector("[data-ei-add]")?.focus(), 40); return;
+    }
+    if(ES.modo==="saida"){
+      if(tipo==="caixa"){ esAbrirPop("caixa", id, true); return; }
+      const s = {id:uid(), nome: E().saidas.length ? `Saída ${E().saidas.length+1}` : "Rede pública", x:pt.sx, y:pt.sy};
+      E().saidas.push(s); ES.modo = "sel"; esAlterou(); esAbrirPop("saida", s.id, true); return;
+    }
+    if(ES.modo==="ligar"){
+      if(!ES.origem){ if(tipo==="caixa"){ ES.origem = id; ES.mouse = pt; renderEst(); } else if(tipo==="saida") aviso("A saída só recebe esgoto. Comece a ligação por uma caixa.", true); return; }
+      let destino = id;
+      if(tipo!=="caixa" && tipo!=="saida"){ if(tipo==="lig"){ ES.origem = null; renderEst(); return; } destino = novaCaixa(pt).id; }
+      if(destino===ES.origem) return;
+      if(esAbaixo(destino, ES.origem)){ aviso("Essa ligação fecharia um circuito.", true); return; }
+      const lig = E().ligacoes, ant = lig.find(l=>l.de===ES.origem);
+      if(ant){ ant.para = destino; aviso("A caixa já tinha saída; a ligação foi redirecionada."); } else lig.push({id:uid(), de:ES.origem, para:destino, L:"", decl:""});
+      ES.origem = E().caixas.some(c=>c.id===destino) ? destino : null;
+      esAlterou(); return;
+    }
+    if(ES.modo==="apagar"){ if(tipo && tipo!=="fundo") esApagar(tipo, id); return; }
+    if(!tipo || tipo==="fundo"){ ES.sel = null; esFecharPop(); renderEst(); return; }
+    if(tipo==="lig"){ esAbrirPop("lig", id, false); return; }
+    const obj = [...E().caixas, ...E().saidas].find(x=>x.id===id);
+    ES.sel = {tipo, id}; ES.arrasto = {obj, tipo, dx: obj.x-pt.x, dy: obj.y-pt.y, moveu:false}; svg.setPointerCapture(e.pointerId); renderEst();
+  });
+  svg.addEventListener("pointermove", e=>{
+    const pt = esPonto(e);
+    if(ES.modo==="ligar" && ES.origem){ ES.mouse = pt; renderEsCanvas(calcEst()); return; }
+    if(ES.arrasto){ const a = ES.arrasto, nx = Math.max(ES_SNAP*2, Math.round((pt.x+a.dx)/ES_SNAP)*ES_SNAP), ny = Math.max(ES_SNAP*2, Math.round((pt.y+a.dy)/ES_SNAP)*ES_SNAP);
+      if(nx!==a.obj.x || ny!==a.obj.y){ a.obj.x = nx; a.obj.y = ny; a.moveu = true; renderEsCanvas(calcEst()); } }
+  });
+  const soltar = ()=>{ if(ES.arrasto){ const a = ES.arrasto; ES.arrasto = null; if(a.moveu){ salvar(); esPosPop(); } else esAbrirPop(a.tipo, a.obj.id, a.tipo==="caixa"); } };
+  svg.addEventListener("pointerup", soltar); svg.addEventListener("pointercancel", soltar);
+  svg.addEventListener("dblclick", e=>{ const g = e.target.closest('[data-tipo="caixa"]'); if(g){ ES.origem = null; esAbrirPop("caixa", g.dataset.id, true); } });
+  const pop = $("es-pop");
+  pop.addEventListener("input", e=>{
+    const t = e.target, a = ES.pop; if(!a) return;
+    if(a.tipo==="lig"){ const l = E().ligacoes.find(x=>x.id===a.id); if(t.dataset.et) l[t.dataset.et] = t.value; }
+    else { const o = [...E().caixas, ...E().saidas].find(x=>x.id===a.id); if(!o) return;
+      if(t.dataset.es) o[t.dataset.es] = t.value;
+      if(t.dataset.ei){ o.itens[+t.closest(".es-item").dataset.j][t.dataset.ei] = t.value; } }
+    renderEst(); resumo(); salvar();
+  });
+  pop.addEventListener("click", e=>{
+    if(e.target.closest("[data-ep-fechar]")){ esFecharPop(); renderEst(); return; }
+    const a = ES.pop; if(!a) return;
+    if(e.target.closest("[data-et-inv]")){
+      const l = E().ligacoes.find(x=>x.id===a.id), para = E().caixas.find(c=>c.id===l.para);
+      if(!para){ aviso("A saída final só recebe esgoto; não dá para inverter.", true); return; }
+      if(E().ligacoes.some(x=>x.de===l.para && x.id!==l.id)){ aviso(`${para.nome} já tem saída; apague-a antes de inverter.`, true); return; }
+      [l.de, l.para] = [l.para, l.de]; esRenderPop(); esAlterou(); return;
+    }
+    const c = E().caixas.find(x=>x.id===a.id); if(!c) return;
+    if(e.target.closest("[data-ei-add]")){ c.itens = c.itens||[]; c.itens.push({ap: c.itens.length ? "lav_r" : "vaso", qtd:1}); esRenderPop(true); esAlterou(); return; }
+    if(e.target.closest("[data-ei-rm]")){ c.itens.splice(+e.target.closest(".es-item").dataset.j,1); esRenderPop(); esAlterou(); return; }
+  });
+  pop.addEventListener("keydown", e=>{ if(e.key==="Escape"){ esFecharPop(); renderEst(); } if(e.key==="Enter" && e.target.tagName==="INPUT"){ e.preventDefault(); esFecharPop(); renderEst(); } });
+  $("es-tela").addEventListener("scroll", esPosPop);
+  addEventListener("resize", ()=>{ if(S.modulo==="est") renderEst(); });
+}
+function relEst(){
+  const MREL = S.est, E = S.est, R = calcEst(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
+  const S2 = secoes(), sec = S2.sec, ord = [...R.trechos].sort((a,b)=>a.uhc-b.uhc), d = E.caixas.length ? esDesenho(R, false) : null;
+  const ok = ord.length>0 && !ord.some(t=>t.erro) && !R.semSaida.length;
+  const obs = ["Unidades Hunter de contribuição (UHC) conforme tabela da planilha de dimensionamento.",
+    "Subcoletores e coletor predial dimensionados pelo número máximo de UHC em função do diâmetro e da declividade (NBR 8160); o diâmetro não é reduzido no sentido do escoamento.", ...linhasObs(E.obs)];
+  return `<div class="r">${relCarimbo("Tubulação de esgoto sanitário · subcoletores e coletor", E.doc, E.rev, "Instalações sanitárias")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Objetivo", `<p>Apresentar o dimensionamento dos subcoletores e do coletor predial de esgoto sanitário entre as caixas da edificação, a partir das unidades Hunter de contribuição dos aparelhos.</p>`)}
+    ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 8160</b><span>Sistemas prediais de esgoto sanitário: projeto e execução</span></li></ul>`)}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Declividade padrão", `${fmt(num(E.decl),1)}%`)}${td("Diâmetro mínimo", `DN ${num(E.dmin)}`)}</tbody></table>`)}
+    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: contribuição própria e total acumulado (UHC). Nos tubos: diâmetro, declividade e UHC.</p></div>`) : ""}
+    ${sec("Memorial de cálculo", memorialEst(R))}
+    ${sec("Quadro de tubulações", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Trecho</th><th class="n">UHC</th><th class="n">Declividade</th><th class="n">Compr. (m)</th><th>Diâmetro</th><th class="n">Máx. (UHC)</th></tr></thead><tbody>
+      ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.uhc,1)}</td><td class="n">${fmt(t.decl,1)}%</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1):"—"}</td><td>${t.dn?`<b>DN ${t.dn}</b>`:`<span class="r-no">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap):"—"}</td></tr>`).join("")}</tbody></table>
+      <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os trechos foram dimensionados para a contribuição de projeto.":"há caixas sem saída ou trechos sem diâmetro válido. Revisar antes da emissão."}</div></div>`)}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
     ${relAssinatura(MREL)}</div>`;
 }
@@ -3238,6 +3844,7 @@ function renderResp(){
   $("g-resp").innerHTML = opcoesResp(S.gas.respId);
   $("p-resp").innerHTML = opcoesResp(S.plu.respId);
   $("h-resp").innerHTML = opcoesResp(S.hid.respId);
+  $("t-resp").innerHTML = opcoesResp(S.est.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -3246,8 +3853,8 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  ["e","g","p","h"].forEach(pre=>{
-    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(pre==="g"?S.gas:pre==="p"?S.plu:pre==="h"?S.hid:S.esg, e.target.value); salvar(); });
+  ["e","g","p","h","t"].forEach(pre=>{
+    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(pre==="g"?S.gas:pre==="p"?S.plu:pre==="h"?S.hid:pre==="t"?S.est:S.esg, e.target.value); salvar(); });
   });
   $("resp-add").addEventListener("click", ()=>{
     RESP.push({id:uid(), nome:"", crea:""}); salvarResp(); renderResp();
@@ -3256,7 +3863,7 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.gas, S.plu, S.hid].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [S.esg, S.est, S.gas, S.plu, S.hid].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
     $("e-resp").innerHTML = opcoesResp(S.esg.respId); $("g-resp").innerHTML = opcoesResp(S.gas.respId); $("p-resp").innerHTML = opcoesResp(S.plu.respId); $("h-resp").innerHTML = opcoesResp(S.hid.respId);
     salvar();
   });
@@ -3275,10 +3882,11 @@ preencherTudo();
 ligar();
 ligarPluvial();
 ligarHid();
+ligarEst();
 ligarClientes();
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","est"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
 
 /* =====================================================================
    PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
