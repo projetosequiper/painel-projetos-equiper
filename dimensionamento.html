@@ -278,6 +278,10 @@ svg.diag{display:block;max-width:none}
 .pis-big .falha strong,.pis-big .falha small{color:var(--vermelho)}
 .pis-sub{font-size:13px;font-weight:600;color:var(--cinza-4);margin:12px 0 4px}
 .pis-esc th,.pis-esc td{font-size:13px}
+.bc-nav{display:flex;align-items:center;gap:8px}
+.bc-seta{width:30px;height:30px;border:1px solid var(--cinza-3);background:var(--branco);border-radius:50%;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 0 2px}
+.bc-seta:hover:not(:disabled){background:var(--preto);color:var(--branco);border-color:var(--preto)}
+.bc-seta:disabled{opacity:.3;cursor:default}
 .pis-mais{margin-top:14px}.pis-mais summary{cursor:pointer;font-weight:600}
 .pis-na[hidden]{display:none!important}
 details, details *{box-sizing:border-box}
@@ -288,6 +292,11 @@ details, details *{box-sizing:border-box}
 @media(max-width:700px){.pis-cj-res{grid-template-columns:1fr!important}}
 .pis-t{grid-column:span 1}
 @media(min-width:720px){.c1{grid-column:span 1}}
+
+.g-pavs{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--cinza-1);border-radius:4px;padding:10px 12px;margin-bottom:10px}
+.g-pavs .campo{min-width:140px;flex:0 1 180px}
+.g-pavs .campo input,.g-pavs .campo select{padding:7px 8px;font-size:15px}
+.g-pavs > b{font-size:13px;color:var(--cinza-4);align-self:center}
 
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
@@ -552,7 +561,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <button class="nav-it nsub" type="button" data-mod="est">Tubulação</button>
       </div>
     </div>
-    <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás</button>
+    <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás - RIP</button>
     <button class="nav-it" type="button" data-mod="plu"><i aria-hidden="true">PLU</i>Água pluvial</button>
     <button class="nav-it" type="button" data-mod="ele"><i aria-hidden="true">ELE</i>Elétrica</button>
     <div class="nav-g" data-g="pis">
@@ -826,6 +835,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Bomba de calor</h3><span class="nbr">tabela Fromtherm</span></div><div class="pis-grid" id="paq-res"></div></div></article>
         <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Consumo e custo mensal</h3></div><div id="paq-cons"></div></div></article>
       </section>
+      <details class="catalogo" id="bc-cat">
+        <summary>Bombas de calor · adicionar, remover e editar</summary>
+        <p class="fonte">A capacidade é calculada por BTU/h ÷ 3,96832 (× unidades). A faixa de cada modelo começa logo acima da capacidade do modelo anterior, arredondada ao milhar; a sugestão pega a faixa da carga e sobe o número de modelos da desclassificação. A vazão mínima (por unidade) alimenta a filtração.</p>
+        <div class="rolar"><table class="cat-tab"><thead><tr><th>Modelo</th><th>Unid.</th><th>BTU/h (por un.)</th><th>Consumo W (por un.)</th><th>Vazão mín. m³/h</th><th class="n">kcal/h</th><th class="n">Faixa a partir de</th><th></th></tr></thead><tbody id="bc-corpo"></tbody></table></div>
+        <button class="add" type="button" id="bc-add">Adicionar bomba de calor</button>
+        <p class="dica"><button class="lnk" type="button" id="bc-reset">Restaurar tabela original</button></p>
+      </details>
     </div>
 
     <!-- FILTRAÇÃO -->
@@ -841,7 +857,14 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
           <label class="campo c2">Instalação das bombas<select id="pfi-inst"><option value="paralelo">Paralelo</option><option value="serie">Série</option></select></label>
         </div>
       </section>
-      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Filtro e bomba</h3><span class="nbr">Fluidra Cantabric</span></div><div id="pfi-res"></div></div></article></section>
+      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Filtro e bomba</h3><span class="nbr">tabela de filtros</span></div><div id="pfi-res"></div></div></article></section>
+      <details class="catalogo" id="cf-cat">
+        <summary>Filtros · adicionar, remover e editar</summary>
+        <p class="fonte">O filtro escolhido é o primeiro, em ordem de vazão, cuja vazão máxima é maior que a vazão adotada.</p>
+        <div class="rolar"><table class="cat-tab"><thead><tr><th>Filtro</th><th>Vazão máxima (m³/h)</th><th>Bomba recomendada</th><th></th></tr></thead><tbody id="cf-corpo"></tbody></table></div>
+        <button class="add" type="button" id="cf-add">Adicionar</button>
+        <p class="dica"><button class="lnk" type="button" id="cf-reset">Restaurar tabela original</button></p>
+      </details>
     </div>
 
     <!-- GERADOR DE CLORO -->
@@ -853,7 +876,14 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
           <label class="campo c3">Margem da capacidade<span class="unid"><input id="pcl-margem" type="number" min="0" step="1" inputmode="decimal"><b>%</b></span></label>
         </div>
       </section>
-      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Gerador de cloro</h3><span class="nbr">Tholz</span></div><div id="pcl-res"></div></div></article></section>
+      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Gerador de cloro</h3><span class="nbr">tabela de geradores</span></div><div id="pcl-res"></div></div></article></section>
+      <details class="catalogo" id="cg-cat">
+        <summary>Geradores de cloro · adicionar, remover e editar</summary>
+        <p class="fonte">O gerador escolhido é o primeiro, em ordem de volume, cujo volume nominal com a margem cobre o dobro do volume da piscina ou do spa.</p>
+        <div class="rolar"><table class="cat-tab"><thead><tr><th>Modelo</th><th>Volume nominal (m³)</th><th>Potência (W)</th><th>Vazão (m³/h)</th><th>Pressão máx. (mca)</th><th></th></tr></thead><tbody id="cg-corpo"></tbody></table></div>
+        <button class="add" type="button" id="cg-add">Adicionar</button>
+        <p class="dica"><button class="lnk" type="button" id="cg-reset">Restaurar tabela original</button></p>
+      </details>
     </div>
 
     <!-- HIDROMASSAGEM -->
@@ -865,8 +895,15 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
           <label class="campo c3">Ralo de sucção<select id="phi-ralo"><option value="lat50">Ralo lateral ø50 (9 m³/h)</option><option value="fun50">Ralo de fundo ø50 (9 m³/h)</option><option value="fun60">Ralo de fundo ø60 (12 m³/h)</option><option value="fun75">Ralo de fundo ø75 (15 m³/h)</option></select></label>
         </div>
       </section>
-      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Conjuntos</h3><span class="nbr">bombas Maxim e Alaska</span></div>
+      <section class="etapas"><article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Conjuntos</h3><span class="nbr">tabela de bombas</span></div>
         <div class="lista" id="phi-lista"></div><button class="add" type="button" id="phi-add">Adicionar conjunto</button></div></article></section>
+      <details class="catalogo" id="cb-cat">
+        <summary>Bombas de hidromassagem · adicionar, remover e editar</summary>
+        <p class="fonte">As combinações usam até 10 bombas desta tabela e somam pelo menos o número de bicos do conjunto.</p>
+        <div class="rolar"><table class="cat-tab"><thead><tr><th>Bomba</th><th>Nº de bicos</th><th>Preço (R$)</th><th></th></tr></thead><tbody id="cb-corpo"></tbody></table></div>
+        <button class="add" type="button" id="cb-add">Adicionar</button>
+        <p class="dica"><button class="lnk" type="button" id="cb-reset">Restaurar tabela original</button></p>
+      </details>
     </div>
 
     <section class="etapas" style="margin-top:0"><article class="etapa"><div class="num">✓</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="pis-memorial"></div></div></article></section>
@@ -986,7 +1023,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 
   <!-- ================= GÁS ================= -->
   <section class="modulo" id="mod-gas" hidden>
-    <h1>Tubulação de gás</h1>
+    <h1>Tubulação de gás - RIP</h1>
     <p class="sub">Soma dos consumos por trecho (Pc), potência adotada pela tabela de simultaneidade (Pa) e diâmetro pela tabela de comprimento e consumo.</p>
     <div class="mod-na"><label class="chave"><input type="checkbox" data-na="gas"> Esta obra não terá instalação de gás</label>
       <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
@@ -1011,6 +1048,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Diagrama da rede</h3><span class="nbr">esquema sem escala, atualizado em tempo real</span></div>
+          <div class="g-pavs" id="g-pavs"></div>
           <div class="pl-ferr g-ferr" role="toolbar" aria-label="Ferramentas do diagrama">
             <button type="button" data-gmodo="mover" class="on">↖ Selecionar / mover</button>
             <button type="button" data-gmodo="apagar">✕ Apagar</button>
@@ -1064,8 +1102,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </section>
 
     <details class="catalogo" id="g-cat">
-      <summary>Catálogo de equipamentos</summary>
-      <p class="fonte">Consumo informado pelo fabricante. A conversão usa PCS de 9.400 kcal/m³ (GN) e 11.750 kcal/kg (GLP): kcal/min = consumo × PCS ÷ 60. Pontos já lançados mantêm o consumo que tinham; para atualizar, escolha o equipamento de novo.</p>
+      <summary>Catálogo de equipamentos · adicionar, remover e editar</summary>
+      <p class="fonte">Informe o consumo do fabricante em m³/h (GN) e kg/h (GLP) ou direto em kcal/min; um converte o outro. A conversão usa PCS de 9.400 kcal/m³ (GN) e 11.750 kcal/kg (GLP): kcal/min = consumo × PCS ÷ 60. Pontos já lançados mantêm o consumo que tinham; para atualizar, escolha o equipamento de novo.</p>
       <div class="rolar"><table class="cat-tab"><thead><tr><th>Equipamento</th><th>GN (m³/h)</th><th>GLP (kg/h)</th><th class="n">GN kcal/min</th><th class="n">GLP kcal/min</th><th></th></tr></thead><tbody id="g-cat-corpo"></tbody></table></div>
       <button class="add" type="button" id="g-cat-add">Adicionar equipamento</button>
       <p class="dica"><button class="lnk" type="button" id="g-cat-reset">Restaurar catálogo original</button></p>
@@ -1321,7 +1359,7 @@ function estadoNovo(){
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
       su:{tipo:1, h:3, d:2, l:3, n:1}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     gas:{gas:"GN", material:"cobre", classe:"E", L:20,
-      pontos:[], trechos:[], modelo:2, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+      pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:11, alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
@@ -1491,8 +1529,11 @@ const kPonto = p => S.gas.gas==="GLP" ? num(p.kglp) : num(p.kgn);
 const kTot = p => kPonto(p)*Math.max(0,num(p.qtd));
 function letraSeq(i){ let s=""; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; }
 const nomeNo = i => letraSeq(i);                           // 0 = A (medidor), 1 = B…
-const nomePav = p => p===0 ? "Térreo" : `${p}º pav.`;
-const DIR_TXT = {h:"→", u:"↑", d:"↓"};
+const nomePavPadrao = p => p===0 ? "Térreo" : p<0 ? `${-p}º subsolo` : `${p}º pav.`;
+const nomePav = p => (S.gas?.pavNomes?.[p] || "").trim() || nomePavPadrao(p);
+const DIR_TXT = {h:"→", u:"↑", d:"↓", su:"↑", sd:"↓"};
+const SLOT = d => d==="su" ? "u" : d==="sd" ? "d" : (d||"h");          // subida/descida no mesmo pavimento usam as saídas verticais
+const DPAV = d => d==="u" ? 1 : d==="d" ? -1 : 0;
 
 /* ---------- Estrutura da rede: nós, pavimentos, saídas e ligações em T ----------
    Cada trecho sai de um nó existente ("de") numa direção: h = segue no mesmo pavimento,
@@ -1500,11 +1541,11 @@ const DIR_TXT = {h:"→", u:"↑", d:"↓"};
 function rede(){
   const G = S.gas, T = G.trechos;
   const nos = Array.from({length:T.length+1},(_,i)=>({i, pav:0, chega:null, sai:{h:null,u:null,d:null}, pts:[]}));
-  nos[0].chega = "m";
+  nos[0].chega = "m"; nos[0].pav = Math.round(num(G.pavMedidor));
   T.forEach((t,k)=>{
-    const o = nos[Math.min(Math.max(0,num(t.de)), k)], e = nos[k+1];
-    e.pav = o.pav + (t.dir==="u"?1 : t.dir==="d"?-1 : 0); e.chega = t.dir || "h"; e.de = o.i; e.t = t;
-    if(!o.sai[t.dir||"h"]) o.sai[t.dir||"h"] = t;
+    const o = nos[Math.min(Math.max(0,num(t.de)), k)], e = nos[k+1], sl = SLOT(t.dir);
+    e.pav = o.pav + DPAV(t.dir); e.chega = sl; e.de = o.i; e.t = t; e.nivel = t.dir==="su"||t.dir==="sd";
+    if(!o.sai[sl]) o.sai[sl] = t;
   });
   // saídas verticais livres (para prumadas ou pontos em T)
   nos.forEach(n=>{
@@ -1565,7 +1606,7 @@ function calcRede(){
   const ordem = r => r.tipo==="principal" ? r.idx*2 : (r.no-1)*2+1;
   return out.sort((a,b)=>ordem(a)-ordem(b));
 }
-const descTr = r => r.dir==="h" ? nomePav(r.pavAte) : r.dir==="u" ? `sobe para ${nomePav(r.pavAte)}` : `desce para ${nomePav(r.pavAte)}`;
+const descTr = r => r.dir==="h" ? nomePav(r.pavAte) : r.dir==="u" ? `sobe para ${nomePav(r.pavAte)}` : r.dir==="d" ? `desce para ${nomePav(r.pavAte)}` : `${r.dir==="su"?"sobe":"desce"} de nível no ${nomePav(r.pavAte)}`;
 const rotDiam = d => !d ? "—" : S.gas.material==="multicamada" ? `${EQUIV[d].mc} mm` : `${d} mm`;
 const rotPol = d => d ? EQUIV[d].pol : "";
 
@@ -1577,11 +1618,11 @@ function saidasLivres(nos, i){                             // direções possív
   const livres = [];
   if(!n.sai.h) livres.push("h");
   const sobraVert = n.vert.length - n.pts.length;          // pontos em T ocupam as saídas verticais
-  if(i>0 && sobraVert>0) n.vert.forEach(s=>livres.push(s));
+  if(i>0 && sobraVert>0) n.vert.forEach(s=>livres.push(s, "s"+s));
   return livres;
 }
-function opcoesEquip(sel){
-  return `<option value="">Outro (informar consumo)</option>` +
+function opcoesEquip(sel, comNovo){
+  return `<option value="">Outro (informar consumo)</option>` + (comNovo ? `<option value="__novo">＋ Novo equipamento no catálogo…</option>` : "") +
     CAT.map(c=>`<option value="${esc(c.n)}" ${c.n===sel?"selected":""}>${esc(c.n)}</option>`).join("") +
     (sel && !CAT.some(c=>c.n===sel) ? `<option value="${esc(sel)}" selected>${esc(sel)} (fora do catálogo)</option>` : "");
 }
@@ -1596,7 +1637,7 @@ function livreNo(){
   for(let no=n; no>=1; no--) if(ocupacao(no) < capPontos(nos,no)) return no;
   return Math.max(1,n);
 }
-const TXT_DIR = {h:"→ segue no mesmo pavimento", u:"↑ sobe para o pavimento superior", d:"↓ desce para o pavimento inferior"};
+const TXT_DIR = {h:"→ segue no mesmo pavimento", u:"↑ sobe para o pavimento superior", d:"↓ desce para o pavimento inferior", su:"↑ sobe de nível no mesmo pavimento", sd:"↓ desce de nível no mesmo pavimento"};
 function preencherNovoTrecho(deSel){
   const G = S.gas, nos = rede();
   const opcoes = nos.map(n=>n.i).filter(i=>saidasLivres(nos,i).length);
@@ -1621,7 +1662,7 @@ function renderGasListas(){
   $("g-trechos").innerHTML = nT ? G.trechos.map((t,k)=>`
     <div class="trecho" data-id="${t.id}">
       <div class="tr-in">
-        <div class="tr-nome"><small>Trecho</small><b>${rotTr(t,k)}</b><span class="tr-dir">${DIR_TXT[t.dir||"h"]} ${t.dir==="u"||t.dir==="d" ? (t.dir==="u"?"sobe para ":"desce para ")+nomePav(nos[k+1].pav) : nomePav(nos[k+1].pav)}</span></div>
+        <div class="tr-nome"><small>Trecho</small><b>${rotTr(t,k)}</b><span class="tr-dir">${DIR_TXT[t.dir||"h"]} ${descTr({dir:t.dir||"h", pavAte:nos[k+1].pav})}</span></div>
         <label class="campo">Comprimento do trecho<span class="unid"><input data-f="L" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(t.L)}" placeholder="0"><b>m</b></span></label>
         ${k===nT-1 ? `<button class="x" type="button" data-rm aria-label="Remover trecho">×</button>` : `<span></span>`}
       </div>
@@ -1674,13 +1715,14 @@ function atualizarGas(){
   });
   $("g-quadro").innerHTML = res.length ? `<table class="quadro"><thead><tr><th>Trecho</th><th>Pavimento</th><th class="n">Compr.</th><th class="n">Pc</th><th class="n">Pa</th><th class="n">L cálc.</th><th>Diâmetro</th></tr></thead><tbody>
     ${res.map(r=>`<tr${r.tipo==="ramal"?' style="color:var(--cinza-4)"':""}><td>${r.tipo==="ramal"?"&nbsp;&nbsp;↳ ":""}${esc(r.rot)}${r.tipo==="principal"&&r.dir!=="h"?" "+DIR_TXT[r.dir]:""}</td>
-      <td>${r.tipo==="principal" ? (r.dir==="h" ? nomePav(r.pavAte) : `${nomePav(r.pavDe)} ${DIR_TXT[r.dir]} ${nomePav(r.pavAte)}`) : nomePav(nos[r.no]?.pav||0)}</td>
+      <td>${r.tipo==="principal" ? (r.dir==="h" ? nomePav(r.pavAte) : r.dir==="su"||r.dir==="sd" ? `${nomePav(r.pavAte)} (${r.dir==="su"?"sobe":"desce"} de nível)` : `${nomePav(r.pavDe)} ${DIR_TXT[r.dir]} ${nomePav(r.pavAte)}`) : nomePav(nos[r.no]?.pav||0)}</td>
       <td class="n">${r.Lseg>0?fmt(r.Lseg,1)+" m":"—"}</td><td class="n">${fmt(r.pc)}</td><td class="n">${fmt(r.pa)}</td><td class="n">${r.Ltab!=null?fmt(r.Ltab)+" m":"—"}</td>
       <td class="d ${r.erro?"falha":""}">${r.erro?`<span style="font:600 14px var(--sans)">${r.erro}</span>`:`${rotDiam(r.d)} <span style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--cinza-4)">${rotPol(r.d)}</span>`}</td></tr>`).join("")}
     </tbody></table><p class="fonte">↳ = ramal em T até o ponto de consumo; ↑ ↓ = prumada entre pavimentos. Pc e Pa em kcal/min. L de cálculo = soma de todos os trechos e ramais (${fmt(Ltotal(),1)} m), arredondada para a linha imediatamente superior da tabela de diâmetros.</p>`
     : `<p class="vazio">Cadastre trechos para ver o quadro.</p>`;
   $("g-memorial").innerHTML = memorialGas(res);
   $("g-diagrama").innerHTML = diagramaGasLivre(res, true);
+  renderGasPavs(nos);
   return {res, total};
 }
 
@@ -1729,7 +1771,7 @@ function diagramaGas(res, interativo){
     // prumadas (sobem/descem) primeiro, para a linha do pavimento atual passar depois delas
     ["u","d"].forEach(s=>{
       const t = n.sai[s]; if(!t) return;
-      const k = G.trechos.indexOf(t), r = porId.get(t.id), m = nos[k+1], ey = Y(m.pav);
+      const k = G.trechos.indexOf(t), r = porId.get(t.id), m = nos[k+1], ey = m.nivel ? y + (s==="u"?-1:1)*130 : Y(m.pav);
       linha(x,y,x,ey, r.erro?"ln err":"ln"); rotV(x,y,ey,r);
       el.push(`<circle cx="${x}" cy="${ey}" r="2.8" class="no"/>`);
       txt(x+8, ey + (s==="u"?-9:18), nomeNo(k+1), "nd");
@@ -1804,12 +1846,15 @@ function memorialGas(res){
 /* ---------- Menu ao clicar num ponto (letra) do diagrama ---------- */
 function abrirMenuNo(i, ev){
   const nos = rede(), n = nos[i], m = $("no-menu"), caixa = document.querySelector(".diag-caixa");
+  m.style.width = ""; delete m.dataset.pt;
   const livres = saidasLivres(nos, i), vagaPonto = i>0 && n.pts.length < n.vert.length;
   const k = S.gas.trechos.length, prox = nomeNo(k+1);
   const op = [];
   if(livres.includes("h")) op.push(`<button type="button" data-acao="h">→ Seguir trecho ${nomeNo(i)}-${prox}</button>`);
   if(livres.includes("u")) op.push(`<button type="button" data-acao="u">↑ Subir para ${nomePav(n.pav+1)} (${nomeNo(i)}-${prox})</button>`);
   if(livres.includes("d")) op.push(`<button type="button" data-acao="d">↓ Descer para ${nomePav(n.pav-1)} (${nomeNo(i)}-${prox})</button>`);
+  if(livres.includes("su")) op.push(`<button type="button" data-acao="su">⤒ Subir de nível no ${nomePav(n.pav)} (${nomeNo(i)}-${prox})</button>`);
+  if(livres.includes("sd")) op.push(`<button type="button" data-acao="sd">⤓ Descer de nível no ${nomePav(n.pav)} (${nomeNo(i)}-${prox})</button>`);
   if(vagaPonto) op.push(`<button type="button" data-acao="p">＋ Ligar ponto de consumo em ${nomeNo(i)}</button>`);
   if(i>0) op.push(`<button type="button" data-gacao="rmt">✕ Remover trecho ${rotTr(S.gas.trechos[i-1], i-1)}</button>`);
   m.innerHTML = `<div class="nm-cab"><b>Ponto ${nomeNo(i)}</b><span>${i===0?"medidor · ":""}${nomePav(n.pav)}</span></div>` +
@@ -1825,10 +1870,13 @@ function acaoMenuNo(acao){
   const m = $("no-menu"), i = +m.dataset.no, f = m.querySelector(".nm-form");
   m.querySelector(".nm-op").hidden = true; f.hidden = false;
   if(acao==="p"){
-    f.innerHTML = `<label class="campo">Equipamento<select data-nm="equip">${opcoesEquip("")}</select></label>
+    f.innerHTML = `<label class="campo">Equipamento<select data-nm="equip">${opcoesEquip("", true)}</select></label>
+      <div class="nm-novo" hidden><label class="campo">Nome do equipamento<input data-nm="nnome" placeholder="Ex.: Aquecedor X 32 L"></label>
+        <label class="campo">Consumo<span class="unid"><input data-nm="nk" type="number" min="0" step="1" inputmode="decimal" placeholder="0"><b>kcal/min</b></span></label></div>
       <label class="campo">Identificação<input data-nm="nome" placeholder="Ex.: AG2"></label>
       <div class="nm-bts"><button class="btn sec peq" type="button" data-nm-cancel>Cancelar</button><button class="btn peq" type="button" data-nm-ok="p">Ligar em ${nomeNo(i)}</button></div>`;
-    f.querySelector('[data-nm="equip"]').addEventListener("change", e=>{ const n = f.querySelector('[data-nm="nome"]'); if(!n.value) n.placeholder = e.target.value || "Ex.: AG2"; });
+    f.querySelector('[data-nm="equip"]').addEventListener("change", e=>{ const n = f.querySelector('[data-nm="nome"]'); const novo = e.target.value==="__novo";
+      f.querySelector(".nm-novo").hidden = !novo; if(novo){ f.querySelector('[data-nm="nnome"]').focus(); return; } if(!n.value) n.placeholder = e.target.value || "Ex.: AG2"; });
     f.querySelector('[data-nm="nome"]').focus();
   } else {
     f.innerHTML = `<label class="campo">Comprimento do trecho ${nomeNo(i)}-${nomeNo(S.gas.trechos.length+1)}<span class="unid"><input data-nm="L" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><b>m</b></span></label>
@@ -1840,7 +1888,9 @@ function acaoMenuNo(acao){
 function confirmarMenuNo(acao){
   const m = $("no-menu"), i = +m.dataset.no, f = m.querySelector(".nm-form");
   if(acao==="p"){
-    const eq = f.querySelector('[data-nm="equip"]').value, c = CAT.find(x=>x.n===eq);
+    let eq = f.querySelector('[data-nm="equip"]').value;
+    if(eq==="__novo"){ const c2 = novoEquipCatalogo(f.querySelector('[data-nm="nnome"]').value, f.querySelector('[data-nm="nk"]').value); if(!c2) return; eq = c2.n; }
+    const c = CAT.find(x=>x.n===eq);
     const nome = f.querySelector('[data-nm="nome"]').value.trim() || eq || `Ponto ${S.gas.pontos.length+1}`;
     S.gas.pontos.push({id:uid(), nome, equip: c?eq:"", qtd:1, ...(c?kcalCat(c):{kgn:0,kglp:0}), no:i, ramal:""});
     fecharMenuNo(); renderGasListas(); resumo(); salvar();
@@ -1855,20 +1905,21 @@ let GREC = null, GD = {modo:"mover", arr:null};
 const GSNAP = 10;
 function gasSemearPos(res){                                // posições que faltam vêm do arranjo automático
   const G = S.gas; G.pos = G.pos || {};
-  const faltam = () => { const nT = G.trechos.length; for(let i=0;i<=nT;i++) if(!G.pos["n"+i]) return true; return G.pontos.some(p=>p._lado && !G.pos["p"+p.id]); };
+  const faltam = () => { const nT = G.trechos.length; for(let i=0;i<=nT;i++) if(!G.pos["n"+i]) return true; return G.pontos.some(p=>p._lado && (!G.pos["p"+p.id] || (G.pos["p"+p.id].lado && G.pos["p"+p.id].lado!==p._lado))); };
   rede();                                                  // atualiza os lados (_lado) dos pontos
   if(!faltam()) return;
   if(!Object.keys(G.pos).length){                          // primeira vez: arranjo automático completo
     GREC = {}; diagramaGas(res, false); const rec = GREC; GREC = null;
     Object.entries(rec).forEach(([k,v])=>{ G.pos[k] = {x:Math.round(v.x), y:Math.round(v.y)}; });
+    G.pontos.forEach(p=>{ if(G.pos["p"+p.id]) G.pos["p"+p.id].lado = p._lado; });
   }
   if(!G.pos.n0) G.pos.n0 = {x:19, y:0};
   G.trechos.forEach((t,k)=>{ if(!G.pos["n"+(k+1)]) G.pos["n"+(k+1)] = gasPosNovoNo(num(t.de), t.dir||"h"); });
-  G.pontos.forEach(p=>{ if(p._lado && !G.pos["p"+p.id]) G.pos["p"+p.id] = gasPosPonto(p); });
+  G.pontos.forEach(p=>{ const q = G.pos["p"+p.id]; if(p._lado && (!q || (q.lado && q.lado!==p._lado))) G.pos["p"+p.id] = {...gasPosPonto(p), lado:p._lado}; });
 }
 function gasPosNovoNo(de, dir){                            // novo nó a partir da posição real do nó de origem
   const G = S.gas; G.pos = G.pos || {}; const o = G.pos["n"+de] || {x:19,y:0};
-  let p = dir==="h" ? {x:o.x+160, y:o.y} : dir==="u" ? {x:o.x, y:o.y-250} : {x:o.x, y:o.y+250};
+  let p = dir==="h" ? {x:o.x+160, y:o.y} : dir==="u" ? {x:o.x, y:o.y-250} : dir==="d" ? {x:o.x, y:o.y+250} : dir==="su" ? {x:o.x, y:o.y-130} : {x:o.x, y:o.y+130};
   const ocupado = q => Object.values(G.pos).some(v=>Math.abs(v.x-q.x)<60 && Math.abs(v.y-q.y)<40);
   let n = 0; while(ocupado(p) && n++<20) p = dir==="h" ? {x:p.x+60, y:p.y} : {x:p.x+60, y:p.y};
   return p;
@@ -1954,13 +2005,35 @@ function diagramaGasLivre(res, interativo){
     .arrastando .bx{stroke:#d10a1e;stroke-width:2.5}</style>
     ${corpo}</svg>`;
 }
+function novoEquipCatalogo(nome, kcal){
+  nome = String(nome||"").trim(); const k = num(kcal);
+  if(!nome){ aviso("Informe o nome do equipamento.", true); return null; }
+  if(!(k>0)){ aviso("Informe o consumo em kcal/min.", true); return null; }
+  let c = CAT.find(x=>x.n.toLowerCase()===nome.toLowerCase());
+  if(c){ c.gn = k*60/PCS.GN; c.glp = k*60/PCS.GLP; } else { c = {n:nome, gn:k*60/PCS.GN, glp:k*60/PCS.GLP}; CAT.push(c); }
+  salvarCatalogo(); renderCatalogo(); aviso(`Equipamento no catálogo: ${nome}`); return c;
+}
 function menuPontoGas(id, ev){
   const G = S.gas, p = G.pontos.find(x=>x.id===id); if(!p) return;
-  const m = $("no-menu"), caixa = document.querySelector(".diag-caixa");
-  m.innerHTML = `<div class="nm-cab"><b>${esc(p.nome||"Ponto")}</b><span>ligado em ${nomeNo(noPonto(p))}</span></div>
-    <div class="nm-op"><button type="button" data-gacao="editar">✎ Editar na lista de pontos</button><button type="button" data-gacao="rmp">✕ Remover ponto de consumo</button></div>`;
-  m.dataset.pt = id; m.hidden = false;
-  const rc = caixa.getBoundingClientRect(); let left = ev.clientX - rc.left + 10; left = Math.min(left, rc.width - 290);
+  const m = $("no-menu"), caixa = document.querySelector(".diag-caixa"), nT = G.trechos.length;
+  m.innerHTML = `<div class="nm-cab"><b>Ponto de consumo</b><span>ligado em ${nomeNo(noPonto(p))}</span></div>
+    <div class="nm-form">
+      <label class="campo">Identificação<input data-gp="nome" value="${esc(p.nome)}"></label>
+      <label class="campo">Equipamento<select data-gp="equip">${opcoesEquip(p.equip, true)}</select></label>
+      <div class="nm-novo" hidden><label class="campo">Nome do equipamento<input data-gp="nnome" placeholder="Ex.: Aquecedor X 32 L"></label>
+        <label class="campo">Consumo<span class="unid"><input data-gp="nk" type="number" min="0" step="1" inputmode="decimal" placeholder="0"><b>kcal/min</b></span></label>
+        <button class="btn peq" type="button" data-gacao="salvarnovo">Adicionar ao catálogo e usar</button></div>
+      <div class="hp-2">
+        <label class="campo">Qtd.<input data-gp="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(p.qtd)}"></label>
+        <label class="campo">Consumo unit.<span class="unid"><input data-gp="k" type="number" min="0" step="1" inputmode="decimal" value="${+kPonto(p).toFixed(1)}"><b>kcal/min</b></span></label>
+        <label class="campo">Ligado em<select data-gp="no" ${nT?"":"disabled"}>${opcoesNo(noPonto(p), p.id)}</select></label>
+        <label class="campo">Ramal<span class="unid"><input data-gp="ramal" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(p.ramal??"")}" placeholder="0"><b>m</b></span></label>
+      </div>
+      <div class="nm-bts" style="justify-content:space-between"><button class="btn sec peq" type="button" data-gacao="rmp">✕ Remover ponto</button><button class="btn peq" type="button" data-gacao="ok">Concluir</button></div>
+      <p class="dica" style="margin:0"><button class="lnk" type="button" data-gacao="catalogo">Gerenciar catálogo de equipamentos</button></p>
+    </div>`;
+  m.dataset.pt = id; m.hidden = false; m.style.width = "320px";
+  const rc = caixa.getBoundingClientRect(); let left = ev.clientX - rc.left + 10; left = Math.min(left, rc.width - 330);
   m.style.left = Math.max(8,left)+"px"; m.style.top = (ev.clientY - rc.top + 10)+"px";
 }
 function gasPtSvg(svg, ev){ const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
@@ -1992,7 +2065,7 @@ function ligarGasLivre(){
     const nx = Math.round((pt.x+a.dx)/GSNAP)*GSNAP, ny = Math.round((pt.y+a.dy)/GSNAP)*GSNAP;
     if(nx===q.x && ny===q.y) return;
     q.x = nx; q.y = ny; a.moveu = true;
-    (a.filhos||[]).forEach(f=>{ S.gas.pos[f.k] = {x:nx+f.ox, y:ny+f.oy}; });
+    (a.filhos||[]).forEach(f=>{ S.gas.pos[f.k] = {...S.gas.pos[f.k], x:nx+f.ox, y:ny+f.oy}; });
     // redesenha sem trocar o elemento svg de lugar (mantém a captura do ponteiro)
     const novo = diagramaGasLivre(calcRede(), true), tmp = document.createElement("div"); tmp.innerHTML = novo;
     const ns = tmp.firstElementChild; a.svg.setAttribute("viewBox", ns.getAttribute("viewBox")); a.svg.setAttribute("width", ns.getAttribute("width")); a.svg.setAttribute("height", ns.getAttribute("height")); a.svg.innerHTML = ns.innerHTML;
@@ -2002,12 +2075,32 @@ function ligarGasLivre(){
     if(a.moveu){ salvar(); atualizarGas(); return; }
     if(a.alvo.tipo==="p") menuPontoGas(a.alvo.id, a.ev); else abrirMenuNo(a.alvo.i, a.ev);
   };
-  cont.addEventListener("pointerup", soltar); cont.addEventListener("pointercancel", ()=>{ GD.arr = null; });
+  cont.addEventListener("pointerup", soltar);
+  const nm = $("no-menu");
+  const editPt = e=>{
+    const t = e.target, f = t.dataset.gp; if(!f || !nm.dataset.pt) return;
+    const p = S.gas.pontos.find(x=>x.id===nm.dataset.pt); if(!p) return;
+    if(f==="nnome"||f==="nk") return;
+    if(f==="equip"){
+      const novo = t.value==="__novo"; nm.querySelector(".nm-novo").hidden = !novo; if(novo){ nm.querySelector('[data-gp="nnome"]').focus(); return; }
+      p.equip = t.value; const c = CAT.find(x=>x.n===p.equip); if(c){ Object.assign(p, kcalCat(c)); if(!p.nome || /^Ponto \d+$/.test(p.nome)) { p.nome = c.n; nm.querySelector('[data-gp="nome"]').value = c.n; } }
+      nm.querySelector('[data-gp="k"]').value = +kPonto(p).toFixed(1);
+    }
+    else if(f==="k"){ p.kgn = p.kglp = num(t.value); if(p.equip){ p.equip = ""; nm.querySelector('[data-gp="equip"]').value = ""; } }
+    else if(f==="no") p.no = +t.value;
+    else p[f] = t.value;
+    atualizarGas(); resumo(); salvar();
+  };
+  nm.addEventListener("input", editPt); nm.addEventListener("change", e=>{ if(e.target.tagName==="SELECT") editPt(e); }); cont.addEventListener("pointercancel", ()=>{ GD.arr = null; });
   $("no-menu").addEventListener("click", e=>{
     const b = e.target.closest("[data-gacao]"); if(!b) return; e.stopPropagation();
     const m = $("no-menu"), id = m.dataset.pt;
     if(b.dataset.gacao==="rmp"){ fecharMenuNo(); if(removerPontoGas(id)){ renderGasListas(); resumo(); salvar(); } }
     if(b.dataset.gacao==="editar"){ fecharMenuNo(); const el = document.querySelector(`#g-pontos .ponto[data-id="${id}"] [data-f="nome"]`); el?.scrollIntoView({block:"center"}); el?.focus(); }
+    if(b.dataset.gacao==="ok"){ fecharMenuNo(); renderGasListas(); return; }
+    if(b.dataset.gacao==="catalogo"){ fecharMenuNo(); const d = $("g-cat"); d.open = true; d.scrollIntoView({block:"start"}); return; }
+    if(b.dataset.gacao==="salvarnovo"){ const p = S.gas.pontos.find(x=>x.id===id); const c = novoEquipCatalogo(m.querySelector('[data-gp="nnome"]').value, m.querySelector('[data-gp="nk"]').value);
+      if(c && p){ p.equip = c.n; Object.assign(p, kcalCat(c)); if(!p.nome || /^Ponto \d+$/.test(p.nome)) p.nome = c.n; renderGasListas(); resumo(); salvar(); menuPontoGas(id, {clientX: m.getBoundingClientRect().left-10, clientY: m.getBoundingClientRect().top-10}); } return; }
     if(b.dataset.gacao==="rmt"){ fecharMenuNo(); if(removerTrechoGas(+m.dataset.no-1)){ renderGasListas(); resumo(); salvar(); } }
   });
   document.querySelectorAll(".g-ferr [data-gmodo]").forEach(b=>b.addEventListener("click", ()=>{
@@ -2016,6 +2109,15 @@ function ligarGasLivre(){
   }));
 }
 
+function atualizarGasSemPavs(){ return atualizarGas(); }
+function renderGasPavs(nos){
+  const el = $("g-pavs"); if(!el) return;
+  if(document.activeElement && el.contains(document.activeElement)) return;      // não redesenha enquanto digita
+  const G = S.gas, usados = [...new Set((nos||rede()).map(n=>n.pav))].sort((a,b)=>b-a);
+  const faixa = []; for(let p=5; p>=-3; p--) faixa.push(p);
+  el.innerHTML = `<label class="campo">Medidor (A) no pavimento<select data-gpm>${faixa.map(p=>`<option value="${p}" ${Math.round(num(G.pavMedidor))===p?"selected":""}>${esc(nomePav(p))}</option>`).join("")}</select></label>
+    <b>Nomes:</b>${usados.map(p=>`<label class="campo">${esc(nomePavPadrao(p))}<input data-gpn="${p}" value="${esc(G.pavNomes?.[p]||"")}" placeholder="${esc(nomePavPadrao(p))}"></label>`).join("")}`;
+}
 function preencherGas(){
   const G = S.gas;
   $("g-gas").value = G.gas; $("g-material").value = G.material; $("g-classe").value = G.classe;
@@ -2027,7 +2129,7 @@ function renderCatalogo(){
     <td><input data-f="n" value="${esc(c.n)}"></td>
     <td><input data-f="gn" type="number" step="0.01" min="0" inputmode="decimal" value="${+num(c.gn).toFixed(3)}"></td>
     <td><input data-f="glp" type="number" step="0.01" min="0" inputmode="decimal" value="${+num(c.glp).toFixed(3)}"></td>
-    <td class="n" data-kgn>${fmt(k.kgn,1)}</td><td class="n" data-kglp>${fmt(k.kglp,1)}</td>
+    <td><input data-f="kgn" type="number" step="1" min="0" inputmode="decimal" value="${+k.kgn.toFixed(1)}"></td><td><input data-f="kglp" type="number" step="1" min="0" inputmode="decimal" value="${+k.kglp.toFixed(1)}"></td>
     <td><button class="x" type="button" data-rm aria-label="Remover equipamento">×</button></td></tr>`; }).join("");
 }
 
@@ -2149,7 +2251,7 @@ function relGas(){
     "O comprimento de cálculo corresponde à soma dos comprimentos de todos os trechos e ramais, arredondada para a linha imediatamente superior da tabela de dimensionamento.",
     ...(mc ? ["Para tubo multicamada foi adotada a equivalência de diâmetros com o tubo de cobre indicada no quadro de diâmetros."] : []),
     ...linhasObs(G.obs)];
-  return `<div class="r">${relCarimbo("Rede de distribuição interna de gás combustível", G.doc, G.rev, "Instalações de gás")}
+  return `<div class="r">${relCarimbo("Tubulação de gás - RIP · rede de distribuição interna", G.doc, G.rev, "Instalações de gás")}
     ${sec("Identificação", relIdent(MREL))}
     ${sec("Objetivo", `<p>Apresentar o dimensionamento dos diâmetros da rede de distribuição interna de ${G.gas==="GN"?"gás natural (GN)":"gás liquefeito de petróleo (GLP)"} da edificação, a partir da potência dos equipamentos a gás, do fator de simultaneidade e do comprimento de cálculo da tubulação.</p>`)}
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 15526</b><span>Redes de distribuição interna para gases combustíveis em instalações residenciais: projeto e execução</span></li></ul>`)}
@@ -2378,6 +2480,9 @@ function ligar(){
   $("g-diagrama").addEventListener("click", e=>{ const a = e.target.closest(".alvo"); if(!a) return; e.stopPropagation(); abrirMenuNo(+a.dataset.no, e); });
   $("g-diagrama").addEventListener("click", e=>{ if(e.target.closest("[data-gno],[data-gpt],[data-gtr]") || Date.now()-(GD.t||0) < 500) e.stopPropagation(); });
   ligarGasLivre();
+  $("g-pavs").addEventListener("change", e=>{ if(e.target.dataset.gpm!==undefined){ S.gas.pavMedidor = +e.target.value; e.target.blur(); atualizarGas(); resumo(); salvar(); } });
+  $("g-pavs").addEventListener("input", e=>{ const p = e.target.dataset.gpn; if(p===undefined) return; S.gas.pavNomes = S.gas.pavNomes||{}; S.gas.pavNomes[p] = e.target.value;
+    const R = atualizarGasSemPavs(); salvar(); });
   $("no-menu").addEventListener("click", e=>{
     e.stopPropagation();
     if(e.target.closest("[data-gacao]")) return;
@@ -2390,9 +2495,11 @@ function ligar(){
 
   // Gás: catálogo
   $("g-cat-corpo").addEventListener("input", e=>{
-    const tr = e.target.closest("tr"); const c = CAT[+tr.dataset.i]; const f = e.target.dataset.f;
-    c[f] = f==="n" ? e.target.value : num(e.target.value);
-    const k = kcalCat(c); tr.querySelector("[data-kgn]").textContent = fmt(k.kgn,1); tr.querySelector("[data-kglp]").textContent = fmt(k.kglp,1);
+    const tr = e.target.closest("tr"); const c = CAT[+tr.dataset.i]; const f = e.target.dataset.f, v = num(e.target.value);
+    if(f==="n") c.n = e.target.value;
+    else if(f==="kgn"){ c.gn = v*60/PCS.GN; tr.querySelector('[data-f="gn"]').value = +c.gn.toFixed(3); }
+    else if(f==="kglp"){ c.glp = v*60/PCS.GLP; tr.querySelector('[data-f="glp"]').value = +c.glp.toFixed(3); }
+    else { c[f] = v; const k = kcalCat(c); tr.querySelector('[data-f="kgn"]').value = +k.kgn.toFixed(1); tr.querySelector('[data-f="kglp"]').value = +k.kglp.toFixed(1); }
     salvarCatalogo();
   });
   $("g-cat-corpo").addEventListener("change", e=>{ if(e.target.dataset.f==="n") renderGasListas(); });
@@ -2444,7 +2551,7 @@ function ligar(){
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
 const ABREV = {hid:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Gás", plu:"Água pluvial", ele:"Elétrica · eletrodutos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
+const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
 const DISC = [{s:"HID", n:"Hidráulica", m:["hid"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
@@ -4411,23 +4518,43 @@ const OPC = {
 };
 const fOpc = (k, v) => (OPC[k].find(o=>o[0]===String(v)) || OPC[k][0])[2];
 const tOpc = (k, v) => (OPC[k].find(o=>o[0]===String(v)) || OPC[k][0])[1];
-// Bombas de calor Fromtherm (aba Fórmulas): faixa de carga (kcal/h), modelo, capacidade (kcal/h = BTU/3,96832), consumo (W)
-const BC = [[1,"FT-20",20000,1300],[5001,"FT-25",25000,1300],[6001,"FT-40",40000,2200],[10001,"FT-50",50000,2500],[12001,"FT-60",60000,3400],[15001,"FT-80",80000,3800],
-  [20001,"FT-100",100000,5000],[25001,"FT-120",120000,5500],[30001,"FT-160",160000,6800],[40001,"FT-180",180000,8000],[45001,"FT-240",240000,9000],
-  [60001,"2xFT-160",320000,13600],[80001,"2xFT-180",360000,16000],[90001,"2xFT-240",480000,18000],[120001,"3xFT-180",540000,24000],[135001,"3xFT-240",720000,27000]]
-  .map(([de,m,btu,w])=>({de, m, cap:btu/3.96832, w}));
+// Bombas de calor (aba Fórmulas + vazão mínima da aba Filtro): modelo, unidades, BTU/h por unidade, consumo (W) e vazão mínima (m³/h) por unidade
+const BC_ORIGINAL = [["FT-20",1,20000,1300,5],["FT-25",1,25000,1300,5],["FT-40",1,40000,2200,6.5],["FT-50",1,50000,2500,6.5],["FT-60",1,60000,3400,7],["FT-80",1,80000,3800,7],
+  ["FT-100",1,100000,5000,8],["FT-120",1,120000,5500,8],["FT-160",1,160000,6800,9],["FT-180",1,180000,8000,12],["FT-240",1,240000,9000,14],
+  ["FT-160",2,160000,6800,9],["FT-180",2,180000,8000,12],["FT-240",2,240000,9000,14],["FT-180",3,180000,8000,12],["FT-240",3,240000,9000,14]]
+  .map(([m,q,btu,w,vmin])=>({id:uid(), m, q, btu, w, vmin}));
+const CHAVE_BC = "equiper-bombas-calor";
+let BCAT = (()=>{ try{ const r = JSON.parse(localStorage.getItem(CHAVE_BC)); if(Array.isArray(r) && r.length) return r; }catch(e){} return BC_ORIGINAL.map(x=>({...x})); })();
+function salvarBC(){ try{ localStorage.setItem(CHAVE_BC, JSON.stringify(BCAT)); }catch(e){} }
+const nomeBC = b => `${num(b.q)>1?num(b.q)+"x":""}${b.m}`;
+// lista ordenada por capacidade; a faixa de cada modelo começa logo acima da capacidade do modelo anterior (arredondada ao milhar), como na planilha
+function listaBC(){
+  const l = BCAT.filter(b=>b.m && num(b.btu)>0).map(b=>({...b, nome:nomeBC(b), cap: Math.max(1,num(b.q))*num(b.btu)/3.96832, wTot: Math.max(1,num(b.q))*num(b.w)}))
+    .sort((a,b)=>a.cap-b.cap);
+  l.forEach((b,k)=>{ b.de = k ? Math.floor(l[k-1].cap/1000)*1000 + 1 : 1; });
+  return l;
+}
 const ESCALAS = [["1","Baixa",[80000,60000,50000,40000,25000,20000]],["2","Intermediária",[160000,120000,100000,80000,60000,50000]],["3","Alta",[240000,180000,160000,120000,100000,80000]],
   ["4","Dupla",[480000,360000,320000,240000,180000,160000]],["5","Tripla",[720000,540000,480000,360000,320000,240000]]];
 const PERDA_MES = [["Jan",0.5,31],["Fev",0.8,28],["Mar",1.1,31],["Abr",1.7,30],["Mai",2.8,31],["Jun",4.6,30],["Jul",5,31],["Ago",3.9,31],["Set",2.7,30],["Out",1.8,31],["Nov",1,30],["Dez",0.9,31]];
 const ENERGIAS = [["ele","Energia elétrica (resistência)","R$/kWh",870,0.95],["glp","GLP","R$/kg",11750,0.8],["gn","Gás natural","R$/m³",9400,0.8],["diesel","Diesel","R$/L",11750,0.75]];
 // Filtração (aba Filtro): vazão mínima das bombas de calor e filtros Cantabric (Fluidra)
-const VMIN_BC = {"FT-20":5,"FT-25":5,"FT-40":6.5,"FT-50":6.5,"FT-60":7,"FT-80":7,"FT-100":8,"FT-120":8,"FT-160":9,"FT-180":12,"FT-240":14};
-const FILTROS = [["Filtro Cantabric D400",7,"Fluvia 1/2 cv"],["Filtro Cantabric D500",10,"Fluvia 3/4 cv"],["Filtro Cantabric D600",15,"Fluvia 1 cv"],["Filtro Cantabric D750",22,"Fluvia 1,25 cv"],
-  ["2x Filtro Cantabric D600",31,"Alaska 2 cv"],["2x Filtro Cantabric D750",45,"Alaska 3 cv"],["3x Filtro Cantabric D750",67,"Maxim 3,5 cv"]];
-// Geradores de cloro Tholz: volume nominal (m³), modelo, potência (W), vazão (m³/h)
-const GERADORES = [[30,"THC30",270,3.2],[45,"THC45",270,3.2],[60,"THC60",600,3.2],[80,"THC80",600,3.2],[90,"2xTHC45",540,6.4],[120,"2xTHC60",1200,6.4],[160,"2xTHC80",1200,6.4],[180,"3xTHC60",1800,9.6],[240,"3xTHC80",1800,9.6],[320,"4xTHC80",2400,12.8]];
+// Catálogos editáveis de equipamentos da piscina (salvos neste computador)
+function catalogoLocal(chave, original){
+  let lista; try{ const r = JSON.parse(localStorage.getItem(chave)); if(Array.isArray(r) && r.length) lista = r; }catch(e){}
+  return {get: ()=>lista || (lista = original.map(x=>({...x, id:uid()}))), set: v=>{ lista = v; try{ localStorage.setItem(chave, JSON.stringify(lista)); }catch(e){} },
+    salvar: ()=>{ try{ localStorage.setItem(chave, JSON.stringify(lista)); }catch(e){} }, reset: ()=>{ lista = original.map(x=>({...x, id:uid()})); try{ localStorage.setItem(chave, JSON.stringify(lista)); }catch(e){} }};
+}
+const CAT_FILTRO = catalogoLocal("equiper-pis-filtros", [["Filtro Cantabric D400",7,"Fluvia 1/2 cv"],["Filtro Cantabric D500",10,"Fluvia 3/4 cv"],["Filtro Cantabric D600",15,"Fluvia 1 cv"],["Filtro Cantabric D750",22,"Fluvia 1,25 cv"],
+  ["2x Filtro Cantabric D600",31,"Alaska 2 cv"],["2x Filtro Cantabric D750",45,"Alaska 3 cv"],["3x Filtro Cantabric D750",67,"Maxim 3,5 cv"]].map(([n,vaz,bomba])=>({n, vaz, bomba})));
+const filtros = () => CAT_FILTRO.get().filter(f=>f.n && num(f.vaz)>0).sort((a,b)=>num(a.vaz)-num(b.vaz)).map(f=>[f.n, num(f.vaz), f.bomba||"—"]);
+// Geradores de cloro Tholz: volume nominal (m³), modelo, potência (W), vazão (m³/h), pressão máxima (mca)
+const CAT_GERADOR = catalogoLocal("equiper-pis-geradores", [[30,"THC30",270,3.2],[45,"THC45",270,3.2],[60,"THC60",600,3.2],[80,"THC80",600,3.2],[90,"2xTHC45",540,6.4],[120,"2xTHC60",1200,6.4],[160,"2xTHC80",1200,6.4],[180,"3xTHC60",1800,9.6],[240,"3xTHC80",1800,9.6],[320,"4xTHC80",2400,12.8]]
+  .map(([v,m,w,q])=>({m, v, w, q, p:20})));
+const geradores = () => CAT_GERADOR.get().filter(g=>g.m && num(g.v)>0).sort((a,b)=>num(a.v)-num(b.v)).map(g=>[num(g.v), g.m, num(g.w), num(g.q), num(g.p)]);
 // Hidromassagem (aba Bombas)
-const BOMBAS_HID = [["Maxim 5,5 cv",16,26200],["Maxim 4,5 cv",13,21200],["Maxim 3,5 cv",12,20100],["Alaska 3 cv",8,6450],["Alaska 2 cv",6,7276]];
+const CAT_BOMBA_HID = catalogoLocal("equiper-pis-bombas-hidro", [["Maxim 5,5 cv",16,26200],["Maxim 4,5 cv",13,21200],["Maxim 3,5 cv",12,20100],["Alaska 3 cv",8,6450],["Alaska 2 cv",6,7276]].map(([n,bicos,preco])=>({n, bicos, preco})));
+const bombasHid = () => CAT_BOMBA_HID.get().filter(b=>b.n && num(b.bicos)>0).map(b=>[b.n, num(b.bicos), num(b.preco)]);
 const RALOS = [["lat50","Ralo lateral ø50",9],["fun50","Ralo de fundo ø50",9],["fun60","Ralo de fundo ø60",12],["fun75","Ralo de fundo ø75",15]];
 
 /* ---------- Cálculos ---------- */
@@ -4435,11 +4562,13 @@ function calcCarga(corpo){
   const P = S.pis, c = P[corpo], V = num(c.vol); if(!(V>0)) return null;
   const f = {agua:fAgua(c.temp), cons:fOpc("construcao",P.construcao), capa:fOpc("capa",P.capa), vento:fOpc("vento",P.vento), ar:fAr(P.tar), uso:fOpc("uso",P.uso), per:fOpc("periodo",P.periodo), vol:fVol(V)};
   const Q = V*250*f.agua*f.cons*f.capa*f.vento*f.ar*f.uso*f.per*1.2/f.vol;
-  let i = -1; BC.forEach((b,k)=>{ if(Q >= b.de) i = k; });
-  const j = i + Math.round(num(P.desclas)), bc = BC[j] || null;
+  const L = listaBC(); let i = -1; L.forEach((b,k)=>{ if(Q >= b.de) i = k; });
+  const j = i + Math.round(num(P.desclas)), sug = L[j] || null;
+  let k = c.bcSel ? L.findIndex(b=>b.nome===c.bcSel) : -1; if(k<0) k = sug ? j : -1;
+  const bc = L[k] || null, manual = !!bc && !!sug && bc.nome!==sug.nome;
   const t1 = bc ? Q/bc.cap*4 : null;
   const escala = (ESCALAS.find(e=>e[0]===String(P.escala))||ESCALAS[1])[2].map(btu=>{ const cap = btu/3.96567, ok = cap >= Q; return {btu, cap, ok, t1: ok ? Q/cap*4 : null}; });
-  return {corpo, V, T:num(c.temp), f, Q, bc, faixa: BC[i]||null, t1, kw: bc ? bc.w/1000 : 0, escala, fora: !bc};
+  return {corpo, V, T:num(c.temp), f, Q, bc: bc ? {...bc, m:bc.nome} : null, sug, idx:k, total:L.length, manual, atende: !!bc && bc.cap >= Q, faixa: L[i] ? {...L[i], m:L[i].nome} : null, t1, kw: bc ? bc.wTot/1000 : 0, escala, fora: !bc};
 }
 function calcConsumo(A, B){                                // A = piscina, B = spa
   const P = S.pis, alvo = String(P.alvo), fq = fOpc("freq", P.freq), preco = num(P.custos?.ele);
@@ -4462,35 +4591,43 @@ function calcFiltro(){
   const P = S.pis, F = P.filtro, corpo = F.corpo==="spa" ? "spa" : "pool", V = num(P[corpo].vol);
   const taxa = V>0 ? V/Math.max(0.5, num(F.tempo)) : 0;
   const carga = calcCarga(corpo);
-  const auto = carga && carga.bc ? parseBC(carga.bc.m) : null;
-  const esc = F.bc ? {n: Math.max(1, Math.round(num(F.nbc))||1), base:F.bc} : auto;
-  const vmin = esc && VMIN_BC[esc.base] ? VMIN_BC[esc.base] : 0;
+  const auto = carga && carga.bc ? {n: Math.max(1,num(carga.bc.q)), base: carga.bc.m, vmin: num(carga.bc.vmin)} : null;
+  const unid = F.bc ? BCAT.find(b=>b.m===F.bc && num(b.q)<=1) || BCAT.find(b=>b.m===F.bc) : null;
+  const esc = F.bc ? {n: Math.max(1, Math.round(num(F.nbc))||1), base:F.bc, vmin: num(unid?.vmin)} : auto;
+  const vmin = esc ? esc.vmin : 0;
   const vAq = !esc || !F.aquecida ? 0 : F.inst==="serie" ? vmin : vmin*esc.n;
   const adot = Math.max(taxa, vAq) + 2;
-  const fil = FILTROS.find(f=>adot < f[1]) || null;
+  const fil = filtros().find(f=>adot < f[1]) || null;
   return {corpo, V, taxa, esc, auto, vmin, vAq, adot, fil, erro: !(V>0) ? "Informe o volume" : !fil ? "Vazão acima de 3x D750 — consultar" : null};
 }
 function calcCloro(){
   const P = S.pis, C = P.cloro, corpo = C.corpo==="spa" ? "spa" : "pool", V = num(P[corpo].vol), marg = num(C.margem)/100;
-  const nec = 2*V, lista = GERADORES.map(([v,m,w,q])=>({v, m, w, q, cap: v*(1+marg)}));
+  const nec = 2*V, lista = geradores().map(([v,m,w,q,pm])=>({v, m, w, q, pm, cap: v*(1+marg)}));
   const g = lista.find(x=>x.cap >= nec) || null;
   return {corpo, V, nec, marg, lista, g, erro: !(V>0) ? "Informe o volume" : !g ? "Volume muito grande — consultar" : null};
 }
-let _combos = null;
-function combosBombas(){                                   // todas as combinações de até 10 bombas
-  if(_combos) return _combos; const out = [], n = BOMBAS_HID.length;
-  const rec = (i, cnt, qtd) => { if(i===n){ if(cnt>0){ let b=0,p=0; qtd.forEach((q,k)=>{ b += q*BOMBAS_HID[k][1]; p += q*BOMBAS_HID[k][2]; }); out.push({qtd:[...qtd], n:cnt, bicos:b, preco:p}); } return; }
-    for(let q=0; cnt+q<=10; q++){ qtd[i]=q; rec(i+1, cnt+q, qtd); } qtd[i]=0; };
-  rec(0, 0, Array(n).fill(0)); return (_combos = out);
+function melhoresCombos(b){                               // até 10 bombas, total de bicos ≥ b: mais barata e com menos bombas
+  const B = bombasHid(); if(!B.length || !(b>0)) return {barata:null, menos:null};
+  const menor = (x,y)=> !y || x.preco<y.preco-1e-9 || (Math.abs(x.preco-y.preco)<1e-9 && x.bicos<y.bicos);
+  let camada = [{0:{preco:0, bicos:0, qtd:B.map(()=>0)}}], finais = [];
+  for(let c=1; c<=10; c++){
+    const prox = {};
+    Object.entries(camada[c-1]).forEach(([t, st])=>{ if(+t>=b) return;
+      B.forEach(([, bic, pr], k)=>{ const nt = Math.min(b, +t + bic), cand = {preco:st.preco+pr, bicos:st.bicos+bic, qtd:st.qtd.map((q,i)=>i===k?q+1:q)};
+        if(menor(cand, prox[nt])) prox[nt] = cand; }); });
+    camada.push(prox); if(prox[b]) finais.push({...prox[b], n:c});
+  }
+  if(!finais.length) return {barata:null, menos:null};
+  const barata = [...finais].sort((x,y)=>x.preco-y.preco || x.n-y.n || x.bicos-y.bicos)[0];
+  const menos = [...finais].sort((x,y)=>x.n-y.n || x.preco-y.preco || x.bicos-y.bicos)[0];
+  return {barata, menos, nomes: B.map(x=>x[0])};
 }
-const txtCombo = c => c ? c.qtd.map((q,k)=>q?`${q>1?q+"× ":""}${BOMBAS_HID[k][0]}`:null).filter(Boolean).join(" + ") : "—";
+const txtCombo = c => c ? c.qtd.map((q,k)=>q?`${q>1?q+"× ":""}${bombasHid()[k][0]}`:null).filter(Boolean).join(" + ") : "—";
 function calcHidro(){
   const P = S.pis, H = P.hidro, ralo = RALOS.find(r=>r[0]===H.ralo) || RALOS[0];
   return H.conjuntos.map(cj=>{
     const b = Math.max(0, Math.round(num(cj.bicos))); if(!b) return {cj, b, vazao:0};
-    const ok = combosBombas().filter(c=>c.bicos>=b);
-    const barata = [...ok].sort((x,y)=>x.preco-y.preco || x.n-y.n || x.bicos-y.bicos)[0];
-    const menos = [...ok].sort((x,y)=>x.n-y.n || x.preco-y.preco || x.bicos-y.bicos)[0];
+    const {barata, menos} = melhoresCombos(b);
     const vazao = b*num(H.vazBico), ralos = Math.ceil(vazao/ralo[2]);
     return {cj, b, barata, menos, vazao, ralos, ralo};
   });
@@ -4508,7 +4645,8 @@ function renderPis(){
     const blocoC = (r, nome) => !r ? `<div class="pis-card"><h4>${nome}</h4><p class="vazio">Informe o volume.</p></div>` : `<div class="pis-card">
       <h4>${nome}<span>${fmt(r.V,2)} m³ · água a ${fmt(r.T)} ºC</span></h4>
       <div class="pis-big"><div><small>Carga térmica</small><strong>${fmt(r.Q,0)}</strong><em>kcal/h</em></div>
-        <div class="${r.bc?"":"falha"}"><small>Bomba de calor sugerida</small><strong>${r.bc?r.bc.m:"consultar"}</strong><em>${r.bc?`${fmt(r.bc.cap,0)} kcal/h · ${fmt(r.kw,1)} kW`:"acima da tabela"}</em></div></div>
+        <div class="${r.bc&&r.atende?"":"falha"}"><small>${!r.bc?"Bomba de calor":r.manual?`Escolhida (sugerida: ${r.sug.nome})`:"Bomba de calor sugerida"}</small>
+          <div class="bc-nav"><button type="button" class="bc-seta" data-bcnav="${r.corpo}" data-dir="-1" ${r.idx<=0?"disabled":""} aria-label="Modelo menor">‹</button><strong>${r.bc?r.bc.m:"consultar"}</strong><button type="button" class="bc-seta" data-bcnav="${r.corpo}" data-dir="1" ${r.idx>=r.total-1?"disabled":""} aria-label="Modelo maior">›</button></div><em>${r.bc?`${fmt(r.bc.cap,0)} kcal/h · ${fmt(r.kw,1)} kW${r.atende?"":" · não atende a carga"}`:"acima da tabela"}</em>${r.manual?`<button type="button" class="lnk" data-bcvolta="${r.corpo}" style="font-size:13px;margin-top:4px">voltar à sugerida</button>`:""}</div></div>
       ${r.bc?`<dl class="pl-tot"><dt>Elevar 1 ºC</dt><dd>${fmt(r.t1,2)} h</dd><dt>Elevar 10 ºC</dt><dd>${fmt(r.t1*10,1)} h</dd><dt>Elevar 15 ºC</dt><dd>${fmt(r.t1*15,1)} h</dd><dt>Elevar ${fmt(num(P.dT))} ºC</dt><dd>${fmt(r.t1*num(P.dT),1)} h</dd></dl>`:""}
       <p class="pis-sub">Comparativo · escala ${(ESCALAS.find(e=>e[0]===String(P.escala))||ESCALAS[1])[1].toLowerCase()}</p>
       <div class="rolar"><table class="mc-tab pis-esc"><tr><th>BTU/h</th>${r.escala.map(x=>`<th style="text-align:right">${fmt(x.btu/1000,0)} mil</th>`).join("")}</tr>
@@ -4537,7 +4675,7 @@ function renderPis(){
     const r = calcCloro();
     $("pcl-res").innerHTML = !(r.V>0) ? `<p class="vazio">${r.erro}</p>` : `<div class="pis-big">
       <div><small>Volume</small><strong>${fmt(r.V,2)}</strong><em>m³</em></div><div><small>Capacidade necessária (2 × volume)</small><strong>${fmt(r.nec,1)}</strong><em>m³</em></div>
-      <div class="${r.g?"":"falha"}"><small>Gerador de cloro</small><strong>${r.g?r.g.m:"consultar"}</strong><em>${r.g?`${fmt(r.g.w)} W · ${fmt(r.g.q,1)} m³/h · 20 mca`:""}</em></div></div>
+      <div class="${r.g?"":"falha"}"><small>Gerador de cloro</small><strong>${r.g?r.g.m:"consultar"}</strong><em>${r.g?`${fmt(r.g.w)} W · ${fmt(r.g.q,1)} m³/h · ${fmt(r.g.pm||20)} mca`:""}</em></div></div>
       <div class="rolar" style="margin-top:12px"><table class="mc-tab"><tr><th>Modelo</th>${r.lista.map(x=>`<th style="text-align:right">${x.m}</th>`).join("")}</tr>
       <tr><th>Capacidade + ${fmt(r.marg*100,0)}% (m³)</th>${r.lista.map(x=>`<td class="${r.g&&x.m===r.g.m?"sel":x.cap<r.nec?"no":""}">${fmt(x.cap,1)}</td>`).join("")}</tr></table></div>`;
   }
@@ -4559,7 +4697,8 @@ function memorialPis(part, A, B){
       <p class="mc-l">Q = V × 250 × f<sub>água</sub> × f<sub>construção</sub> × f<sub>capa</sub> × f<sub>vento</sub> × f<sub>ar</sub> × f<sub>uso</sub> × f<sub>período</sub> × 1,2 ÷ f<sub>volume</sub></p>
       <p class="mc-l">Q = ${fmt(r.V,2)} × 250 × ${fmt(r.f.agua,2)} × ${fmt(r.f.cons,2)} × ${fmt(r.f.capa,2)} × ${fmt(r.f.vento,2)} × ${fmt(r.f.ar,4)} × ${fmt(r.f.uso,2)} × ${fmt(r.f.per,2)} × 1,2 ÷ ${fmt(r.f.vol,3)} = <b>${fmt(r.Q,0)} kcal/h</b></p>
       ${r.T===24 ? `<p class="mc-l mc-aviso">Fator da água a 24 ºC em revisão (usado ${fmt(r.f.agua,2)}).</p>` : ""}
-      <p class="mc-l">Faixa da tabela: ${r.faixa?`${r.faixa.m} (a partir de ${fmt(r.faixa.de)} kcal/h)`:"abaixo da tabela"} · desclassificação de ${fmt(num(P.desclas))} modelo(s) → <b>${r.bc?r.bc.m:"consultar"}</b>${r.bc?` (${fmt(r.bc.cap,0)} kcal/h, ${fmt(r.kw,1)} kW)`:""}</p>
+      <p class="mc-l">Faixa da tabela: ${r.faixa?`${r.faixa.m} (a partir de ${fmt(r.faixa.de)} kcal/h)`:"abaixo da tabela"} · desclassificação de ${fmt(num(P.desclas))} modelo(s) → sugerida <b>${r.sug?r.sug.nome:"consultar"}</b>${r.bc?` · adotada <b>${r.bc.m}</b> (${fmt(r.bc.cap,0)} kcal/h, ${fmt(r.kw,1)} kW)`:""}</p>
+      ${r.manual?`<p class="mc-l">Modelo escolhido manualmente: <b>${r.bc.m}</b>${r.atende?"":` <span class="mc-aviso">(capacidade abaixo da carga)</span>`}</p>`:""}
       ${r.bc?`<p class="mc-l fim">Tempo para elevar 1 ºC = Q ÷ capacidade × 4 = ${fmt(r.Q,0)} ÷ ${fmt(r.bc.cap,0)} × 4 = <b>${fmt(r.t1,2)} h</b></p>`:""}</div>`;
     return bl(A, "Piscina") + bl(B, "Spa") + (A||B ? `<div class="mc-bloco"><h4>Consumo mensal</h4><p class="mc-l">Funcionamento (h/dia) = tempo para 1 ºC × perda média do mês (ºC/dia) · consumo (kWh/mês) = potência × h/dia × dias${String(P.freq)==="2"?" ÷ 3 (uso em fim de semana)":""} · custo = consumo × ${fmt(num(P.custos?.ele),2)} R$/kWh</p></div>` : "");
   }
@@ -4583,6 +4722,41 @@ function renderPhiLista(){
     <button class="x" type="button" data-rm aria-label="Remover conjunto">×</button></div><div class="tr-res pis-cj-res" data-res></div></div>`).join("") || `<p class="vazio">Nenhum conjunto.</p>`;
   renderPis();
 }
+function renderBCcat(){
+  const L = listaBC(), porId = new Map(L.map(b=>[b.id,b]));
+  $("bc-corpo").innerHTML = [...BCAT].sort((a,b)=>(porId.get(a.id)?.cap||0)-(porId.get(b.id)?.cap||0)).map(b=>{ const x = porId.get(b.id); return `<tr data-id="${b.id}">
+    <td><input data-bf="m" value="${esc(b.m)}"></td><td><input data-bf="q" type="number" min="1" step="1" value="${esc(b.q)}" style="width:60px"></td>
+    <td><input data-bf="btu" type="number" min="0" step="1000" value="${esc(b.btu)}"></td><td><input data-bf="w" type="number" min="0" step="10" value="${esc(b.w)}"></td>
+    <td><input data-bf="vmin" type="number" min="0" step="0.5" value="${esc(b.vmin)}" style="width:80px"></td>
+    <td class="n" data-bcap>${x?fmt(x.cap,0):"—"}</td><td class="n" data-bde>${x?fmt(x.de,0):"—"}</td>
+    <td><button class="x" type="button" data-rm aria-label="Remover bomba">×</button></td></tr>`; }).join("");
+  $("pfi-bc").innerHTML = `<option value="" id="pfi-auto">Automático</option>` + [...new Set(BCAT.filter(b=>b.m).map(b=>b.m))].map(m=>`<option ${S.pis.filtro.bc===m?"selected":""}>${esc(m)}</option>`).join("");
+}
+const CATS_PIS = {
+  cf:{cat:()=>CAT_FILTRO, campos:[["n","text"],["vaz","number","0.5"],["bomba","text"]], novo:{n:"Novo filtro", vaz:0, bomba:""}, ord:(a,b)=>num(a.vaz)-num(b.vaz)},
+  cg:{cat:()=>CAT_GERADOR, campos:[["m","text"],["v","number","5"],["w","number","10"],["q","number","0.1"],["p","number","1"]], novo:{m:"Novo gerador", v:0, w:0, q:0, p:20}, ord:(a,b)=>num(a.v)-num(b.v)},
+  cb:{cat:()=>CAT_BOMBA_HID, campos:[["n","text"],["bicos","number","1"],["preco","number","100"]], novo:{n:"Nova bomba", bicos:0, preco:0}, ord:(a,b)=>num(b.bicos)-num(a.bicos)}
+};
+function renderCatPis(id){
+  const c = CATS_PIS[id], L = [...c.cat().get()].sort(c.ord);
+  $(id+"-corpo").innerHTML = L.map(x=>`<tr data-id="${x.id}">${c.campos.map(([k,t,st])=>`<td><input data-pf="${k}" ${t==="number"?`type="number" min="0" step="${st}" inputmode="decimal"`:""} value="${esc(x[k]??"")}"></td>`).join("")}
+    <td><button class="x" type="button" data-rm aria-label="Remover">×</button></td></tr>`).join("");
+}
+function ligarCatsPis(){
+  Object.entries(CATS_PIS).forEach(([id, c])=>{
+    $(id+"-cat").addEventListener("toggle", ()=>{ if($(id+"-cat").open) renderCatPis(id); });
+    $(id+"-corpo").addEventListener("input", e=>{
+      const tr = e.target.closest("tr"), x = c.cat().get().find(y=>y.id===tr.dataset.id); if(!x) return;
+      const k = e.target.dataset.pf, tipo = c.campos.find(f=>f[0]===k)[1]; x[k] = tipo==="number" ? num(e.target.value) : e.target.value;
+      c.cat().salvar(); renderPis(); resumo();
+    });
+    $(id+"-corpo").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; const rid = e.target.closest("tr").dataset.id, x = c.cat().get().find(y=>y.id===rid);
+      if(!confirm(`Remover ${x.n||x.m} da tabela?`)) return; c.cat().set(c.cat().get().filter(y=>y.id!==rid)); renderCatPis(id); renderPis(); resumo(); });
+    $(id+"-add").addEventListener("click", ()=>{ const n = {...c.novo, id:uid()}; c.cat().set([...c.cat().get(), n]); renderCatPis(id);
+      const i = $(id+"-corpo").querySelector(`tr[data-id="${n.id}"] input`); i?.focus(); i?.select(); });
+    $(id+"-reset").addEventListener("click", ()=>{ if(!confirm("Restaurar a tabela original? As alterações serão perdidas.")) return; c.cat().reset(); renderCatPis(id); renderPis(); resumo(); });
+  });
+}
 function preencherPis(){
   const P = S.pis;
   $("pis-vp").value = P.pool.vol; $("pis-tp").value = P.pool.temp; $("pis-vs").value = P.spa.vol; $("pis-ts").value = P.spa.temp;
@@ -4590,7 +4764,7 @@ function preencherPis(){
   $("pis-tar").value = P.tar; $("pis-desclas").value = P.desclas; $("pis-escala").value = P.escala; $("pis-dT").value = P.dT; $("pis-alvo").value = P.alvo; $("pis-f24").value = P.fator24;
   ENERGIAS.forEach(([k])=>{ $("pis-c-"+k).value = P.custos[k]; });
   $("pfi-corpo").value = P.filtro.corpo; $("pfi-tempo").value = P.filtro.tempo; $("pfi-aq").checked = !!P.filtro.aquecida;
-  $("pfi-bc").value = P.filtro.bc; $("pfi-nbc").value = P.filtro.nbc; $("pfi-inst").value = P.filtro.inst;
+  renderBCcat(); $("pfi-bc").value = P.filtro.bc; $("pfi-nbc").value = P.filtro.nbc; $("pfi-inst").value = P.filtro.inst;
   $("pcl-corpo").value = P.cloro.corpo; $("pcl-margem").value = P.cloro.margem;
   $("phi-vaz").value = P.hidro.vazBico; $("phi-ralo").value = P.hidro.ralo;
   $("q-doc").value = P.doc; $("q-rev").value = P.rev; $("q-obs").value = P.obs;
@@ -4617,6 +4791,33 @@ function ligarPis(){
     alt();
   });
   m.addEventListener("change", e=>{ if(e.target.type==="checkbox" && e.target.id==="pfi-aq"){ P().filtro.aquecida = e.target.checked; alt(); } });
+  // setas de modelo
+  $("paq-res").addEventListener("click", e=>{
+    const nav = e.target.closest("[data-bcnav]"), volta = e.target.closest("[data-bcvolta]");
+    if(volta){ P()[volta.dataset.bcvolta].bcSel = ""; alt(); return; }
+    if(!nav) return; const corpo = nav.dataset.bcnav, r = calcCarga(corpo); if(!r) return;
+    const L = listaBC(), k = Math.max(0, Math.min(L.length-1, (r.idx<0 ? 0 : r.idx) + (+nav.dataset.dir)));
+    P()[corpo].bcSel = r.sug && L[k].nome===r.sug.nome ? "" : L[k].nome; alt();
+  });
+  // catálogo de bombas de calor
+  $("bc-corpo").addEventListener("input", e=>{
+    const tr = e.target.closest("tr"), b = BCAT.find(x=>x.id===tr.dataset.id); if(!b) return; const f = e.target.dataset.bf;
+    b[f] = f==="m" ? e.target.value : num(e.target.value); salvarBC();
+    const x = listaBC().find(y=>y.id===b.id); tr.querySelector("[data-bcap]").textContent = x?fmt(x.cap,0):"—";
+    renderPis(); resumo();
+  });
+  $("bc-corpo").addEventListener("change", ()=>{                     // atualiza só os valores calculados, sem reordenar (não perde o foco)
+    const L = new Map(listaBC().map(b=>[b.id,b]));
+    $("bc-corpo").querySelectorAll("tr").forEach(tr=>{ const x = L.get(tr.dataset.id); tr.querySelector("[data-bcap]").textContent = x?fmt(x.cap,0):"—"; tr.querySelector("[data-bde]").textContent = x?fmt(x.de,0):"—"; });
+    const sel = $("pfi-bc"), v = sel.value;
+    sel.innerHTML = `<option value="" id="pfi-auto">Automático</option>` + [...new Set(BCAT.filter(b=>b.m).map(b=>b.m))].map(m=>`<option>${esc(m)}</option>`).join(""); sel.value = v;
+  });
+  $("bc-cat").addEventListener("toggle", ()=>{ if($("bc-cat").open) renderBCcat(); });
+  $("bc-corpo").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; const id = e.target.closest("tr").dataset.id, b = BCAT.find(x=>x.id===id);
+    if(!confirm(`Remover ${nomeBC(b)} da tabela?`)) return; BCAT = BCAT.filter(x=>x.id!==id); salvarBC(); renderBCcat(); renderPis(); resumo(); });
+  $("bc-add").addEventListener("click", ()=>{ BCAT.push({id:uid(), m:"Nova", q:1, btu:0, w:0, vmin:0}); salvarBC(); renderBCcat();
+    const ins = $("bc-corpo").querySelectorAll('[data-bf="m"]'); const u = [...ins].find(i=>i.value==="Nova"); u?.focus(); u?.select(); });
+  $("bc-reset").addEventListener("click", ()=>{ if(!confirm("Restaurar a tabela original de bombas de calor? As alterações serão perdidas.")) return; BCAT = BC_ORIGINAL.map(x=>({...x, id:uid()})); salvarBC(); renderBCcat(); renderPis(); resumo(); });
   $("phi-add").addEventListener("click", ()=>{ const n = P().hidro.conjuntos.length+1; P().hidro.conjuntos.push({nome:`Conjunto ${n}`, bicos:""}); renderPhiLista(); resumo(); salvar();
     const ins = document.querySelectorAll('#phi-lista [data-hc="bicos"]'); ins[ins.length-1]?.focus(); });
   $("phi-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; P().hidro.conjuntos.splice(+e.target.closest(".pis-cj").dataset.i,1); renderPhiLista(); resumo(); salvar(); });
@@ -4735,6 +4936,7 @@ ligarEst();
 ligarEle();
 ligarEleCanvas();
 ligarPis();
+ligarCatsPis();
 ligarGruposNav();
 ligarClientes();
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); renderResp();
