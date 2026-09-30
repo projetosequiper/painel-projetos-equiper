@@ -637,6 +637,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
             <button type="button" data-modo="vd">VD Válvula de descarga</button>
             <button type="button" data-modo="ligar">⟶ Ligar</button>
             <button type="button" data-modo="apagar">✕ Apagar</button>
+            <button type="button" data-hist="-1" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" data-hist="1" title="Refazer (Ctrl+Y)">↷ Refazer</button>
           </div>
           <p class="pl-modo" id="hd-modo-dica"></p>
           <div class="pl-tela-env"><div class="pl-tela" id="hd-tela"><svg id="hd-canvas" class="cv-edit" xmlns="http://www.w3.org/2000/svg"></svg></div><div class="pl-pop hd-pop" id="hd-pop" hidden></div></div>
@@ -699,6 +701,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
             <button type="button" data-modo="ligar">⟶ Ligar</button>
             <button type="button" data-modo="saida">◉ Saída</button>
             <button type="button" data-modo="apagar">✕ Apagar</button>
+            <button type="button" data-hist="-1" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" data-hist="1" title="Refazer (Ctrl+Y)">↷ Refazer</button>
           </div>
           <p class="pl-modo" id="es-modo-dica"></p>
           <div class="pl-tela-env"><div class="pl-tela" id="es-tela"><svg id="es-canvas" class="cv-es" xmlns="http://www.w3.org/2000/svg"></svg></div><div class="pl-pop hd-pop" id="es-pop" hidden></div></div>
@@ -752,6 +756,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
             <button type="button" data-modo="cx">⊠ Caixa de passagem</button>
             <button type="button" data-modo="ligar">— Ligar (eletroduto)</button>
             <button type="button" data-modo="apagar">✕ Apagar</button>
+            <button type="button" data-hist="-1" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" data-hist="1" title="Refazer (Ctrl+Y)">↷ Refazer</button>
           </div>
           <p class="pl-modo" id="ec-modo-dica"></p>
           <div class="pl-tela-env"><div class="pl-tela" id="ec-tela"><svg id="el-canvas" xmlns="http://www.w3.org/2000/svg"></svg></div><div class="pl-pop hd-pop" id="ec-pop" hidden></div></div>
@@ -1053,6 +1059,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
             <button type="button" data-gmodo="mover" class="on">↖ Selecionar / mover</button>
             <button type="button" data-gmodo="apagar">✕ Apagar</button>
             <button type="button" data-gmodo="auto">⟲ Organizar automaticamente</button>
+            <button type="button" data-hist="-1" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" data-hist="1" title="Refazer (Ctrl+Y)">↷ Refazer</button>
           </div>
           <div class="diag-caixa"><div class="diag-rolar" id="g-diagrama"></div><div class="no-menu" id="no-menu" hidden></div></div>
           <p class="fonte">Clique numa letra para seguir o trecho, subir ou descer de pavimento, ligar um ponto de consumo ou remover. Arraste letras e equipamentos para mover (os equipamentos acompanham a letra). Com a ferramenta Apagar, clique no que quer remover.</p>
@@ -1154,6 +1162,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
             <button type="button" data-modo="ligar">⟶ Ligar</button>
             <button type="button" data-modo="saida">◉ Saída</button>
             <button type="button" data-modo="apagar">✕ Apagar</button>
+            <button type="button" data-hist="-1" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+            <button type="button" data-hist="1" title="Refazer (Ctrl+Y)">↷ Refazer</button>
           </div>
           <p class="pl-modo" id="pl-modo-dica"></p>
           <div class="pl-area-trab">
@@ -1413,7 +1423,7 @@ function carregar(){
   return estadoNovo();
 }
 let S = carregar();
-function salvar(){ try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} if(typeof bibAtualizar==="function") bibAtualizar(); }
+function salvar(){ try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
 
 /* =====================================================================
    ESGOTO: cálculo e interface
@@ -2349,6 +2359,7 @@ function preencherTudo(){
   [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
   preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); aplicarNA();
+  if(typeof histBase==="function" && !HIST.restaurando) histBase();
 }
 
 let avisoT;
@@ -4925,6 +4936,68 @@ function ligarResp(){
   });
 }
 
+/* =====================================================================
+   DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
+   ===================================================================== */
+const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", ele:"ele", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
+const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
+function histBase(){                                       // ponto de partida (abrir obra, obra nova)
+  HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
+  Object.values(HIST_CHAVE).forEach(k=>{ if(S[k]) HIST.ultimo[k] = JSON.stringify(S[k]); });
+}
+function histRegistrar(){                                  // chamado a cada gravação
+  if(HIST.restaurando) return;
+  if(HIST.obra !== S.id){ histBase(); return; }
+  const agora = Date.now();
+  [...new Set(Object.values(HIST_CHAVE))].forEach(k=>{
+    if(!S[k]) return; const atual = JSON.stringify(S[k]), antes = HIST.ultimo[k];
+    if(antes===undefined){ HIST.ultimo[k] = atual; return; }
+    if(atual===antes) return;
+    const pilha = HIST.desfazer[k] = HIST.desfazer[k] || [];
+    // digitação seguida no mesmo campo vira um passo só
+    if(!(pilha.length && agora - (HIST.t[k]||0) < 700 && histDigitando())) pilha.push(antes);
+    if(pilha.length > 100) pilha.shift();
+    HIST.t[k] = agora; HIST.ultimo[k] = atual; HIST.refazer[k] = [];
+  });
+}
+const histDigitando = () => /INPUT|TEXTAREA/.test(document.activeElement?.tagName||"") && !/checkbox|radio/.test(document.activeElement?.type||"");
+function histRestaurar(k){                                 // redesenha a disciplina depois de desfazer/refazer
+  HIST.restaurando = true;
+  try{
+    if(k==="esg"){ preencherEsgoto(); renderEsgoto(); }
+    if(k==="gas"){ fecharMenuNo?.(); preencherGas(); }
+    if(k==="plu") preencherPluvial();
+    if(k==="hid") preencherHid();
+    if(k==="est") preencherEst();
+    if(k==="ele") preencherEle();
+    if(k==="pis") preencherPis();
+    aplicarNA(); resumo();
+    try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
+    if(typeof bibAtualizar==="function") bibAtualizar();
+  } finally { HIST.restaurando = false; }
+}
+function histPasso(dir){
+  const k = HIST_CHAVE[S.modulo]; if(!k || !$("tela-clientes").hidden) return false;
+  if(HIST.obra !== S.id) histBase();
+  const de = dir<0 ? HIST.desfazer : HIST.refazer, para = dir<0 ? HIST.refazer : HIST.desfazer;
+  const pilha = de[k] || []; if(!pilha.length){ aviso(dir<0 ? "Nada para desfazer" : "Nada para refazer"); return true; }
+  (para[k] = para[k] || []).push(JSON.stringify(S[k]));
+  const estado = pilha.pop(); S[k] = JSON.parse(estado); HIST.ultimo[k] = estado; HIST.t[k] = 0;
+  histRestaurar(k); aviso(dir<0 ? "Desfeito" : "Refeito"); return true;
+}
+function ligarHist(){
+  addEventListener("keydown", e=>{
+    if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const tecla = e.key.toLowerCase();
+    const desfazer = tecla==="z" && !e.shiftKey, refazer = tecla==="y" || (tecla==="z" && e.shiftKey);
+    if(!desfazer && !refazer) return;
+    if(histDigitando()) return;                            // dentro de um campo, vale o desfazer do próprio campo
+    if(histPasso(desfazer ? -1 : 1)) e.preventDefault();
+  });
+  document.addEventListener("click", e=>{ const b = e.target.closest("[data-hist]"); if(b){ e.preventDefault(); histPasso(+b.dataset.hist); } });
+  histBase();
+}
+
 /* ---------- Início ---------- */
 $("predio").innerHTML = PREDIOS.map((p,i)=>`<option value="${i}">${p.n}</option>`).join("");
 $("solo").innerHTML = SOLOS.map((s,i)=>`<option value="${i}">${s.n} (Ci ${s.ci} L/m²·dia)</option>`).join("");
@@ -4938,6 +5011,7 @@ ligarEleCanvas();
 ligarPis();
 ligarCatsPis();
 ligarGruposNav();
+ligarHist();
 ligarClientes();
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); renderResp();
 renderEsgoto();
