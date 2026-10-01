@@ -308,6 +308,10 @@ details, details *{box-sizing:border-box}
 .rs-op em{font-style:normal;font-size:12px;color:var(--cinza-3);margin-top:4px}
 .rs-op.on em{color:var(--vermelho);font-weight:600}
 
+#tela-tecnicos{max-width:900px;margin:0 auto;padding:40px 20px 60px}
+.tec-bloco{max-width:820px;margin:0 auto}
+.lnk-tec{font-size:13px;margin-top:4px;align-self:flex-start}
+
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
 @media(max-width:560px){.so-lg{display:none}}
@@ -499,7 +503,7 @@ body.arrastando main{outline:2px dashed var(--preto);outline-offset:-8px}
   :root{padding:0}
   html,body{background:#fff}
   body{font-size:9.5pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  header,.app,.aviso,#tela-clientes,.lateral,.layout,.barra,.no-menu,.pl-pop{display:none!important}
+  header,.app,.aviso,#tela-clientes,#tela-tecnicos,.lateral,.layout,.barra,.no-menu,.pl-pop{display:none!important}
   html,body{height:auto!important;min-height:0!important}
   #memoria{display:block}
 }
@@ -562,6 +566,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   </a>
   <nav class="lat-nav">
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
+    <button class="nav-it" type="button" data-view="tecnicos"><i aria-hidden="true">✎</i>Responsáveis técnicos</button>
     <p class="lat-sec">Disciplinas</p>
     <div class="nav-g" data-g="hid">
       <button class="nav-grupo" type="button" data-toggle-g="hid" aria-expanded="true"><i aria-hidden="true">HID</i>Hidráulica<span class="nav-seta" aria-hidden="true">▾</span></button>
@@ -678,7 +683,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="h-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="h-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="h-doc" autocomplete="off" placeholder="Ex.: MC-HID-001"></label>
         <label class="campo c2">Revisão<input id="h-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="h-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -737,7 +742,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="t-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="t-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="t-doc" autocomplete="off" placeholder="Ex.: MC-ESG-002"></label>
         <label class="campo c2">Revisão<input id="t-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="t-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -797,7 +802,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="l-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="l-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="l-doc" autocomplete="off" placeholder="Ex.: MC-ELE-001"></label>
         <label class="campo c2">Revisão<input id="l-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="l-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -933,7 +938,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="q-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="q-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="q-doc" autocomplete="off" placeholder="Ex.: MC-PIS-001"></label>
         <label class="campo c2">Revisão<input id="q-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="q-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -965,7 +970,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="r-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="r-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="r-doc" autocomplete="off" placeholder="Ex.: MC-RES-001"></label>
         <label class="campo c2">Revisão<input id="r-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="r-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1067,7 +1072,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:12px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="e-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="e-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="e-doc" autocomplete="off" placeholder="Ex.: MC-ESG-001"></label>
         <label class="campo c2">Revisão<input id="e-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="e-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1168,7 +1173,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="g-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="g-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="g-doc" autocomplete="off" placeholder="Ex.: MC-GAS-001"></label>
         <label class="campo c2">Revisão<input id="g-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="g-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1241,7 +1246,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="p-resp"></select></label>
+        <label class="campo c2">Responsável técnico<select id="p-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
         <label class="campo c2">Nº do documento<input id="p-doc" autocomplete="off" placeholder="Ex.: MC-APL-001"></label>
         <label class="campo c2">Revisão<input id="p-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="p-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1249,15 +1254,6 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </section>
   </section>
 
-  <section class="bloco-dados" style="margin-top:12px">
-    <h2>Responsáveis técnicos</h2>
-    <p class="fonte" style="margin:-8px 0 12px">Cadastre uma vez e escolha o responsável no bloco Documento de cada dimensionamento.</p>
-    <div class="lista" id="resp-lista"></div>
-    <button class="add" type="button" id="resp-add">Cadastrar responsável</button>
-    <div class="grade" style="margin-top:16px">
-      <label class="campo c2">Local de emissão dos relatórios<input id="local" autocomplete="off" placeholder="Cidade/UF"></label>
-    </div>
-  </section>
 </main>
 
 <div class="barra">
@@ -1271,6 +1267,21 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 </div>
 </div>
 
+<main id="tela-tecnicos" hidden>
+  <div class="cli-centro">
+    <h1>Responsáveis técnicos</h1>
+    <p class="sub">Cadastro único para todos os dimensionamentos. Em cada dimensionamento, só escolha o técnico no bloco Documento.</p>
+  </div>
+  <section class="bloco-dados tec-bloco">
+    <div class="lista" id="resp-lista"></div>
+    <button class="add" type="button" id="resp-add">Cadastrar responsável técnico</button>
+  </section>
+  <section class="bloco-dados tec-bloco" style="margin-top:12px">
+    <h2>Relatórios</h2>
+    <div class="grade"><label class="campo c3">Local de emissão<input id="local" autocomplete="off" placeholder="Cidade/UF"></label></div>
+    <p class="fonte" style="margin-top:8px">Aparece junto da data, acima da assinatura, em todos os relatórios.</p>
+  </section>
+</main>
 <main id="tela-clientes" hidden>
   <div class="cli-centro">
     <h1>Clientes</h1>
@@ -2213,9 +2224,11 @@ function relIdent(M){
   return `<table class="r-t"><tbody>${td("Cliente", esc(O.cliente)||"—")}${td("Local da obra", esc(O.endereco)||"—")}
     ${td("Responsável técnico", esc(O.resp)||"—")}${td("Registro profissional", O.crea?`CREA ${esc(O.crea)}`:"—")}</tbody></table>`;
 }
+function localEmissao(){ try{ return localStorage.getItem("equiper-local-emissao") || S.obra?.local || ""; }catch(e){ return S.obra?.local || ""; } }
 function relAssinatura(M){
   const O = {...S.obra, resp:M.resp, crea:M.crea}, dl = new Date().toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"});
-  return `<div class="r-ass"><div><div>${esc(O.local)?esc(O.local)+", ":""}${dl}.</div></div>
+  const loc = localEmissao() || O.local || "";
+  return `<div class="r-ass"><div><div>${esc(loc)?esc(loc)+", ":""}${dl}.</div></div>
     <div><div class="linha-ass"><b>${esc(O.resp)||"Responsável técnico"}</b><br>
     <small>Engenheiro civil${O.crea?` | CREA ${esc(O.crea)}`:""}</small><br><small>Equiper</small></div></div></div>`;
 }
@@ -2410,7 +2423,8 @@ function aplicarNA(){
 function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
-  for(const k of ["cliente","endereco","local"]) $(k).value = O[k] ?? "";
+  for(const k of ["cliente","endereco"]) $(k).value = O[k] ?? "";
+  $("local").value = localEmissao();
   // obras antigas: o responsável da obra passa para os dimensionamentos
   [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
@@ -2462,9 +2476,10 @@ function lerArquivo(f){
 
 function ligar(){
   // Obra
-  for(const k of ["cliente","endereco","local"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
+  for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
+  $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2736,19 +2751,25 @@ function ligarGruposNav(){
   }));
 }
 function marcarNav(){
-  const cli = !$("tela-clientes").hidden;
+  const tec = !$("tela-tecnicos").hidden, cli = !$("tela-clientes").hidden || tec;
   document.querySelectorAll(".nav-it").forEach(b=>{
-    const on = cli ? b.dataset.view==="clientes" : b.dataset.mod===S.modulo;
+    const on = tec ? b.dataset.view==="tecnicos" : cli ? b.dataset.view==="clientes" : b.dataset.mod===S.modulo;
     b.classList.toggle("on", on); b.setAttribute("aria-current", on ? "page" : "false");
   });
   document.querySelectorAll(".nav-g").forEach(g=>g.classList.toggle("ativo", !cli && !!g.querySelector(`[data-mod="${S.modulo}"]`)));
 }
+function abrirTecnicos(){
+  $("tela-tecnicos").hidden = false; $("tela-clientes").hidden = true; document.querySelector(".app").hidden = true;
+  renderResp(); $("local").value = localEmissao(); marcarNav(); window.scrollTo({top:0});
+  try{ history.replaceState(null,"","#tecnicos"); }catch(e){}
+}
 function abrirClientes(){
+  $("tela-tecnicos").hidden = true;
   $("tela-clientes").hidden = false; document.querySelector(".app").hidden = true;
   renderClientes(); marcarNav(); window.scrollTo({top:0});
   try{ history.replaceState(null,"","#clientes"); }catch(e){}
 }
-function fecharClientes(){ $("tela-clientes").hidden = true; document.querySelector(".app").hidden = false; marcarNav(); }
+function fecharClientes(){ $("tela-clientes").hidden = true; $("tela-tecnicos").hidden = true; document.querySelector(".app").hidden = false; marcarNav(); }
 function renderLateralObra(){
   const el = $("lat-obra"); if(!el) return;
   const nome = (S.obra.cliente||"").trim();
@@ -2836,6 +2857,7 @@ function criarCliente(){
 function ligarClientes(){
   document.querySelectorAll(".nav-it").forEach(bt=>bt.addEventListener("click", ()=>{
     if(bt.dataset.view==="clientes") abrirClientes();
+    else if(bt.dataset.view==="tecnicos") abrirTecnicos();
     else { fecharClientes(); trocarModulo(bt.dataset.mod); window.scrollTo({top:0}); }
   }));
   $("cli-busca").addEventListener("input", renderClientes);
@@ -5175,9 +5197,10 @@ ligarRes();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
+document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]")) abrirTecnicos(); });
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
 
 /* =====================================================================
    PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
@@ -5221,6 +5244,7 @@ if(EMBUTIDO){
     S = migrar(msg.dados || estadoNovo());
     S.obra.cliente = msg.clienteNome || "";
     S.obra.clienteIdExterno = msg.clienteId || "";
+    if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
     preencherTudo();
     renderLateralObra();
     _pontePronta = true;

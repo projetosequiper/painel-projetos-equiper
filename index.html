@@ -3170,6 +3170,7 @@
             tipo: 'carregar-dimensionamento',
             clienteId: dimensionamentoClienteAberto,
             clienteNome: fAtual ? fAtual.cliente : '',
+            enderecoCliente: fAtual ? (fAtual.enderecoCompleto || '') : '',
             dados: state.dimensionamentos[dimensionamentoClienteAberto] || null
           }, '*');
         } else if(msg.tipo === 'dimensionamento-salvo'){
