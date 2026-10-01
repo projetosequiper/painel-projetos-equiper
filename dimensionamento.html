@@ -166,7 +166,7 @@ details.catalogo summary{cursor:pointer;font-family:var(--cond);font-weight:700;
 .diag-rolar{overflow:auto;padding:12px;max-height:680px}
 .diag-rolar .vazio{padding:8px 0}
 svg.diag{display:block;max-width:none}
-.r svg.diag{width:100%;height:auto;max-height:120mm}
+.r svg.diag{width:100%;height:auto;max-height:110mm}
 .r .diag-r{border:.6pt solid #bdbdbd;padding:3mm;break-inside:avoid}
 .r .diag-r p{margin:1.5mm 0 0;font-size:7.5pt;color:#555}
 
@@ -198,7 +198,7 @@ svg.diag{display:block;max-width:none}
 .pl-tot{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:12px 0 0;font-size:14px}
 .pl-tot dt{color:var(--cinza-4)}
 .pl-tot dd{margin:0;text-align:right}
-.r .diag-r svg.diag{max-height:150mm}
+.r .diag-r svg.diag{max-height:120mm}
 
 .pl-tela-env{position:relative;min-width:0}
 .pl-pop{position:absolute;z-index:6;width:310px;max-width:calc(100% - 16px);background:var(--branco);border:1px solid var(--preto);border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,.2);padding:12px}
@@ -247,7 +247,7 @@ svg.diag{display:block;max-width:none}
 .nav-grupo i{font-style:normal;font-family:var(--cond);font-weight:700;font-size:12px;min-width:34px;text-align:center;padding:2px 0;border-radius:3px;background:var(--cinza-1);color:var(--cinza-4)}
 .nav-it.nsub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
 .nav-it.nsub.on{font-weight:600}
-@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}.nav-g[data-g="pis"] .nav-it.nsub::before{content:"Piscina · "}}
+@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}.nav-g[data-g="pis"] .nav-it.nsub::before{content:"Piscina · "}.nav-g[data-g="hid"] .nav-it.nsub::before{content:"Hidráulica · "}}
 #es-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 #es-canvas[data-modo="caixa"],#es-canvas[data-modo="saida"]{cursor:crosshair}#es-canvas[data-modo="ligar"]{cursor:alias}#es-canvas[data-modo="apagar"]{cursor:not-allowed}
 .es-item{grid-template-columns:1fr 60px 34px}
@@ -297,6 +297,16 @@ details, details *{box-sizing:border-box}
 .g-pavs .campo{min-width:140px;flex:0 1 180px}
 .g-pavs .campo input,.g-pavs .campo select{padding:7px 8px;font-size:15px}
 .g-pavs > b{font-size:13px;color:var(--cinza-4);align-self:center}
+
+.rs-ops{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.rs-op{text-align:left;background:var(--cinza-1);border:2px solid transparent;border-radius:4px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
+.rs-op:hover{border-color:var(--cinza-3)}
+.rs-op.on{border-color:var(--preto);background:var(--branco)}
+.rs-op small{font-size:13px;color:var(--cinza-4);font-weight:600}
+.rs-op strong{font-family:var(--cond);font-size:34px;line-height:1}
+.rs-op span{font-size:14px}
+.rs-op em{font-style:normal;font-size:12px;color:var(--cinza-3);margin-top:4px}
+.rs-op.on em{color:var(--vermelho);font-weight:600}
 
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
@@ -489,8 +499,8 @@ body.arrastando main{outline:2px dashed var(--preto);outline-offset:-8px}
   :root{padding:0}
   html,body{background:#fff}
   body{font-size:9.5pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  header,.app,.aviso,#tela-clientes,.lateral{display:none!important}
-  .layout{display:block}
+  header,.app,.aviso,#tela-clientes,.lateral,.layout,.barra,.no-menu,.pl-pop{display:none!important}
+  html,body{height:auto!important;min-height:0!important}
   #memoria{display:block}
 }
 .r{color:#000;font-family:var(--sans)}
@@ -508,7 +518,7 @@ body.arrastando main{outline:2px dashed var(--preto);outline-offset:-8px}
 .r-meta span{font-size:6.5pt;color:#555}
 .r-meta b{font-size:9pt}
 .r-faixa{height:2.2mm;background:#d10a1e;margin:0 0 5mm;border:1.2pt solid #000;border-top:0}
-.r-sec{margin:0 0 5mm}
+.r-sec{margin:0 0 4mm}
 .r-sec>h2{display:flex;gap:3mm;align-items:baseline;font-family:var(--cond);font-size:12.5pt;font-weight:700;margin:0 0 2mm;padding:0 0 1mm;border-bottom:.8pt solid #000;break-after:avoid}
 .r-sec>h2 i{font-style:normal;color:#d10a1e;min-width:6mm}
 .r-sec>p{margin:0 0 2mm;font-size:9.5pt}
@@ -533,8 +543,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 .r-normas li{display:grid;grid-template-columns:36mm 1fr;gap:3mm;padding:.8mm 0;border-bottom:.5pt dotted #bdbdbd}
 .r-obs{margin:0;padding-left:5mm;font-size:9pt}
 .r-obs li{margin:0 0 1.2mm}
-.r-ass{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm;break-inside:avoid;font-size:9pt}
-.r-ass .linha-ass{border-top:.8pt solid #000;padding-top:1.5mm;margin-top:14mm}
+.r-ass{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:6mm;break-inside:avoid;font-size:9pt}
+.r-ass .linha-ass{border-top:.8pt solid #000;padding-top:1.5mm;margin-top:11mm}
 .r-ass small{color:#555}
 .r-resumo{break-inside:avoid}
 .r-concl{border:1pt solid #000;padding:2.5mm 3mm;font-size:9.5pt;margin-top:2mm;break-inside:avoid}
@@ -553,7 +563,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   <nav class="lat-nav">
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
     <p class="lat-sec">Disciplinas</p>
-    <button class="nav-it" type="button" data-mod="hid"><i aria-hidden="true">HID</i>Hidráulica</button>
+    <div class="nav-g" data-g="hid">
+      <button class="nav-grupo" type="button" data-toggle-g="hid" aria-expanded="true"><i aria-hidden="true">HID</i>Hidráulica<span class="nav-seta" aria-hidden="true">▾</span></button>
+      <div class="nav-sub">
+        <button class="nav-it nsub" type="button" data-mod="hid">Água fria</button>
+        <button class="nav-it nsub" type="button" data-mod="res">Reservatórios</button>
+      </div>
+    </div>
     <div class="nav-g" data-g="esg">
       <button class="nav-grupo" type="button" data-toggle-g="esg" aria-expanded="true"><i aria-hidden="true">ESG</i>Esgoto sanitário<span class="nav-seta" aria-hidden="true">▾</span></button>
       <div class="nav-sub">
@@ -921,6 +937,38 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Nº do documento<input id="q-doc" autocomplete="off" placeholder="Ex.: MC-PIS-001"></label>
         <label class="campo c2">Revisão<input id="q-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="q-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= HIDRÁULICA · RESERVATÓRIOS ================= -->
+  <section class="modulo" id="mod-res" hidden>
+    <h1>Hidráulica · reservatórios</h1>
+    <p class="sub">Volume de reservação de água pelo consumo diário da edificação, com 3 dias (norma), 5 e 7 dias de reserva.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="res"> Esta obra não terá dimensionamento de reservatórios</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Edificação e usuários</h2>
+      <div class="lista" id="rs-lista"></div>
+      <button class="add" type="button" id="rs-add">Adicionar outro uso (edificação mista)</button>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px">
+        <label class="chave"><input type="checkbox" id="rs-sup"> Caixa d'água superior</label>
+        <label class="chave"><input type="checkbox" id="rs-cist"> Cisterna</label>
+      </div>
+      <p class="fonte" style="margin-top:8px">Com caixa superior e cisterna, a caixa fica com 2/5 e a cisterna com 3/5 do volume total.</p>
+    </section>
+    <div class="params p4" id="rs-params"></div>
+    <section class="etapas">
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Volumes</h3><span class="nbr">clique para escolher o adotado</span></div><div id="rs-res"></div></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="rs-memorial"></div></div></article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="r-resp"></select></label>
+        <label class="campo c2">Nº do documento<input id="r-doc" autocomplete="off" placeholder="Ex.: MC-RES-001"></label>
+        <label class="campo c2">Revisão<input id="r-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="r-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
     </section>
   </section>
@@ -1363,7 +1411,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, ele:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1371,6 +1419,7 @@ function estadoNovo(){
     gas:{gas:"GN", material:"cobre", classe:"E", L:20,
       pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:11, alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
       hidro:{vazBico:5, ralo:"lat50", conjuntos:[{nome:"Conjunto 1", bicos:""}]}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
@@ -1394,11 +1443,12 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","est","ele","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     plu:{...b.plu, ...lim(o.plu)},
     est:{...b.est, ...lim(o.est)},
     ele:{...b.ele, ...lim(o.ele)},
+    res:{...b.res, ...lim(o.res)},
     pis:(()=>{ const q = lim(o.pis||{}); return {...b.pis, ...q, pool:{...b.pis.pool, ...(q.pool||{})}, spa:{...b.pis.spa, ...(q.spa||{})}, custos:{...b.pis.custos, ...(q.custos||{})}, filtro:{...b.pis.filtro, ...(q.filtro||{})}, cloro:{...b.pis.cloro, ...(q.cloro||{})}, hidro:{...b.pis.hidro, ...(q.hidro||{})}}; })(),
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
@@ -2275,7 +2325,6 @@ function relGas(){
     ${sec("Pontos de consumo", `<table class="r-t"><thead><tr><th>Ponto</th><th>Equipamento</th><th class="c">Qtd.</th><th class="n">Consumo unit. (kcal/min)</th><th class="n">Total (kcal/min)</th><th class="c">Ligado em</th><th class="n">Ramal (m)</th></tr></thead><tbody>
       ${G.pontos.map(p=>`<tr><td>${esc(p.nome)||"—"}</td><td>${esc(p.equip)||"Informado"}</td><td class="c">${fmt(num(p.qtd))}</td><td class="n">${fmt(kPonto(p),1)}</td><td class="n">${fmt(kTot(p))}</td><td class="c">${nomeNo(noPonto(p))} · ${nomePav(rede()[noPonto(p)]?.pav||0)}</td><td class="n">${num(p.ramal)>0?fmt(num(p.ramal),1):"—"}</td></tr>`).join("")}
       <tr class="tot"><td colspan="4">Potência instalada total</td><td class="n">${fmt(total)}</td><td colspan="2"></td></tr></tbody></table>`)}
-    ${sec("Diagrama esquemático da rede", `<div class="diag-r">${diagramaGasLivre(res, false)}<p>Esquema sem escala. M = medidor (ponto A). Diâmetros em mm; Pc e Pa em kcal/min.</p></div>`)}
     ${sec("Metodologia", `<p>A rede parte do medidor (ponto A) e segue em trechos identificados por letras (A-B, B-C…), no mesmo pavimento ou em prumadas que sobem ou descem para outros pavimentos; cada ponto de consumo é ligado em T a uma letra por meio de um ramal. A potência computada (Pc) de um trecho da linha principal é a soma dos consumos de todos os pontos ligados a jusante dele; a de um ramal é o consumo do próprio ponto. A potência adotada (Pa) considera a simultaneidade de uso e é obtida na tabela de potência adotada no dimensionamento (para Pc &lt; 350 kcal/min, Pa = Pc; para Pc &gt; 70.000 kcal/min, Pa = 0,095 × Pc). O comprimento de cálculo L é a soma dos comprimentos de todos os trechos e ramais da rede e é o mesmo para todos. O diâmetro de cada trecho é o menor da tabela de dimensionamento cuja capacidade, para o comprimento L, seja igual ou superior à sua Pa.</p>`)}
     ${sec("Dimensionamento por trecho e ramal", calcTr || "<p>Nenhum trecho cadastrado.</p>")}
     ${sec("Quadro de diâmetros", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Trecho</th><th class="n">Compr. (m)</th><th class="n">Pc (kcal/min)</th><th class="n">Pa (kcal/min)</th><th class="n">L tab. (m)</th><th class="n">Capac. (kcal/min)</th><th>Diâmetro</th>${!mc?`<th>Tubo (mm)</th>`:""}</tr></thead><tbody>
@@ -2284,6 +2333,7 @@ function relGas(){
       </tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os trechos foram dimensionados dentro dos limites da tabela de dimensionamento para a potência adotada e o comprimento de cálculo.":"há trechos sem dimensionamento válido. Revisar os itens indicados em vermelho antes da emissão."}</div></div>`)}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${sec("Diagrama esquemático da rede", `<div class="diag-r">${diagramaGasLivre(res, false)}<p>Esquema sem escala. M = medidor (ponto A). Diâmetros em mm; Pc e Pa em kcal/min.</p></div>`)}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -2293,7 +2343,8 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m];
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res";
+  if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
   if(m==="est") renderEst();
   if(m==="ele") atualizarEle();
@@ -2306,6 +2357,11 @@ function trocarModulo(m){
 function resumo(){
   if(S.naoAplica?.[S.modulo]){ $("resumo").innerHTML = `<span class="pilula">Não se aplica</span>`; return; }
   let itens;
+  if(S.modulo==="res"){
+    const r = resumoResParte();
+    $("resumo").innerHTML = r ? `<span class="pilula">Reservatórios</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Reservatórios</span><span class="rotulo">informe os usuários</span>`;
+    return;
+  }
   if(PIS_PARTES[S.modulo]){
     const r = resumoPisParte(S.modulo);
     $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">${PIS_PARTES[S.modulo]}</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">${PIS_PARTES[S.modulo]}</span><span class="rotulo">informe os dados</span>`;
@@ -2344,21 +2400,21 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","plu","hid","ele","paq","pfi","pcl","phi"].forEach(m=>{
+  ["esgoto","est","gas","plu","hid","res","ele","paq","pfi","pcl","phi"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco","local"]) $(k).value = O[k] ?? "";
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); aplicarNA();
   if(typeof histBase==="function" && !HIST.restaurando) histBase();
 }
 
@@ -2408,7 +2464,7 @@ function ligar(){
   // Obra
   for(const k of ["cliente","endereco","local"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","est","ele","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2535,14 +2591,23 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : relEsgoto());
     window.print();
   });
+  // nome do PDF = planilha + cliente (o navegador usa o título da página como nome do arquivo)
+  const tituloOriginal = document.title;
+  const nomePDF = () => {
+    const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
+    const cli = (S.obra.cliente||"").trim();
+    return [plan, cli || "Sem cliente"].join(" - ").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
+  };
+  addEventListener("beforeprint", ()=>{ document.title = nomePDF(); });
+  addEventListener("afterprint", ()=>{ document.title = tituloOriginal; });
   $("novo").addEventListener("click", ()=>{
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -2553,7 +2618,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -2561,9 +2626,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -2615,6 +2680,7 @@ function resumoObra(dados){
       const res = calcRede(), a = res.find(r=>r.tipo==="principal");
       out.push({mod:"gas", det:`${S.gas.gas} · ${S.gas.trechos.length} trecho(s), ${S.gas.pontos.length} ponto(s)${a && !a.erro ? ` · saída do medidor ${rotDiam(a.d)}` : ""}`, ok: res.length>0 && !res.some(r=>r.erro)});
     }
+    { const r = resumoResParte(); if(r) out.push({mod:"res", det:r.det, ok:r.ok}); }
     ["paq","pfi","pcl","phi"].forEach(pt=>{ const r = resumoPisParte(pt); if(r) out.push({mod:pt, det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); });
     if(S.ele.alims.length){
       const R = S.ele.alims.map(calcAlim);
@@ -2698,7 +2764,7 @@ function abrirObraBib(id, mod){
 }
 function novaObraCliente(nome, mod){
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -2829,7 +2895,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
 }
@@ -3276,12 +3342,12 @@ function relPluvial(){
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 10844</b><span>Instalações prediais de águas pluviais</span></li></ul>`)}
     ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Intensidade pluviométrica (I)", `${fmt(num(P.I))} mm/h`)}${td("Declividade dos condutores (i)", `${fmt(num(P.i),1)}%`)}
       ${td("Coeficiente de rugosidade (n)", `${String(P.n).replace(".",",")} — ${(RUGOS.find(r=>r.n===num(P.n))||{}).t||""}`)}${td("Altura de lâmina", P.lamina==="plena"?"Seção plena":"2/3 do diâmetro")}${td("Diâmetro mínimo adotado", `${num(P.dmin)} mm`)}</tbody></table>`)}
-    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: Contrib. = área equivalente que a própria caixa recebe; Total = contribuição da caixa somada às caixas ligadas nela (m²). Nos tubos: diâmetro (mm) e vazão (l/min).</p></div>`) : ""}
     ${sec("Memorial de cálculo", memorialPluvial(R))}
     ${sec("Quadro de tubulações", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Tubulação</th><th class="n">Área (m²)</th><th class="n">Vazão (l/min)</th><th class="n">Compr. (m)</th><th>Diâmetro</th><th class="n">Capac. (m²)</th></tr></thead><tbody>
       ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.area,1)}</td><td class="n">${fmt(t.Q,1)}</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1):"—"}</td><td>${t.d?`<b>ø${t.d} mm</b>`:`<span class="r-no">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap,1):"—"}</td></tr>`).join("")}</tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todas as tubulações foram dimensionadas para as áreas de contribuição de projeto.":"há caixas sem saída ou tubulações sem diâmetro válido. Revisar antes da emissão."}</div></div>`)}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: Contrib. = área equivalente que a própria caixa recebe; Total = contribuição da caixa somada às caixas ligadas nela (m²). Nos tubos: diâmetro (mm) e vazão (l/min).</p></div>`) : ""}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -3860,7 +3926,6 @@ function relHid(){
     ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Reservatório", res0?`${esc(res0.nome)} · cota ${fmt(num(res0.fundo ?? res0.nivel),2)} m${num(res0.lamina)>0?` · nível mínimo ${fmt(cotaEl(res0),2)} m`:""}`:"—")}
       ${td("Pavimentos", H.pav.map(p=>`${esc(p.nome)} (${fmt(num(p.cota),2)} m)`).join(" · "))}${H.els.filter(e=>e.tipo==="bomba").map(b=>td(`Bomba de pressurização ${esc(b.nome||"BP")}`, b.modo==="fixa"?`pressão de saída ${fmt(num(b.pressao),1)} mca (${fmt(10*num(b.pressao),0)} kPa)`:`acréscimo de ${fmt(num(b.pressao),1)} mca (${fmt(10*num(b.pressao),0)} kPa)`)).join("")}${td("Material", "Tubo de PVC soldável (tubo liso)")}
       ${td("Diâmetro de cálculo", H.dcalc==="nominal"?"Nominal (DE)":"Interno (DI)")}${td("Velocidade máxima", `${fmt(num(H.vmax),1)} m/s`)}${td("Pressão estática máxima", `${fmt(num(H.pmaxEst))} kPa`)}</tbody></table>`)}
-    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Nos tubos: diâmetro externo (mm), velocidade (m/s), soma dos pesos e vazão (L/s). Nos ambientes: aparelhos e menor pressão entre eles (kPa); VD = válvula de descarga com alimentação individual; BP = bomba de pressurização (entrada → saída, kPa).</p></div>`) : ""}
     ${sec("Quadro de dimensionamento", `<table class="r-t"><thead><tr><th>Trecho</th><th class="n">ΣP</th><th class="n">Q (L/s)</th><th class="n">DE</th><th class="n">V (m/s)</th><th class="n">J (kPa/m)</th><th class="n">L real</th><th class="n">L eq.</th><th class="n">Perda (kPa)</th><th class="n">Δz (m)</th><th class="n">P jus. (kPa)</th></tr></thead><tbody>
       ${R.ordem.map(r=>`<tr><td>${esc(r.rot)}</td><td class="n">${fmt(r.somaP,1)}</td><td class="n">${fmt(r.Q,2)}</td><td class="n"><b>${r.tb.de}</b></td><td class="n">${r.erroV?`<span class="r-no">${fmt(r.V,2)}</span>`:fmt(r.V,2)}</td><td class="n">${fmt(r.J,3)}</td><td class="n">${fmt(r.Lr,2)}</td><td class="n">${fmt(r.Leq,2)}</td><td class="n">${fmt(r.perda,2)}</td><td class="n">${fmt(r.dz,2)}</td><td class="n">${r.Pj!=null?fmt(r.Pj,1):"—"}</td></tr>`).join("")}</tbody></table>`)}
     ${sec("Verificação das pressões", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Ponto</th><th>Aparelho</th><th class="n">Cota (m)</th><th class="n">Pressão (kPa)</th><th class="n">Mínima (kPa)</th><th class="n">Estática (kPa)</th><th class="c">Situação</th></tr></thead><tbody>
@@ -3868,6 +3933,7 @@ function relHid(){
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os trechos respeitam a velocidade máxima e todos os pontos de utilização têm pressão dinâmica igual ou superior à mínima.":"há trechos ou pontos que não atendem. Revisar antes da emissão."}</div></div>`)}
     ${sec("Memorial de cálculo", memorialHid(R))}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Nos tubos: diâmetro externo (mm), velocidade (m/s), soma dos pesos e vazão (L/s). Nos ambientes: aparelhos e menor pressão entre eles (kPa); VD = válvula de descarga com alimentação individual; BP = bomba de pressurização (entrada → saída, kPa).</p></div>`) : ""}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -4175,12 +4241,12 @@ function relEst(){
     ${sec("Objetivo", `<p>Apresentar o dimensionamento dos subcoletores e do coletor predial de esgoto sanitário entre as caixas da edificação, a partir das unidades Hunter de contribuição dos aparelhos.</p>`)}
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 8160</b><span>Sistemas prediais de esgoto sanitário: projeto e execução</span></li></ul>`)}
     ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Declividade padrão", `${fmt(num(E.decl),1)}%`)}${td("Diâmetro mínimo", `DN ${num(E.dmin)}`)}</tbody></table>`)}
-    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: contribuição própria e total acumulado (UHC). Nos tubos: diâmetro, declividade e UHC.</p></div>`) : ""}
     ${sec("Memorial de cálculo", memorialEst(R))}
     ${sec("Quadro de tubulações", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Trecho</th><th class="n">UHC</th><th class="n">Declividade</th><th class="n">Compr. (m)</th><th>Diâmetro</th><th class="n">Máx. (UHC)</th></tr></thead><tbody>
       ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.uhc,1)}</td><td class="n">${fmt(t.decl,1)}%</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1):"—"}</td><td>${t.dn?`<b>DN ${t.dn}</b>`:`<span class="r-no">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap):"—"}</td></tr>`).join("")}</tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os trechos foram dimensionados para a contribuição de projeto.":"há caixas sem saída ou trechos sem diâmetro válido. Revisar antes da emissão."}</div></div>`)}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: contribuição própria e total acumulado (UHC). Nos tubos: diâmetro, declividade e UHC.</p></div>`) : ""}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -4502,12 +4568,12 @@ function relEle(){
     ${sec("Objetivo", `<p>Apresentar o dimensionamento dos eletrodutos dos alimentadores da edificação, a partir da quantidade, da bitola e do diâmetro externo dos cabos e da taxa máxima de ocupação.</p>`)}
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 5410</b><span>Instalações elétricas de baixa tensão</span></li></ul>`)}
     ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Cabo padrão", CABOS[E.cabo].t)}${td("Taxa de ocupação", E.taxa==="nbr"?"53% (1 cabo) · 31% (2 cabos) · 40% (3 ou mais)":"40% (mais de 3 cabos) · 33% (até 3 cabos)")}</tbody></table>`)}
-    ${E.els.length ? sec("Diagrama", `<div class="diag-r">${(d=>`<svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg>`)(ecDesenho(false))}<p>Esquema sem escala. Nos eletrodutos: diâmetro do eletroduto rígido (Ø) e do Kanaflex (K) e fios (quantidade × seção em mm²).</p></div>`) : ""}
     ${sec("Quadro de eletrodutos", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Alimentador</th><th>Condutores (mm²)</th><th class="n">Área (mm²)</th><th class="n">Taxa</th><th class="n">Necessária (mm²)</th><th>Rígido</th><th>Kanaflex</th></tr></thead><tbody>
       ${R.map(r=>`<tr><td>${esc(r.nome)}</td><td>${r.linhas.map(l=>`${l.q}×${fmt(l.b,l.b%1?1:0)}`).join(" + ")||"—"}</td><td class="n">${fmt(r.area,0)}</td><td class="n">${fmt(r.taxa*100,0)}%</td><td class="n">${fmt(r.nec,0)}</td><td>${r.rig?.ok?`<b>${r.rig.txt}</b>`:`<span class="r-no">—</span>`}</td><td>${r.kan?.ok?`<b>${r.kan.txt}</b>`:`<span class="r-no">—</span>`}</td></tr>`).join("")}</tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os alimentadores têm eletroduto dimensionado dentro da taxa de ocupação.":"há alimentadores sem eletroduto válido. Revisar antes da emissão."}</div></div>`)}
     ${sec("Memorial de cálculo", memorialEle(R))}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
+    ${E.els.length ? sec("Diagrama", `<div class="diag-r">${(d=>`<svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg>`)(ecDesenho(false))}<p>Esquema sem escala. Nos eletrodutos: diâmetro do eletroduto rígido (Ø) e do Kanaflex (K) e fios (quantidade × seção em mm²).</p></div>`) : ""}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -4870,6 +4936,98 @@ function relPis(){
 }
 
 /* =====================================================================
+   HIDRÁULICA · RESERVATÓRIOS (consumo por edificação)
+   ===================================================================== */
+const CONSUMO_ED = [
+  ["aloj","Alojamento provisório",80,"pessoas","per capita","1 habitante por cama / beliche 2 habitantes"],
+  ["res50","Residência até 50 m²",200,"pessoas","per capita","2 habitantes por quarto"],
+  ["res50m","Residência acima de 50 m²",250,"pessoas","per capita","2 habitantes por quarto"],
+  ["resLux","Residência de luxo",300,"pessoas","per capita","2 habitantes por quarto"],
+  ["resSup","Residência de alto padrão (acima de luxo)",350,"pessoas","per capita","2 habitantes por quarto"],
+  ["ap150","Apartamento até 150 m²",200,"pessoas","per capita","2 habitantes por quarto"],
+  ["ap150m","Apartamento acima de 150 m²",250,"pessoas","per capita","2 habitantes por quarto"],
+  ["hotel","Hotel (não incluso cozinha e lavanderia)",120,"hóspedes","por hóspede","Cama de casal 2 hóspedes, cama de solteiro 1 hóspede"],
+  ["hosp","Hospital",250,"leitos","por leito","Conforme arquitetura"],
+  ["escInt","Escola · internato",150,"pessoas","per capita","Layout de mobiliário"],
+  ["escExt","Escola · externato",50,"pessoas","per capita","Layout de mobiliário"],
+  ["quartel","Quartel",150,"pessoas","per capita","Informação fornecida pelo órgão"],
+  ["pub","Edifício público ou comercial",50,"pessoas","per capita","Layout de mobiliário"],
+  ["escr","Escritório",50,"pessoas","per capita","Layout de mobiliário ou 1 habitante/2,5 m² úteis"],
+  ["cine","Cinema e teatro",2,"lugares","por lugar","Layout de mobiliário"],
+  ["templo","Templo",2,"lugares","por lugar","Layout de mobiliário"],
+  ["rest","Restaurante e similares",25,"refeições","por refeição","Solicitar do cliente ou do responsável pelo projeto arquitetônico a quantidade de refeições"],
+  ["lavand","Lavanderia",30,"kg de roupa","por kg de roupa","Conferir modelo de lavadora e tempo de lavagem"],
+  ["merc","Mercado",50,"m² de área","por m² de área","Área útil"],
+  ["matG","Matadouro · grande porte",300,"cabeças abatidas","por cabeça abatida","Solicitar a quantidade de animais abatidos"],
+  ["matP","Matadouro · animais de pequeno porte",150,"cabeças abatidas","por cabeça abatida","Solicitar a quantidade de animais abatidos"],
+  ["caval","Cavalaria",100,"cavalos","por cavalo","Solicitar a quantidade de animais"]
+];
+const edif = id => CONSUMO_ED.find(e=>e[0]===id) || CONSUMO_ED[1];
+const DIAS_RES = [3,5,7];
+function calcRes(){
+  const R = S.res, linhas = R.linhas.map(l=>{ const e = edif(l.tipo), q = Math.max(0, num(l.qtd)); return {l, e, q, c: q*e[2]}; });
+  const diario = linhas.reduce((s,x)=>s+x.c, 0), cist = !!R.cisterna, sup = !!R.superior;
+  const opcoes = DIAS_RES.map(d=>{ const V = diario*d; return {d, V, sup: cist&&sup ? V*2/5 : sup ? V : 0, cist: cist&&sup ? V*3/5 : cist ? V : 0}; });
+  return {linhas, diario, opcoes, cist, sup, erro: !diario ? "Informe a quantidade de usuários" : !cist && !sup ? "Marque cisterna e/ou caixa d'água superior" : null};
+}
+const litros = v => `${fmt(Math.round(v),0)} L`;
+function renderResLista(){
+  $("rs-lista").innerHTML = S.res.linhas.map((l,i)=>{ const e = edif(l.tipo); return `<div class="trecho rs-lin" data-i="${i}">
+    <div class="el-cab" style="grid-template-columns:2fr 1fr 40px">
+      <label class="campo">Edificação<select data-rf="tipo">${CONSUMO_ED.map(x=>`<option value="${x[0]}" ${x[0]===l.tipo?"selected":""}>${x[1]} · ${fmt(x[2])} L ${x[4]}</option>`).join("")}</select></label>
+      <label class="campo">Quantidade de ${e[3]}<input data-rf="qtd" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.qtd)}" placeholder="0"></label>
+      ${S.res.linhas.length>1?`<button class="x" type="button" data-rm aria-label="Remover">×</button>`:"<span></span>"}
+    </div>
+    <p class="fonte rs-dica" style="margin:0 12px 10px">Como determinar: ${esc(e[5])}</p></div>`; }).join("");
+  renderRes();
+}
+function renderRes(){
+  const R = calcRes(), A = S.res;
+  document.querySelectorAll("#rs-lista .rs-lin").forEach((el,i)=>{ const x = R.linhas[i]; if(!x) return; el.querySelector(".rs-dica").textContent = `Como determinar: ${x.e[5]} · consumo ${fmt(x.c,0)} L/dia`; });
+  $("rs-params").innerHTML = [["Consumo diário", fmt(R.diario,0), "L/dia"], ["Cisterna", R.cist?"sim":"não", ""], ["Caixa d'água superior", R.sup?"sim":"não", ""], ["Divisão", R.cist&&R.sup?"2/5 · 3/5":"—", ""]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  $("rs-res").innerHTML = R.erro ? `<p class="vazio">${R.erro}.</p>` : `<div class="rs-ops">${R.opcoes.map(o=>`
+    <button type="button" class="rs-op ${num(A.adotado)===o.d?"on":""}" data-dias="${o.d}">
+      <small>${o.d} dias de reserva${o.d===3?" · norma":""}</small><strong>${litros(o.V)}</strong>
+      ${R.sup?`<span>Caixa superior${R.cist?" (2/5)":""}: <b>${litros(o.sup)}</b></span>`:""}
+      ${R.cist?`<span>Cisterna${R.sup?" (3/5)":""}: <b>${litros(o.cist)}</b></span>`:""}
+      <em>${num(A.adotado)===o.d?"adotado":"clique para adotar"}</em></button>`).join("")}</div>`;
+  $("rs-memorial").innerHTML = memorialRes(R);
+}
+function memorialRes(R){
+  if(R.erro) return "";
+  return `<div class="mc-bloco"><h4>Consumo diário</h4>${R.linhas.filter(x=>x.q>0).map(x=>`<p class="mc-l">${esc(x.e[1])}: ${fmt(x.q)} ${x.e[3]} × ${fmt(x.e[2])} L ${x.e[4]} = <b>${fmt(x.c,0)} L/dia</b></p>`).join("")}
+    ${R.linhas.filter(x=>x.q>0).length>1?`<p class="mc-l">Total = <b>${fmt(R.diario,0)} L/dia</b></p>`:""}</div>
+    <div class="mc-bloco"><h4>Volume de reservação</h4>${R.opcoes.map(o=>`<p class="mc-l">${o.d} dias: V = ${fmt(R.diario,0)} × ${o.d} = <b>${fmt(o.V,0)} L</b>${R.cist&&R.sup?` → caixa superior 2/5 = ${fmt(o.sup,0)} L · cisterna 3/5 = ${fmt(o.cist,0)} L`:R.sup?" (todo na caixa superior)":" (todo na cisterna)"}</p>`).join("")}</div>`;
+}
+function preencherRes(){ const R = S.res; $("rs-cist").checked = !!R.cisterna; $("rs-sup").checked = !!R.superior; $("r-doc").value = R.doc; $("r-rev").value = R.rev; $("r-obs").value = R.obs; renderResLista(); }
+function ligarRes(){
+  const R = () => S.res, alt = () => { renderRes(); resumo(); salvar(); };
+  $("rs-cist").addEventListener("change", e=>{ R().cisterna = e.target.checked; alt(); });
+  $("rs-sup").addEventListener("change", e=>{ R().superior = e.target.checked; alt(); });
+  for(const k of ["doc","rev","obs"]) $("r-"+k).addEventListener("input", e=>{ R()[k] = e.target.value; salvar(); });
+  $("rs-lista").addEventListener("input", e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; R().linhas[i][f] = e.target.value;
+    if(f==="tipo"){ renderResLista(); resumo(); salvar(); return; } alt(); });
+  $("rs-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; R().linhas.splice(+e.target.closest(".rs-lin").dataset.i,1); renderResLista(); resumo(); salvar(); });
+  $("rs-add").addEventListener("click", ()=>{ R().linhas.push({tipo:"res50m", qtd:""}); renderResLista(); resumo(); salvar(); });
+  $("rs-res").addEventListener("click", e=>{ const b = e.target.closest("[data-dias]"); if(!b) return; R().adotado = +b.dataset.dias; alt(); });
+}
+function resumoResParte(){ const R = calcRes(); if(!R.diario) return null; const o = R.opcoes.find(x=>x.d===num(S.res.adotado)) || R.opcoes[0];
+  return {det:`${fmt(R.diario,0)} L/dia · ${o.d} dias: ${litros(o.V)}${R.cist&&R.sup?` (superior ${litros(o.sup)} + cisterna ${litros(o.cist)})`:""}`, ok: !R.erro}; }
+function relRes(){
+  const MREL = S.res, R = calcRes(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec, ad = num(S.res.adotado);
+  return `<div class="r">${relCarimbo("Dimensionamento de reservatórios d'água", S.res.doc, S.res.rev, "Instalações hidráulicas")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${R.linhas.filter(x=>x.q>0).map(x=>td(x.e[1], `${fmt(x.q)} ${x.e[3]} × ${fmt(x.e[2])} L ${x.e[4]} = ${fmt(x.c,0)} L/dia`)).join("")}
+      ${td("Consumo diário total", `<b>${fmt(R.diario,0)} L/dia</b>`)}${td("Reservatórios", [R.sup?"caixa d'água superior":null, R.cist?"cisterna":null].filter(Boolean).join(" e ")+(R.cist&&R.sup?" (2/5 e 3/5 do volume)":""))}</tbody></table>`)}
+    ${sec("Volumes de reservação", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Reserva</th><th class="n">Volume total</th>${R.sup?`<th class="n">Caixa superior</th>`:""}${R.cist?`<th class="n">Cisterna</th>`:""}<th class="c">Adotado</th></tr></thead><tbody>
+      ${R.opcoes.map(o=>`<tr ${o.d===ad?'style="font-weight:700"':""}><td>${o.d} dias${o.d===3?" (norma)":""}</td><td class="n">${fmt(o.V,0)} L</td>${R.sup?`<td class="n">${fmt(o.sup,0)} L</td>`:""}${R.cist?`<td class="n">${fmt(o.cist,0)} L</td>`:""}<td class="c">${o.d===ad?"✓":""}</td></tr>`).join("")}</tbody></table></div>`)}
+    ${sec("Memorial de cálculo", memorialRes(R))}
+    ${linhasObs(S.res.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(S.res.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
    RESPONSÁVEIS TÉCNICOS (cadastro neste computador)
    ===================================================================== */
 const CHAVE_RESP = "equiper-responsaveis";
@@ -4906,6 +5064,7 @@ function renderResp(){
   $("t-resp").innerHTML = opcoesResp(S.est.respId);
   $("l-resp").innerHTML = opcoesResp(S.ele.respId);
   $("q-resp").innerHTML = opcoesResp(S.pis.respId);
+  $("r-resp").innerHTML = opcoesResp(S.res.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -4914,8 +5073,9 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  ["e","g","p","h","t","l","q"].forEach(pre=>{
-    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(pre==="g"?S.gas:pre==="p"?S.plu:pre==="h"?S.hid:pre==="t"?S.est:pre==="l"?S.ele:pre==="q"?S.pis:S.esg, e.target.value); salvar(); });
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res"};
+  Object.entries(PRE).forEach(([pre,k])=>{
+    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
   });
   $("resp-add").addEventListener("click", ()=>{
     RESP.push({id:uid(), nome:"", crea:""}); salvarResp(); renderResp();
@@ -4924,8 +5084,8 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
-    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
+    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
   $("resp-lista").addEventListener("click", e=>{
@@ -4939,7 +5099,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", ele:"ele", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -4971,6 +5131,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="est") preencherEst();
     if(k==="ele") preencherEle();
     if(k==="pis") preencherPis();
+    if(k==="res") preencherRes();
     aplicarNA(); resumo();
     try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
     if(typeof bibAtualizar==="function") bibAtualizar();
@@ -5010,12 +5171,13 @@ ligarEle();
 ligarEleCanvas();
 ligarPis();
 ligarCatsPis();
+ligarRes();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","est","ele","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); renderLateralObra(); }
 
 /* =====================================================================
    PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
