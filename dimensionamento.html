@@ -247,7 +247,7 @@ svg.diag{display:block;max-width:none}
 .nav-grupo i{font-style:normal;font-family:var(--cond);font-weight:700;font-size:12px;min-width:34px;text-align:center;padding:2px 0;border-radius:3px;background:var(--cinza-1);color:var(--cinza-4)}
 .nav-it.nsub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
 .nav-it.nsub.on{font-weight:600}
-@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}.nav-g[data-g="pis"] .nav-it.nsub::before{content:"Piscina · "}.nav-g[data-g="hid"] .nav-it.nsub::before{content:"Hidráulica · "}}
+@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}.nav-g[data-g="pis"] .nav-it.nsub::before{content:"Piscina · "}.nav-g[data-g="hid"] .nav-it.nsub::before{content:"Hidráulica · "}.nav-g[data-g="ele"] .nav-it.nsub::before{content:"Elétrica · "}}
 #es-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 #es-canvas[data-modo="caixa"],#es-canvas[data-modo="saida"]{cursor:crosshair}#es-canvas[data-modo="ligar"]{cursor:alias}#es-canvas[data-modo="apagar"]{cursor:not-allowed}
 .es-item{grid-template-columns:1fr 60px 34px}
@@ -311,6 +311,10 @@ details, details *{box-sizing:border-box}
 #tela-tecnicos{max-width:900px;margin:0 auto;padding:40px 20px 60px}
 .tec-bloco{max-width:820px;margin:0 auto}
 .lnk-tec{font-size:13px;margin-top:4px;align-self:flex-start}
+
+.cm-cab{padding:12px;display:grid;gap:8px;grid-template-columns:1.2fr 1.4fr .8fr .8fr .8fr .9fr 40px;align-items:end}
+@media(max-width:900px){.cm-cab{grid-template-columns:1fr 1fr 40px}.cm-cab .campo:nth-child(2){grid-column:1/-1}}
+@media(min-width:720px){.c4{grid-column:span 4}}
 
 /* Clientes */
 .btn.on{background:var(--vermelho);border-color:var(--vermelho)}
@@ -584,7 +588,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </div>
     <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás - RIP</button>
     <button class="nav-it" type="button" data-mod="plu"><i aria-hidden="true">PLU</i>Água pluvial</button>
-    <button class="nav-it" type="button" data-mod="ele"><i aria-hidden="true">ELE</i>Elétrica</button>
+    <div class="nav-g" data-g="ele">
+      <button class="nav-grupo" type="button" data-toggle-g="ele" aria-expanded="true"><i aria-hidden="true">ELE</i>Elétrica<span class="nav-seta" aria-hidden="true">▾</span></button>
+      <div class="nav-sub">
+        <button class="nav-it nsub" type="button" data-mod="ele">Eletrodutos</button>
+        <button class="nav-it nsub" type="button" data-mod="cmx">Comprimento de circuitos</button>
+      </div>
+    </div>
     <div class="nav-g" data-g="pis">
       <button class="nav-grupo" type="button" data-toggle-g="pis" aria-expanded="true"><i aria-hidden="true">PIS</i>Piscina<span class="nav-seta" aria-hidden="true">▾</span></button>
       <div class="nav-sub">
@@ -974,6 +984,41 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Nº do documento<input id="r-doc" autocomplete="off" placeholder="Ex.: MC-RES-001"></label>
         <label class="campo c2">Revisão<input id="r-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="r-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= ELÉTRICA · COMPRIMENTO MÁXIMO ================= -->
+  <section class="modulo" id="mod-cmx" hidden>
+    <h1>Elétrica · comprimento de circuitos</h1>
+    <p class="sub">Informe tensão, disjuntor e comprimento de cada circuito; o app indica o cabo pelo comprimento máximo e pela corrente.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="cmx"> Esta obra não terá dimensionamento de comprimento de circuitos</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Dados de projeto</h2>
+      <div class="grade">
+        <label class="campo c2">Tensão padrão<span class="unid"><input id="cm-tensao" type="number" min="0" step="1" inputmode="decimal"><b>V</b></span></label>
+        <label class="campo c2">Curva padrão dos disjuntores<select id="cm-curva"><option value="B">B (Im = 5)</option><option value="C">C (Im = 10)</option><option value="D">D (Im = 14)</option></select></label>
+        <label class="campo c2">Método de instalação<select id="cm-metodo"><option>A1</option><option>A2</option><option value="B1">B1 (eletroduto embutido)</option><option>B2</option><option>C</option><option>D</option></select></label>
+        <label class="campo c2">Circuitos no mesmo eletroduto<input id="cm-agrup" type="number" min="1" step="1" inputmode="numeric"></label>
+        <label class="campo c2">Seção mínima<select id="cm-smin"><option value="1.5">1,5 mm² (iluminação)</option><option value="2.5">2,5 mm² (força)</option></select></label>
+        <label class="chave c4" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="cm-capac"> Conferir também a capacidade de condução (tabela 36)</label>
+      </div>
+      <p class="fonte" style="margin-top:8px">Use a tensão fase-neutro nos circuitos com neutro e fase-fase nos sem neutro. Cada circuito pode ter tensão e curva próprias.</p>
+    </section>
+    <div class="params p4" id="cm-params"></div>
+    <section class="etapas">
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Circuitos</h3></div><div class="lista" id="cm-lista"></div><button class="add" type="button" id="cm-add">Adicionar circuito</button></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Quadro de cabos</h3></div><div class="rolar" id="cm-quadro"></div><div class="rolar" id="cm-tab" style="margin-top:14px"></div></div></article>
+      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="cm-memorial"></div></div></article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="k-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Nº do documento<input id="k-doc" autocomplete="off" placeholder="Ex.: MC-ELE-002"></label>
+        <label class="campo c2">Revisão<input id="k-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="k-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
     </section>
   </section>
@@ -1422,7 +1467,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1430,6 +1475,7 @@ function estadoNovo(){
     gas:{gas:"GN", material:"cobre", classe:"E", L:20,
       pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:11, alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
@@ -1454,12 +1500,13 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     plu:{...b.plu, ...lim(o.plu)},
     est:{...b.est, ...lim(o.est)},
     ele:{...b.ele, ...lim(o.ele)},
     res:{...b.res, ...lim(o.res)},
+    cmx:{...b.cmx, ...lim(o.cmx)},
     pis:(()=>{ const q = lim(o.pis||{}); return {...b.pis, ...q, pool:{...b.pis.pool, ...(q.pool||{})}, spa:{...b.pis.spa, ...(q.spa||{})}, custos:{...b.pis.custos, ...(q.custos||{})}, filtro:{...b.pis.filtro, ...(q.filtro||{})}, cloro:{...b.pis.cloro, ...(q.cloro||{})}, hidro:{...b.pis.hidro, ...(q.hidro||{})}}; })(),
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
@@ -2356,7 +2403,8 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx";
+  if(m==="cmx") atualizarCmx();
   if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
   if(m==="est") renderEst();
@@ -2370,6 +2418,11 @@ function trocarModulo(m){
 function resumo(){
   if(S.naoAplica?.[S.modulo]){ $("resumo").innerHTML = `<span class="pilula">Não se aplica</span>`; return; }
   let itens;
+  if(S.modulo==="cmx"){
+    const r = resumoCmxParte();
+    $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Circuitos</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Circuitos</span><span class="rotulo">informe disjuntor e comprimento</span>`;
+    return;
+  }
   if(S.modulo==="res"){
     const r = resumoResParte();
     $("resumo").innerHTML = r ? `<span class="pilula">Reservatórios</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Reservatórios</span><span class="rotulo">informe os usuários</span>`;
@@ -2413,22 +2466,22 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","plu","hid","res","ele","paq","pfi","pcl","phi"].forEach(m=>{
+  ["esgoto","est","gas","plu","hid","res","ele","cmx","paq","pfi","pcl","phi"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco"]) $(k).value = O[k] ?? "";
   $("local").value = localEmissao();
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); aplicarNA();
   if(typeof histBase==="function" && !HIST.restaurando) histBase();
 }
 
@@ -2479,7 +2532,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2606,7 +2659,7 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : relEsgoto());
     window.print();
   });
   // nome do PDF = planilha + cliente (o navegador usa o título da página como nome do arquivo)
@@ -2622,7 +2675,7 @@ function ligar(){
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -2633,7 +2686,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -2641,9 +2694,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -2696,6 +2749,7 @@ function resumoObra(dados){
       out.push({mod:"gas", det:`${S.gas.gas} · ${S.gas.trechos.length} trecho(s), ${S.gas.pontos.length} ponto(s)${a && !a.erro ? ` · saída do medidor ${rotDiam(a.d)}` : ""}`, ok: res.length>0 && !res.some(r=>r.erro)});
     }
     { const r = resumoResParte(); if(r) out.push({mod:"res", det:r.det, ok:r.ok}); }
+    { const r = resumoCmxParte(); if(r) out.push({mod:"cmx", det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); }
     ["paq","pfi","pcl","phi"].forEach(pt=>{ const r = resumoPisParte(pt); if(r) out.push({mod:pt, det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); });
     if(S.ele.alims.length){
       const R = S.ele.alims.map(calcAlim);
@@ -2785,7 +2839,7 @@ function abrirObraBib(id, mod){
 }
 function novaObraCliente(nome, mod){
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -2917,7 +2971,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
 }
@@ -5050,6 +5104,113 @@ function relRes(){
 }
 
 /* =====================================================================
+   ELÉTRICA · COMPRIMENTO MÁXIMO DE CIRCUITO (planilha "Comprimento máximo circuito")
+   ===================================================================== */
+const SECOES = [1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240];
+const R_SECAO = s => s>=240 ? 1.25 : s>=185 ? 1.2 : s>=150 ? 1.15 : 1;          // aba Dados (seções grandes)
+const IM_CURVA = {B:5, C:10, D:14};                                            // múltiplo de disparo magnético
+const RHO_COBRE = 0.027;                                                       // Ω·mm²/m
+const TIPOS_CIRC = [["mn","Monofásico com neutro",2],["ms","Monofásico sem neutro (fase-fase)",2],["tn","Trifásico com neutro",3],["ts","Trifásico sem neutro",3]];
+const METODOS = ["A1","A2","B1","B2","C","D"];
+// Tabela 36 (PVC, cobre, 30 ºC): [seção, A1(2,3), A2(2,3), B1(2,3), B2(2,3), C(2,3), D(2,3)]
+const T36 = {1.5:[14.5,13.5,14,13,17.5,15.5,16.5,15,19.5,17.5,22,18],2.5:[19.5,18,18.5,17.5,24,21,23,20,27,24,29,24],4:[26,24,25,23,32,28,30,27,36,32,38,31],6:[34,31,32,29,41,36,38,34,46,41,47,39],
+  10:[46,42,43,39,57,50,52,46,63,57,63,52],16:[61,56,57,52,76,68,69,62,85,76,81,67],25:[80,73,75,68,101,89,90,80,112,96,104,86],35:[99,89,92,83,125,110,111,99,138,119,125,103],
+  50:[119,108,110,99,151,134,133,118,168,144,148,122],70:[151,136,139,125,192,171,168,149,213,184,183,151],95:[182,164,167,150,232,207,201,179,258,223,216,179],120:[210,188,192,172,269,239,232,206,299,259,246,203],
+  150:[240,216,219,196,309,275,265,236,344,299,278,230],185:[273,245,248,223,353,314,300,268,392,341,312,258],240:[321,286,291,261,415,370,351,313,461,403,361,297]};
+// Tabela 42 (feixe, conduto fechado): fator por nº de circuitos agrupados
+const F_AGRUP = [[1,1],[2,0.8],[3,0.7],[4,0.65],[5,0.6],[6,0.57],[7,0.54],[8,0.52],[11,0.5],[15,0.45],[19,0.41],[Infinity,0.38]];
+const fAgrup = n => (F_AGRUP.find(([l])=>Math.max(1,Math.round(num(n))) <= l) || F_AGRUP[F_AGRUP.length-1])[1];
+const lMax = (U, S, I, curva) => Math.floor(0.8*U*S/(R_SECAO(S)*2*RHO_COBRE*(IM_CURVA[curva]||10)*I));
+function calcCirc(c){
+  const K = S.cmx, U = num(c.tensao) || num(K.tensao), I = num(c.disj), L = num(c.comp), curva = c.curva || K.curva;
+  const tipo = TIPOS_CIRC.find(t=>t[0]===c.tipo) || TIPOS_CIRC[0], cond = tipo[2];
+  const mi = METODOS.indexOf(K.metodo), col = Math.max(0,mi)*2 + (cond===3?1:0), f = fAgrup(K.agrup);
+  if(!(U>0) || !(I>0)) return {c, U, I, L, curva, tipo, erro:"Informe tensão e disjuntor"};
+  const linhas = SECOES.map(s=>({s, lmax: lMax(U,s,I,curva), iz: T36[s][col]*f}));
+  const cand = linhas.filter(x=>x.s >= num(c.smin || K.smin || 1.5));
+  const porComp = L>0 ? cand.find(x=>x.lmax >= L) : cand[0];
+  const porCorr = K.capac ? cand.find(x=>x.iz >= I) : cand[0];
+  const adot = porComp && porCorr ? (porComp.s >= porCorr.s ? porComp : porCorr) : null;
+  return {c, U, I, L, curva, tipo, cond, f, linhas, porComp, porCorr, adot, erro: !porComp ? "Comprimento acima do possível com 240 mm²" : !porCorr ? "Corrente acima da tabela" : null};
+}
+function renderCmxLista(){
+  const K = S.cmx;
+  $("cm-lista").innerHTML = K.circs.length ? K.circs.map((c,i)=>`<div class="trecho cm-c" data-i="${i}">
+    <div class="cm-cab">
+      <label class="campo">Circuito<input data-cf="nome" value="${esc(c.nome)}" placeholder="Ex.: C1 · Chuveiro"></label>
+      <label class="campo">Tipo<select data-cf="tipo">${TIPOS_CIRC.map(t=>`<option value="${t[0]}" ${t[0]===c.tipo?"selected":""}>${t[1]}</option>`).join("")}</select></label>
+      <label class="campo">Tensão<span class="unid"><input data-cf="tensao" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.tensao)}" placeholder="${esc(K.tensao)}"><b>V</b></span></label>
+      <label class="campo">Disjuntor<span class="unid"><input data-cf="disj" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.disj)}" placeholder="0"><b>A</b></span></label>
+      <label class="campo">Curva<select data-cf="curva"><option value="">Padrão (${K.curva})</option>${["B","C","D"].map(x=>`<option ${c.curva===x?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="campo">Comprimento<span class="unid"><input data-cf="comp" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.comp)}" placeholder="0"><b>m</b></span></label>
+      <button class="x" type="button" data-rm aria-label="Remover circuito">×</button>
+    </div><div class="tr-res" data-res></div></div>`).join("") : `<p class="vazio">Nenhum circuito.</p>`;
+  atualizarCmx();
+}
+const mm2 = s => `${fmt(s, s%1?1:0)} mm²`;
+function atualizarCmx(){
+  const K = S.cmx, R = K.circs.map(calcCirc);
+  document.querySelectorAll("#cm-lista .cm-c").forEach((el,i)=>{ const r = R[i]; if(!r) return;
+    el.querySelector("[data-res]").innerHTML = r.erro && !r.linhas ? `<p class="vazio" style="margin:0">${r.erro}.</p>` : `
+      <div><small>Pelo comprimento</small><strong>${r.porComp?mm2(r.porComp.s):"—"}</strong><em>${r.porComp?`até ${fmt(r.porComp.lmax)} m`:""}</em></div>
+      <div><small>Pela corrente${K.capac?"":" (desligado)"}</small><strong>${K.capac&&r.porCorr?mm2(r.porCorr.s):"—"}</strong><em>${K.capac&&r.porCorr?`${fmt(r.porCorr.iz,1)} A ≥ ${fmt(r.I)} A`:""}</em></div>
+      <div><small>Comprimento máx. com o cabo</small><strong>${r.adot?fmt(r.adot.lmax):"—"}</strong><em>m</em></div><div></div>
+      <div class="tr-diam ${r.adot&&!r.erro?"":"falha"}"><small>${r.erro||"Cabo adotado"}</small><strong>${r.adot&&!r.erro?mm2(r.adot.s):"—"}</strong><em>curva ${r.curva} · ${fmt(r.U)} V</em></div>`; });
+  $("cm-quadro").innerHTML = R.length ? `<table class="quadro"><thead><tr><th>Circuito</th><th class="n">Tensão</th><th class="n">Disjuntor</th><th class="n">Comprimento</th><th class="n">Pelo comprimento</th><th class="n">Pela corrente</th><th>Cabo</th></tr></thead><tbody>
+    ${R.map(r=>`<tr><td>${esc(r.c.nome)||"—"}</td><td class="n">${fmt(r.U)} V</td><td class="n">${fmt(r.I)} A ${r.curva}</td><td class="n">${r.L?fmt(r.L,1)+" m":"—"}</td><td class="n">${r.porComp?mm2(r.porComp.s):"—"}</td><td class="n">${K.capac&&r.porCorr?mm2(r.porCorr.s):"—"}</td>
+      <td class="d ${r.adot&&!r.erro?"":"falha"}">${r.adot&&!r.erro?mm2(r.adot.s):"—"}</td></tr>`).join("")}</tbody></table>` : `<p class="vazio">Adicione circuitos.</p>`;
+  // tabela de referência do primeiro circuito válido
+  const ref = R.find(r=>r.linhas);
+  $("cm-tab").innerHTML = ref ? `<p class="fonte" style="margin:0 0 6px">Comprimento máximo (m) por seção para ${esc(ref.c.nome||"o circuito")}: ${fmt(ref.U)} V, disjuntor ${fmt(ref.I)} A, curva ${ref.curva}</p>
+    <table class="mc-tab mc-larga"><tr><th>Seção (mm²)</th>${ref.linhas.map(x=>`<th style="text-align:right">${fmt(x.s,x.s%1?1:0)}</th>`).join("")}</tr>
+    <tr><th>L máx. (m)</th>${ref.linhas.map(x=>`<td class="${ref.adot&&x.s===ref.adot.s?"sel":ref.L&&x.lmax<ref.L?"no":""}">${fmt(x.lmax)}</td>`).join("")}</tr>
+    ${K.capac?`<tr><th>Iz (A)</th>${ref.linhas.map(x=>`<td class="${x.iz<ref.I?"no":""}">${fmt(x.iz,1)}</td>`).join("")}</tr>`:""}</table>` : "";
+  $("cm-memorial").innerHTML = memorialCmx(R);
+  $("cm-params").innerHTML = [["Tensão padrão", fmt(num(K.tensao)), "V"], ["Curva padrão", K.curva, ""], ["Método · agrupamento", `${K.metodo} · ${fmt(fAgrup(K.agrup),2)}`, ""], ["Circuitos", String(R.length), ""]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  return R;
+}
+function memorialCmx(R){
+  const K = S.cmx; if(!R.length) return "";
+  let h = `<div class="mc-bloco"><h4>Critérios</h4>
+    <p class="mc-l">Comprimento máximo (proteção contra curto-circuito): L<sub>máx</sub> = 0,8 × U × S ÷ (r × 2 × ρ × I<sub>m</sub> × I<sub>n</sub>) <em>(ρ = ${String(RHO_COBRE).replace(".",",")} Ω·mm²/m, cobre; I<sub>m</sub> = 5 (curva B), 10 (C), 14 (D); r = 1 até 120 mm², 1,15 (150), 1,2 (185), 1,25 (240))</em></p>
+    ${K.capac?`<p class="mc-l">Capacidade de condução: I<sub>z</sub> = tabela 36 (PVC, 30 ºC, método ${K.metodo}) × fator de agrupamento ${fmt(fAgrup(K.agrup),2)} (${fmt(num(K.agrup))} circuito(s)) ≥ I<sub>n</sub> do disjuntor</p>`:""}</div>`;
+  h += R.filter(r=>r.linhas).map(r=>`<div class="mc-bloco"><h4>${esc(r.c.nome)||"Circuito"}<span>${r.tipo[1]} · ${fmt(r.U)} V · ${fmt(r.I)} A curva ${r.curva} · ${r.L?fmt(r.L,1)+" m":"sem comprimento"}</span></h4>
+    ${r.porComp?`<p class="mc-l"><b>1.</b> Pelo comprimento: L<sub>máx</sub>(${mm2(r.porComp.s)}) = 0,8 × ${fmt(r.U)} × ${fmt(r.porComp.s,r.porComp.s%1?1:0)} ÷ (${String(R_SECAO(r.porComp.s)).replace(".",",")} × 2 × ${String(RHO_COBRE).replace(".",",")} × ${IM_CURVA[r.curva]} × ${fmt(r.I)}) = <b>${fmt(r.porComp.lmax)} m</b> ≥ ${fmt(r.L,1)} m</p>`:`<p class="mc-l mc-aviso">Nenhuma seção atende ao comprimento.</p>`}
+    ${K.capac?(r.porCorr?`<p class="mc-l"><b>2.</b> Pela corrente: ${mm2(r.porCorr.s)} → I<sub>z</sub> = ${fmt(r.porCorr.iz/r.f,1)} × ${fmt(r.f,2)} = <b>${fmt(r.porCorr.iz,1)} A</b> ≥ ${fmt(r.I)} A <em>(${r.cond} condutores carregados)</em></p>`:`<p class="mc-l mc-aviso">Corrente acima da tabela.</p>`):""}
+    <p class="mc-l fim">Cabo adotado: <b>${r.adot&&!r.erro?mm2(r.adot.s):"—"}</b>${r.adot&&!r.erro?` · comprimento máximo com este cabo ${fmt(r.adot.lmax)} m`:""}</p></div>`).join("");
+  return h;
+}
+function preencherCmx(){ const K = S.cmx; $("cm-tensao").value = K.tensao; $("cm-curva").value = K.curva; $("cm-metodo").value = K.metodo; $("cm-agrup").value = K.agrup; $("cm-smin").value = K.smin; $("cm-capac").checked = !!K.capac;
+  $("k-doc").value = K.doc; $("k-rev").value = K.rev; $("k-obs").value = K.obs; renderCmxLista(); }
+function ligarCmx(){
+  const K = () => S.cmx, alt = () => { atualizarCmx(); resumo(); salvar(); };
+  [["cm-tensao","tensao"],["cm-curva","curva"],["cm-metodo","metodo"],["cm-agrup","agrup"],["cm-smin","smin"]].forEach(([id,k])=>$(id).addEventListener("input", e=>{ K()[k] = e.target.value; if(k==="tensao"||k==="curva") renderCmxLista(); alt(); }));
+  $("cm-capac").addEventListener("change", e=>{ K().capac = e.target.checked; alt(); });
+  for(const k of ["doc","rev","obs"]) $("k-"+k).addEventListener("input", e=>{ K()[k] = e.target.value; salvar(); });
+  $("cm-add").addEventListener("click", ()=>{ const u = K().circs[K().circs.length-1]; K().circs.push({nome:`C${K().circs.length+1}`, tipo:u?.tipo||"mn", tensao:"", disj:u?.disj||"", curva:"", comp:""}); renderCmxLista(); resumo(); salvar();
+    const ins = document.querySelectorAll('#cm-lista [data-cf="disj"]'); ins[ins.length-1]?.focus(); });
+  $("cm-lista").addEventListener("input", e=>{ const i = +e.target.closest(".cm-c").dataset.i, f = e.target.dataset.cf; if(!f) return; K().circs[i][f] = e.target.value; alt(); });
+  $("cm-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; K().circs.splice(+e.target.closest(".cm-c").dataset.i,1); renderCmxLista(); resumo(); salvar(); });
+}
+function resumoCmxParte(){ const R = S.cmx.circs.map(calcCirc).filter(r=>r.linhas); if(!R.length) return null;
+  return {det:`${R.length} circuito(s) · ${R.map(r=>`${esc(r.c.nome||"C")} ${r.adot&&!r.erro?mm2(r.adot.s):"—"}`).slice(0,4).join(", ")}${R.length>4?"…":""}`, ok: R.every(r=>r.adot && !r.erro)}; }
+function relCmx(){
+  const MREL = S.cmx, K = S.cmx, R = K.circs.map(calcCirc), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec;
+  const ok = R.length>0 && R.every(r=>r.adot && !r.erro);
+  return `<div class="r">${relCarimbo("Comprimento máximo de circuitos e seção dos cabos", K.doc, K.rev, "Instalações elétricas")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 5410</b><span>Instalações elétricas de baixa tensão</span></li></ul>`)}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Condutor","Cobre, isolação PVC")}${td("Tensão padrão", `${fmt(num(K.tensao))} V`)}${td("Curva padrão dos disjuntores", K.curva)}${K.capac?td("Capacidade de condução", `método ${K.metodo} · ${fmt(num(K.agrup))} circuito(s) agrupado(s) (fator ${fmt(fAgrup(K.agrup),2)})`):""}</tbody></table>`)}
+    ${sec("Quadro de circuitos", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Circuito</th><th>Tipo</th><th class="n">Tensão (V)</th><th class="n">Disjuntor</th><th class="n">Compr. (m)</th><th class="n">Cabo</th><th class="n">L máx. (m)</th></tr></thead><tbody>
+      ${R.map(r=>`<tr><td>${esc(r.c.nome)||"—"}</td><td>${esc(r.tipo[1])}</td><td class="n">${fmt(r.U)}</td><td class="n">${fmt(r.I)} A ${r.curva}</td><td class="n">${r.L?fmt(r.L,1):"—"}</td><td class="n">${r.adot&&!r.erro?`<b>${mm2(r.adot.s)}</b>`:`<span class="r-no">—</span>`}</td><td class="n">${r.adot?fmt(r.adot.lmax):"—"}</td></tr>`).join("")}</tbody></table>
+      <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todos os circuitos têm seção que atende ao comprimento"+(K.capac?" e à corrente do disjuntor.":"."):"há circuitos sem seção válida. Revisar antes da emissão."}</div></div>`)}
+    ${sec("Memorial de cálculo", memorialCmx(R))}
+    ${linhasObs(K.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(K.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
    RESPONSÁVEIS TÉCNICOS (cadastro neste computador)
    ===================================================================== */
 const CHAVE_RESP = "equiper-responsaveis";
@@ -5087,6 +5248,7 @@ function renderResp(){
   $("l-resp").innerHTML = opcoesResp(S.ele.respId);
   $("q-resp").innerHTML = opcoesResp(S.pis.respId);
   $("r-resp").innerHTML = opcoesResp(S.res.respId);
+  $("k-resp").innerHTML = opcoesResp(S.cmx.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -5095,7 +5257,7 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res"};
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx"};
   Object.entries(PRE).forEach(([pre,k])=>{
     $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
   });
@@ -5106,8 +5268,8 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
-    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
+    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
   $("resp-lista").addEventListener("click", e=>{
@@ -5121,7 +5283,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -5154,6 +5316,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="ele") preencherEle();
     if(k==="pis") preencherPis();
     if(k==="res") preencherRes();
+    if(k==="cmx") preencherCmx();
     aplicarNA(); resumo();
     try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
     if(typeof bibAtualizar==="function") bibAtualizar();
@@ -5194,13 +5357,14 @@ ligarEleCanvas();
 ligarPis();
 ligarCatsPis();
 ligarRes();
+ligarCmx();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
 document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]")) abrirTecnicos(); });
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
 
 /* =====================================================================
    PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
