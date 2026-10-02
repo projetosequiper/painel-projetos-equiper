@@ -308,8 +308,9 @@
   .pdf-ci-dados{display:grid; grid-template-columns:1fr 1fr; gap:6px 24px; background:#F5F5F7; border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:12.5px;}
   .pdf-ci-dados .full{grid-column:1 / -1;}
   .pdf-ci-dados b{color:#1C1C1E;}
-  .pdf-ci-secao{margin-bottom:18px; page-break-inside:avoid;}
-  .pdf-ci-secao h2{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; padding:8px 14px; margin:0 0 10px; border-radius:6px;}
+  .pdf-ci-secao{margin-bottom:18px;}
+  .pdf-ci-secao h2{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; padding:8px 14px; margin:0 0 10px; border-radius:6px; page-break-after:avoid; break-after:avoid;}
+  .pdf-ci-campo, .pdf-ci-check-lista div{ page-break-inside:avoid; break-inside:avoid; }
   .pdf-ci-campo{font-size:12px; padding:3px 0; border-bottom:1px solid #EAEAEA;}
   .pdf-ci-campo b{color:#1C1C1E; margin-right:6px;}
   .pdf-ci-check-lista{font-size:12px; margin:4px 0 8px;}
@@ -3579,6 +3580,15 @@
     return '';
   }
 
+  function imprimirComNomeArquivo(nomeSugerido){
+    var tituloOriginal = document.title;
+    document.title = nomeSugerido;
+    var restaurar = function(){ document.title = tituloOriginal; window.removeEventListener('afterprint', restaurar); };
+    window.addEventListener('afterprint', restaurar);
+    window.print();
+    setTimeout(restaurar, 3000);
+  }
+
   function mostrarPdfConsideracaoInicial(registro){
     var secoesHtml = CONSIDERACAO_ESQUEMA.map(function(sec){
       var dadosSec = registro.dados[sec.chave] || {};
@@ -3619,7 +3629,7 @@
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfCI').onclick = fecharDiaModal;
-    document.getElementById('btnImprimirCI').onclick = function(){ window.print(); };
+    document.getElementById('btnImprimirCI').onclick = function(){ imprimirComNomeArquivo('Considerações iniciais_'+(registro.clienteNome||'')); };
   }
 
   function renderConsideracoesIniciaisLista(){
