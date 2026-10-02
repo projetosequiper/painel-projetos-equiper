@@ -318,6 +318,14 @@
   .pdf-ci-fotos{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
   .pdf-ci-fotos img{width:140px; height:140px; object-fit:cover; border-radius:6px; border:1px solid #E5E5EA;}
   .pdf-ci-rodape{margin-top:26px; font-size:10px; color:#8A8778; font-family:'Inter',sans-serif; border-top:1px solid #E5E5EA; padding-top:8px; display:flex; justify-content:space-between;}
+  .ci-form-cabecalho{display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:4px solid #C8202B; padding-bottom:14px; margin-bottom:18px;}
+  .ci-form-cabecalho .marca{display:flex; align-items:center; gap:14px;}
+  .ci-form-cabecalho img{height:44px; width:auto;}
+  .ci-form-cabecalho .titulos h1{margin:0; font-family:'Inter',sans-serif; font-weight:800; font-size:18px; color:#1C1C1E;}
+  .ci-form-cabecalho .titulos p{margin:2px 0 0; font-size:11.5px; color:#6E6E73; font-family:'Inter',sans-serif;}
+  .ci-form-dados{background:#F5F5F7; border-radius:10px; padding:16px 18px; margin-bottom:18px;}
+  .ci-form-secao{border-top:none; margin-bottom:18px; padding-top:0;}
+  .ci-form-secao h3{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:9px 14px; margin:0 0 12px; border-radius:6px;}
   .lightbox-overlay img{max-width:100%; max-height:85vh; border-radius:4px;}
 
   .nav-tabs{display:flex; gap:4px; margin-bottom:20px; background:var(--sheet); border-radius:var(--r-md); padding:5px; box-shadow:var(--shadow-sm); border:1px solid var(--border);}
@@ -1324,7 +1332,7 @@
       {chave:'tipoVaso', label:'Tipo de vaso sanitário', tipo:'select', opcoes:['convencional','suspenso','saída horizontal','outros...']},
       {chave:'tipoRalo', label:'Tipo de ralo de banho', tipo:'select', opcoes:['sifonado 15','grelha larga','grelha fina (oculto)','grelha fina','outros...']},
       {chave:'restricaoCaixas', label:'Restrição locais das caixas de inspeção', tipo:'texto', def:'não pertinente'},
-      {chave:'equipamentos', tipo:'tabelaCheck', titulo:'Equipamentos que existirão', linhas:['Área de serviço','Cozinha','Cozinha Gourmet'], colunas:['MLR','MSR','MG','MLL','Triturador','Ralos de piso']}
+      {chave:'equipamentos', tipo:'tabelaCheck', titulo:'Equipamentos que existirão', linhas:['Área de serviço','Cozinha','Cozinha Gourmet'], colunas:['MLR','MSR','MLSR','MG','MLL','Triturador','Ralos de piso']}
     ]},
     { chave:'pluviais', titulo:'Águas Pluviais', campos:[
       {chave:'itens', tipo:'grupoCheck', opcoes:['ralo sótão','extravasor em calhas embutidas','extravasor nos pátios','reaproveitamento e acumulação de água para jardim','restrição quanto á localização das caixas de areia']},
@@ -1368,7 +1376,7 @@
     ]},
     { chave:'eletrica', titulo:'Elétrica', campos:[
       {chave:'localizacaoQuadros', label:'Localização dos quadros de proteção', tipo:'texto'},
-      {chave:'distribuicaoCircuitos', label:'Distribuição de circuitos', tipo:'select', opcoes:['padrão alto separando por cômodo e funcionamento','Funcional, juntaremos alguns circuitos para minimizar o quadro','econônico']},
+      {chave:'distribuicaoCircuitos', label:'Distribuição de circuitos', tipo:'select', opcoes:['padrão alto separando por cômodo e funcionamento','Funcional, juntaremos alguns circuitos para minimizar o quadro','econônico','Sistema de cargas críticas']},
       {tipo:'titulo', label:'Caso o cliente já possua algum equipamento informar a tensão'},
       {chave:'maquinaLavarAQ', label:'Máquina de Lavar roupa precisa de AQ', tipo:'check'},
       {chave:'maquinaSecarGas', label:'Máquina de secar roupa é a gás', tipo:'check'},
@@ -2101,7 +2109,7 @@
         (t.status==='Concluído' ? '<div class="row"><div class="k">Concluído</div><div class="v"><input type="date" class="inline-edit" data-field="dataConclusao" value="'+(t.dataConclusao||'')+'"></div></div>' : '')+
         '<div class="row"><div class="k">Obs.</div><div class="v">'+
           '<div style="position:relative;">'+
-            '<textarea class="inline-edit-obs" rows="2" placeholder="Observações (cole um print com Ctrl+V)">'+escapeHtml(t.obs||'')+'</textarea>'+
+            '<textarea class="inline-edit-obs" rows="5" placeholder="Observações (cole um print com Ctrl+V)">'+escapeHtml(t.obs||'')+'</textarea>'+
             '<button type="button" class="btn-expandir-obs" title="Abrir em tela grande" style="position:absolute; top:3px; right:3px; font-size:12px; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:var(--sheet); cursor:pointer; opacity:0.8;">⤢</button>'+
           '</div>'+
           '<div class="anexos-area">'+(t.anexos||[]).map(function(a){ return renderAnexoChip(a); }).join('')+'</div>'+
@@ -2389,7 +2397,7 @@
         '<div class="full" id="agendaResp"></div>'+
         '<div><label>Status</label><select id="inStatus">'+statusOptions+'</select></div>'+
         '<div id="campoDataConclusao" style="display:'+(t.status==='Concluído'?'block':'none')+'"><label>Data de conclusão</label><input type="date" id="inDataConclusao" value="'+(t.dataConclusao||'')+'"></div>'+
-        '<div class="full"><label>Observações</label><textarea id="inObs" rows="3" placeholder="Notas para o responsável sobre essa disciplina" style="width:100%; font-size:13px; padding:7px 8px; border:1px solid var(--border); border-radius:4px; font-family:\'IBM Plex Sans\',sans-serif; resize:vertical;">'+escapeHtml(t.obs||'')+'</textarea></div>'+
+        '<div class="full"><label>Observações</label><textarea id="inObs" rows="6" placeholder="Notas para o responsável sobre essa disciplina" style="width:100%; font-size:13px; padding:7px 8px; border:1px solid var(--border); border-radius:4px; font-family:\'IBM Plex Sans\',sans-serif; resize:vertical;">'+escapeHtml(t.obs||'')+'</textarea></div>'+
         (editingT?'':'<div class="full hint">O mesmo responsável, prazo, status e observações serão aplicados a todas as disciplinas marcadas.</div>')+
         '<div class="full error" id="formError" style="display:none"></div>'+
         '<div class="form-actions"><button class="btn" id="btnSalvar">'+(editingT?'Salvar':'Adicionar disciplina(s)')+'</button><button class="btn secondary" id="btnCancelar">Cancelar</button></div>'+
@@ -2506,7 +2514,7 @@
           '</div>'+
         '</div>'+
         '<div class="full" id="relBlocoLivre">'+
-          '<label>Observações</label><textarea id="relTexto" rows="6" placeholder="Descreva o que foi observado na visita...">'+escapeHtml((existente&&existente.texto)||'')+'</textarea>'+
+          '<label>Observações</label><textarea id="relTexto" rows="10" placeholder="Descreva o que foi observado na visita...">'+escapeHtml((existente&&existente.texto)||'')+'</textarea>'+
           '<div style="margin-top:8px;"><label>Fotos</label>'+
             '<div id="relFotosArea" class="anexos-area"></div>'+
             '<button type="button" class="btn small secondary" id="btnAddFotoRelatorio">📷 Adicionar foto</button>'+
@@ -2785,7 +2793,7 @@
             '<input type="text" class="rel-item-titulo" data-id="'+it.id+'" placeholder="Nome do item (ex: Banheiro social)" style="flex:1;" value="'+escapeHtml(it.titulo||'')+'">'+
             (itens.length > 1 ? '<button type="button" class="rel-item-remover" data-id="'+it.id+'" style="color:var(--red); font-size:11px;">Remover</button>' : '')+
           '</div>'+
-          '<textarea class="rel-item-texto" data-id="'+it.id+'" rows="3" placeholder="O que foi observado nesse item...">'+escapeHtml(it.texto||'')+'</textarea>'+
+          '<textarea class="rel-item-texto" data-id="'+it.id+'" rows="6" placeholder="O que foi observado nesse item...">'+escapeHtml(it.texto||'')+'</textarea>'+
           '<div>'+
             '<div class="anexos-area" id="relItemFotos_'+it.id+'"></div>'+
             '<button type="button" class="btn small secondary rel-item-add-foto" data-id="'+it.id+'">📷 Adicionar foto</button>'+
@@ -3251,9 +3259,14 @@
     }
     if(campo.tipo === 'select'){
       var valorSel = (dadosSec && dadosSec[campo.chave] !== undefined && dadosSec[campo.chave] !== '') ? dadosSec[campo.chave] : (campo.def || '');
+      var ehPersonalizado = !!valorSel && campo.opcoes.indexOf(valorSel) === -1;
       var opcoesHtml = '<option value=""'+(!valorSel?' selected':'')+'>— Escolher um item —</option>' +
-        campo.opcoes.map(function(op){ return '<option value="'+escapeHtml(op)+'"'+(op===valorSel?' selected':'')+'>'+escapeHtml(op)+'</option>'; }).join('');
-      return '<div><label>'+escapeHtml(campo.label)+'</label><select id="'+id+'">'+opcoesHtml+'</select></div>';
+        campo.opcoes.map(function(op){ return '<option value="'+escapeHtml(op)+'"'+(op===valorSel?' selected':'')+'>'+escapeHtml(op)+'</option>'; }).join('') +
+        '<option value="__outro__"'+(ehPersonalizado?' selected':'')+'>✏️ Outro (escrever)...</option>';
+      return '<div><label>'+escapeHtml(campo.label)+'</label>'+
+        '<select id="'+id+'" class="select-com-outro" data-outro-alvo="'+id+'_outro">'+opcoesHtml+'</select>'+
+        '<input type="text" id="'+id+'_outro" placeholder="Escreva o item" style="margin-top:4px; display:'+(ehPersonalizado?'block':'none')+';" value="'+escapeHtml(ehPersonalizado?valorSel:'')+'">'+
+      '</div>';
     }
     if(campo.tipo === 'check'){
       var marcado = dadosSec && dadosSec[campo.chave];
@@ -3290,8 +3303,16 @@
 
   function coletarCampoConsideracao(secaoChave, campo){
     var id = 'ci_'+secaoChave+'_'+campo.chave;
-    if(campo.tipo === 'texto' || campo.tipo === 'select'){
+    if(campo.tipo === 'texto'){
       var el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+    if(campo.tipo === 'select'){
+      var el = document.getElementById(id);
+      if(el && el.value === '__outro__'){
+        var elOutro = document.getElementById(id+'_outro');
+        return elOutro ? elOutro.value.trim() : '';
+      }
       return el ? el.value.trim() : '';
     }
     if(campo.tipo === 'check'){
@@ -3342,10 +3363,10 @@
     var htmlSecoes = CONSIDERACAO_ESQUEMA.map(function(sec){
       var dadosSec = (existente && existente.dados[sec.chave]) || {};
       var camposHtml = sec.campos.map(function(campo){ return renderCampoConsideracao(sec.chave, campo, dadosSec); }).join('');
-      return '<div data-secao-bloco="'+sec.chave+'" style="border-top:1px solid var(--border); padding-top:14px; margin-top:14px;">'+
-        '<h3 style="margin:0 0 8px; font-size:14px;">'+escapeHtml(sec.titulo)+'</h3>'+
+      return '<div class="ci-form-secao" data-secao-bloco="'+sec.chave+'">'+
+        '<h3>'+escapeHtml(sec.titulo)+'</h3>'+
         camposHtml+
-        '<div><label>Obs.</label><textarea id="ci_'+sec.chave+'_obs" rows="2">'+escapeHtml(dadosSec.obs||'')+'</textarea></div>'+
+        '<div><label>Obs.</label><textarea id="ci_'+sec.chave+'_obs" rows="6" style="width:100%; font-size:13px; padding:7px 8px; border:1px solid var(--border); border-radius:4px; font-family:\'IBM Plex Sans\',sans-serif; resize:vertical;">'+escapeHtml(dadosSec.obs||'')+'</textarea></div>'+
         '<div style="margin-top:8px;"><label>Fotos</label><div id="ciFotos_'+sec.chave+'" class="anexos-area"></div>'+
         '<button type="button" class="btn small secondary btn-add-foto-ci" data-secao="'+sec.chave+'">📷 Adicionar foto</button>'+
         ' <span class="hint" style="font-size:11px;">ou clique aqui e cole (Ctrl+V) um print</span>'+
@@ -3355,19 +3376,21 @@
     }).join('');
 
     box.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'+
-        '<h3 style="margin:0;">📋 '+(existente?'Editar':'Nova')+' consideração inicial</h3>'+
+      '<div class="ci-form-cabecalho">'+
+        '<div class="marca"><img src="'+LOGO_EQUIPER+'" alt="Equiper">'+
+        '<div class="titulos"><h1>Considerações Iniciais</h1><p>'+(existente?'Editando':'Novo preenchimento')+'</p></div></div>'+
         '<button class="btn small secondary" id="btnFecharFormCI">Fechar</button>'+
       '</div>'+
-      '<div class="form-grid">'+
+      '<div class="ci-form-dados"><div class="form-grid">'+
         '<div class="full"><label>Cliente</label><select id="ciClienteSelect"><option value="">— Selecionar cliente cadastrado —</option>'+opcoesClientes+'<option value="__avulso__"'+((existente&&!existente.projetoId)?' selected':'')+'>Outro (não cadastrado)</option></select></div>'+
+        '<div><label>Tipo de edificação</label><select id="ciTipoEdificacao">'+['Casa','Prédio','Apartamento'].map(function(op){ return '<option'+((existente&&existente.tipoEdificacao===op)?' selected':'')+'>'+op+'</option>'; }).join('')+'</select></div>'+
         '<div class="full" id="ciClienteAvulsoWrap" style="display:'+((existente&&!existente.projetoId)?'block':'none')+';"><label>Nome do cliente</label><input type="text" id="ciClienteAvulso" value="'+escapeHtml((existente&&!existente.projetoId)?existente.clienteNome:'')+'"></div>'+
         '<div><label>Participante — Cliente</label><input type="text" id="ciPartCliente" value="'+escapeHtml((existente&&existente.participantes&&existente.participantes.cliente)||'')+'"></div>'+
         '<div><label>Participante — Arquitetura</label><input type="text" id="ciPartArquitetura" value="'+escapeHtml((existente&&existente.participantes&&existente.participantes.arquitetura)||'')+'"></div>'+
         '<div><label>Participante — Construtora</label><input type="text" id="ciPartConstrutora" value="'+escapeHtml((existente&&existente.participantes&&existente.participantes.construtora)||'')+'"></div>'+
         '<div><label>Equiper</label><input type="text" id="ciPartEquiper" value="'+escapeHtml((existente&&existente.participantes&&existente.participantes.equiper)||nomeProjetistaAtual||'')+'"></div>'+
         '<div><label>Data preenchimento</label><input type="date" id="ciDataPreenchimento" value="'+((existente&&existente.dataPreenchimento)||todayISO())+'"></div>'+
-      '</div>'+
+      '</div></div>'+
       htmlSecoes+
       '<div class="form-actions" style="margin-top:16px;"><button class="btn" id="btnSalvarCI">Salvar consideração inicial</button></div>';
 
@@ -3398,6 +3421,19 @@
       });
     }
     CONSIDERACAO_ESQUEMA.forEach(function(sec){ renderFotosPreviewSecao(sec.chave); });
+
+    box.querySelectorAll('.select-com-outro').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        var elOutro = document.getElementById(sel.getAttribute('data-outro-alvo'));
+        if(!elOutro) return;
+        if(sel.value === '__outro__'){
+          elOutro.style.display = 'block';
+          elOutro.focus();
+        } else {
+          elOutro.style.display = 'none';
+        }
+      });
+    });
 
     box.querySelectorAll('.btn-add-foto-ci').forEach(function(btn){
       btn.onclick = function(){ box.querySelector('.ci-foto-input[data-secao="'+btn.getAttribute('data-secao')+'"]').click(); };
@@ -3447,6 +3483,7 @@
           equiper: document.getElementById('ciPartEquiper').value.trim()
         },
         dataPreenchimento: document.getElementById('ciDataPreenchimento').value,
+        tipoEdificacao: document.getElementById('ciTipoEdificacao').value,
         dados: dados,
         autor: nomeProjetistaAtual || 'Gerente',
         criadoEm: existente ? existente.criadoEm : Date.now()
@@ -3519,6 +3556,7 @@
       '<div class="titulos"><h1>Considerações Iniciais</h1><p>Cliente: '+escapeHtml(registro.clienteNome)+'</p></div>'+
       '</div>'+
       '<div class="pdf-ci-dados">'+
+        '<div><b>Tipo de edificação:</b> '+escapeHtml(registro.tipoEdificacao||'—')+'</div>'+
         '<div><b>Data de preenchimento:</b> '+(registro.dataPreenchimento?fmtDate(registro.dataPreenchimento):'—')+'</div>'+
         '<div><b>Equiper:</b> '+escapeHtml((registro.participantes&&registro.participantes.equiper)||'—')+'</div>'+
         '<div><b>Cliente (reunião):</b> '+escapeHtml((registro.participantes&&registro.participantes.cliente)||'—')+'</div>'+
@@ -4406,7 +4444,7 @@
         '<div><label>Prazo (dias)</label><input type="number" class="fi-prazo" value="'+(rec.prazoDias||'')+'"></div>'+
         '<div><label>Data de entrega</label><input type="date" class="fi-entrega" value="'+(rec.dataEntrega||'')+'"></div>'+
         '<div><label>Contato</label><input type="text" class="fi-contato" value="'+escapeHtml(rec.contato||'')+'"></div>'+
-        '<div style="grid-column:1/-1;"><label>Observações</label><textarea class="fi-obs" rows="2">'+escapeHtml(rec.obs||'')+'</textarea></div>';
+        '<div style="grid-column:1/-1;"><label>Observações</label><textarea class="fi-obs" rows="5">'+escapeHtml(rec.obs||'')+'</textarea></div>';
       infoGrid.querySelector('.fi-cliente').addEventListener('change', function(e){
         var novoNome = e.target.value.trim();
         if(novoNome){ rec.cliente = novoNome; saveFinanceiro(); renderFinanceiroLista(); }
