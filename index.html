@@ -1348,7 +1348,7 @@
       {chave:'mistBanheiroServico', label:'Banheiro de serviço', tipo:'select', opcoes:['Separados AQ e AF','Monocomando']},
       {chave:'mistCozinha', label:'Cozinha', tipo:'select', opcoes:['Separados AQ e AF','Monocomando']},
       {tipo:'titulo', label:'Alimentação de água fria'},
-      {chave:'aguaFria', tipo:'grupoCheck', opcoes:['terá cisterna inferior','terá caixa d´água superior do prédio','terá pressurização']},
+      {chave:'aguaFria', tipo:'grupoCheck', opcoes:['terá cisterna inferior','terá caixa superior','terá pressurização']},
       {chave:'aguaFriaOutros', label:'Outros', tipo:'texto'},
       {chave:'localizacaoCisterna', label:'Localização da cisterna, caixa e pressurização se houver', tipo:'texto'},
       {tipo:'titulo', label:'Aquecimento de água'},
@@ -1382,7 +1382,7 @@
       {chave:'maquinaSecarGas', label:'Máquina de secar roupa é a gás', tipo:'check'},
       {chave:'aquecimentoAmbiente', label:'Aquecimento de ambiente', tipo:'select', opcoes:['total casa','parcial alto','parcial médio','local']},
       {tipo:'titulo', label:'Diversos'},
-      {chave:'eletricaItens', tipo:'grupoCheck', opcoes:['terá secador elétrico de toalhas nos banheiros menos serviço (marcar em planta) (dois no banheiro master provavelmente)','prever tomadas 220V (marcar em planta)','coifa cozinha','prever tomada e iluminação sótão','terá projeto luminotécnico interno','terá projeto luminotécnico jardim/paisagismo','terá controlador de cenas em estudo','prever comando elétrico persianas','campainha','alimentação elétrica portão','Previsão Sistema Fotovoltaico','Carregador de carro elétrico','Alimentação para DJ (ver potência)','Anti-embaçante','desumidificador nos armários']},
+      {chave:'eletricaItens', tipo:'grupoCheck', comQuantidade:[11], opcoes:['terá secador elétrico de toalhas nos banheiros menos serviço (marcar em planta) (dois no banheiro master provavelmente)','prever tomadas 220V (marcar em planta)','coifa cozinha','prever tomada e iluminação sótão','terá projeto luminotécnico interno','terá projeto luminotécnico jardim/paisagismo','terá controlador de cenas em estudo','prever comando elétrico persianas','campainha','alimentação elétrica portão','Previsão Sistema Fotovoltaico','Carregador de carro elétrico','Alimentação para DJ (ver potência)','Anti-embaçante','desumidificador nos armários']},
       {tipo:'titulo', label:'Sistemas de emergência'},
       {chave:'gerador', label:'Gerador', tipo:'select', opcoes:['marcado em planta','não terá','individualizado por equipamentos se preciso']},
       {chave:'nobreak', label:'No-break', tipo:'select', opcoes:['geral para rede estabilizada','não terá']},
@@ -3275,7 +3275,11 @@
     if(campo.tipo === 'grupoCheck'){
       var vals = (dadosSec && dadosSec[campo.chave]) || [];
       return '<div style="display:flex; flex-direction:column; gap:4px; margin:4px 0 10px;">' + campo.opcoes.map(function(op, i){
-        return '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;"><input type="checkbox" id="'+id+'_'+i+'" '+(vals[i]?'checked':'')+'> '+escapeHtml(op)+'</label>';
+        var marcadoG = !!vals[i];
+        var temQtd = campo.comQuantidade && campo.comQuantidade.indexOf(i) !== -1;
+        var qtdAtual = (typeof vals[i] === 'number') ? vals[i] : 1;
+        var htmlQtd = temQtd ? '<input type="number" min="1" id="'+id+'_'+i+'_qtd" value="'+qtdAtual+'" style="width:52px; margin-left:6px; padding:3px 5px; font-size:12px; display:'+(marcadoG?'inline-block':'none')+';">' : '';
+        return '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;" class="'+(temQtd?'grupocheck-com-qtd':'')+'"><input type="checkbox" id="'+id+'_'+i+'" data-qtd-alvo="'+id+'_'+i+'_qtd" '+(marcadoG?'checked':'')+'> '+escapeHtml(op)+(temQtd?' <span class="hint">(quantidade)</span>':'')+htmlQtd+'</label>';
       }).join('') + '</div>';
     }
     if(campo.tipo === 'tabelaCheck' || campo.tipo === 'tabelaRadio'){
@@ -3322,7 +3326,14 @@
     if(campo.tipo === 'grupoCheck'){
       return campo.opcoes.map(function(op, i){
         var el = document.getElementById(id+'_'+i);
-        return !!(el && el.checked);
+        if(!(el && el.checked)) return false;
+        var temQtd = campo.comQuantidade && campo.comQuantidade.indexOf(i) !== -1;
+        if(temQtd){
+          var elQtd = document.getElementById(id+'_'+i+'_qtd');
+          var n = elQtd ? parseInt(elQtd.value, 10) : 1;
+          return (n && n > 0) ? n : 1;
+        }
+        return true;
       });
     }
     if(campo.tipo === 'tabelaCheck'){
@@ -3358,7 +3369,10 @@
     var opcoesClientes = state.projetos.map(function(p){ return '<option value="'+p.id+'"'+((existente&&existente.projetoId===p.id)?' selected':'')+'>'+escapeHtml(p.nome)+'</option>'; }).join('');
 
     var fotosPorSecao = {};
-    CONSIDERACAO_ESQUEMA.forEach(function(sec){ fotosPorSecao[sec.chave] = (existente && existente.dados[sec.chave] && existente.dados[sec.chave].fotos) ? existente.dados[sec.chave].fotos.slice() : []; });
+    CONSIDERACAO_ESQUEMA.forEach(function(sec){
+      var fotosExistentes = (existente && existente.dados[sec.chave] && existente.dados[sec.chave].fotos) ? existente.dados[sec.chave].fotos.slice() : [];
+      fotosPorSecao[sec.chave] = fotosExistentes.map(function(f){ return (typeof f === 'string') ? { url: f, legenda: '' } : f; });
+    });
 
     var htmlSecoes = CONSIDERACAO_ESQUEMA.map(function(sec){
       var dadosSec = (existente && existente.dados[sec.chave]) || {};
@@ -3398,7 +3412,7 @@
     box.classList.add('dia-modal-grande');
 
     function definirAlvoColagem(secaoChave){
-      fotoPasteAlvo = { adicionar: function(dataUrl){ fotosPorSecao[secaoChave].push(dataUrl); renderFotosPreviewSecao(secaoChave); } };
+      fotoPasteAlvo = { adicionar: function(dataUrl){ fotosPorSecao[secaoChave].push({ url: dataUrl, legenda: '' }); renderFotosPreviewSecao(secaoChave); } };
     }
     box.querySelectorAll('[data-secao-bloco]').forEach(function(bloco){
       bloco.addEventListener('focusin', function(){ definirAlvoColagem(bloco.getAttribute('data-secao-bloco')); });
@@ -3408,10 +3422,13 @@
 
     function renderFotosPreviewSecao(secaoChave){
       document.getElementById('ciFotos_'+secaoChave).innerHTML = fotosPorSecao[secaoChave].map(function(f, i){
-        return '<span class="anexo-chip anexo-img"><img src="'+f+'" class="ci-foto-ver" data-secao="'+secaoChave+'" data-idx="'+i+'"><button type="button" class="anexo-remove ci-foto-remover" data-secao="'+secaoChave+'" data-idx="'+i+'">×</button></span>';
+        return '<span class="anexo-chip anexo-img" style="display:inline-flex; flex-direction:column; align-items:stretch; gap:3px; vertical-align:top;">'+
+          '<span style="position:relative; display:inline-block;"><img src="'+f.url+'" class="ci-foto-ver" data-secao="'+secaoChave+'" data-idx="'+i+'"><button type="button" class="anexo-remove ci-foto-remover" data-secao="'+secaoChave+'" data-idx="'+i+'">×</button></span>'+
+          '<input type="text" class="ci-foto-legenda" data-secao="'+secaoChave+'" data-idx="'+i+'" placeholder="Legenda da foto" value="'+escapeHtml(f.legenda||'')+'" style="font-size:10.5px; padding:3px 5px; width:100%; max-width:120px;">'+
+        '</span>';
       }).join('');
       box.querySelectorAll('.ci-foto-ver[data-secao="'+secaoChave+'"]').forEach(function(img){
-        img.onclick = function(){ abrirImagemModalMantendo(fotosPorSecao[secaoChave][parseInt(img.getAttribute('data-idx'),10)]); };
+        img.onclick = function(){ abrirImagemModalMantendo(fotosPorSecao[secaoChave][parseInt(img.getAttribute('data-idx'),10)].url); };
       });
       box.querySelectorAll('.ci-foto-remover[data-secao="'+secaoChave+'"]').forEach(function(btn){
         btn.onclick = function(){
@@ -3419,9 +3436,20 @@
           renderFotosPreviewSecao(secaoChave);
         };
       });
+      box.querySelectorAll('.ci-foto-legenda[data-secao="'+secaoChave+'"]').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          fotosPorSecao[secaoChave][parseInt(inp.getAttribute('data-idx'),10)].legenda = inp.value;
+        });
+      });
     }
     CONSIDERACAO_ESQUEMA.forEach(function(sec){ renderFotosPreviewSecao(sec.chave); });
 
+    box.querySelectorAll('[data-qtd-alvo]').forEach(function(chk){
+      chk.addEventListener('change', function(){
+        var elQtd = document.getElementById(chk.getAttribute('data-qtd-alvo'));
+        if(elQtd) elQtd.style.display = chk.checked ? 'inline-block' : 'none';
+      });
+    });
     box.querySelectorAll('.select-com-outro').forEach(function(sel){
       sel.addEventListener('change', function(){
         var elOutro = document.getElementById(sel.getAttribute('data-outro-alvo'));
@@ -3443,7 +3471,7 @@
         var secaoChave = input.getAttribute('data-secao');
         Array.prototype.forEach.call(e.target.files, function(file){
           redimensionarImagem(file, 900, 0.72, function(dataUrl){
-            fotosPorSecao[secaoChave].push(dataUrl);
+            fotosPorSecao[secaoChave].push({ url: dataUrl, legenda: '' });
             renderFotosPreviewSecao(secaoChave);
           });
         });
@@ -3515,9 +3543,12 @@
     }
     if(campo.tipo === 'grupoCheck'){
       var vals = (dadosSec && dadosSec[campo.chave]) || [];
-      var marcados = campo.opcoes.filter(function(op,i){ return vals[i]; });
-      if(marcados.length === 0) return '';
-      return '<div class="pdf-ci-check-lista">'+marcados.map(function(op){ return '<div>☑ '+escapeHtml(op)+'</div>'; }).join('')+'</div>';
+      var marcadosIdx = campo.opcoes.map(function(op,i){ return i; }).filter(function(i){ return vals[i]; });
+      if(marcadosIdx.length === 0) return '';
+      return '<div class="pdf-ci-check-lista">'+marcadosIdx.map(function(i){
+        var qtdTxt = (typeof vals[i] === 'number') ? ' — Qtd: '+vals[i] : '';
+        return '<div>☑ '+escapeHtml(campo.opcoes[i])+qtdTxt+'</div>';
+      }).join('')+'</div>';
     }
     if(campo.tipo === 'tabelaCheck' || campo.tipo === 'tabelaRadio'){
       var valsT = (dadosSec && dadosSec[campo.chave]) || {};
@@ -3546,7 +3577,11 @@
       var dadosSec = registro.dados[sec.chave] || {};
       var camposHtml = sec.campos.map(function(campo){ return renderCampoConsideracaoPdf(sec.chave, campo, dadosSec); }).join('');
       var obsHtml = dadosSec.obs ? '<div class="pdf-ci-obs">'+escapeHtml(dadosSec.obs)+'</div>' : '';
-      var fotosHtml = (dadosSec.fotos && dadosSec.fotos.length) ? '<div class="pdf-ci-fotos">'+dadosSec.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
+      var fotosHtml = (dadosSec.fotos && dadosSec.fotos.length) ? '<div class="pdf-ci-fotos">'+dadosSec.fotos.map(function(f){
+        var url = (typeof f === 'string') ? f : f.url;
+        var legenda = (typeof f === 'string') ? '' : (f.legenda||'');
+        return '<div style="display:inline-block; text-align:center; vertical-align:top;"><img src="'+url+'">'+(legenda?'<div style="font-size:9px; color:#6E6E73; margin-top:2px; max-width:140px;">'+escapeHtml(legenda)+'</div>':'')+'</div>';
+      }).join('')+'</div>' : '';
       if(!camposHtml && !obsHtml && !fotosHtml) return '';
       return '<div class="pdf-ci-secao"><h2>'+escapeHtml(sec.titulo)+'</h2>'+camposHtml+obsHtml+fotosHtml+'</div>';
     }).join('');
