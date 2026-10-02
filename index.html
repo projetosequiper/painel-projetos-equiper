@@ -241,9 +241,12 @@
   .dia-modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(2px); z-index:6000; display:none; align-items:center; justify-content:center; padding:16px;}
   @media print{
     #senhaGate, #appContainer, .lightbox-overlay{ display:none !important; }
+    #botaoTema, #botaoInstalar, #botaoFaceId, #barraInferiorMobile, #sidebarDesktop{ display:none !important; }
+    body{ padding-left:0 !important; padding-top:0 !important; padding-bottom:0 !important; margin:0 !important; }
     #diaModalOverlay{ position:static !important; display:block !important; width:100% !important; height:auto !important; background:#fff !important; padding:0 !important; margin:0 !important; inset:auto !important; }
     #diaModalBox{ box-shadow:none !important; max-height:none !important; overflow:visible !important; max-width:100% !important; width:100% !important; margin:0 !important; padding:0 !important; border:none !important; }
     .sem-impressao{ display:none !important; }
+    @page{ margin:12mm; }
   }
   .dia-modal-box{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-lg); max-width:440px; width:100%; max-height:80vh; overflow:auto; padding:22px; box-shadow:var(--shadow-lg); animation:popIn .22s cubic-bezier(.2,.9,.3,1);}
   .dia-modal-box.dia-modal-grande{max-width:900px; max-height:92vh;}
