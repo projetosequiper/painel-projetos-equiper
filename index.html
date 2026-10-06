@@ -391,6 +391,12 @@
   .eq-rodape{ position:relative; margin-top:26px; padding-top:9px; border-top:1px solid #D9D9D9; font-size:8.5pt; color:#6B6B6B; }
   .eq-rodape::before{ content:""; position:absolute; top:-1px; left:0; width:14mm; height:2px; background:#E3120B; }
   .eq-rodape b{ margin-right:6px; color:#111111; }
+  .eq-doc{ --red:#E3120B; }
+  .eq-planta{ position:relative; width:100%; margin-top:10px; border:1px solid #D9D9D9; line-height:0; break-inside:avoid; page-break-inside:avoid; }
+  .eq-planta img{ display:block; width:100%; height:auto; }
+  .eq-planta svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
+  .eq-legenda{ margin-top:8px; }
+  .eq-num{ flex:0 0 auto; display:inline-block; min-width:16px; height:16px; padding:0 4px; line-height:16px; text-align:center; background:#E3120B; color:#fff; font-size:8pt; font-weight:700; }
   .ci-form-cabecalho{display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:4px solid #C8202B; padding-bottom:14px; margin-bottom:18px;}
   .ci-form-cabecalho .marca{display:flex; align-items:center; gap:14px;}
   .ci-form-cabecalho img{height:44px; width:auto;}
@@ -2547,6 +2553,7 @@
 
   function desenharConePin(pin, idx, opts){
     opts = opts || {};
+    var cor = opts.cor || 'var(--red)';
     var raio = opts.raio || 7;
     var stroke = opts.stroke || 2.2;
     var strokeCirc = opts.strokeCirc || 2;
@@ -2559,11 +2566,11 @@
     var ax = x1 + len*Math.cos(ang-meio), ay = y1 + len*Math.sin(ang-meio);
     var bx = x1 + len*Math.cos(ang+meio), by = y1 + len*Math.sin(ang+meio);
     return '<g>'+
-      '<line x1="'+x1+'" y1="'+y1+'" x2="'+ax+'" y2="'+ay+'" style="stroke:var(--red); stroke-width:'+stroke+';"></line>'+
-      '<line x1="'+x1+'" y1="'+y1+'" x2="'+bx+'" y2="'+by+'" style="stroke:var(--red); stroke-width:'+stroke+';"></line>'+
-      '<path d="M '+ax+' '+ay+' A '+len+' '+len+' 0 0 1 '+bx+' '+by+'" style="fill:none; stroke:var(--red); stroke-width:'+stroke+';"></path>'+
-      '<circle class="planta-pin-clique" data-pin-id="'+pin.id+'" cx="'+x1+'" cy="'+y1+'" r="'+raio+'" style="fill:var(--red); stroke:#fff; stroke-width:'+strokeCirc+';"></circle>'+
-      '<text x="'+((ax+bx)/2)+'" y="'+((ay+by)/2)+'" text-anchor="middle" style="fill:var(--red); font-size:'+fonte+'px; font-weight:800; font-family:Inter,sans-serif; paint-order:stroke; stroke:#fff; stroke-width:'+strokeTexto+'px;">'+(idx+1)+'</text>'+
+      '<line x1="'+x1+'" y1="'+y1+'" x2="'+ax+'" y2="'+ay+'" style="stroke:'+cor+'; stroke-width:'+stroke+';"></line>'+
+      '<line x1="'+x1+'" y1="'+y1+'" x2="'+bx+'" y2="'+by+'" style="stroke:'+cor+'; stroke-width:'+stroke+';"></line>'+
+      '<path d="M '+ax+' '+ay+' A '+len+' '+len+' 0 0 1 '+bx+' '+by+'" style="fill:none; stroke:'+cor+'; stroke-width:'+stroke+';"></path>'+
+      '<circle class="planta-pin-clique" data-pin-id="'+pin.id+'" cx="'+x1+'" cy="'+y1+'" r="'+raio+'" style="fill:'+cor+'; stroke:#fff; stroke-width:'+strokeCirc+';"></circle>'+
+      '<text x="'+((ax+bx)/2)+'" y="'+((ay+by)/2)+'" text-anchor="middle" style="fill:'+cor+'; font-size:'+fonte+'px; font-weight:800; font-family:Inter,sans-serif; paint-order:stroke; stroke:#fff; stroke-width:'+strokeTexto+'px;">'+(idx+1)+'</text>'+
     '</g>';
   }
 
@@ -2982,19 +2989,28 @@
   }
 
   function mostrarPdfRelatorioVisita(registro){
+    function fotosEq(lista){
+      return (lista && lista.length) ? '<div class="eq-fotos">'+lista.map(function(f){
+        var url = (typeof f === 'string') ? f : f.url;
+        var legenda = (typeof f === 'string') ? '' : (f.legenda||'');
+        return '<figure class="eq-foto"><div class="quadro"><img src="'+url+'"></div>'+(legenda?'<figcaption>'+escapeHtml(legenda)+'</figcaption>':'')+'</figure>';
+      }).join('')+'</div>' : '';
+    }
     var corpoHtml;
     if(registro.modo === 'itens' && registro.itens){
       corpoHtml = registro.itens.map(function(it){
-        var fotosHtml = (it.fotos && it.fotos.length) ? '<div class="pdf-ci-fotos">'+it.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
-        return '<div class="pdf-ci-secao"><h2>'+escapeHtml(it.titulo||'Item')+'</h2>'+(it.texto?'<div class="pdf-ci-campo">'+escapeHtml(it.texto)+'</div>':'')+fotosHtml+'</div>';
+        return '<div class="eq-secao"><h2>'+escapeHtml(it.titulo||'Item')+'</h2>'+
+          (it.texto ? '<div class="eq-obs"><div class="txt">'+escapeHtml(it.texto)+'</div></div>' : '')+
+          fotosEq(it.fotos)+'</div>';
       }).join('');
     } else {
-      var fotosHtmlL = (registro.fotos && registro.fotos.length) ? '<div class="pdf-ci-fotos">'+registro.fotos.map(function(f){ return '<img src="'+f+'">'; }).join('')+'</div>' : '';
-      corpoHtml = '<div class="pdf-ci-secao">'+(registro.texto?'<div class="pdf-ci-obs">'+escapeHtml(registro.texto)+'</div>':'')+fotosHtmlL+'</div>';
+      corpoHtml = '<div class="eq-secao"><h2>Observações da visita</h2>'+
+        (registro.texto ? '<div class="eq-obs"><div class="txt">'+escapeHtml(registro.texto)+'</div></div>' : '')+
+        fotosEq(registro.fotos)+'</div>';
     }
     var plantasHtml = (registro.plantas && registro.plantas.length) ? registro.plantas.map(function(p, idxP){
-      var pinsHtml = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">'+
-        (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx, {raio:1.8, stroke:0.6, strokeCirc:0.6, fonte:3.2, strokeTexto:0.8}); }).join('') +
+      var pinsHtml = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">'+
+        (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx, {raio:1.8, stroke:0.6, strokeCirc:0.6, fonte:3.2, strokeTexto:0.8, cor:'#E3120B'}); }).join('') +
       '</svg>';
       var legendaHtml = (p.pins||[]).map(function(pin, idx){
         var label = pin.texto;
@@ -3002,24 +3018,30 @@
           var itemRef = registro.itens.find(function(it){ return it.id === pin.refItemId; });
           label = itemRef ? itemRef.titulo : '';
         }
-        return '<div>'+(idx+1)+'. '+escapeHtml(label||'(sem nome)')+'</div>';
+        return '<div class="eq-campo item"><span class="eq-num">'+(idx+1)+'</span><span class="txt">'+escapeHtml(label||'(sem nome)')+'</span></div>';
       }).join('');
-      return '<div class="pdf-ci-secao" style="page-break-inside:avoid;"><h2>Planta — '+escapeHtml(p.nome||('Pavimento '+(idxP+1)))+'</h2>'+
-        '<div style="position:relative; width:100%;"><img src="'+p.imagem+'" style="width:100%; display:block;">'+pinsHtml+'</div>'+
-        (legendaHtml ? '<div class="planta-legenda">'+legendaHtml+'</div>' : '')+
+      return '<div class="eq-secao"><h2>Planta — '+escapeHtml(p.nome||('Pavimento '+(idxP+1)))+'</h2>'+
+        '<div class="eq-planta"><img src="'+p.imagem+'">'+pinsHtml+'</div>'+
+        (legendaHtml ? '<div class="eq-legenda">'+legendaHtml+'</div>' : '')+
       '</div>';
     }).join('') : '';
-    var html = '<div class="pdf-ci-cabecalho">'+
-      '<img src="'+LOGO_EQUIPER+'" alt="Equiper">'+
-      '<div class="titulos"><h1>Relatório de Visita</h1><p>Cliente: '+escapeHtml(registro.clienteNome)+'</p></div>'+
+    function celula(rotulo, valor, destaque){
+      return '<div class="cel'+(destaque?' destaque':'')+'"><span class="rot">'+rotulo+'</span><span class="val">'+escapeHtml(valor||'—')+'</span></div>';
+    }
+    var html = '<div class="eq-doc">'+
+      '<div class="eq-cabecalho">'+
+        '<img src="'+LOGO_EQUIPER_PDF+'" alt="Equiper">'+
+        '<div class="titulos"><h1>Relatório de Visita</h1><p>Registro da visita técnica</p><p>Emissão: '+new Date().toLocaleDateString('pt-BR')+'</p></div>'+
       '</div>'+
-      '<div class="pdf-ci-dados">'+
-        '<div><b>Data da visita:</b> '+(registro.data?fmtDate(registro.data):'—')+'</div>'+
-        '<div><b>Responsável:</b> '+escapeHtml(registro.autor||'—')+'</div>'+
+      '<div class="eq-dados">'+
+        celula('Cliente', registro.clienteNome, true)+
+        celula('Data da visita', registro.data ? fmtDate(registro.data) : '')+
+        celula('Responsável', registro.autor)+
       '</div>'+
       corpoHtml+
       plantasHtml+
-      '<div class="pdf-ci-rodape"><span>Gerado em '+new Date().toLocaleString('pt-BR')+'</span><span>Painel de Projetos Equiper</span></div>';
+      '<div class="eq-rodape"><b>EQUIPER</b>Projetos de Instalações Prediais · projetos@equiper.com.br</div>'+
+    '</div>';
 
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
@@ -3032,7 +3054,7 @@
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfRV').onclick = fecharDiaModal;
-    document.getElementById('btnImprimirRV').onclick = function(){ window.print(); };
+    document.getElementById('btnImprimirRV').onclick = function(){ imprimirComNomeArquivo('Relatório de visita_'+(registro.clienteNome||'')); };
   }
 
   function renderRelatoriosVisitaLista(){
