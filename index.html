@@ -5821,29 +5821,36 @@
     var mesLabel = MESES_PT[comMes] + ' de ' + comAno;
     var tituloRelatorio = nomesFiltrados.length === 1 ? ('Comissão de ' + nomesFiltrados[0]) : 'Comissão dos Desenhistas';
 
-    var html = '<div class="pdf-cabecalho">'+
-      '<img src="'+LOGO_EQUIPER+'" alt="Equiper">'+
-      '<div class="titulos"><h1>'+escapeHtml(tituloRelatorio)+'</h1><p>Referência: '+mesLabel+' · 10% por disciplina concluída e liberada</p></div>'+
+    function celulaCom(rotulo, valor, destaque){
+      return '<div class="cel'+(destaque?' destaque':'')+'"><span class="rot">'+rotulo+'</span><span class="val">'+escapeHtml(valor||'—')+'</span></div>';
+    }
+    var html = '<div class="eq-doc">'+
+      '<div class="eq-cabecalho">'+
+        '<img src="'+LOGO_EQUIPER_PDF+'" alt="Equiper">'+
+        '<div class="titulos"><h1>'+escapeHtml(tituloRelatorio)+'</h1><p>Referência: '+mesLabel+'</p><p>Emissão: '+new Date().toLocaleDateString('pt-BR')+'</p></div>'+
       '</div>'+
-      '<div class="pdf-total-geral">TOTAL'+(nomesFiltrados.length>1?' GERAL':'')+' DO MÊS: '+formatarMoeda(totalFiltrado)+'</div>';
+      '<div class="eq-dados">'+
+        celulaCom('Mês de referência', mesLabel)+
+        celulaCom('Comissão', '10% por disciplina concluída')+
+        celulaCom('Total'+(nomesFiltrados.length>1?' geral':'')+' do mês', formatarMoeda(totalFiltrado), true)+
+      '</div>';
 
     nomesFiltrados.forEach(function(nome){
       var dados = porDesenhistaTodos[nome];
       if(!dados) return;
-      var cor = corDesenhistaSeguro(nome);
-      html += '<div class="pdf-desenhista">'+
-        '<div class="pdf-desenhista-nome" style="--pdf-cor:'+cor+';"><span>'+escapeHtml(nome)+'</span><span>'+formatarMoeda(dados.total)+'</span></div>'+
-        '<table class="pdf-tabela"><thead><tr><th>Projeto</th><th>Disciplina</th><th>Valor disciplina</th><th>Comissão (10%)</th><th>Concluído em</th></tr></thead><tbody>';
+      html += '<div class="eq-secao"><h2>'+escapeHtml(nome)+' — '+formatarMoeda(dados.total)+'</h2>'+
+        '<table class="eq-tabela"><thead><tr><th>Projeto</th><th>Disciplina</th><th>Valor disciplina</th><th>Comissão (10%)</th><th>Concluído em</th></tr></thead><tbody>';
       dados.itens.forEach(function(item){
         html += '<tr><td>'+escapeHtml(item.projeto)+'</td><td>'+escapeHtml(item.tipo)+'</td><td>'+formatarMoeda(item.valorDisciplina)+'</td><td>'+formatarMoeda(item.comissao)+'</td><td>'+fmtDate(item.dataConclusao)+'</td></tr>';
       });
       html += '</tbody></table></div>';
     });
 
-    html += '<div class="pdf-rodape">Gerado em '+new Date().toLocaleString('pt-BR')+' · Painel de Projetos Equiper</div>';
+    html += '<div class="eq-rodape"><b>EQUIPER</b>Projetos de Instalações Prediais · projetos@equiper.com.br</div></div>';
 
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
     box.innerHTML =
       '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; gap:8px; flex-wrap:wrap;">'+
         '<span class="hint">Toque em "🖨️ Imprimir / PDF" — no celular abre a opção de salvar/compartilhar como PDF.</span>'+
@@ -5852,7 +5859,7 @@
       html;
     overlay.style.display = 'flex';
     document.getElementById('btnFecharPdfModal').onclick = fecharDiaModal;
-    document.getElementById('btnImprimirComissao').onclick = function(){ window.print(); };
+    document.getElementById('btnImprimirComissao').onclick = function(){ imprimirComNomeArquivo('Comissão_'+(nomesFiltrados.length===1?nomesFiltrados[0]+'_':'')+MESES_PT[comMes]+'_'+comAno); };
   }
 
   document.getElementById('finComBaixarPdf').onclick = function(){

@@ -38,6 +38,19 @@ h1{font-family:var(--cond);font-weight:700;font-size:clamp(30px,6vw,46px);line-h
 
 /* Obra + abas */
 .obra{display:grid;gap:12px;grid-template-columns:1fr;margin-bottom:18px}
+.inst{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 22px;padding:10px 12px;border:1px solid var(--cinza-2);border-radius:3px;background:var(--cinza-1)}
+.inst>small{font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza-4);margin-right:2px}
+.inst-tab{border:1px solid var(--cinza-3);background:var(--branco);border-radius:3px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14px}
+.inst-tab.on{background:var(--preto);color:var(--branco);border-color:var(--preto)}
+.inst-tab.inst-add{border-style:dashed;color:var(--cinza-4)}
+.inst-ed{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto}
+.inst-ed input{border:1px solid var(--cinza-2);border-radius:3px;padding:7px 9px;width:170px;background:var(--branco);font-size:14px}
+.inst.um{background:none;border-style:dashed}
+.inst.um span{color:var(--cinza-4);font-size:14px;flex:1 1 220px}
+.cli-disc .lnk.cli-inst{display:block;text-align:left;font-weight:400;margin:0 0 4px;text-decoration:none}
+.cli-disc .lnk.cli-inst:hover b{text-decoration:underline}
+.cli-inst b{font-weight:600}
+.inst-ed input{flex:1 1 140px}
 @media(min-width:720px){.obra{grid-template-columns:1fr 1.4fr}}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--cinza-2);margin:0 0 26px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .abas::-webkit-scrollbar{display:none}
@@ -661,6 +674,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <datalist id="lista-clientes"></datalist>
     <label class="campo">Local da obra<input id="endereco" autocomplete="off" placeholder="Endereço da obra"></label>
   </div>
+  <div class="inst" id="inst" aria-label="Dimensionamentos separados deste cliente"></div>
 
 
 
@@ -1522,7 +1536,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1557,6 +1571,7 @@ function migrar(o){
   return {
     v:2, id: o.id || uid(), modulo: ["gas","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
+    inst: (o.inst && typeof o.inst==="object") ? o.inst : {},
     plu:{...b.plu, ...lim(o.plu)},
     est:{...b.est, ...lim(o.est)},
     ele:{...b.ele, ...lim(o.ele)},
@@ -2323,7 +2338,8 @@ function relCarimbo(sub, doc, rev, disc){
 }
 function relIdent(M){
   const O = {...S.obra, resp:M.resp, crea:M.crea}, td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
-  return `<table class="r-t"><tbody>${td("Cliente", esc(O.cliente)||"—")}${td("Local da obra", esc(O.endereco)||"—")}
+  const kI = HIST_CHAVE[S.modulo];
+  return `<table class="r-t"><tbody>${td("Cliente", esc(O.cliente)||"—")}${td("Local da obra", esc(O.endereco)||"—")}${instMultiplo(kI) ? td("Edificação", esc(instNomeAtivo(kI))) : ""}
     ${td("Responsável técnico", esc(O.resp)||"—")}${td("Registro profissional", O.crea?`CREA ${esc(O.crea)}`:"—")}</tbody></table>`;
 }
 function localEmissao(){ try{ return localStorage.getItem("equiper-local-emissao") || S.obra?.local || ""; }catch(e){ return S.obra?.local || ""; } }
@@ -2466,7 +2482,7 @@ function trocarModulo(m){
   if(m==="ele") atualizarEle();
   if(m==="plu") renderPluvial();
   if(m==="hid") renderHid();
-  aplicarNA();
+  aplicarNA(); renderInst();
   try{ if(location.hash !== "#"+m) history.replaceState(null,"","#"+m); }catch(e){}
   resumo(); salvar();
 }
@@ -2538,6 +2554,7 @@ function preencherTudo(){
   if(typeof renderResp==="function") renderResp();
   preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); aplicarNA();
   if(typeof histBase==="function" && !HIST.restaurando) histBase();
+  if(typeof renderInst==="function") renderInst();
 }
 
 let avisoT;
@@ -2722,7 +2739,8 @@ function ligar(){
   const nomePDF = () => {
     const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
     const cli = (S.obra.cliente||"").trim();
-    return [plan, cli || "Sem cliente"].join(" - ").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
+    const kI = HIST_CHAVE[S.modulo];
+    return [plan, cli || "Sem cliente", instMultiplo(kI) ? instNomeAtivo(kI) : ""].filter(Boolean).join(" - ").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
   };
   addEventListener("beforeprint", ()=>{ document.title = nomePDF(); });
   addEventListener("afterprint", ()=>{ document.title = tituloOriginal; });
@@ -2790,6 +2808,18 @@ function atualizarListaClientes(){
 }
 function comObra(dados, fn){ const bak = S; S = migrar(clone(dados)); try{ return fn(); } finally { S = bak; } }
 function resumoObra(dados){
+  const base = resumoObraBase(dados), ks = Object.keys(dados.inst||{}).filter(k=>dados.inst[k]?.lista?.length>1);
+  if(!ks.length) return base;
+  const out = base.filter(r=>!ks.includes(HIST_CHAVE[r.mod]));
+  ks.forEach(k=>{ const I = dados.inst[k];
+    I.lista.forEach(it=>{
+      const d = it.id===I.ativo ? dados : {...dados, [k]: it.dados || estadoNovo()[k]};
+      resumoObraBase(d).filter(r=>HIST_CHAVE[r.mod]===k).forEach(r=>out.push({...r, inst:it.id, instNome:it.nome}));
+    });
+  });
+  return out;
+}
+function resumoObraBase(dados){
   return comObra(dados, ()=>{
     const out = [];
     if(S.esg.usado){
@@ -2830,8 +2860,8 @@ const TXT_ST = {ok:"atende", rev:"revisar", pend:"não iniciado", na:"não se ap
 function statusObra(dados){
   const mods = resumoObra(dados), na = dados.naoAplica || {}, out = {};
   Object.keys(ABREV).forEach(m=>{
-    const r = mods.find(x=>x.mod===m);
-    out[m] = na[m] ? {st:"na"} : r ? {st: r.ok?"ok":"rev", det:r.det} : {st:"pend"};
+    const rs = mods.filter(x=>x.mod===m);
+    out[m] = na[m] ? {st:"na"} : rs.length ? {st: rs.every(r=>r.ok)?"ok":"rev", det: rs.map(r=>r.instNome ? `${r.instNome}: ${r.det}` : r.det).join("\n"), n: rs.length, itens: rs} : {st:"pend"};
   });
   return out;
 }
@@ -2845,7 +2875,7 @@ function statusCliente(lista){                      // lista de statusObra das o
   const out = {}, cont = {};
   Object.keys(ABREV).forEach(m=>{
     const sts = lista.map(x=>x[m].st), feitos = sts.filter(v=>v==="ok"||v==="rev");
-    cont[m] = feitos.length;
+    cont[m] = lista.reduce((a,x)=>a + ((x[m].st==="ok"||x[m].st==="rev") ? (x[m].n||1) : 0), 0);
     out[m] = {st: feitos.length ? (feitos.includes("rev")?"rev":"ok") : (sts.length && sts.every(v=>v==="na")) ? "na" : "pend"};
   });
   return {st: out, cont};
@@ -2886,9 +2916,10 @@ function renderLateralObra(){
 }
 /* ---------- Tela de clientes ---------- */
 let CLI = {aberto:null, criando:false, editando:null};
-function abrirObraBib(id, mod){
+function abrirObraBib(id, mod, inst){
   const r = bibLer().obras[id]; if(!r) return;
   S = migrar(clone(r.dados)); S.id = id;
+  if(inst && mod) instSwap(HIST_CHAVE[mod], inst);
   preencherTudo(); fecharClientes(); trocarModulo(mod || S.modulo); renderTudo(); window.scrollTo({top:0});
   aviso(`Obra aberta: ${r.cliente}${r.local?" — "+r.local:""}`);
 }
@@ -2945,7 +2976,7 @@ function renderClientes(){
             <ul class="cli-disc">${Object.keys(ABREV).map(m=>{ const x = st[m], cls = {ok:"", rev:"falha", pend:"pend", na:"na"}[x.st];
               return `<li>
                 <button type="button" class="lnk" data-abrir="${o.id}" data-mod="${m}" ${x.st==="na"?"disabled":""}><span class="abrev ${cls}">${ABREV[m]}</span> ${NOME_MOD[m]}</button>
-                <span>${x.st==="na" ? "Não terá este dimensionamento" : x.det ? esc(x.det) : "Ainda não dimensionado"}</span>
+                <span>${x.st==="na" ? "Não terá este dimensionamento" : x.itens && x.itens.some(r=>r.instNome) ? x.itens.map(r=>`<button type="button" class="lnk cli-inst" data-abrir="${o.id}" data-mod="${m}" data-inst="${r.inst}" title="Abrir ${esc(r.instNome)}"><b>${esc(r.instNome)}</b> ${r.ok?"":"<em class=\"st falha\" style=\"font-style:normal\">revisar</em> "}· ${esc(r.det)}</button>`).join("") : x.det ? esc(x.det) : "Ainda não dimensionado"}</span>
                 <span style="display:flex;gap:14px;align-items:center;justify-content:flex-end">
                   ${x.st==="ok"||x.st==="rev" ? `<em class="st ${x.st==="rev"?"falha":""}" style="font-style:normal">${x.st==="rev"?"Revisar":"Atende"}</em>` : ""}
                   <label class="na-tg"><input type="checkbox" data-na-obra="${m}" ${x.st==="na"?"checked":""}> não se aplica</label>
@@ -2986,7 +3017,7 @@ function ligarClientes(){
     const sec = e.target.closest("[data-cli]"); if(!sec) return;
     const cid = sec.dataset.cli, b = bibLer(), c = b.clientes[cid];
     if(e.target.closest("[data-toggle]")){ CLI.aberto = CLI.aberto===cid ? null : cid; CLI.editando = null; renderClientes(); return; }
-    const ab = e.target.closest("[data-abrir]"); if(ab){ abrirObraBib(ab.dataset.abrir, ab.dataset.mod); return; }
+    const ab = e.target.closest("[data-abrir]"); if(ab){ abrirObraBib(ab.dataset.abrir, ab.dataset.mod, ab.dataset.inst); return; }
     if(e.target.closest("[data-nova]")){ novaObraCliente(c.nome); return; }
     if(e.target.closest("[data-editar]")){ CLI.editando = CLI.editando===cid ? null : cid; renderClientes(); sec.querySelector('[data-ce="nome"]')?.focus(); return; }
     if(e.target.closest("[data-edit-cancelar]")){ CLI.editando = null; renderClientes(); return; }
@@ -6092,6 +6123,94 @@ function ligarHist(){
   histBase();
 }
 
+/* =====================================================================
+   VÁRIOS DIMENSIONAMENTOS DO MESMO TIPO NA MESMA OBRA (ex.: duas casas no terreno)
+   S.inst[chave] = {ativo, lista:[{id, nome, dados?}]} — o ativo fica em S[chave]
+   ===================================================================== */
+function instDe(k, dados){
+  dados = dados || S; if(!dados.inst || typeof dados.inst!=="object") dados.inst = {};
+  let I = dados.inst[k];
+  if(!I || !Array.isArray(I.lista) || !I.lista.length){ const id = uid(); I = dados.inst[k] = {ativo:id, lista:[{id, nome:"Casa 1"}]}; }
+  if(!I.lista.some(x=>x.id===I.ativo)) I.ativo = I.lista[0].id;
+  return I;
+}
+const instMultiplo = (k, dados) => !!k && ((dados||S).inst?.[k]?.lista?.length || 0) > 1;
+function instNomeAtivo(k, dados){ const I = instDe(k, dados); return I.lista.find(x=>x.id===I.ativo).nome || "—"; }
+const instNormalizar = (k, d) => migrar({v:2, [k]: clone(d)})[k];
+function instModuloNovo(k){
+  const M = estadoNovo()[k], A = S[k] || {};
+  M.respId = A.respId || ""; M.resp = A.resp || ""; M.crea = A.crea || "";   // mesmo técnico
+  return M;
+}
+function instSwap(k, id){                                   // só troca os dados (sem redesenhar)
+  if(!k) return false;
+  const I = instDe(k); if(id===I.ativo) return false;
+  const atual = I.lista.find(x=>x.id===I.ativo), alvo = I.lista.find(x=>x.id===id); if(!alvo) return false;
+  atual.dados = clone(S[k]);
+  S[k] = instNormalizar(k, alvo.dados || instModuloNovo(k)); delete alvo.dados; I.ativo = id;
+  return true;
+}
+function instDepois(k){
+  HIST.desfazer[k] = []; HIST.refazer[k] = []; HIST.ultimo[k] = JSON.stringify(S[k]); HIST.t[k] = 0;
+  if(typeof fecharMenuNo==="function") try{ fecharMenuNo(); }catch(e){}
+  histRestaurar(k); renderInst();
+}
+function instTrocar(k, id){ if(instSwap(k, id)){ instDepois(k); aviso(`Aberto: ${instNomeAtivo(k)}`); } }
+function instProxNome(I){ let n = I.lista.length + 1; while(I.lista.some(x=>x.nome===`Casa ${n}`)) n++; return `Casa ${n}`; }
+function instNovo(k, copiar){
+  const I = instDe(k), atual = I.lista.find(x=>x.id===I.ativo);
+  const nome = copiar ? `${atual.nome} (cópia)` : instProxNome(I);
+  const it = {id:uid(), nome, dados: copiar ? clone(S[k]) : instModuloNovo(k)};
+  I.lista.push(it); instSwap(k, it.id); instDepois(k);
+  aviso(copiar ? `Cópia criada: ${nome}` : `Novo dimensionamento: ${nome}`);
+  setTimeout(()=>{ const n = $("inst-nome"); if(n){ n.focus(); n.select(); } }, 30);
+}
+function instExcluir(k){
+  const I = instDe(k); if(I.lista.length<2) return;
+  const atual = I.lista.find(x=>x.id===I.ativo);
+  if(!confirm(`Excluir o dimensionamento "${atual.nome}"? Os dados dele serão perdidos.`)) return;
+  const ix = I.lista.findIndex(x=>x.id===I.ativo), outro = I.lista[ix>0 ? ix-1 : 1];
+  instSwap(k, outro.id); I.lista = I.lista.filter(x=>x.id!==atual.id);
+  instDepois(k); aviso(`Excluído: ${atual.nome}`);
+}
+function renderInst(){
+  const el = $("inst"); if(!el) return;
+  const k = HIST_CHAVE[S.modulo]; if(!k){ el.hidden = true; return; }
+  el.hidden = false;
+  const I = instDe(k), nomeTipo = PIS_PARTES[S.modulo] ? "piscina" : "dimensionamento";
+  if(I.lista.length < 2){
+    el.className = "inst um";
+    el.innerHTML = `<span>Mais de uma edificação no mesmo terreno? Crie um ${nomeTipo} separado para cada uma, dentro deste cliente.</span>
+      <button class="btn sec peq" type="button" data-inst-novo>+ Outro ${nomeTipo}</button>`;
+    return;
+  }
+  const at = I.lista.find(x=>x.id===I.ativo);
+  el.className = "inst";
+  el.innerHTML = `<small>${PIS_PARTES[S.modulo] ? "Piscinas" : "Edificações"}</small>
+    ${I.lista.map(x=>`<button type="button" class="inst-tab ${x.id===I.ativo?"on":""}" data-inst-ir="${x.id}" aria-pressed="${x.id===I.ativo}">${esc(x.nome)||"—"}</button>`).join("")}
+    <button type="button" class="inst-tab inst-add" data-inst-novo title="Criar outro ${nomeTipo} em branco">+ Novo</button>
+    <span class="inst-ed"><input id="inst-nome" value="${esc(at.nome)}" aria-label="Nome deste ${nomeTipo}" placeholder="Nome (ex.: Casa 2)">
+      <button class="btn sec peq" type="button" data-inst-dup title="Criar uma cópia deste ${nomeTipo}">Duplicar</button>
+      <button class="btn sec peq" type="button" data-inst-del>Excluir</button></span>`;
+}
+function ligarInst(){
+  const el = $("inst");
+  el.addEventListener("click", e=>{
+    const k = HIST_CHAVE[S.modulo]; if(!k) return;
+    const ir = e.target.closest("[data-inst-ir]"); if(ir){ instTrocar(k, ir.dataset.instIr); return; }
+    if(e.target.closest("[data-inst-novo]")) instNovo(k, false);
+    else if(e.target.closest("[data-inst-dup]")) instNovo(k, true);
+    else if(e.target.closest("[data-inst-del]")) instExcluir(k);
+  });
+  el.addEventListener("input", e=>{
+    if(e.target.id!=="inst-nome") return;
+    const k = HIST_CHAVE[S.modulo], I = instDe(k), at = I.lista.find(x=>x.id===I.ativo);
+    at.nome = e.target.value; const tab = el.querySelector(`[data-inst-ir="${at.id}"]`); if(tab) tab.textContent = at.nome || "—";
+    salvar();
+  });
+  el.addEventListener("change", e=>{ if(e.target.id==="inst-nome" && !e.target.value.trim()){ const k = HIST_CHAVE[S.modulo], I = instDe(k); I.lista.find(x=>x.id===I.ativo).nome = "Sem nome"; renderInst(); salvar(); } });
+}
+
 /* ---------- Início ---------- */
 $("predio").innerHTML = PREDIOS.map((p,i)=>`<option value="${i}">${p.n}</option>`).join("");
 $("solo").innerHTML = SOLOS.map((s,i)=>`<option value="${i}">${s.n} (Ci ${s.ci} L/m²·dia)</option>`).join("");
@@ -6100,6 +6219,8 @@ ligar();
 ligarPluvial();
 ligarHid();
 ligarImpHid();
+ligarInst();
+renderInst();
 ligarEst();
 ligarEle();
 ligarEleCanvas();
@@ -6116,55 +6237,23 @@ ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao
 renderEsgoto();
 { let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
 
-/* =====================================================================
-   PONTE COM O PAINEL EQUIPER (modo embutido, dentro de um iframe)
-   Não altera nenhum cálculo nem o funcionamento de quando este arquivo
-   é aberto sozinho, fora do painel.
-   ===================================================================== */
 var EMBUTIDO = false;
 try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
-
 if(EMBUTIDO){
   document.body.classList.add("embutido-painel");
-  // Esconde a área "Clientes" própria deste app — quem escolhe o cliente é o painel.
   var estiloEmbutido = document.createElement("style");
   estiloEmbutido.textContent = "body.embutido-painel [data-view=\"clientes\"], body.embutido-painel #tela-clientes{display:none!important}";
   document.head.appendChild(estiloEmbutido);
-  var campoClienteEl = $("cliente");
-  if(campoClienteEl) campoClienteEl.readOnly = true;
-
-  var _pontePronta = false;
-  var _ponteTimer;
-  function ponteAvisarSalvo(){
-    if(!_pontePronta) return;
-    clearTimeout(_ponteTimer);
-    _ponteTimer = setTimeout(function(){
-      try{
-        window.parent.postMessage({
-          tipo: "dimensionamento-salvo",
-          clienteId: S.obra.clienteIdExterno || "",
-          dados: clone(S)
-        }, "*");
-      }catch(e){}
-    }, 400);
-  }
-  // Reaproveita o mesmo gatilho de salvamento que já existe — sem duplicar a lógica de cálculo.
-  var _salvarOriginal = salvar;
-  salvar = function(){ _salvarOriginal(); ponteAvisarSalvo(); };
-
-  window.addEventListener("message", function(e){
-    var msg = e.data;
-    if(!msg || msg.tipo !== "carregar-dimensionamento") return;
-    S = migrar(msg.dados || estadoNovo());
-    S.obra.cliente = msg.clienteNome || "";
-    S.obra.clienteIdExterno = msg.clienteId || "";
+  var campoClienteEl = $("cliente"); if(campoClienteEl) campoClienteEl.readOnly = true;
+  var _pontePronta = false, _ponteTimer;
+  function ponteAvisarSalvo(){ if(!_pontePronta) return; clearTimeout(_ponteTimer);
+    _ponteTimer = setTimeout(function(){ try{ window.parent.postMessage({tipo:"dimensionamento-salvo", clienteId:S.obra.clienteIdExterno||"", dados:clone(S)}, "*"); }catch(e){} }, 400); }
+  var _salvarOriginal = salvar; salvar = function(){ _salvarOriginal(); ponteAvisarSalvo(); };
+  window.addEventListener("message", function(e){ var msg=e.data; if(!msg||msg.tipo!=="carregar-dimensionamento") return;
+    S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
     if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
-    preencherTudo();
-    renderLateralObra();
-    _pontePronta = true;
-  });
-
-  try{ window.parent.postMessage({ tipo: "dimensionamento-pronto" }, "*"); }catch(e){}
+    preencherTudo(); renderLateralObra(); _pontePronta = true; });
+  try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
 }
 </script>
 </body>
