@@ -6457,6 +6457,9 @@ if(EMBUTIDO){
     S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
     if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
     preencherTudo(); renderLateralObra(); _pontePronta = true; });
+  var _tituloPai = null;
+  addEventListener("beforeprint", function(){ try{ _tituloPai = window.parent.document.title; window.parent.document.title = nomePDF(); }catch(e){} });
+  addEventListener("afterprint", function(){ try{ if(_tituloPai!==null) window.parent.document.title = _tituloPai; _tituloPai = null; }catch(e){} });
   try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
 }
 </script>
