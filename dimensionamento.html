@@ -2810,7 +2810,7 @@ function ligar(){
     const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
     const cli = (S.obra.cliente||"").trim();
     const kI = HIST_CHAVE[S.modulo];
-    return [plan, cli || "Sem cliente", instMultiplo(kI) ? instNomeAtivo(kI) : ""].filter(Boolean).join(" - ").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
+    return (`${cli || "Sem cliente"}_${plan}` + (instMultiplo(kI) ? ` - ${instNomeAtivo(kI)}` : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
   };
   addEventListener("beforeprint", ()=>{ document.title = nomePDF(); });
   addEventListener("afterprint", ()=>{ document.title = tituloOriginal; });
