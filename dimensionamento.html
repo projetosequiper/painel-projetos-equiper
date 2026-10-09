@@ -319,6 +319,15 @@ details, details *{box-sizing:border-box}
 .rs-op{text-align:left;background:var(--cinza-1);border:2px solid transparent;border-radius:4px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
 .rs-op:hover{border-color:var(--cinza-3)}
 .rs-op.on{border-color:var(--preto);background:var(--branco)}
+.cg-lin{padding:12px;display:grid;gap:10px;grid-template-columns:1fr 1.5fr 70px 175px 110px 40px;align-items:end}
+.cg-lin .cg-tot{font-size:13px;color:var(--cinza-4);padding-bottom:10px}
+.cg-lin .cg-tot b{display:block;font-size:17px;color:var(--preto);font-variant-numeric:tabular-nums}
+@media(max-width:760px){.cg-lin{grid-template-columns:1fr 1fr 40px}.cg-lin .cg-eq{grid-column:1/-1;grid-row:1}}
+.cg-bts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.cg-bts .add{width:auto;margin:0;flex:1 1 220px}
+.rs-op .cg-rec{align-self:flex-start;background:var(--vermelho);color:var(--branco);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:3px}
+.rs-op strong{font-family:var(--cond);font-size:28px;font-weight:700;line-height:1.05}
+.rs-op em{font-style:normal;font-size:13px;color:var(--cinza-4)}
+.cg-op-x{opacity:.55}
 .rs-op small{font-size:13px;color:var(--cinza-4);font-weight:600}
 .rs-op strong{font-family:var(--cond);font-size:34px;line-height:1}
 .rs-op span{font-size:14px}
@@ -639,7 +648,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <button class="nav-it nsub" type="button" data-mod="est">Tubulação</button>
       </div>
     </div>
-    <button class="nav-it" type="button" data-mod="gas"><i aria-hidden="true">GÁS</i>Gás - RIP</button>
+    <div class="nav-g" data-g="gas">
+      <button class="nav-grupo" type="button" data-toggle-g="gas" aria-expanded="true"><i aria-hidden="true">GÁS</i>Gás<span class="nav-seta" aria-hidden="true">▾</span></button>
+      <div class="nav-sub">
+        <button class="nav-it nsub" type="button" data-mod="gas">Tubulação - RIP</button>
+        <button class="nav-it nsub" type="button" data-mod="cgl">Casa de gás (GLP)</button>
+      </div>
+    </div>
     <button class="nav-it" type="button" data-mod="plu"><i aria-hidden="true">PLU</i>Água pluvial</button>
     <div class="nav-g" data-g="ele">
       <button class="nav-grupo" type="button" data-toggle-g="ele" aria-expanded="true"><i aria-hidden="true">ELE</i>Elétrica<span class="nav-seta" aria-hidden="true">▾</span></button>
@@ -1092,6 +1107,45 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </section>
   </section>
 
+  <!-- ================= GÁS · CASA DE GÁS (GLP) ================= -->
+  <section class="modulo" id="mod-cgl" hidden>
+    <h1>Gás · casa de gás (GLP)</h1>
+    <p class="sub">Consumo calculado e adotada dos equipamentos (NBR 13932), consumo em kg/h e quantidade de cilindros pela capacidade de vaporização.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="cgl"> Esta obra não terá casa de gás (GLP)</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Equipamentos a gás da casa</h2>
+      <div class="lista" id="gl-lista"></div>
+      <div class="cg-bts">
+        <button class="add" type="button" id="gl-add">Adicionar equipamento</button>
+        <button class="add" type="button" id="gl-rip">Trazer os pontos da Tubulação de gás - RIP</button>
+      </div>
+      <p class="fonte" style="margin-top:10px">Mesmo catálogo de equipamentos da Tubulação de gás - RIP (lá dá para cadastrar e editar). Consumos em GLP, em kcal/min.</p>
+    </section>
+    <div class="params p4" id="gl-params"></div>
+    <section class="etapas">
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Consumo para os cilindros</h3><span class="nbr">clique para escolher</span></div><div id="gl-pot"></div></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Cilindros</h3>
+        <label class="campo" style="min-width:230px">Capacidade de vaporização<select id="gl-vap"><option value="pratica">Prática (planilha)</option><option value="teorica">Teórica</option></select></label></div>
+        <div id="gl-cil"></div>
+        <div class="grade" style="margin-top:16px">
+          <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="gl-res"> Bateria reserva com a mesma quantidade (troca sem desligar)</label>
+          <label class="campo c3">Cilindros em uso adotados (opcional)<input id="gl-qtd" type="number" min="0" step="1" inputmode="numeric" placeholder="calculado"></label>
+        </div>
+        <div id="gl-fim" style="margin-top:14px"></div></div></article>
+      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div id="gl-memorial"></div></div></article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="b-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Nº do documento<input id="b-doc" autocomplete="off" placeholder="Ex.: MC-GAS-002"></label>
+        <label class="campo c2">Revisão<input id="b-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="b-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
   <!-- ================= ESGOTO ================= -->
   <section class="modulo" id="mod-esgoto">
     <h1>Esgoto · tratamento</h1>
@@ -1486,6 +1540,9 @@ const ESPESS = {15:{E:"0,50",A:"0,80",I:"1,00"},22:{E:"0,60",A:"0,90",I:"1,10"},
 // Catálogo original (consumo em m³/h de GN e kg/h de GLP)
 const K300 = {gn:300*60/9400, glp:300*60/11750};      // 300 kcal/min
 const CAT_NOVOS_V2 = ["Fogão","Churrasqueira","Lareira","Forno","Fogo de chão"];
+// potências de GLP em kcal/min (tabela de aquecedores da Equiper) — valem para GLP em todo o app
+const GLP_KCALMIN = {"REU-1002 FEH":16900/60, "E15":21000/60, "E21":479.8, "REU-2802 FEC":821, "E42":979, "E43":1038, "E48":979, "Sensei":819, "Condensing":864, "Mastertemp 125":431, "Mastertemp 250":842, "Mastertemp 400":1351};
+const glpDeKcalMin = k => k*60/11750;
 const CAT_ORIGINAL = [
   ...CAT_NOVOS_V2.map(n=>({n, ...K300})),
   {n:"REU-1002 FEH", gn:16900/9400, glp:16900/11750},   // só potência nominal 16.900 kcal/h
@@ -1502,7 +1559,7 @@ const CAT_ORIGINAL = [
   {n:"Mastertemp 125", gn:3.5, glp:2.2},
   {n:"Mastertemp 250", gn:7, glp:4.3},
   {n:"Mastertemp 400", gn:11.3, glp:6.9}
-];
+].map(c=>GLP_KCALMIN[c.n]!=null ? {...c, glp: glpDeKcalMin(GLP_KCALMIN[c.n])} : c);
 
 /* =====================================================================
    ESTADO
@@ -1522,21 +1579,26 @@ function carregarCatalogo(){
     const r = JSON.parse(localStorage.getItem(CHAVE_CAT));
     if(Array.isArray(r) && r.length){
       // catálogo já personalizado: acrescenta uma única vez os equipamentos novos
-      if(localStorage.getItem(CHAVE_CAT+"-v")!=="2"){
+      const v = localStorage.getItem(CHAVE_CAT+"-v");
+      if(v!=="2" && v!=="3"){
         const faltam = CAT_NOVOS_V2.filter(n=>!r.some(c=>c.n===n)).map(n=>({n, ...K300}));
-        r.unshift(...faltam); localStorage.setItem(CHAVE_CAT, JSON.stringify(r)); localStorage.setItem(CHAVE_CAT+"-v","2");
+        r.unshift(...faltam);
+      }
+      if(v!=="3"){                                  // v3: potências de GLP pela tabela de aquecedores
+        r.forEach(c=>{ if(GLP_KCALMIN[c.n]!=null) c.glp = glpDeKcalMin(GLP_KCALMIN[c.n]); });
+        localStorage.setItem(CHAVE_CAT, JSON.stringify(r)); localStorage.setItem(CHAVE_CAT+"-v","3");
       }
       return r;
     }
   }catch(e){}
   return clone(CAT_ORIGINAL);
 }
-function salvarCatalogo(){ try{ localStorage.setItem(CHAVE_CAT, JSON.stringify(CAT)); localStorage.setItem(CHAVE_CAT+"-v","2"); }catch(e){} }
+function salvarCatalogo(){ try{ localStorage.setItem(CHAVE_CAT, JSON.stringify(CAT)); localStorage.setItem(CHAVE_CAT+"-v","3"); }catch(e){} }
 const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1545,6 +1607,7 @@ function estadoNovo(){
       pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    cgl:{itens:[], base:"adot", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:11, alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
@@ -1569,7 +1632,7 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     inst: (o.inst && typeof o.inst==="object") ? o.inst : {},
     plu:{...b.plu, ...lim(o.plu)},
@@ -1577,6 +1640,7 @@ function migrar(o){
     ele:{...b.ele, ...lim(o.ele)},
     res:{...b.res, ...lim(o.res)},
     cmx:{...b.cmx, ...lim(o.cmx)},
+    cgl:{...b.cgl, ...lim(o.cgl)},
     pis:(()=>{ const q = lim(o.pis||{}); return {...b.pis, ...q, pool:{...b.pis.pool, ...(q.pool||{})}, spa:{...b.pis.spa, ...(q.spa||{})}, custos:{...b.pis.custos, ...(q.custos||{})}, filtro:{...b.pis.filtro, ...(q.filtro||{})}, cloro:{...b.pis.cloro, ...(q.cloro||{})}, hidro:{...b.pis.hidro, ...(q.hidro||{})}}; })(),
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
@@ -2474,8 +2538,9 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-cgl").hidden = m!=="cgl";
   if(m==="cmx") atualizarCmx();
+  if(m==="cgl") renderCgl();
   if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
   if(m==="est") renderEst();
@@ -2492,6 +2557,11 @@ function resumo(){
   if(S.modulo==="cmx"){
     const r = resumoCmxParte();
     $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Circuitos</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Circuitos</span><span class="rotulo">informe disjuntor e comprimento</span>`;
+    return;
+  }
+  if(S.modulo==="cgl"){
+    const r = resumoCglParte();
+    $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Casa de gás</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Casa de gás</span><span class="rotulo">informe os equipamentos</span>`;
     return;
   }
   if(S.modulo==="res"){
@@ -2537,22 +2607,22 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","plu","hid","res","ele","cmx","paq","pfi","pcl","phi"].forEach(m=>{
+  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","paq","pfi","pcl","phi"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); renderCgl(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco"]) $(k).value = O[k] ?? "";
   $("local").value = localEmissao();
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); preencherCgl(); aplicarNA();
   if(typeof histBase==="function" && !HIST.restaurando) histBase();
   if(typeof renderInst==="function") renderInst();
 }
@@ -2604,7 +2674,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2731,7 +2801,7 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : relEsgoto());
     window.print();
   });
   // nome do PDF = planilha + cliente (o navegador usa o título da página como nome do arquivo)
@@ -2748,7 +2818,7 @@ function ligar(){
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -2759,7 +2829,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -2767,9 +2837,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -2834,6 +2904,7 @@ function resumoObraBase(dados){
       out.push({mod:"gas", det:`${S.gas.gas} · ${S.gas.trechos.length} trecho(s), ${S.gas.pontos.length} ponto(s)${a && !a.erro ? ` · saída do medidor ${rotDiam(a.d)}` : ""}`, ok: res.length>0 && !res.some(r=>r.erro)});
     }
     { const r = resumoResParte(); if(r) out.push({mod:"res", det:r.det, ok:r.ok}); }
+    { const r = resumoCglParte(); if(r) out.push({mod:"cgl", det:r.det, ok:r.ok}); }
     { const r = resumoCmxParte(); if(r) out.push({mod:"cmx", det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); }
     ["paq","pfi","pcl","phi"].forEach(pt=>{ const r = resumoPisParte(pt); if(r) out.push({mod:pt, det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); });
     if(S.ele.alims.length){
@@ -2867,7 +2938,7 @@ function statusObra(dados){
 }
 function chipsStatus(st, contagem){
   return DISC.map(d=>{ const v = juntarSt(d.m.map(m=>st[m].st)), cls = {ok:"", rev:"falha", pend:"pend", na:"na"}[v];
-    const partes = d.m.length>1 ? " (" + d.m.map(m=>`${NOME_MOD[m].split(" · ")[1]}: ${TXT_ST[st[m].st]}`).join("; ") + ")" : "";
+    const partes = d.m.length>1 ? " (" + d.m.map(m=>`${NOME_MOD[m].split(" · ")[1] || NOME_MOD[m]}: ${TXT_ST[st[m].st]}`).join("; ") + ")" : "";
     const n = contagem ? Math.max(...d.m.map(m=>contagem[m]||0)) : 0;
     return `<span class="abrev ${cls}" title="${d.n} · ${TXT_ST[v]}${partes}">${d.s}${n>1?` ×${n}`:""}</span>`; }).join("");
 }
@@ -2925,7 +2996,7 @@ function abrirObraBib(id, mod, inst){
 }
 function novaObraCliente(nome, mod){
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -3057,7 +3128,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
 }
@@ -5990,6 +6061,136 @@ function relCmx(){
 }
 
 /* =====================================================================
+   GÁS · CASA DE GÁS (GLP) — planilha "GLP - NBR 13932 rev.5"
+   ===================================================================== */
+const PCI_GLP_KG = 11700;                                   // kcal/kg (planilha, aba Aux)
+const CILINDROS = [                                         // capacidade de vaporização em kg/h (planilha)
+  {id:"P13", kg:13, teo:0.6, pra:0.6},
+  {id:"P45", kg:45, teo:1.0, pra:1.2},
+  {id:"P90", kg:90, teo:2.0, pra:2.0},
+  {id:"P125", kg:125, teo:2.5, pra:2.5},
+  {id:"P190", kg:190, teo:3.7, pra:4.0}
+];
+const CG_MAX_USO = 4;                                       // recomendação: até 4 cilindros em uso
+function fSim13932(C){                                      // Anexo D · C em kcal/min · resultado em %
+  if(C<350) return 100;
+  if(C<9612) return 100/(1+0.001*Math.pow(C-349,0.8712));
+  if(C<20000) return 100/(1+0.4705*Math.pow(C-1055,0.19931));
+  return 23;
+}
+function calcCgl(){
+  const G = S.cgl;
+  const itens = G.itens.map(it=>{ const c = it.equip && CAT.find(x=>x.n===it.equip); if(c) it.k = +kcalCat(c).kglp.toFixed(1);
+    const q = Math.max(0, num(it.qtd)), k = Math.max(0, num(it.k)); return {it, q, k, t:q*k}; });
+  const C = itens.reduce((a,x)=>a+x.t, 0), F = C>0 ? fSim13932(C) : 100, A = C*F/100;
+  const base = G.base==="calc" ? "calc" : "adot", P = base==="calc" ? C : A, kgh = P*60/PCI_GLP_KG;
+  const teor = G.vap==="teorica";
+  const opcoes = CILINDROS.map(c=>{ const v = teor ? c.teo : c.pra, n = kgh>0 ? Math.ceil(kgh/v - 1e-9) : 0; return {...c, v, n}; });
+  const rec = opcoes.find(o=>o.id!=="P13" && o.n<=CG_MAX_USO) || opcoes[opcoes.length-1];
+  const sel = opcoes.find(o=>o.id===G.cil) || rec;
+  const nUso = Math.max(sel.n, Math.floor(num(G.qtdUso))), nRes = G.reserva ? nUso : 0, total = nUso + nRes;
+  return {itens, C, F, A, base, P, kgh, teor, opcoes, rec, sel, nUso, nRes, total, massa: total*sel.kg, capVap: nUso*sel.v,
+    erro: !C ? "Informe os equipamentos a gás e o consumo" : null};
+}
+function renderCglLista(){
+  const G = S.cgl;
+  $("gl-lista").innerHTML = G.itens.length ? G.itens.map((it,i)=>`<div class="trecho cg-it" data-i="${i}"><div class="cg-lin">
+      <label class="campo">Identificação<input data-cg="nome" value="${esc(it.nome||"")}" placeholder="Ex.: Cozinha"></label>
+      <label class="campo cg-eq">Equipamento<select data-cg="equip">${opcoesEquip(it.equip)}</select></label>
+      <label class="campo">Qtd.<input data-cg="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.qtd)}"></label>
+      <label class="campo">Consumo unit.<span class="unid"><input data-cg="k" type="number" min="0" step="1" inputmode="decimal" value="${esc(it.k)}" placeholder="0"><b>kcal/min</b></span></label>
+      <div class="cg-tot">Total<b data-cgt>0</b></div>
+      <button class="x" type="button" data-rm aria-label="Remover equipamento">×</button></div></div>`).join("")
+    : `<p class="vazio">Nenhum equipamento ainda. Adicione os equipamentos a gás da casa.</p>`;
+  renderCgl();
+}
+const kcm = v => `${fmt(v,0)} kcal/min`;
+function renderCgl(){
+  if(!$("gl-params")) return;
+  const R = calcCgl(), G = S.cgl;
+  document.querySelectorAll("#gl-lista .cg-it").forEach((el,i)=>{ const x = R.itens[i]; if(x) el.querySelector("[data-cgt]").textContent = kcm(x.t); });
+  $("gl-params").innerHTML = [["Consumo calculado (C)", fmt(R.C,0), "kcal/min"], ["Fator de simultaneidade (F)", fmt(R.F,1), "%"], ["Consumo adotado (A)", fmt(R.A,0), "kcal/min"], ["Consumo de GLP", fmt(R.kgh,2), "kg/h"]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  $("gl-vap").value = G.vap==="teorica" ? "teorica" : "pratica";
+  $("gl-res").checked = !!G.reserva; if(document.activeElement!==$("gl-qtd")) $("gl-qtd").value = G.qtdUso ?? "";
+  if(R.erro){ $("gl-pot").innerHTML = `<p class="vazio">${R.erro}.</p>`; $("gl-cil").innerHTML = ""; $("gl-fim").innerHTML = ""; $("gl-memorial").innerHTML = ""; return; }
+  const op = (b, tit, sub, P) => `<button type="button" class="rs-op ${R.base===b?"on":""}" data-cg-base="${b}"><small>${tit}</small><strong>${kcm(P)}</strong>
+      <span>${sub}</span><span>Consumo: <b>${fmt(P*60/PCI_GLP_KG,2)} kg/h</b> (${fmt(P*60,0)} kcal/h)</span><em>${R.base===b?"usada nos cilindros":"clique para usar"}</em></button>`;
+  $("gl-pot").innerHTML = `<div class="rs-ops">${op("adot","Consumo adotado (A)","Consumo máximo provável · com simultaneidade", R.A)}${op("calc","Consumo calculado (C)","Consumo máximo possível · tudo ligado", R.C)}</div>`;
+  $("gl-cil").innerHTML = `<div class="rs-ops">${R.opcoes.map(o=>{ const on = o.id===R.sel.id;
+    return `<button type="button" class="rs-op ${on?"on":""} ${o.id==="P13"&&!on?"cg-op-x":""}" data-cg-cil="${o.id}">
+      ${o.id===R.rec.id?`<span class="cg-rec">Recomendado</span>`:""}<small>${o.id} · ${o.kg} kg · vaporiza ${fmt(o.v,1)} kg/h</small>
+      <strong>${o.n} em uso</strong><span>${G.reserva?`+ ${o.n} reserva = <b>${o.n*2} cilindros</b>`:`<b>${o.n} cilindro${o.n!==1?"s":""}</b>`}</span>
+      <span>Capacidade: ${fmt(o.n*o.v,1)} kg/h ≥ ${fmt(R.kgh,2)} kg/h</span><em>${on?(G.cil?"escolhido":"escolhido (recomendação)"):"clique para escolher"}</em></button>`; }).join("")}</div>
+    <p class="fonte" style="margin-top:10px">Recomendação: o menor cilindro que atende com até ${CG_MAX_USO} em uso (o P13 não entra na recomendação de central).${G.cil?` <button type="button" class="lnk" data-cg-cil="">voltar para a recomendação</button>`:""}</p>`;
+  $("gl-fim").innerHTML = `<div class="conclusao ok" style="padding:14px 16px;background:var(--cinza-1);border-left:4px solid var(--preto)"><b>Casa de gás:</b> ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} em uso${R.nRes?` + ${R.nRes} de reserva`:""} = <b>${R.total} cilindros ${R.sel.id}</b> · ${fmt(R.massa,0)} kg de GLP armazenados · vaporização ${fmt(R.capVap,1)} kg/h para ${fmt(R.kgh,2)} kg/h.</div>`;
+  $("gl-memorial").innerHTML = memorialCgl(R);
+}
+function memorialCgl(R){
+  if(R.erro) return "";
+  const C = R.C;
+  const fTxt = C<350 ? "C &lt; 350 kcal/min → F = 100%" : C<9612 ? `350 ≤ C &lt; 9.612 → F = 100 / [1 + 0,001 × (C − 349)<sup>0,8712</sup>] = 100 / [1 + 0,001 × (${fmt(C,1)} − 349)<sup>0,8712</sup>] = <b>${fmt(R.F,2)}%</b>`
+    : C<20000 ? `9.612 ≤ C &lt; 20.000 → F = 100 / [1 + 0,4705 × (C − 1.055)<sup>0,19931</sup>] = <b>${fmt(R.F,2)}%</b>` : "C ≥ 20.000 kcal/min → F = 23%";
+  return `<div class="mc-bloco"><h4>Consumo calculado (consumo máximo possível)</h4>${R.itens.filter(x=>x.t>0).map(x=>`<p class="mc-l">${esc(x.it.nome||x.it.equip||"Equipamento")}${x.it.nome&&x.it.equip?` (${esc(x.it.equip)})`:""}: ${fmt(x.q)} × ${fmt(x.k,1)} = ${kcm(x.t)}</p>`).join("")}
+      <p class="mc-l">C = <b>${kcm(C)}</b> (${fmt(C*60,0)} kcal/h)</p></div>
+    <div class="mc-bloco"><h4>Fator de simultaneidade e consumo adotado (NBR 13932, anexo D)</h4><p class="mc-l">${fTxt}</p><p class="mc-l">A = C × F / 100 = ${fmt(C,1)} × ${fmt(R.F,2)} / 100 = <b>${kcm(R.A)}</b></p></div>
+    <div class="mc-bloco"><h4>Consumo de GLP em massa</h4><p class="mc-l">Consumo usado: ${R.base==="calc"?"calculado (C)":"adotado (A)"} = ${kcm(R.P)}</p><p class="mc-l">Consumo = ${fmt(R.P,1)} × 60 / ${fmt(PCI_GLP_KG)} kcal/kg = <b>${fmt(R.kgh,2)} kg/h</b></p></div>
+    <div class="mc-bloco"><h4>Quantidade de cilindros</h4><p class="mc-l">${R.sel.id}: vaporização ${R.teor?"teórica":"prática"} ${fmt(R.sel.v,1)} kg/h → n = ${fmt(R.kgh,2)} / ${fmt(R.sel.v,1)} = ${fmt(R.kgh/R.sel.v,2)} → <b>${R.sel.n} em uso</b>${R.nUso>R.sel.n?` (adotados ${R.nUso})`:""}</p>
+      ${R.nRes?`<p class="mc-l">Reserva: ${R.nRes} → total <b>${R.total} cilindros ${R.sel.id}</b> (${fmt(R.massa,0)} kg)</p>`:""}</div>`;
+}
+function preencherCgl(){ const G = S.cgl; $("b-doc").value = G.doc; $("b-rev").value = G.rev; $("b-obs").value = G.obs; renderCglLista(); }
+function ligarCgl(){
+  const G = () => S.cgl, alt = () => { renderCgl(); resumo(); salvar(); };
+  for(const k of ["doc","rev","obs"]) $("b-"+k).addEventListener("input", e=>{ G()[k] = e.target.value; salvar(); });
+  $("gl-add").addEventListener("click", ()=>{ G().itens.push({nome:"", equip:"", qtd:1, k:""}); renderCglLista(); resumo(); salvar();
+    const s = document.querySelectorAll('#gl-lista [data-cg="equip"]'); s[s.length-1]?.focus(); });
+  $("gl-rip").addEventListener("click", ()=>{
+    const pts = S.gas.pontos.filter(p=>num(p.qtd)>0 || p.equip);
+    if(!pts.length){ aviso("A Tubulação de gás - RIP desta obra ainda não tem pontos de consumo.", true); return; }
+    if(G().itens.length && !confirm(`Substituir os ${G().itens.length} equipamento(s) da lista pelos ${pts.length} ponto(s) da Tubulação de gás - RIP?`)) return;
+    G().itens = pts.map(p=>{ const c = p.equip && CAT.find(x=>x.n===p.equip); return {nome:p.nome||"", equip:c?p.equip:"", qtd:p.qtd??1, k: +(c ? kcalCat(c).kglp : num(p.kglp)).toFixed(1)}; });
+    renderCglLista(); resumo(); salvar(); aviso(`${pts.length} ponto(s) trazido(s) da Tubulação de gás - RIP (consumo em GLP)`);
+  });
+  $("gl-lista").addEventListener("change", e=>{
+    const f = e.target.dataset.cg; if(f!=="equip") return;
+    const it = G().itens[+e.target.closest(".cg-it").dataset.i], c = CAT.find(x=>x.n===e.target.value);
+    it.equip = e.target.value; if(c) it.k = +kcalCat(c).kglp.toFixed(1);
+    renderCglLista(); resumo(); salvar();
+  });
+  $("gl-lista").addEventListener("input", e=>{
+    const f = e.target.dataset.cg; if(!f || f==="equip") return;
+    const it = G().itens[+e.target.closest(".cg-it").dataset.i]; it[f] = e.target.value;
+    if(f==="k" && it.equip){ const c = CAT.find(x=>x.n===it.equip); if(c && Math.abs(kcalCat(c).kglp - num(it.k))>0.05){ it.equip = ""; e.target.closest(".cg-it").querySelector('[data-cg="equip"]').value = ""; } }
+    alt();
+  });
+  $("gl-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; G().itens.splice(+e.target.closest(".cg-it").dataset.i,1); renderCglLista(); resumo(); salvar(); });
+  $("gl-pot").addEventListener("click", e=>{ const b = e.target.closest("[data-cg-base]"); if(!b) return; G().base = b.dataset.cgBase; alt(); });
+  $("gl-cil").addEventListener("click", e=>{ const b = e.target.closest("[data-cg-cil]"); if(!b) return; G().cil = b.dataset.cgCil; alt(); });
+  $("gl-vap").addEventListener("change", e=>{ G().vap = e.target.value; alt(); });
+  $("gl-res").addEventListener("change", e=>{ G().reserva = e.target.checked; alt(); });
+  $("gl-qtd").addEventListener("input", e=>{ G().qtdUso = e.target.value; alt(); });
+}
+function resumoCglParte(){ const R = calcCgl(); if(R.erro) return null;
+  return {det:`${kcm(R.P)} (${R.base==="calc"?"calculado":"adotado"}) · ${fmt(R.kgh,2)} kg/h · ${R.nUso} ${R.sel.id} em uso${R.nRes?` + ${R.nRes} reserva`:""}`, ok:true}; }
+function relCgl(){
+  const MREL = S.cgl, G = S.cgl, R = calcCgl(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec;
+  return `<div class="r">${relCarimbo("Casa de gás · central de GLP · quantidade de cilindros", G.doc, G.rev, "Instalações de gás")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Normas de referência", `<ul class="r-normas"><li><b>ABNT NBR 13932</b><span>Instalações internas de gás liquefeito de petróleo (GLP)</span></li><li><b>ABNT NBR 13523</b><span>Central de gás liquefeito de petróleo (GLP)</span></li></ul>`)}
+    ${sec("Equipamentos a gás", `<table class="r-t"><thead><tr><th>Identificação</th><th>Equipamento</th><th class="n">Qtd.</th><th class="n">Consumo unit. (kcal/min.)</th><th class="n">Total (kcal/min.)</th></tr></thead><tbody>
+      ${R.itens.filter(x=>x.t>0).map(x=>`<tr><td>${esc(x.it.nome)||"—"}</td><td>${esc(x.it.equip)||"Outro"}</td><td class="n">${fmt(x.q)}</td><td class="n">${fmt(x.k,1)}</td><td class="n">${fmt(x.t,0)}</td></tr>`).join("")}
+      <tr style="font-weight:700"><td colspan="4">Consumo calculado (C)</td><td class="n">${fmt(R.C,0)}</td></tr></tbody></table>`)}
+    ${sec("Consumos", `<table class="r-t"><tbody>${td("Consumo calculado (C) · consumo máximo possível", `${kcm(R.C)} (${fmt(R.C*60,0)} kcal/h)`)}${td("Fator de simultaneidade (F)", `${fmt(R.F,2)}%`)}${td("Consumo adotado (A) · consumo máximo provável", `${kcm(R.A)} (${fmt(R.A*60,0)} kcal/h)`)}
+      ${td("Consumo usado nos cilindros", `<b>${R.base==="calc"?"calculado (C)":"adotado (A)"} = ${kcm(R.P)}</b>`)}${td("Consumo de GLP", `<b>${fmt(R.kgh,2)} kg/h</b> (PCI ${fmt(PCI_GLP_KG)} kcal/kg)`)}</tbody></table>`)}
+    ${sec("Cilindros", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Cilindro</th><th class="n">Vaporização ${R.teor?"teórica":"prática"} (kg/h)</th><th class="n">Em uso</th>${G.reserva?`<th class="n">Reserva</th>`:""}<th class="c">Adotado</th></tr></thead><tbody>
+      ${R.opcoes.map(o=>{ const on = o.id===R.sel.id; return `<tr ${on?'style="font-weight:700"':""}><td>${o.id} (${o.kg} kg)</td><td class="n">${fmt(o.v,1)}</td><td class="n">${on?R.nUso:o.n}</td>${G.reserva?`<td class="n">${on?R.nRes:o.n}</td>`:""}<td class="c">${on?"✓":""}</td></tr>`; }).join("")}</tbody></table>
+      <div class="r-concl"><b>Conclusão:</b> ${R.erro?"informar os equipamentos a gás.":`casa de gás com <b>${R.total} cilindros ${R.sel.id}</b> (${R.nUso} em uso${R.nRes?` + ${R.nRes} de reserva`:""}), ${fmt(R.massa,0)} kg de GLP armazenados; capacidade de vaporização ${fmt(R.capVap,1)} kg/h para consumo de ${fmt(R.kgh,2)} kg/h.`}</div></div>`)}
+    ${sec("Memorial de cálculo", memorialCgl(R))}
+    ${linhasObs(G.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(G.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
    RESPONSÁVEIS TÉCNICOS (cadastro neste computador)
    ===================================================================== */
 const CHAVE_RESP = "equiper-responsaveis";
@@ -6028,6 +6229,7 @@ function renderResp(){
   $("q-resp").innerHTML = opcoesResp(S.pis.respId);
   $("r-resp").innerHTML = opcoesResp(S.res.respId);
   $("k-resp").innerHTML = opcoesResp(S.cmx.respId);
+  $("b-resp").innerHTML = opcoesResp(S.cgl.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -6036,7 +6238,7 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx"};
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl"};
   Object.entries(PRE).forEach(([pre,k])=>{
     $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
   });
@@ -6047,8 +6249,8 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
-    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
+    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
   $("resp-lista").addEventListener("click", e=>{
@@ -6062,7 +6264,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -6096,6 +6298,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="pis") preencherPis();
     if(k==="res") preencherRes();
     if(k==="cmx") preencherCmx();
+    if(k==="cgl") preencherCgl();
     aplicarNA(); resumo();
     try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
     if(typeof bibAtualizar==="function") bibAtualizar();
@@ -6228,14 +6431,15 @@ ligarPis();
 ligarCatsPis();
 ligarRes();
 ligarCmx();
+ligarCgl();
 ligarImp();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
 document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]")) abrirTecnicos(); });
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
 
 var EMBUTIDO = false;
 try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
