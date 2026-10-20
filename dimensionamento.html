@@ -37,6 +37,11 @@ h1{font-family:var(--cond);font-weight:700;font-size:clamp(30px,6vw,46px);line-h
 .sub{color:var(--cinza-4);margin:0 0 24px;max-width:62ch}
 
 /* Obra + abas */
+.livre-aviso{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;background:#fff4f4;border:1px solid var(--vermelho);border-left:5px solid var(--vermelho);border-radius:3px;padding:12px 16px;margin:0 0 18px}
+.livre-aviso[hidden]{display:none}.livre-aviso b{display:block;font-family:var(--cond);font-size:20px}.livre-aviso span{color:var(--cinza-4);font-size:14px}
+.livre-bts{display:flex;gap:8px;flex-wrap:wrap}
+body.livre .obra,body.livre #inst{display:none}
+.nav-it.livre-on{background:var(--vermelho)!important;color:var(--branco)!important}
 .obra{display:grid;gap:12px;grid-template-columns:1fr;margin-bottom:18px}
 .inst{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 22px;padding:10px 12px;border:1px solid var(--cinza-2);border-radius:3px;background:var(--cinza-1)}
 .inst>small{font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza-4);margin-right:2px}
@@ -190,6 +195,10 @@ svg.diag{display:block;max-width:none}
 .pl-ferr{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .pl-ferr button{border:1px solid var(--cinza-2);background:var(--branco);border-radius:3px;padding:8px 12px;font-weight:600;cursor:pointer;font-size:14px}
 .pl-ferr button:hover{border-color:var(--preto)}
+.pl-zoom{display:inline-flex;margin-left:auto;align-items:stretch}
+.pl-zoom button{border-radius:0;margin-left:-1px;min-width:40px;padding:8px 10px}
+.pl-zoom button:first-child{border-radius:3px 0 0 3px;margin-left:0}.pl-zoom button:last-child{border-radius:0 3px 3px 0}
+.pl-zoom [data-z="0"]{min-width:64px;font-variant-numeric:tabular-nums}
 .pl-ferr button.on{background:var(--preto);border-color:var(--preto);color:var(--branco)}
 .pl-modo{font-size:14px;color:var(--cinza-4);margin:0 0 8px;min-height:20px}
 .pl-area-trab{display:grid;gap:12px;grid-template-columns:1fr}
@@ -636,6 +645,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   <nav class="lat-nav">
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
     <button class="nav-it" type="button" data-view="tecnicos"><i aria-hidden="true">✎</i>Responsáveis técnicos</button>
+    <button class="nav-it" type="button" data-view="livre" title="Dimensionar sem cliente e sem salvar"><i aria-hidden="true">⚡</i>Dimensionamento livre</button>
     <p class="lat-sec">Disciplinas</p>
     <div class="nav-g" data-g="hid">
       <button class="nav-grupo" type="button" data-toggle-g="hid" aria-expanded="true"><i aria-hidden="true">HID</i>Hidráulica<span class="nav-seta" aria-hidden="true">▾</span></button>
@@ -688,6 +698,10 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 
 <div class="app">
 <main>
+  <div class="livre-aviso" id="livre-aviso" hidden>
+    <div><b>Dimensionamento livre</b><span>Sem cliente e sem salvar: ao sair, fechar ou recarregar a página, tudo isto é descartado. Imprimir funciona normalmente.</span></div>
+    <div class="livre-bts"><button class="btn sec peq" type="button" id="livre-salvar">Salvar como obra de um cliente</button><button class="btn peq" type="button" id="livre-sair">Sair do modo livre</button></div>
+  </div>
   <div class="obra">
     <label class="campo">Cliente<input id="cliente" autocomplete="off" list="lista-clientes" placeholder="Escolha ou digite o cliente"></label>
     <datalist id="lista-clientes"></datalist>
@@ -736,7 +750,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Desenho da rede</h3><span class="nbr">atalhos: V selecionar · R caixa d'água · N nó · B bomba · E ambiente · D válvula · L ligar · A apagar</span></div>
-          <div class="pl-ferr hd-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+          <div class="pl-ferr hd-ferr" data-zoomde="hd" role="toolbar" aria-label="Ferramentas do desenho">
             <button type="button" data-modo="sel">↖ Selecionar</button>
             <button type="button" data-modo="res">▭ Caixa d'água</button>
             <button type="button" data-modo="no">● Nó</button>
@@ -807,7 +821,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Desenho da rede</h3><span class="nbr">atalhos: V selecionar · C caixa · L ligar · S saída · A apagar</span></div>
-          <div class="pl-ferr es-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+          <div class="pl-ferr es-ferr" data-zoomde="es" role="toolbar" aria-label="Ferramentas do desenho">
             <button type="button" data-modo="sel">↖ Selecionar</button>
             <button type="button" data-modo="caixa">▣ Caixa</button>
             <button type="button" data-modo="ligar">⟶ Ligar</button>
@@ -864,7 +878,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Desenho</h3><span class="nbr">atalhos: V selecionar · Q quadro · C caixa · L ligar · A apagar</span></div>
-          <div class="pl-ferr ec-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+          <div class="pl-ferr ec-ferr" data-zoomde="ec" role="toolbar" aria-label="Ferramentas do desenho">
             <button type="button" data-modo="sel">↖ Selecionar</button>
             <button type="button" data-modo="qd">◩ Quadro de distribuição</button>
             <button type="button" data-modo="cx">⊠ Caixa de passagem</button>
@@ -1289,7 +1303,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div>
           <div class="etapa-cab"><h3>Diagrama da rede</h3><span class="nbr">esquema sem escala, atualizado em tempo real</span></div>
           <div class="g-pavs" id="g-pavs"></div>
-          <div class="pl-ferr g-ferr" role="toolbar" aria-label="Ferramentas do diagrama">
+          <div class="pl-ferr g-ferr" data-zoomde="g" role="toolbar" aria-label="Ferramentas do diagrama">
             <button type="button" data-gmodo="mover" class="on">↖ Selecionar / mover</button>
             <button type="button" data-gmodo="apagar">✕ Apagar</button>
             <button type="button" data-gmodo="auto">⟲ Organizar automaticamente</button>
@@ -1390,7 +1404,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <div class="num">1</div>
         <div>
           <div class="etapa-cab"><h3>Desenho da rede</h3><span class="nbr">atalhos: V selecionar · C caixa · L ligar · S saída · A apagar</span></div>
-          <div class="pl-ferr" role="toolbar" aria-label="Ferramentas do desenho">
+          <div class="pl-ferr" data-zoomde="pl" role="toolbar" aria-label="Ferramentas do desenho">
             <button type="button" data-modo="sel">↖ Selecionar</button>
             <button type="button" data-modo="caixa">▣ Caixa de areia</button>
             <button type="button" data-modo="ligar">⟶ Ligar</button>
@@ -1678,7 +1692,9 @@ function carregar(){
   return estadoNovo();
 }
 let S = carregar();
-function salvar(){ try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
+let LIVRE = false;                                   // dimensionamento livre: sem cliente e sem salvar
+function gravarS(){ if(LIVRE) return; try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} }
+function salvar(){ gravarS(); if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
 
 /* =====================================================================
    ESGOTO: cálculo e interface
@@ -1986,7 +2002,7 @@ function atualizarGas(){
     </tbody></table><p class="fonte">↳ = ramal em T até o ponto de consumo; ↑ ↓ = prumada entre pavimentos. Pc e Pa em kcal/min. L de cálculo = soma de todos os trechos e ramais (${fmt(Ltotal(),1)} m), arredondada para a linha imediatamente superior da tabela de diâmetros.</p>`
     : `<p class="vazio">Cadastre trechos para ver o quadro.</p>`;
   $("g-memorial").innerHTML = memorialGas(res);
-  $("g-diagrama").innerHTML = diagramaGasLivre(res, true);
+  $("g-diagrama").innerHTML = diagramaGasLivre(res, true); zoomGasAplicar();
   renderGasPavs(nos);
   return {res, total};
 }
@@ -2333,7 +2349,7 @@ function ligarGasLivre(){
     (a.filhos||[]).forEach(f=>{ S.gas.pos[f.k] = {...S.gas.pos[f.k], x:nx+f.ox, y:ny+f.oy}; });
     // redesenha sem trocar o elemento svg de lugar (mantém a captura do ponteiro)
     const novo = diagramaGasLivre(calcRede(), true), tmp = document.createElement("div"); tmp.innerHTML = novo;
-    const ns = tmp.firstElementChild; a.svg.setAttribute("viewBox", ns.getAttribute("viewBox")); a.svg.setAttribute("width", ns.getAttribute("width")); a.svg.setAttribute("height", ns.getAttribute("height")); a.svg.innerHTML = ns.innerHTML;
+    const ns = tmp.firstElementChild; a.svg.setAttribute("viewBox", ns.getAttribute("viewBox")); a.svg.setAttribute("width", ns.getAttribute("width")); a.svg.setAttribute("height", ns.getAttribute("height")); a.svg.innerHTML = ns.innerHTML; zoomGasAplicar();
   });
   const soltar = e=>{
     const a = GD.arr; if(!a) return; GD.arr = null; GD.t = Date.now();
@@ -2666,6 +2682,7 @@ async function salvarArquivo(){
   aviso(`Obra baixada: ${nome}`);
 }
 function abrirTexto(txt, nome){
+  livreDesligar();
   let o; try{ o=JSON.parse(txt); }catch(e){ aviso("Este arquivo não é uma obra da Equiper.",true); return; }
   let dados = null;
   if(o && o.app==="equiper-dimensionamentos") dados = o.obra;
@@ -2821,13 +2838,14 @@ function ligar(){
   const tituloOriginal = document.title;
   const nomePDF = () => {
     const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
-    const cli = (S.obra.cliente||"").trim();
+    const cli = (S.obra.cliente||"").trim() || (LIVRE ? "Dimensionamento livre" : "");
     const kI = HIST_CHAVE[S.modulo];
     return (`${cli || "Sem cliente"}_${plan}` + (instMultiplo(kI) ? ` - ${instNomeAtivo(kI)}` : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
   };
   addEventListener("beforeprint", ()=>{ document.title = nomePDF(); });
   addEventListener("afterprint", ()=>{ document.title = tituloOriginal; });
   $("novo").addEventListener("click", ()=>{
+    if(LIVRE){ if(!confirm("Limpar o dimensionamento livre e começar outro?")) return; entrarLivre(true); return; }
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
@@ -2875,7 +2893,7 @@ function bibAtualizar(){                           // chamado a cada alteração
   clearTimeout(_bibT);
   _bibT = setTimeout(()=>{
     renderLateralObra();
-    if(!S.obra.cliente || !S.obra.cliente.trim()) return;
+    if(LIVRE || !S.obra.cliente || !S.obra.cliente.trim()) return;
     const b = bibLer(), agora = new Date().toISOString(), atual = b.obras[S.id];
     let c = clientePorNome(b, S.obra.cliente);
     if(!c){ c = {id:uid(), nome:S.obra.cliente.trim(), criado:agora}; b.clientes[c.id] = c; }
@@ -2996,11 +3014,13 @@ function fecharClientes(){ $("tela-clientes").hidden = true; $("tela-tecnicos").
 function renderLateralObra(){
   const el = $("lat-obra"); if(!el) return;
   const nome = (S.obra.cliente||"").trim();
+  if(LIVRE){ el.innerHTML = `<small>Modo livre</small><b>Dimensionamento livre</b><span>não é salvo</span>`; return; }
   el.innerHTML = `<small>Obra aberta</small><b>${nome?esc(nome):"Sem cliente"}</b>${S.obra.endereco?`<span>${esc(S.obra.endereco)}</span>`:""}<div class="abrevs">${chipsStatus(statusObra(clone(S)))}</div>`;
 }
 /* ---------- Tela de clientes ---------- */
 let CLI = {aberto:null, criando:false, editando:null};
 function abrirObraBib(id, mod, inst){
+  livreDesligar();
   const r = bibLer().obras[id]; if(!r) return;
   S = migrar(clone(r.dados)); S.id = id;
   if(inst && mod) instSwap(HIST_CHAVE[mod], inst);
@@ -3008,6 +3028,7 @@ function abrirObraBib(id, mod, inst){
   aviso(`Obra aberta: ${r.cliente}${r.local?" — "+r.local:""}`);
 }
 function novaObraCliente(nome, mod){
+  livreDesligar();
   const O = S.obra;
   S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
@@ -3082,6 +3103,7 @@ function ligarClientes(){
   document.querySelectorAll(".nav-it").forEach(bt=>bt.addEventListener("click", ()=>{
     if(bt.dataset.view==="clientes") abrirClientes();
     else if(bt.dataset.view==="tecnicos") abrirTecnicos();
+    else if(bt.dataset.view==="livre") entrarLivre();
     else { fecharClientes(); trocarModulo(bt.dataset.mod); window.scrollTo({top:0}); }
   }));
   $("cli-busca").addEventListener("input", renderClientes);
@@ -3093,7 +3115,7 @@ function ligarClientes(){
     const cb = e.target.closest("[data-na-obra]"); if(!cb) return;
     const oid = cb.closest("[data-obra]").dataset.obra, m = cb.dataset.naObra, b = bibLer(), o = b.obras[oid]; if(!o) return;
     o.dados.naoAplica = {...(o.dados.naoAplica||{}), [m]: cb.checked}; o.atualizado = new Date().toISOString();
-    if(oid===S.id){ S.naoAplica[m] = cb.checked; aplicarNA(); try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} renderLateralObra(); }
+    if(oid===S.id){ S.naoAplica[m] = cb.checked; aplicarNA(); gravarS(); renderLateralObra(); }
     bibGravar(b); renderClientes();
   });
   $("cli-lista").addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.dataset.ce) e.target.closest("[data-cli]").querySelector("[data-edit-salvar]")?.click(); });
@@ -3113,7 +3135,7 @@ function ligarClientes(){
       Object.assign(c, {nome:novo, telefone:v("telefone"), email:v("email"), cidade:v("cidade"), obs:v("obs")});
       if(novo!==antigo){
         Object.values(b.obras).filter(o=>o.clienteId===cid).forEach(o=>{ o.cliente = novo; if(o.dados?.obra) o.dados.obra.cliente = novo; });
-        if(chaveCliente(S.obra.cliente)===chaveCliente(antigo)){ S.obra.cliente = novo; $("cliente").value = novo; try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} renderLateralObra(); }
+        if(chaveCliente(S.obra.cliente)===chaveCliente(antigo)){ S.obra.cliente = novo; $("cliente").value = novo; gravarS(); renderLateralObra(); }
       }
       bibGravar(b); CLI.editando = null; renderClientes(); atualizarListaClientes(); aviso("Cliente atualizado"); return;
     }
@@ -3143,7 +3165,7 @@ function novaObraVazia(){                           // a tela passa a ser uma ob
   const O = S.obra, mod = S.modulo;
   S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
-  try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
+  gravarS();
 }
 
 /* =====================================================================
@@ -3291,7 +3313,7 @@ function renderPlCanvas(R){
   svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
   // escala fixa: a área de 900 unidades ocupa a largura da tela; se o desenho crescer, aparece rolagem (não encolhe)
   const larg = svg.parentElement.clientWidth; if(larg>0) PL.k = Math.min(1.2, (larg-2)/900);
-  svg.style.width = `${d.W*(PL.k||1)}px`;
+  svg.dataset.bw = d.W*(PL.k||1); svg.style.width = `${svg.dataset.bw*zoomDe("pl")}px`;
   svg.innerHTML = d.svg;
   svg.dataset.modo = PL.modo;
   plPosPop();
@@ -3893,7 +3915,7 @@ function renderHdCanvas(R){
   const d = hdDesenho(R, true), svg = $("hd-canvas");
   svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
   const larg = svg.parentElement.clientWidth; if(larg>0) HD.k = Math.min(1.2, (larg-2)/900);
-  svg.style.width = `${d.W*(HD.k||1)}px`;
+  svg.dataset.bw = d.W*(HD.k||1); svg.style.width = `${svg.dataset.bw*zoomDe("hd")}px`;
   svg.innerHTML = d.svg; svg.dataset.modo = HD.modo;
   hdPosPop();
 }
@@ -4659,7 +4681,7 @@ function renderEsCanvas(R){
   const d = esDesenho(R, true), svg = $("es-canvas");
   svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
   const larg = svg.parentElement.clientWidth; if(larg>0) ES.k = Math.min(1.2, (larg-2)/900);
-  svg.style.width = `${d.W*(ES.k||1)}px`; svg.innerHTML = d.svg; svg.dataset.modo = ES.modo;
+  svg.dataset.bw = d.W*(ES.k||1); svg.style.width = `${svg.dataset.bw*zoomDe("es")}px`; svg.innerHTML = d.svg; svg.dataset.modo = ES.modo;
   esPosPop();
 }
 /* janela */
@@ -5065,7 +5087,7 @@ function renderEcCanvas(){
   const d = ecDesenho(true), svg = $("el-canvas");
   svg.setAttribute("viewBox", d.vb); svg.style.aspectRatio = `${d.W} / ${d.H}`;
   const larg = svg.parentElement.clientWidth; if(larg>0) EC.k = Math.min(1.2, (larg-2)/900);
-  svg.style.width = `${d.W*(EC.k||1)}px`; svg.innerHTML = d.svg; svg.dataset.modo = EC.modo;
+  svg.dataset.bw = d.W*(EC.k||1); svg.style.width = `${svg.dataset.bw*zoomDe("ec")}px`; svg.innerHTML = d.svg; svg.dataset.modo = EC.modo;
   $("ec-modo-dica").textContent = MODOS_EC[EC.modo] + (EC.modo==="ligar" && EC.origem ? ` Origem: ${nomeEc(EC.origem)}. Esc cancela.` : "");
   document.querySelectorAll(".ec-ferr [data-modo]").forEach(b=>b.classList.toggle("on", b.dataset.modo===EC.modo));
   ecPosPop();
@@ -6379,7 +6401,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="cmx") preencherCmx();
     if(k==="cgl") preencherCgl();
     aplicarNA(); resumo();
-    try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){}
+    gravarS();
     if(typeof bibAtualizar==="function") bibAtualizar();
   } finally { HIST.restaurando = false; }
 }
@@ -6493,6 +6515,79 @@ function ligarInst(){
   el.addEventListener("change", e=>{ if(e.target.id==="inst-nome" && !e.target.value.trim()){ const k = HIST_CHAVE[S.modulo], I = instDe(k); I.lista.find(x=>x.id===I.ativo).nome = "Sem nome"; renderInst(); salvar(); } });
 }
 
+/* =====================================================================
+   ZOOM DOS DIAGRAMAS (caixas de areia)
+   ===================================================================== */
+const ZOOM_PASSOS = [0.4,0.5,0.67,0.8,1,1.25,1.5,2,2.5,3];
+const ZOOM_ALVO = {pl:"pl-canvas", hd:"hd-canvas", es:"es-canvas", ec:"el-canvas", g:"g-diagrama"};
+let ZOOM = (()=>{ try{ return JSON.parse(localStorage.getItem("equiper-zoom")) || {}; }catch(e){ return {}; } })();
+const zoomDe = k => ZOOM[k] || 1;
+function zoomSvg(k){ const el = $(ZOOM_ALVO[k]); return k==="g" ? el?.querySelector("svg") : el; }
+function zoomGasAplicar(){
+  const svg = $("g-diagrama")?.querySelector("svg"); if(!svg) return;
+  const w = num(svg.getAttribute("width")); if(!(w>0)) return;
+  svg.style.width = `${w*zoomDe("g")}px`; svg.style.height = "auto";
+}
+function zoomRotulos(){ document.querySelectorAll("[data-zoomde]").forEach(t=>{ const b = t.querySelector('[data-z="0"]'); if(b) b.textContent = `${Math.round(zoomDe(t.dataset.zoomde)*100)}%`; }); }
+function zoomMudar(k, dir, cx, cy){
+  const atual = zoomDe(k); let i = ZOOM_PASSOS.findIndex(z=>Math.abs(z-atual)<1e-6); if(i<0) i = ZOOM_PASSOS.indexOf(1);
+  const novo = dir===0 ? 1 : ZOOM_PASSOS[Math.max(0, Math.min(ZOOM_PASSOS.length-1, i+dir))];
+  if(Math.abs(novo-atual)<1e-6) return;
+  const svg = zoomSvg(k), tela = k==="g" ? $("g-diagrama") : svg?.parentElement;
+  // mantém o ponto sob o mouse (ou o centro) no mesmo lugar
+  let fx = 0.5, fy = 0.5, ox = tela ? tela.clientWidth/2 : 0, oy = tela ? tela.clientHeight/2 : 0;
+  if(tela && cx!=null){ const r = tela.getBoundingClientRect(); ox = cx - r.left; oy = cy - r.top; }
+  const px = tela ? tela.scrollLeft + ox : 0, py = tela ? tela.scrollTop + oy : 0;
+  ZOOM[k] = novo; try{ localStorage.setItem("equiper-zoom", JSON.stringify(ZOOM)); }catch(e){}
+  if(k==="g") zoomGasAplicar(); else if(svg && svg.dataset.bw) svg.style.width = `${svg.dataset.bw*novo}px`;
+  if(tela){ const r = novo/atual; tela.scrollLeft = px*r - ox; tela.scrollTop = py*r - oy; }
+  zoomRotulos();
+}
+function ligarZoom(){
+  document.querySelectorAll("[data-zoomde]").forEach(t=>{
+    const k = t.dataset.zoomde;
+    t.insertAdjacentHTML("beforeend", `<span class="pl-zoom" role="group" aria-label="Zoom do desenho"><button type="button" data-z="-1" title="Diminuir zoom (Ctrl + rolar o mouse)" aria-label="Diminuir zoom">−</button><button type="button" data-z="0" title="Voltar para 100%">100%</button><button type="button" data-z="1" title="Aumentar zoom (Ctrl + rolar o mouse)" aria-label="Aumentar zoom">+</button></span>`);
+    t.querySelector(".pl-zoom").addEventListener("click", e=>{ const b = e.target.closest("[data-z]"); if(!b) return; e.stopPropagation(); zoomMudar(k, +b.dataset.z); });
+    const tela = k==="g" ? $("g-diagrama") : $(ZOOM_ALVO[k])?.parentElement;
+    tela?.addEventListener("wheel", e=>{ if(!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); zoomMudar(k, e.deltaY<0 ? 1 : -1, e.clientX, e.clientY); }, {passive:false});
+  });
+  zoomRotulos();
+}
+
+/* =====================================================================
+   DIMENSIONAMENTO LIVRE (sem cliente, sem salvar)
+   ===================================================================== */
+function livreUI(){
+  document.body.classList.toggle("livre", LIVRE);
+  $("livre-aviso").hidden = !LIVRE;
+  document.querySelectorAll('[data-view="livre"]').forEach(b=>b.classList.toggle("livre-on", LIVRE));
+  renderLateralObra();
+}
+function livreDesligar(){ if(!LIVRE) return; LIVRE = false; livreUI(); }
+function entrarLivre(limpar){
+  const mod = S.modulo;
+  if(!LIVRE) gravarS();                               // a obra aberta fica guardada como estava
+  LIVRE = true;
+  S = estadoNovo(); S.modulo = mod; [S.esg, S.gas, S.plu, S.hid, S.est, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(respPadrao);
+  livreUI(); preencherTudo(); fecharClientes(); trocarModulo(mod); renderTudo(); window.scrollTo({top:0});
+  aviso(limpar ? "Dimensionamento livre limpo" : "Modo livre: nada será salvo");
+}
+function sairLivre(){
+  if(!LIVRE) return;
+  const mod = S.modulo; LIVRE = false; S = carregar(); livreUI();
+  preencherTudo(); trocarModulo(mod); renderTudo(); window.scrollTo({top:0});
+  aviso("Modo livre encerrado · voltou para a obra que estava aberta");
+}
+function livreSalvarComoObra(){
+  const nome = (prompt("Nome do cliente para salvar este dimensionamento:") || "").trim(); if(!nome) return;
+  LIVRE = false; S.id = uid(); S.obra.cliente = nome; $("cliente").value = nome; livreUI();
+  salvar(); aviso(`Salvo como obra de ${nome}`);
+}
+function ligarLivre(){
+  $("livre-sair").addEventListener("click", sairLivre);
+  $("livre-salvar").addEventListener("click", livreSalvarComoObra);
+}
+
 /* ---------- Início ---------- */
 $("predio").innerHTML = PREDIOS.map((p,i)=>`<option value="${i}">${p.n}</option>`).join("");
 $("solo").innerHTML = SOLOS.map((s,i)=>`<option value="${i}">${s.n} (Ci ${s.ci} L/m²·dia)</option>`).join("");
@@ -6502,6 +6597,8 @@ ligarPluvial();
 ligarHid();
 ligarImpHid();
 ligarInst();
+ligarLivre();
+ligarZoom();
 renderInst();
 ligarEst();
 ligarEle();
