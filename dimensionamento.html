@@ -951,11 +951,11 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
           <label class="campo c2">Temperatura do ar<span class="unid"><input id="pis-tar" type="number" min="5" max="41" step="1" inputmode="decimal"><b>ºC</b></span></label>
           <label class="campo c2">Tipo de uso<select id="pis-uso"></select></label>
           <label class="campo c2">Período<select id="pis-periodo"></select></label>
-          <label class="campo c2">Elevação de temperatura livre<span class="unid"><input id="pis-dT" type="number" min="1" step="1" inputmode="decimal"><b>ºC</b></span></label>
+          <label class="campo c2">Elevação de temperatura livre<span class="unid"><input id="pis-dT" type="number" min="0" step="1" inputmode="decimal"><b>ºC</b></span></label>
           <label class="campo c2">Tempo máximo · piscina<span class="unid"><input id="pis-hMaxPool" type="number" min="0" step="1" inputmode="decimal"><b>h</b></span></label>
           <label class="campo c2">Tempo máximo · spa<span class="unid"><input id="pis-hMaxSpa" type="number" min="0" step="0.5" inputmode="decimal"><b>h</b></span></label>
         </div>
-        <p class="fonte" style="margin-top:8px">A bomba de calor sugerida aquece a elevação informada em no máximo esse tempo: se a da tabela demorar mais, o app sobe de modelo até atender.</p>
+        <p class="fonte" style="margin-top:8px">A bomba de calor sugerida eleva a água em 10 ºC dentro do tempo máximo: se a da tabela demorar mais, o app sobe de modelo até atender. A elevação livre só mostra o tempo para outra elevação.</p>
         <details class="pis-mais"><summary>Seleção, consumo e custos</summary>
           <div class="grade" style="margin-top:12px">
             <label class="campo c2">Desclassificação (modelos acima)<input id="pis-desclas" type="number" min="0" max="5" step="1" inputmode="numeric"></label>
@@ -1626,7 +1626,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 function estadoNovo(){
   return {
     v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
-    obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
+    obra:{cliente:"", endereco:"", resp:"", crea:"", local:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
       su:{tipo:1, h:3, d:2, l:3, n:1}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
@@ -1636,7 +1636,7 @@ function estadoNovo(){
     cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cgl:{itens:[], base:"adot", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
-    pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:20, hMaxPool:20, hMaxSpa:4, poolspa:false, bcPS:"", alvo:3, fator24:0.2,
+    pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:0, hMaxPool:24, hMaxSpa:4, poolspa:false, bcPS:"", alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
       hidro:{vazBico:5, ralo:"lat50", conjuntos:[{nome:"Conjunto 1", bicos:""}]}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     ele:{cabo:"Gsette", taxa:"planilha", dutoPad:"rigido", dmin:1, els:[], alims:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
@@ -5282,12 +5282,13 @@ const bombasHid = () => CAT_BOMBA_HID.get().filter(b=>b.n && num(b.bicos)>0).map
 const RALOS = [["lat50","Ralo lateral ø50",9],["fun50","Ralo de fundo ø50",9],["fun60","Ralo de fundo ø60",12],["fun75","Ralo de fundo ø75",15]];
 
 /* ---------- Cálculos ---------- */
+const DT_SUGESTAO = 10;                                    // ºC usados para conferir o tempo máximo na sugestão da bomba de calor
 function calcCarga(corpo){
   const P = S.pis, c = P[corpo], V = num(c.vol); if(!(V>0)) return null;
   const f = {agua:fAgua(c.temp), cons:fOpc("construcao",P.construcao), capa:fOpc("capa",P.capa), vento:fOpc("vento",P.vento), ar:fAr(P.tar), uso:fOpc("uso",P.uso), per:fOpc("periodo",P.periodo), vol:fVol(V)};
   const Q = V*250*f.agua*f.cons*f.capa*f.vento*f.ar*f.uso*f.per*1.2/f.vol;
   const L = listaBC(); let i = -1; L.forEach((b,k)=>{ if(Q >= b.de) i = k; });
-  const j0 = i + Math.round(num(P.desclas)), dT = num(P.dT), hMax = num(corpo==="spa" ? (P.hMaxSpa ?? 4) : (P.hMaxPool ?? 20));
+  const j0 = i + Math.round(num(P.desclas)), dT = DT_SUGESTAO, hMax = num(corpo==="spa" ? (P.hMaxSpa ?? 4) : (P.hMaxPool ?? 24));
   const tempo = b => b ? Q/b.cap*4*dT : null;                // horas para elevar dT ºC
   let jP = j0; if(L[jP] && hMax>0 && dT>0) while(jP < L.length-1 && tempo(L[jP]) > hMax) jP++;
   const porTempo = jP>j0;
@@ -5383,7 +5384,7 @@ function renderPis(){
       <div class="pis-big"><div><small>Carga térmica</small><strong>${fmt(r.Q,0)}</strong><em>kcal/h</em></div>
         <div class="${r.bc&&r.atende?"":"falha"}"><small>${!r.bc?"Bomba de calor":r.manual?`Escolhida (sugerida: ${r.sug.nome})`:r.ps?"Pool-spa (mesmo equipamento)":"Bomba de calor sugerida"}</small>
           <div class="bc-nav"><button type="button" class="bc-seta" data-bcnav="${r.corpo}" data-dir="-1" ${r.idx<=0?"disabled":""} aria-label="Modelo menor">‹</button><strong>${r.bc?r.bc.m:"consultar"}</strong><button type="button" class="bc-seta" data-bcnav="${r.corpo}" data-dir="1" ${r.idx>=r.total-1?"disabled":""} aria-label="Modelo maior">›</button></div><em>${r.bc?`${fmt(r.bc.cap,0)} kcal/h · ${fmt(r.kw,1)} kW${r.atende?"":" · não atende a carga"}`:"acima da tabela"}</em>${r.bc&&r.hMax>0?`<em class="${r.tempoOk?"":"r-no"}" style="display:block">${fmt(r.dT)} ºC em ${fmt(r.tAq,1)} h · máx. ${fmt(r.hMax,1)} h${r.tempoOk?"":" · não atende o tempo"}</em>`:""}${r.porTempo&&!r.manual&&!r.ps?`<em style="display:block">pela tabela seria ${r.sug0.nome}; subiu pelo tempo</em>`:""}${r.manual?`<button type="button" class="lnk" data-bcvolta="${r.corpo}" style="font-size:13px;margin-top:4px">voltar à sugerida</button>`:""}</div></div>
-      ${r.bc?`<dl class="pl-tot"><dt>Elevar 1 ºC</dt><dd>${fmt(r.t1,2)} h</dd><dt>Elevar 10 ºC</dt><dd>${fmt(r.t1*10,1)} h</dd><dt>Elevar 15 ºC</dt><dd>${fmt(r.t1*15,1)} h</dd><dt>Elevar ${fmt(num(P.dT))} ºC</dt><dd>${fmt(r.t1*num(P.dT),1)} h</dd></dl>`:""}
+      ${r.bc?`<dl class="pl-tot"><dt>Elevar 1 ºC</dt><dd>${fmt(r.t1,2)} h</dd><dt>Elevar 10 ºC</dt><dd>${fmt(r.t1*10,1)} h</dd><dt>Elevar 15 ºC</dt><dd>${fmt(r.t1*15,1)} h</dd>${num(P.dT)>0?`<dt>Elevar ${fmt(num(P.dT))} ºC</dt><dd>${fmt(r.t1*num(P.dT),1)} h</dd>`:""}</dl>`:""}
       <p class="pis-sub">Comparativo · escala ${(ESCALAS.find(e=>e[0]===String(P.escala))||ESCALAS[1])[1].toLowerCase()}</p>
       <div class="rolar"><table class="mc-tab pis-esc"><tr><th>BTU/h</th>${r.escala.map(x=>`<th style="text-align:right">${fmt(x.btu/1000,0)} mil</th>`).join("")}</tr>
         <tr><th>kcal/h</th>${r.escala.map(x=>`<td class="${x.ok?"":"no"}">${fmt(x.cap,0)}</td>`).join("")}</tr>
@@ -5502,7 +5503,7 @@ function preencherPis(){
   const P = S.pis;
   $("pis-vp").value = P.pool.vol; $("pis-tp").value = P.pool.temp; $("pis-vs").value = P.spa.vol; $("pis-ts").value = P.spa.temp;
   ["construcao","capa","vento","uso","periodo","freq"].forEach(k=>{ $("pis-"+k).outerHTML = selOpc("pis-"+k, k, P[k]); });
-  $("pis-tar").value = P.tar; $("pis-desclas").value = P.desclas; $("pis-escala").value = P.escala; $("pis-dT").value = P.dT; $("pis-poolspa").value = P.poolspa ? "1" : ""; $("pis-hMaxPool").value = P.hMaxPool ?? 20; $("pis-hMaxSpa").value = P.hMaxSpa ?? 4; $("pis-alvo").value = P.alvo; $("pis-f24").value = P.fator24;
+  $("pis-tar").value = P.tar; $("pis-desclas").value = P.desclas; $("pis-escala").value = P.escala; $("pis-dT").value = P.dT; $("pis-poolspa").value = P.poolspa ? "1" : ""; $("pis-hMaxPool").value = P.hMaxPool ?? 24; $("pis-hMaxSpa").value = P.hMaxSpa ?? 4; $("pis-alvo").value = P.alvo; $("pis-f24").value = P.fator24;
   ENERGIAS.forEach(([k])=>{ $("pis-c-"+k).value = P.custos[k]; });
   $("pfi-corpo").value = P.filtro.corpo; $("pfi-tempo").value = P.filtro.tempo; $("pfi-aq").checked = !!P.filtro.aquecida;
   renderBCcat(); $("pfi-bc").value = P.filtro.bc; $("pfi-nbc").value = P.filtro.nbc; $("pfi-inst").value = P.filtro.inst;
@@ -6616,28 +6617,6 @@ document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]"
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); renderResp();
 renderEsgoto();
 { let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
-
-var EMBUTIDO = false;
-try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
-if(EMBUTIDO){
-  document.body.classList.add("embutido-painel");
-  var estiloEmbutido = document.createElement("style");
-  estiloEmbutido.textContent = "body.embutido-painel [data-view=\"clientes\"], body.embutido-painel #tela-clientes{display:none!important}";
-  document.head.appendChild(estiloEmbutido);
-  var campoClienteEl = $("cliente"); if(campoClienteEl) campoClienteEl.readOnly = true;
-  var _pontePronta = false, _ponteTimer;
-  function ponteAvisarSalvo(){ if(!_pontePronta) return; clearTimeout(_ponteTimer);
-    _ponteTimer = setTimeout(function(){ try{ window.parent.postMessage({tipo:"dimensionamento-salvo", clienteId:S.obra.clienteIdExterno||"", dados:clone(S)}, "*"); }catch(e){} }, 400); }
-  var _salvarOriginal = salvar; salvar = function(){ _salvarOriginal(); ponteAvisarSalvo(); };
-  window.addEventListener("message", function(e){ var msg=e.data; if(!msg||msg.tipo!=="carregar-dimensionamento") return;
-    S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
-    if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
-    preencherTudo(); renderLateralObra(); _pontePronta = true; });
-  var _tituloPai = null;
-  addEventListener("beforeprint", function(){ try{ _tituloPai = window.parent.document.title; window.parent.document.title = nomePDF(); }catch(e){} });
-  addEventListener("afterprint", function(){ try{ if(_tituloPai!==null) window.parent.document.title = _tituloPai; _tituloPai = null; }catch(e){} });
-  try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
-}
 </script>
 </body>
 </html>
