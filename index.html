@@ -425,6 +425,19 @@
   .ci-form-secao.desativada h3{background:#8A8A8E; text-decoration:line-through;}
   .ci-form-secao h3{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:9px 14px; margin:0 0 12px; border-radius:6px;}
   .lightbox-overlay img{max-width:100%; max-height:85vh; border-radius:4px;}
+  /* ===== Visualizador de imagens (anexos das tarefas) ===== */
+  .viz-img{ position:fixed; inset:0; z-index:1300; display:flex; flex-direction:column; background:rgba(10,10,10,.94); }
+  .viz-img:fullscreen{ background:#0a0a0a; }
+  .viz-barra{ display:flex; align-items:center; gap:6px; padding:8px 10px; color:#fff; flex-wrap:wrap; }
+  .viz-barra .tit{ flex:1; min-width:80px; font-size:13px; opacity:.85; }
+  .viz-barra button{ min-width:38px; height:38px; padding:0 12px; border:1px solid rgba(255,255,255,.35); border-radius:6px; background:rgba(255,255,255,.1); color:#fff; font-size:15px; cursor:pointer; }
+  .viz-barra button:hover{ background:rgba(255,255,255,.22); }
+  .viz-cena{ position:relative; flex:1; min-height:0; overflow:auto; display:flex; touch-action:pan-x pan-y pinch-zoom; }
+  .viz-cena img{ margin:auto; max-width:96vw; max-height:calc(100vh - 70px); object-fit:contain; cursor:zoom-in; user-select:none; }
+  .viz-cena.zoom img{ max-width:none; max-height:none; width:var(--viz-larg); flex:none; cursor:zoom-out; }
+  .viz-nav{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; border:0; border-radius:8px; background:rgba(255,255,255,.14); color:#fff; font-size:26px; cursor:pointer; z-index:2; }
+  .viz-nav.ant{ left:8px; } .viz-nav.prox{ right:8px; }
+
 
   .nav-tabs{display:flex; gap:4px; margin-bottom:20px; background:var(--sheet); border-radius:var(--r-md); padding:5px; box-shadow:var(--shadow-sm); border:1px solid var(--border);}
   .nav-tab{background:none; border:none; padding:11px 14px; font-size:13.5px; font-weight:600; font-family:'Inter',sans-serif; color:var(--ink-soft); cursor:pointer; border-radius:var(--r-sm); flex:1; transition:background .15s ease, color .15s ease, transform .1s ease;}
@@ -2108,6 +2121,75 @@
     reader.readAsDataURL(file);
     return null;
   }
+  function abrirVisualizadorImagens(lista, indice){
+    if(!lista || !lista.length) return;
+    var idx = Math.max(0, Math.min(indice||0, lista.length-1));
+    var zoom = 1;          // 1 = ajustado à tela; >1 = ampliado
+    var antigo = document.getElementById('vizImg'); if(antigo) antigo.remove();
+    var el = document.createElement('div');
+    el.className = 'viz-img'; el.id = 'vizImg';
+    el.innerHTML =
+      '<div class="viz-barra">'+
+        '<span class="tit"></span>'+
+        '<button type="button" data-v="menos" title="Diminuir">−</button>'+
+        '<button type="button" data-v="mais" title="Ampliar">+</button>'+
+        '<button type="button" data-v="ajustar" title="Ajustar à tela">⤢ Ajustar</button>'+
+        '<button type="button" data-v="tela" title="Tela cheia">⛶ Tela cheia</button>'+
+        '<button type="button" data-v="fechar" title="Fechar (Esc)">✕</button>'+
+      '</div>'+
+      '<div class="viz-cena"><button type="button" class="viz-nav ant" data-v="ant">‹</button><img alt="Anexo"><button type="button" class="viz-nav prox" data-v="prox">›</button></div>';
+    document.body.appendChild(el);
+    var cena = el.querySelector('.viz-cena'), img = el.querySelector('img'), tit = el.querySelector('.tit');
+
+    function larguraBase(){ return Math.min(img.naturalWidth || 800, window.innerWidth*0.96); }
+    function aplicar(){
+      if(zoom <= 1){ cena.classList.remove('zoom'); img.style.removeProperty('--viz-larg'); }
+      else { cena.classList.add('zoom'); cena.style.setProperty('--viz-larg', (Math.max(larguraBase(), window.innerWidth*0.5)*zoom)+'px'); }
+      img.style.width = zoom > 1 ? (Math.max(larguraBase(), window.innerWidth*0.5)*zoom)+'px' : '';
+      tit.textContent = (lista.length > 1 ? (idx+1)+' / '+lista.length+' · ' : '') + (zoom > 1 ? Math.round(zoom*100)+'%' : 'ajustada');
+      el.querySelector('.ant').style.display = el.querySelector('.prox').style.display = lista.length > 1 ? '' : 'none';
+    }
+    function mostrar(){ zoom = 1; img.src = lista[idx]; cena.scrollTo(0,0); aplicar(); }
+    function fechar(){
+      document.removeEventListener('keydown', teclas, true);
+      try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+      el.remove();
+    }
+    function telaCheia(){
+      try{
+        if(document.fullscreenElement){ document.exitFullscreen(); }
+        else if(el.requestFullscreen){ el.requestFullscreen(); }
+        else if(el.webkitRequestFullscreen){ el.webkitRequestFullscreen(); }
+      }catch(e){}
+    }
+    function teclas(e){
+      if(e.key === 'Escape'){ if(!document.fullscreenElement){ e.stopPropagation(); fechar(); } }
+      else if(e.key === 'ArrowLeft' && lista.length > 1){ idx = (idx-1+lista.length)%lista.length; mostrar(); }
+      else if(e.key === 'ArrowRight' && lista.length > 1){ idx = (idx+1)%lista.length; mostrar(); }
+      else if(e.key === '+' || e.key === '='){ zoom = Math.min(zoom+0.5, 6); aplicar(); }
+      else if(e.key === '-'){ zoom = Math.max(zoom-0.5, 1); aplicar(); }
+      else if(e.key === 'f' || e.key === 'F'){ telaCheia(); }
+    }
+    document.addEventListener('keydown', teclas, true);
+    el.addEventListener('click', function(e){
+      var b = e.target.closest('button');
+      if(b){
+        var v = b.getAttribute('data-v');
+        if(v === 'fechar') fechar();
+        else if(v === 'tela') telaCheia();
+        else if(v === 'mais'){ zoom = Math.min(zoom+0.5, 6); aplicar(); }
+        else if(v === 'menos'){ zoom = Math.max(zoom-0.5, 1); aplicar(); }
+        else if(v === 'ajustar'){ zoom = 1; aplicar(); }
+        else if(v === 'ant'){ idx = (idx-1+lista.length)%lista.length; mostrar(); }
+        else if(v === 'prox'){ idx = (idx+1)%lista.length; mostrar(); }
+        return;
+      }
+      if(e.target === img){ zoom = zoom > 1 ? 1 : 2; aplicar(); }
+      else if(e.target === cena && zoom <= 1){ fechar(); }
+    });
+    mostrar();
+  }
+
   function abrirImagemModal(dataUrl){
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
@@ -2387,7 +2469,12 @@
       };
     }
     card.querySelectorAll('[data-abrir-imagem]').forEach(function(img){
-      img.addEventListener('click', function(){ abrirImagemModal(img.getAttribute('src')); });
+      img.addEventListener('click', function(e){
+        e.stopPropagation();
+        var imagens = (t.anexos||[]).filter(function(a){ return a.tipo === 'imagem'; });
+        var pos = imagens.findIndex(function(a){ return a.id === img.getAttribute('data-abrir-imagem'); });
+        abrirVisualizadorImagens(imagens.map(function(a){ return a.dataUrl; }), pos < 0 ? 0 : pos);
+      });
     });
     card.querySelectorAll('[data-remover-anexo]').forEach(function(btn){
       btn.addEventListener('click', function(){
