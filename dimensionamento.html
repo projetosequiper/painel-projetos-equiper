@@ -130,6 +130,28 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 
 /* Gás: pontos e trechos */
 .lista{display:grid;gap:10px}
+.dm-abas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.dm-aba{border:1px solid var(--cinza-3);background:var(--branco);border-radius:3px;padding:7px 12px;font-weight:600;cursor:pointer;font-size:14px}
+.dm-aba.on{background:var(--preto);border-color:var(--preto);color:var(--branco)}.dm-aba small{font-weight:400;opacity:.75;margin-left:6px}
+.dm-aba.dm-adq{border-style:dashed;color:var(--cinza-4)}
+.dm-diag{border:1px solid var(--cinza-2);border-radius:4px;background:#fafafa;overflow:auto;margin:0 0 16px;padding:10px}
+.dm-diag svg{display:block;margin:0 auto;max-width:none}
+.dm-diag [data-dmq]{cursor:pointer}.dm-diag [data-dmq]:hover rect{stroke-width:2.5}
+.r .dm-diag-r svg{width:100%;height:auto;max-height:120mm;display:block}
+.dm-resumo{margin:0 0 16px;padding:0 0 14px;border-bottom:1px solid var(--cinza-2)}
+.dm-tot strong{font-size:28px}.dm-tot em{font-style:normal;font-size:13px;color:var(--cinza-4);display:block}.dm-tot .falha strong{color:var(--vermelho)}
+.dm-det summary{cursor:pointer;font-size:14px;color:var(--cinza-4);margin-top:10px}
+.dm-q{background:var(--cinza-1);border-radius:4px;padding:14px 16px}
+.dm-sub{font-family:var(--cond);font-weight:700;font-size:18px;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dm-sub span{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cinza-4)}
+.dm-lin{display:grid;gap:8px;grid-template-columns:2fr 90px 140px 40px;align-items:end;margin-bottom:6px}
+.dm-lin.ar{grid-template-columns:2fr 170px 90px 140px 40px}
+.dm-lin .campo input,.dm-lin .campo select{padding:8px 9px;font-size:15px}
+.dm-lin .campo{font-size:13px}
+.dm-addl{border:1px dashed var(--cinza-3);background:var(--branco);border-radius:3px;padding:7px 12px;font-weight:600;cursor:pointer;font-size:14px}
+.dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
+.dm-arv td.q{white-space:nowrap}.dm-arv td.q b{font-weight:700}.dm-arv tr.raiz td{font-weight:700}
+@media(max-width:720px){.dm-lin,.dm-lin.ar{grid-template-columns:1fr 1fr 40px}.dm-lin .campo:first-child{grid-column:1/-1}}
 .ponto{background:var(--cinza-1);border-radius:4px;padding:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr;align-items:end}
 .ponto .p-nome,.ponto .p-equip{grid-column:1/-1}
 @media(min-width:820px){.ponto{grid-template-columns:1fr 1.3fr 58px 150px 72px 96px 62px 40px}.ponto .p-nome,.ponto .p-equip{grid-column:auto}}
@@ -674,6 +696,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <div class="nav-sub">
         <button class="nav-it nsub" type="button" data-mod="ele">Eletrodutos</button>
         <button class="nav-it nsub" type="button" data-mod="cmx">Comprimento de circuitos</button>
+        <button class="nav-it nsub" type="button" data-mod="dem">Cálculo de demanda</button>
       </div>
     </div>
     <div class="nav-g" data-g="pis">
@@ -1090,6 +1113,56 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Nº do documento<input id="r-doc" autocomplete="off" placeholder="Ex.: MC-RES-001"></label>
         <label class="campo c2">Revisão<input id="r-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="r-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= ELÉTRICA · CÁLCULO DE DEMANDA ================= -->
+  <section class="modulo" id="mod-dem" hidden>
+    <h1>Elétrica · cálculo de demanda</h1>
+    <p class="sub">Demanda de cada quadro e da casa (iluminação e tomadas, aquecimento, ar-condicionado e motores), categoria de atendimento e disjuntor pela norma da concessionária.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="dem"> Esta obra não terá cálculo de demanda</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Concessionária</h2>
+      <div class="grade">
+        <label class="campo c3">Concessionária da obra<select id="dm-conc"></select></label>
+        <label class="campo c2">Tipo de construção<select id="dm-tipo"><option value="res">Residencial</option><option value="nres">Não residencial</option></select></label>
+        <label class="campo c1">FP do ar-condicionado<input id="dm-fp" type="number" min="0.5" max="1" step="0.01" inputmode="decimal"></label>
+        <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-ger"> Terá gerador (QTA antes do QDG)</label>
+        <label class="campo c3" id="dm-ger-pot">Potência do gerador<span class="unid"><input id="dm-gerkva" type="number" min="0" step="any" inputmode="decimal" placeholder="opcional"><b>kVA</b></span></label>
+        <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-fv"> Terá geração fotovoltaica on grid</label>
+        <label class="campo c3" id="dm-fv-pot">Potência fotovoltaica<span class="unid"><input id="dm-fvkwp" type="number" min="0" step="any" inputmode="decimal" placeholder="opcional"><b>kWp</b></span></label>
+        <label class="campo c3" id="dm-fv-lig-c">Fotovoltaico conecta em<select id="dm-fvlig"><option value="entrada">Entrada (medidor)</option><option value="qta">QTA</option></select></label>
+        <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-hib"> Terá sistema fotovoltaico híbrido com bateria</label>
+        <label class="campo c3 dm-hib-c">Quadro de cargas críticas (via chave by-pass)<select id="dm-hibq"></select></label>
+        <label class="chave c2 dm-hib-c" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-hibpl"> Com placas fotovoltaicas</label>
+        <label class="campo c1 dm-hib-c">Inversor<span class="unid"><input id="dm-hibkw" type="number" min="0" step="any" inputmode="decimal" placeholder="opc."><b>kW</b></span></label>
+        <label class="campo c1 dm-hib-c">Bateria<span class="unid"><input id="dm-hibkwh" type="number" min="0" step="any" inputmode="decimal" placeholder="opc."><b>kWh</b></span></label>
+        <label class="campo c2 dm-hib-c" id="dm-hibkwp-c">Placas<span class="unid"><input id="dm-hibkwp" type="number" min="0" step="any" inputmode="decimal" placeholder="opcional"><b>kWp</b></span></label>
+      </div>
+      <div id="dm-conc-info"></div>
+    </section>
+    <div id="dm-corpo">
+      <div class="params p4" id="dm-params"></div>
+      <section class="etapas">
+        <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Quadros e cargas</h3><span class="nbr">cada quadro soma as próprias cargas e as dos quadros ligados nele</span></div>
+          <div class="dm-diag" id="dm-diag"></div>
+          <div class="dm-abas" id="dm-abas"></div><div id="dm-quadro"></div></div></article>
+        <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Demanda por quadro</h3></div><div class="rolar" id="dm-res"></div></div></article>
+        <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3><span class="nbr" id="dm-mem-q"></span></div><div id="dm-memorial"></div></div></article>
+      </section>
+    </div>
+    <datalist id="dm-l-aq"><option value="Sauna"><option value="Bomba de calor"><option value="Evaporador adega"><option value="Forno"><option value="Boiler"><option value="Carregador de carro elétrico"><option value="Chuveiro elétrico"><option value="Torneira elétrica"><option value="Cooktop elétrico"></datalist>
+    <datalist id="dm-l-ar"><option value="Ar-condicionado"><option value="Condensadora"><option value="Evaporadora"></datalist>
+    <datalist id="dm-l-mo"><option value="Exaustores"><option value="Piscina"><option value="Reúso"><option value="Recalque"><option value="Irrigação"><option value="Pressurização"><option value="Hidromassagem"><option value="Portão"></datalist>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="d-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Nº do documento<input id="d-doc" autocomplete="off" placeholder="Ex.: MC-ELE-003"></label>
+        <label class="campo c2">Revisão<input id="d-rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea id="d-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
     </section>
   </section>
@@ -1625,8 +1698,8 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
-    obra:{cliente:"", endereco:"", resp:"", crea:"", local:""},
+    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, dem:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
+    obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
       su:{tipo:1, h:3, d:2, l:3, n:1}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
@@ -1634,6 +1707,7 @@ function estadoNovo(){
       pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    dem:{conc:"", tipo:"res", fp:0.7, gerador:false, gerKva:"", fv:false, fvKwp:"", fvLig:"entrada", hib:false, hibQ:"", hibPlacas:true, hibKw:"", hibKwh:"", hibKwp:"", quadros:[{id:"qdg", nome:"QDG", pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cgl:{itens:[], base:"adot", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:0, hMaxPool:24, hMaxSpa:4, poolspa:false, bcPS:"", alvo:3, fator24:0.2,
@@ -1659,7 +1733,7 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     inst: (o.inst && typeof o.inst==="object") ? o.inst : {},
     plu:{...b.plu, ...lim(o.plu)},
@@ -1668,6 +1742,7 @@ function migrar(o){
     res:{...b.res, ...lim(o.res)},
     cmx:{...b.cmx, ...lim(o.cmx)},
     cgl:{...b.cgl, ...lim(o.cgl)},
+    dem:(()=>{ const d = {...b.dem, ...lim(o.dem)}; if(!Array.isArray(d.quadros) || !d.quadros.length) d.quadros = clone(b.dem.quadros); return d; })(),
     pis:(()=>{ const q = lim(o.pis||{}); return {...b.pis, ...q, pool:{...b.pis.pool, ...(q.pool||{})}, spa:{...b.pis.spa, ...(q.spa||{})}, custos:{...b.pis.custos, ...(q.custos||{})}, filtro:{...b.pis.filtro, ...(q.filtro||{})}, cloro:{...b.pis.cloro, ...(q.cloro||{})}, hidro:{...b.pis.hidro, ...(q.hidro||{})}}; })(),
     hid:(()=>{ const h = {...b.hid, ...lim(o.hid)};
       h.els = (h.els||[]).map(e=>{
@@ -2567,9 +2642,10 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-cgl").hidden = m!=="cgl";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-dem").hidden = m!=="dem"; $("mod-cgl").hidden = m!=="cgl";
   if(m==="cmx") atualizarCmx();
   if(m==="cgl") renderCgl();
+  if(m==="dem") renderDem();
   if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
   if(m==="est") renderEst();
@@ -2586,6 +2662,11 @@ function resumo(){
   if(S.modulo==="cmx"){
     const r = resumoCmxParte();
     $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Circuitos</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Circuitos</span><span class="rotulo">informe disjuntor e comprimento</span>`;
+    return;
+  }
+  if(S.modulo==="dem"){
+    const r = resumoDemParte();
+    $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Demanda</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Demanda</span><span class="rotulo">${S.dem.conc?"informe as cargas":"escolha a concessionária"}</span>`;
     return;
   }
   if(S.modulo==="cgl"){
@@ -2636,22 +2717,22 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","paq","pfi","pcl","phi","pls"].forEach(m=>{
+  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","dem","paq","pfi","pcl","phi","pls"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
   });
 }
-function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); renderCgl(); resumo(); salvar(); }
+function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); renderCgl(); renderDem(); resumo(); salvar(); }
 function preencherTudo(){
   const O = S.obra;
   for(const k of ["cliente","endereco"]) $(k).value = O[k] ?? "";
   $("local").value = localEmissao();
   // obras antigas: o responsável da obra passa para os dimensionamentos
-  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
+  [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl, S.dem].forEach(M=>{ if(!M.resp && O.resp){ const r = RESP.find(x=>x.nome===O.resp.trim()); M.respId = r?r.id:""; M.resp = O.resp; M.crea = O.crea||""; } });
   if(typeof renderResp==="function") renderResp();
-  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); preencherCgl(); aplicarNA();
+  preencherEsgoto(); preencherGas(); preencherPluvial(); preencherHid(); preencherEst(); preencherEle(); preencherPis(); preencherRes(); preencherCmx(); preencherCgl(); preencherDem(); aplicarNA();
   if(typeof histBase==="function" && !HIST.restaurando) histBase();
   if(typeof renderInst==="function") renderInst();
 }
@@ -2704,7 +2785,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
 
   // Esgoto
   const E = () => S.esg;
@@ -2831,7 +2912,7 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : relEsgoto());
     window.print();
   });
   // nome do PDF = planilha + cliente (o navegador usa o título da página como nome do arquivo)
@@ -2849,7 +2930,7 @@ function ligar(){
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
     if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
     const O = S.obra, mod = S.modulo;
-    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
+    S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
   });
   $("salvar").addEventListener("click", salvarArquivo);
@@ -2860,7 +2941,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
 }
 
@@ -2868,9 +2949,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", dem:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", dem:"Elétrica · cálculo de demanda", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["ele","cmx","dem"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -2936,6 +3017,7 @@ function resumoObraBase(dados){
     }
     { const r = resumoResParte(); if(r) out.push({mod:"res", det:r.det, ok:r.ok}); }
     { const r = resumoCglParte(); if(r) out.push({mod:"cgl", det:r.det, ok:r.ok}); }
+    { const r = resumoDemParte(); if(r) out.push({mod:"dem", det:r.det, ok:r.ok}); }
     { const r = resumoCmxParte(); if(r) out.push({mod:"cmx", det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); }
     ["paq","pfi","pcl","phi"].forEach(pt=>{ const r = resumoPisParte(pt); if(r) out.push({mod:pt, det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); });
     if(S.ele.alims.length){
@@ -3030,7 +3112,7 @@ function abrirObraBib(id, mod, inst){
 function novaObraCliente(nome, mod){
   livreDesligar();
   const O = S.obra;
-  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
+  S = estadoNovo(); S.obra.cliente = nome; S.obra.local = O.local; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem);
   preencherTudo(); fecharClientes(); trocarModulo(mod || "esgoto"); renderTudo(); window.scrollTo({top:0});
   setTimeout(()=>$("endereco").focus(), 50);
 }
@@ -3163,7 +3245,7 @@ function ligarClientes(){
 }
 function novaObraVazia(){                           // a tela passa a ser uma obra nova e vazia (sem regravar a excluída)
   const O = S.obra, mod = S.modulo;
-  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl);
+  S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem);
   preencherTudo(); renderEsgoto(); atualizarGas(); renderPluvial(); resumo(); renderLateralObra();
   gravarS();
 }
@@ -6293,6 +6375,334 @@ function relCgl(){
 }
 
 /* =====================================================================
+   ELÉTRICA · CÁLCULO DE DEMANDA (planilha "Cálculo de demanda Recon Light")
+   ===================================================================== */
+const TAB_LIGHT = {
+  norma:"RECON BT", fornecimento:"220/127 V trifásico · medição direta",
+  ilum:[[1,80],[1,75],[1,65],[1,60],[1,50],[1,45],[1,40],[1,35],[1,30],[1,27],[Infinity,24]],   // faixas de 1 kVA (tabela 1, residencial)
+  minRes:0.03,                                                                                     // kVA/m² (tabela 1, residencial)
+  aquec:[100,100,75,70,66,62,59,56,53,51,49,47,45,43,41,40,39,38,37,36,35,34,33,32,31,30],       // tabela 2 · índice = nº de aparelhos (25 ou mais: 30%)
+  splitRes:[[1,100],[5,70],[11,60],[21,55],[31,53],[41,52],[51,50]],                               // tabela 3A
+  splitNRes:[[1,100],[11,75],[21,70],[31,65],[41,60],[51,55],[81,50]],                             // tabela 3B
+  central:[[1,100],[4,80],[8,75],[16,70],[21,60]],                                                 // tabela 4
+  cvKva:[[0.25,0.66],[1/3,0.77],[0.5,0.87],[0.75,1.26],[1,1.52],[1.5,2.17],[2,2.7],[3,4.04],[4,5.03],[5,6.02],[7.5,8.65],[10,11.54],[12.5,14.09],[15,16.65],[20,22.1],[25,25.83],[30,30.52],[40,39.74],[50,48.73],[60,58.15],[75,72.28],[100,95.56],[125,117.05],[150,141.29],[200,190.18]], // tabela 5A
+  motFD:[100,100,75,63.33,57.5,54,50,47.14,45,43.33,42],                                           // tabela 5B · índice = nº de motores (10 ou mais: 42%)
+  cat:[["T1",0,12,32],["T2",12,15,40],["T3",15,24,63],["T4",24,30,80],["T5",30,38,100],["T6",38,47,125],["T7",47,57,150],["T8",57,66,175],["T9",66,76,200],
+    ["TI1",76,85,225],["TI2",85,95,250],["TI3",95,114,300],["TI4",114,133,350],["TI5",133,150,400],["TI6",150,190,500],["TI7",190,225,600],["TI8",225,266,700],
+    ["TI9",266,300,800],["TI10",300,381,1000],["TI11",381,457,1200],["TI12",457,571,1500],["TI13",571,609,1600],["TI14",609,762,2000],["TI15",762,952,2500],["TI16",952,1143,3000]]  // tabela 10A
+};
+const CONCESSIONARIAS = [
+  {id:"light", nome:"Light (Rio de Janeiro)", t:TAB_LIGHT},
+  {id:"enelrj", nome:"Enel RJ (ex-Ampla)", t:null},
+  {id:"enelsp", nome:"Enel SP", t:null},
+  {id:"neodf", nome:"Neoenergia Brasília (DF)", t:null}
+];
+const concDe = id => CONCESSIONARIAS.find(c=>c.id===id) || null;
+const degrau = (tab, n) => { let v = 0; tab.forEach(([de, f])=>{ if(n >= de - 1e-9) v = f; }); return v; };
+const DM = {sel:"qdg"};
+function dmFilhos(id){ return S.dem.quadros.filter(q=>q.pai===id); }
+function dmDesc(id, vis = new Set()){                      // o quadro e todos os ligados nele (protege contra laço)
+  if(vis.has(id)) return []; vis.add(id);
+  return [id, ...dmFilhos(id).flatMap(f=>dmDesc(f.id, vis))];
+}
+function dmRaizes(){ const ids = new Set(S.dem.quadros.map(q=>q.id)); return S.dem.quadros.filter(q=>!q.pai || !ids.has(q.pai) || q.pai===q.id); }
+function dmOrdem(){                                         // árvore: [{q, nivel}]
+  const out = [], vis = new Set(), rec = (q, n)=>{ if(vis.has(q.id)) return; vis.add(q.id); out.push({q, nivel:n}); dmFilhos(q.id).forEach(f=>rec(f, n+1)); };
+  dmRaizes().forEach(r=>rec(r, 0)); S.dem.quadros.forEach(q=>{ if(!vis.has(q.id)) rec(q, 0); });
+  return out;
+}
+function dmIlum(P, T){                                      // demanda de iluminação e tomadas por faixas
+  let resto = Math.max(0, P), d = 0; const passos = [];
+  for(const [larg, f] of T.ilum){ if(resto<=0) break; const p = Math.min(resto, larg); d += p*f/100; passos.push([p, f]); resto -= p; }
+  return {d, passos};
+}
+function calcDemQ(id){
+  const D = S.dem, c = concDe(D.conc), T = c && c.t; if(!T) return null;
+  const ids = dmDesc(id), qs = ids.map(i=>D.quadros.find(q=>q.id===i)).filter(Boolean), q0 = D.quadros.find(q=>q.id===id);
+  const fp = num(D.fp) > 0 ? num(D.fp) : 1, res = D.tipo!=="nres";
+  // agrega as cargas do quadro e dos quadros ligados nele
+  const area = qs.reduce((a,q)=>a+num(q.area),0), ilum = qs.reduce((a,q)=>a+num(q.ilum),0);
+  const junta = (lista, chave) => { const m = new Map(); lista.forEach(x=>{ const k = chave(x), qt = Math.max(0, num(x.qtd)); if(!qt) return; const a = m.get(k); if(a) a.qtd += qt; else m.set(k, {...x, qtd:qt}); }); return [...m.values()]; };
+  // aquecimento: aparelhos com o mesmo nome formam um grupo (o fator vem da quantidade total do grupo)
+  const aqG = new Map(); qs.flatMap(q=>q.aq||[]).forEach(x=>{ const qt = Math.max(0, num(x.qtd)); if(!qt) return;
+    const nome = (x.n||"").trim(), k = nome ? nome.toLowerCase() : `#${num(x.w)}`, g = aqG.get(k) || {n:nome, qtd:0, tot:0, pots:new Set()};
+    g.qtd += qt; g.tot += qt*num(x.w); g.pots.add(num(x.w)); aqG.set(k, g); });
+  const aq = [...aqG.values()];
+  const ar = junta(qs.flatMap(q=>q.ar||[]), x=>`${(x.n||"").trim().toLowerCase()}|${x.tipo}|${num(x.kw)}`);
+  const mo = junta(qs.flatMap(q=>q.mo||[]), x=>`${(x.n||"").trim().toLowerCase()}|${num(x.cv)}`);
+  // D1
+  const il = dmIlum(ilum, T), dMin = res ? area*T.minRes : 0, D1 = Math.max(il.d, dMin);
+  // D2
+  const aqR = aq.map(x=>{ const fd = T.aquec[Math.min(x.qtd, T.aquec.length-1)]; return {...x, w: x.pots.size===1 ? [...x.pots][0] : null, fd, d:x.tot*fd/100}; });
+  const D2 = aqR.reduce((a,x)=>a+x.d,0)/1000;
+  // D3
+  const arR = ar.map(x=>({...x, kva: x.qtd*num(x.kw)/fp}));
+  const cen = arR.filter(x=>x.tipo!=="split"), spl = arR.filter(x=>x.tipo==="split");
+  const nEvap = cen.filter(x=>x.tipo==="evap").reduce((a,x)=>a+x.qtd,0), nCond = cen.filter(x=>x.tipo==="cond").reduce((a,x)=>a+x.qtd,0);
+  const nCen = nEvap || nCond, kvaCen = cen.reduce((a,x)=>a+x.kva,0), fdCen = nCen ? degrau(T.central, nCen) : 0;
+  const nSpl = spl.reduce((a,x)=>a+x.qtd,0), kvaSpl = spl.reduce((a,x)=>a+x.kva,0), fdSpl = nSpl ? degrau(res ? T.splitRes : T.splitNRes, nSpl) : 0;
+  const D3 = kvaCen*fdCen/100 + kvaSpl*fdSpl/100;
+  // D4
+  const moR = mo.map(x=>{ const k = degrau(T.cvKva, num(x.cv)); return {...x, kvaU:k, kva:x.qtd*k}; });
+  const nMo = moR.reduce((a,x)=>a+x.qtd,0), somaMo = moR.reduce((a,x)=>a+x.kva,0), fdMo = nMo ? T.motFD[Math.min(nMo, T.motFD.length-1)] : 0;
+  const calcMo = somaMo*fdMo/100, maiorMo = moR.reduce((a,x)=>Math.max(a,x.kva),0), D4 = Math.max(calcMo, maiorMo);
+  const Dt = D1 + D2 + D3 + D4;
+  const inst = {il: ilum, aq: aqR.reduce((a,x)=>a+x.tot,0)/1000, ar: arR.reduce((a,x)=>a+x.kva,0), mo: somaMo}, instT = inst.il + inst.aq + inst.ar + inst.mo;
+  const cat = Dt>0 ? T.cat.find(([, de, ate])=>Dt > de && Dt <= ate + 1e-9) || null : null;
+  const I = Dt*1000/(Math.sqrt(3)*220);
+  return {id, q:q0, nQ:qs.length, inst, instT, area, ilum, il, dMin, D1, aqR, D2, arR, nEvap, nCond, nCen, kvaCen, fdCen, nSpl, kvaSpl, fdSpl, D3, moR, nMo, somaMo, fdMo, calcMo, maiorMo, D4, Dt, cat, I,
+    acima: Dt > T.cat[T.cat.length-1][2]};
+}
+function dmNovoNome(){ let n = 1; while(S.dem.quadros.some(q=>q.nome===`QDC${n}`)) n++; return `QDC${n}`; }
+function renderDem(){
+  if(!$("dm-conc")) return;
+  const D = S.dem, c = concDe(D.conc), T = c && c.t;
+  $("dm-conc").value = D.conc || "";
+  $("dm-conc-info").innerHTML = !D.conc ? `<p class="dm-conc-msg">Escolha a concessionária da obra antes de preencher: as tabelas de demanda e de disjuntor mudam de uma para outra.</p>`
+    : !T ? `<p class="dm-conc-msg">As tabelas da <b>${esc(c.nome)}</b> ainda não estão cadastradas. Mande a planilha da ${esc(c.nome)} para eu incluir.</p>`
+    : `<p class="fonte" style="margin-top:8px">${esc(c.nome)} · ${T.norma} · ${T.fornecimento}.</p>`;
+  $("dm-corpo").hidden = !T;
+  $("dm-ger-pot").style.visibility = D.gerador ? "" : "hidden"; $("dm-fv-pot").style.visibility = D.fv ? "" : "hidden";
+  $("dm-fv-lig-c").hidden = !D.fv;
+  document.querySelectorAll(".dm-hib-c").forEach(el=>el.style.display = D.hib ? "" : "none"); $("dm-hibkwp-c").style.display = D.hib && D.hibPlacas!==false ? "" : "none";
+  $("dm-fv-lig-c").style.display = D.fv ? "" : "none";
+  $("dm-hibq").innerHTML = D.quadros.map(q=>`<option value="${q.id}" ${q.id===D.hibQ?"selected":""}>${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}</option>`).join(""); const opQ = $("dm-fvlig").querySelector('[value="qta"]'); opQ.disabled = !D.gerador; opQ.textContent = D.gerador ? "QTA" : "QTA (marque o gerador)";
+  $("dm-fvlig").value = D.fvLig==="qta" && D.gerador ? "qta" : "entrada";
+  if(!T) return;
+  if(!D.quadros.some(q=>q.id===DM.sel)) DM.sel = D.quadros[0]?.id;
+  const ordem = dmOrdem(), R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)]));
+  // abas
+  $("dm-abas").innerHTML = ordem.map(({q, nivel})=>`<button type="button" class="dm-aba ${q.id===DM.sel?"on":""}" data-dmq="${q.id}">${"› ".repeat(nivel)}${esc(q.nome)||"—"}<small>${fmt(R[q.id]?.Dt||0,1)} kVA</small></button>`).join("")
+    + `<button type="button" class="dm-aba dm-adq" id="dm-add-q">+ Quadro</button>`;
+  renderDemQuadro(); renderDemRes(R, ordem);
+}
+function renderDemQuadro(){
+  const D = S.dem, q = D.quadros.find(x=>x.id===DM.sel); if(!q){ $("dm-quadro").innerHTML = ""; return; }
+  const proib = new Set(dmDesc(q.id));
+  const opPai = `<option value="">Entrada (medidor)</option>` + D.quadros.filter(x=>!proib.has(x.id)).map(x=>`<option value="${x.id}" ${x.id===q.pai?"selected":""}>${esc(x.nome)}</option>`).join("");
+  const lin = (lista, tipo) => (q[lista]||[]).map((x,i)=>`<div class="dm-lin ${tipo==="ar"?"ar":""}" data-dml="${lista}" data-i="${i}">
+      <label class="campo">Descrição<input data-df="n" value="${esc(x.n||"")}" list="dm-l-${tipo}" placeholder="Ex.: ${tipo==="aq"?"Sauna":tipo==="ar"?"Ar-condicionado":"Pressurização"}"></label>
+      ${tipo==="ar"?`<label class="campo">Tipo<select data-df="tipo"><option value="evap" ${x.tipo==="evap"?"selected":""}>Central · evaporadora</option><option value="cond" ${x.tipo==="cond"?"selected":""}>Central · condensadora</option><option value="split" ${x.tipo==="split"?"selected":""}>Split / janela</option></select></label>`:""}
+      <label class="campo">Qtd.<input data-df="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.qtd)}"></label>
+      <label class="campo">${tipo==="aq"?"Potência (W)":tipo==="ar"?"Potência (kW)":"Potência (CV)"}<input data-df="${tipo==="aq"?"w":tipo==="ar"?"kw":"cv"}" type="number" min="0" step="any" inputmode="decimal" value="${esc(tipo==="aq"?x.w:tipo==="ar"?x.kw:x.cv)}"></label>
+      <button class="x" type="button" data-dmrm aria-label="Remover">×</button></div>`).join("");
+  $("dm-quadro").innerHTML = `<div class="dm-q" data-q="${q.id}"><div class="dm-resumo" id="dm-qres"></div>
+    <div class="grade">
+      <label class="campo c2">Nome do quadro<input data-qf="nome" value="${esc(q.nome)}"></label>
+      <label class="campo c2">Local do quadro<input data-qf="local" value="${esc(q.local||"")}" placeholder="Ex.: garagem, área técnica"></label>
+      <label class="campo c2">Alimentado por<select data-qf="pai">${opPai}</select></label>
+      <label class="campo c3">Área útil<span class="unid"><input data-qf="area" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.area)}" placeholder="0"><b>m²</b></span></label>
+      <label class="campo c3">Iluminação e tomadas<span class="unid"><input data-qf="ilum" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.ilum)}" placeholder="0"><b>kW</b></span></label>
+    </div>
+    <div class="dm-sub">D2 · Aparelhos de aquecimento<span>aparelhos com a mesma função (mesmo nome) somam a quantidade para o fator (tabela 2)</span></div>${lin("aq","aq")}<button type="button" class="dm-addl" data-dmadd="aq">+ Aparelho de aquecimento</button>
+    <div class="dm-sub">D3 · Ar-condicionado<span>central: tabela 4 · split/janela: tabela 3${S.dem.tipo==="nres"?"B":"A"}</span></div>${lin("ar","ar")}<button type="button" class="dm-addl" data-dmadd="ar">+ Ar-condicionado</button>
+    <div class="dm-sub">D4 · Motores<span>CV → kVA (tabela 5A) · fator pelo nº de motores (tabela 5B)</span></div>${lin("mo","mo")}<button type="button" class="dm-addl" data-dmadd="mo">+ Motor</button>
+    <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap">${S.dem.quadros.length>1?`<button type="button" class="btn sec peq" data-dmdel>Excluir ${esc(q.nome)||"quadro"}</button>`:""}</p></div>`;
+}
+
+function dmDiagrama(R, interativo){                         // árvore: entrada → (QTA) → quadros → quadros ligados
+  const W = 176, H = 82, GX = 26, GY = 56, D = S.dem;
+  const WS = 150, HS = 54, HQ = 56;                          // caixas laterais (fotovoltaico/gerador) e QTA
+  const WI = 120, HI = 70, HC = 58, HP = 48, HB = 48, GI = 46;  // híbrido: inversor, chave by-pass, placas, bateria
+  const hib = D.hib && D.quadros.some(q=>q.id===D.hibQ) ? D.hibQ : null, placas = hib && D.hibPlacas;
+  const temHibIrmao = q => !!hib && q.id!==hib && (D.quadros.find(x=>x.id===hib)?.pai||"") === (q.pai||"");
+  // posição horizontal: cursor em pixels; o quadro de cargas críticas reserva uma coluna à esquerda para inversor/bateria/placas
+  let cur = 0; const vis = new Set();
+  const arr = q => { if(vis.has(q.id)) return null; vis.add(q.id);
+    let col = null; if(q.id===hib){ col = cur; cur += WI + GI; }
+    const fs = dmFilhos(q.id).map(arr).filter(Boolean);
+    let x; if(fs.length) x = (fs[0].x + fs[fs.length-1].x)/2; else { x = cur; cur += W + GX; }
+    if(col!=null) x = Math.max(x, col + WI + GI);
+    return {q, x, fs, col}; };
+  const raizes = dmRaizes().map(arr).filter(Boolean);
+  S.dem.quadros.forEach(q=>{ if(!vis.has(q.id)){ const n = arr(q); if(n) raizes.push(n); } });
+  const largura = Math.max(W, cur - GX), cxE = raizes.length ? (raizes[0].x + raizes[raizes.length-1].x)/2 + W/2 : W/2;
+  const out = [], c = concDe(D.conc);
+  // entrada
+  out.push(`<g><rect x="${cxE-W/2}" y="0" width="${W}" height="${H}" rx="4" fill="#000"/><text x="${cxE}" y="34" class="t1 inv">Entrada · medidor</text><text x="${cxE}" y="56" class="t2 inv">${esc(c?.nome?.replace(/ \(.*\)$/,"")||"")}</text></g>`);
+  let yFim = H, xDir = Math.max(largura, cxE + W/2), xEsq = 0, yMax = H;
+  const lado = cxE + W/2 + 40, ladoE = cxE - W/2 - 40 - WS;
+  const fvNoQta = D.fv && D.gerador && D.fvLig==="qta";
+  const caixaFV = (x, yC) => `<g><rect x="${x}" y="${yC-HS/2}" width="${WS}" height="${HS}" rx="4" fill="#fff" stroke="#d10a1e" stroke-width="1.5" stroke-dasharray="6 3"/><text x="${x+WS/2}" y="${yC-5}" class="t1">Fotovoltaico</text><text x="${x+WS/2}" y="${yC+14}" class="t3">on grid${num(D.fvKwp)?` · ${fmt(num(D.fvKwp),2)} kWp`:""}</text></g>`;
+  if(D.fv && !fvNoQta){ out.push(`<path d="M${cxE+W/2} ${H/2} H${lado}" class="lig"/>${caixaFV(lado, H/2)}`); xDir = Math.max(xDir, lado + WS); }
+  if(D.gerador){                                             // QTA antes do QDG, com o gerador ligado nele
+    const yQ = yFim + 36;
+    out.push(`<path d="M${cxE} ${yFim} V${yQ}" class="lig"/>`);
+    if(fvNoQta){ out.push(`<path d="M${cxE-W/2} ${yQ+HQ/2} H${ladoE+WS}" class="lig"/>${caixaFV(ladoE, yQ+HQ/2)}`); xEsq = Math.min(xEsq, ladoE); }
+    out.push(`<g><rect x="${cxE-W/2}" y="${yQ}" width="${W}" height="${HQ}" rx="4" fill="#fff" stroke="#000" stroke-width="2.5"/><text x="${cxE}" y="${yQ+24}" class="t1">QTA</text><text x="${cxE}" y="${yQ+42}" class="t3">transferência automática</text></g>
+      <path d="M${cxE+W/2} ${yQ+HQ/2} H${lado}" class="lig"/>
+      <g><rect x="${lado}" y="${yQ+HQ/2-HS/2}" width="${WS}" height="${HS}" rx="4" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="${lado+WS/2}" y="${yQ+HQ/2-5}" class="t1">Gerador</text><text x="${lado+WS/2}" y="${yQ+HQ/2+14}" class="t3">${num(D.gerKva)?`${fmt(num(D.gerKva),1)} kVA`:"potência a definir"}</text></g>`);
+    yFim = yQ + HQ; xDir = Math.max(xDir, lado + WS);
+  }
+  // altura de cada quadro: o de cargas críticas desce para dar lugar à chave by-pass (e às placas)
+  const extraHib = (placas ? HP + 34 : 14) + HC + 40;
+  const posY = (n, yPaiFim) => { n.y = yPaiFim + GY + (n.q.id===hib ? extraHib : 0); n.fs.forEach(f=>posY(f, n.y + H)); };
+  raizes.forEach(r=>posY(r, yFim));
+  const liga = (x1, y1, x2, y2) => { const ym = y1 + GY/2; return `<path d="M${x1} ${y1} V${ym} H${x2} V${y2}" class="lig"/>`; };
+  const destino = n => n.q.id===hib ? n.y - 40 - HC : n.y;   // a linha do quadro de cima chega na chave by-pass
+  raizes.forEach(r=>out.push(liga(cxE, yFim, r.x + W/2, destino(r))));
+  const desenha = n => {
+    const r = R[n.q.id], x = n.x, y = n.y, sel = interativo && n.q.id===DM.sel, cat = r && r.cat;
+    n.fs.forEach(f=>out.push(liga(x + W/2, y + H, f.x + W/2, destino(f))));
+    if(n.q.id===hib){                                        // chave by-pass + inversor + bateria (+ placas)
+      const cx = x + W/2, yC = y - 40 - HC, xC = cx - W/2, xI = n.col, yI = yC + HC/2 - HI/2;
+      out.push(`<path d="M${cx} ${yC+HC} V${y}" class="lig"/>
+        <g><rect x="${xC}" y="${yC}" width="${W}" height="${HC}" rx="4" fill="#fff" stroke="#000" stroke-width="2"/><text x="${cx}" y="${yC+25}" class="t1">Chave by-pass</text><text x="${cx}" y="${yC+43}" class="t3">sistema híbrido</text></g>
+        <path d="M${xI+WI} ${yI+HI*0.28} H${xC}" class="lig"/><path d="M${xI+WI} ${yI+HI*0.72} H${xC}" class="lig"/>
+        <g><rect x="${xI}" y="${yI}" width="${WI}" height="${HI}" rx="2" fill="#fff" stroke="#000" stroke-width="1.8"/><path d="M${xI} ${yI} L${xI+WI} ${yI+HI}" class="lig"/>
+          <text x="${xI+WI-22}" y="${yI+24}" class="sim">~</text><text x="${xI+20}" y="${yI+HI-12}" class="sim">=</text></g>
+        <text x="${xI+WI/2}" y="${yI-8}" class="t2">Inversor${num(D.hibKw)?` · ${fmt(num(D.hibKw),1)} kW`:""}</text>
+        <path d="M${xI+WI/2} ${yI+HI} V${yI+HI+34}" class="lig"/>
+        <g><rect x="${xI}" y="${yI+HI+34}" width="${WI}" height="${HB}" rx="4" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="${xI+WI/2}" y="${yI+HI+34+21}" class="t1">Bateria</text><text x="${xI+WI/2}" y="${yI+HI+34+38}" class="t3">${num(D.hibKwh)?`${fmt(num(D.hibKwh),1)} kWh`:"capacidade a definir"}</text></g>`);
+      yMax = Math.max(yMax, yI + HI + 34 + HB);
+      if(placas){ const WP = 150, yP = yI - 30 - HP, xP = xI - 46;
+        out.push(`<g><rect x="${xP}" y="${yP}" width="${WP}" height="${HP}" rx="2" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="${xP+WP/2}" y="${yP+20}" class="t1">Placas fotovoltaicas</text><text x="${xP+WP/2}" y="${yP+37}" class="t3">${num(D.hibKwp)?`${fmt(num(D.hibKwp),2)} kWp`:"potência a definir"}</text></g>
+          <path d="M${xP+22} ${yP+HP} V${yI+HI/2} H${xI}" class="lig"/>`); xEsq = Math.min(xEsq, xP); }
+    }
+    const crit = n.q.id===hib ? "cargas críticas" : temHibIrmao(n.q) ? "cargas não críticas" : "";
+    out.push(`<g ${interativo?`data-dmq="${n.q.id}"`:""}><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="4" fill="#fff" stroke="${sel?"#d10a1e":"#000"}" stroke-width="${sel?2.5:1.5}"/>
+      <text x="${x+W/2}" y="${y+22}" class="t1">${esc(n.q.nome)||"—"}</text>
+      <text x="${x+W/2}" y="${y+38}" class="t4">${esc((n.q.local||"").trim().slice(0,26))||"local não informado"}</text>
+      <text x="${x+W/2}" y="${y+56}" class="t2">${r?`Inst. ${fmt(r.instT,1)} · Dem. ${fmt(r.Dt,1)} kVA`:"—"}</text>
+      <text x="${x+W/2}" y="${y+72}" class="t3 ${cat?"":"no"}">${cat?`${cat[0]} · disjuntor ${cat[3]} A`:r&&r.acima?"acima da tabela":"sem demanda"}</text></g>
+      ${crit?`<text x="${x+W/2}" y="${y+H+18}" class="crit">${crit}</text>`:""}`);
+    yMax = Math.max(yMax, y + H + (crit ? 24 : 0));
+    n.fs.forEach(desenha);
+  };
+  raizes.forEach(desenha);
+  const Wt = xDir - xEsq, Ht = yMax;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${xEsq-6} -6 ${Wt+12} ${Ht+12}" width="${Wt+12}" height="${Ht+12}" role="img" aria-label="Diagrama de alimentação dos quadros">
+    <style>.t1{font:700 15px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t2{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t3{font:500 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.t3.no{fill:#d10a1e}.t4{font:italic 400 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.inv{fill:#fff}.lig{fill:none;stroke:#000;stroke-width:1.5}.sim{font:700 20px Arial,sans-serif;text-anchor:middle;fill:#000}.crit{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#1f6fd1}</style>
+    ${out.join("")}</svg>`;
+}
+function dmResumoQ(r){
+  if(!r) return "";
+  const lin = (t, i, d) => `<tr><td>${t}</td><td class="n">${fmt(i,2)}</td><td class="n">${fmt(d,2)}</td></tr>`;
+  return `<div class="pis-big dm-tot">
+      <div><small>Carga total (instalada)</small><strong>${fmt(r.instT,2)}</strong><em>kVA</em></div>
+      <div><small>Carga demandada</small><strong>${fmt(r.Dt,2)}</strong><em>kVA${r.instT>0?` · ${fmt(r.Dt/r.instT*100,0)}% da instalada`:""}</em></div>
+      <div class="${r.cat||!(r.Dt>0)?"":"falha"}"><small>Disjuntor</small><strong>${r.cat?r.cat[3]+" A":"—"}</strong><em>${r.cat?`${r.cat[0]} · ${fmt(r.I,0)} A de demanda`:r.acima?"acima da tabela":""}</em></div></div>
+    <details class="dm-det" ${DM.det?"open":""}><summary>Por tipo de carga${r.nQ>1?` · inclui ${r.nQ-1} quadro(s) ligado(s)`:""}</summary>
+    <table class="quadro" style="margin-top:6px"><thead><tr><th>Tipo</th><th class="n">Instalada (kVA)</th><th class="n">Demandada (kVA)</th></tr></thead><tbody>
+      ${lin("D1 · Iluminação e tomadas", r.inst.il, r.D1)}${lin("D2 · Aquecimento", r.inst.aq, r.D2)}${lin("D3 · Ar-condicionado", r.inst.ar, r.D3)}${lin("D4 · Motores", r.inst.mo, r.D4)}
+      <tr style="font-weight:700"><td>Total</td><td class="n">${fmt(r.instT,2)}</td><td class="n">${fmt(r.Dt,2)}</td></tr></tbody></table></details>`;
+}
+function renderDemRes(R, ordem){
+  if($("dm-qres")) $("dm-qres").innerHTML = dmResumoQ(R[DM.sel]);
+  const D = S.dem, raizes = dmRaizes(), r0 = R[raizes[0]?.id];
+  $("dm-params").innerHTML = [["Demanda total", r0?fmt(r0.Dt,2):"—", "kVA"], ["Categoria", r0&&r0.cat?r0.cat[0]:"—", ""], ["Disjuntor geral", r0&&r0.cat?fmt(r0.cat[3]):"—", "A trifásico"], ["Corrente de demanda", r0?fmt(r0.I,0):"—", "A"]]
+    .map(([a,b,c])=>`<div class="param"><small>${a}${raizes.length>1?` · ${esc(raizes[0].nome)}`:""}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
+  $("dm-diag").innerHTML = dmDiagrama(R, true);
+  $("dm-res").innerHTML = `<table class="quadro dm-arv"><thead><tr><th>Quadro</th><th class="n">Instalada (kVA)</th><th class="n">D1</th><th class="n">D2</th><th class="n">D3</th><th class="n">D4</th><th class="n">Dt (kVA)</th><th class="n">I (A)</th><th>Categoria</th><th class="n">Disjuntor</th></tr></thead><tbody>
+    ${ordem.map(({q, nivel})=>{ const r = R[q.id]; return `<tr class="${nivel?"":"raiz"}" data-dmq="${q.id}" style="cursor:pointer"><td class="q">${"&nbsp;&nbsp;&nbsp;&nbsp;".repeat(nivel)}${nivel?"└ ":""}<b>${esc(q.nome)}</b>${q.local?` <span style="color:var(--cinza-4);font-weight:400">· ${esc(q.local)}</span>`:""}${r.nQ>1?` <span style="color:var(--cinza-4);font-weight:400">(+${r.nQ-1})</span>`:""}</td><td class="n">${fmt(r.instT,2)}</td><td class="n">${fmt(r.D1,2)}</td><td class="n">${fmt(r.D2,2)}</td><td class="n">${fmt(r.D3,2)}</td><td class="n">${fmt(r.D4,2)}</td><td class="n"><b>${fmt(r.Dt,2)}</b></td><td class="n">${fmt(r.I,0)}</td><td>${r.cat?r.cat[0]:r.acima?`<span class="falha">acima da tabela</span>`:"—"}</td><td class="n">${r.cat?`<b>${r.cat[3]} A</b>`:"—"}</td></tr>`; }).join("")}</tbody></table>
+    <p class="fonte" style="margin-top:8px">Cada quadro soma as próprias cargas e as dos quadros ligados nele, e os fatores de demanda são aplicados sobre o total. (+n) = quadros ligados. Categoria e disjuntor pela tabela 10A (220 V trifásico, medição direta).</p>`;
+  const rs = R[DM.sel]; $("dm-mem-q").textContent = rs ? `${rs.q.nome}${rs.nQ>1?` + ${rs.nQ-1} quadro(s) ligado(s)`:""}` : "";
+  $("dm-memorial").innerHTML = rs ? memorialDem(rs) : "";
+}
+function memorialDem(r){
+  const D = S.dem, T = concDe(D.conc).t;
+  const il = r.il.passos.length ? r.il.passos.map(([p,f])=>`${fmt(p,2)} × ${fmt(f)}%`).join(" + ") : "0";
+  return `<div class="mc-bloco"><h4>D1 · Iluminação e tomadas</h4>
+      <p class="mc-l">Carga instalada ${fmt(r.ilum,2)} kW → ${il} = <b>${fmt(r.il.d,2)} kVA</b></p>
+      ${D.tipo!=="nres"?`<p class="mc-l">Demanda mínima = ${fmt(r.area,2)} m² × ${fmt(T.minRes,3)} kVA/m² = ${fmt(r.dMin,2)} kVA</p>`:""}
+      <p class="mc-l fim">D1 = maior valor = <b>${fmt(r.D1,2)} kVA</b></p></div>
+    <div class="mc-bloco"><h4>D2 · Aparelhos de aquecimento</h4>${r.aqR.length ? r.aqR.map(x=>`<p class="mc-l">${esc(x.n)||"Aparelho"}: ${x.w!=null?`${fmt(x.qtd)} × ${fmt(x.w)} W`:`${fmt(x.qtd)} aparelhos, ${fmt(x.tot)} W no total`} × ${fmt(x.fd)}% (${fmt(x.qtd)} aparelho${x.qtd>1?"s":""} com a mesma função) = ${fmt(x.d,0)} W</p>`).join("") : `<p class="mc-l">Sem aparelhos de aquecimento.</p>`}
+      <p class="mc-l fim">D2 = <b>${fmt(r.D2,2)} kVA</b></p></div>
+    <div class="mc-bloco"><h4>D3 · Ar-condicionado (FP ${fmt(num(D.fp),2)})</h4>${r.arR.length ? r.arR.map(x=>`<p class="mc-l">${esc(x.n)||"Ar-condicionado"} (${x.tipo==="split"?"split":x.tipo==="cond"?"condensadora":"evaporadora"}): ${fmt(x.qtd)} × ${fmt(num(x.kw),2)} kW ÷ ${fmt(num(D.fp),2)} = ${fmt(x.kva,2)} kVA</p>`).join("") : `<p class="mc-l">Sem ar-condicionado.</p>`}
+      ${r.kvaCen?`<p class="mc-l">Central: ${fmt(r.kvaCen,2)} kVA × ${fmt(r.fdCen)}% (${fmt(r.nCen)} ${r.nEvap?"evaporadora(s)":"condensadora(s)"}, tabela 4) = ${fmt(r.kvaCen*r.fdCen/100,2)} kVA</p>`:""}
+      ${r.kvaSpl?`<p class="mc-l">Split/janela: ${fmt(r.kvaSpl,2)} kVA × ${fmt(r.fdSpl)}% (${fmt(r.nSpl)} aparelho(s), tabela 3${D.tipo==="nres"?"B":"A"}) = ${fmt(r.kvaSpl*r.fdSpl/100,2)} kVA</p>`:""}
+      <p class="mc-l fim">D3 = <b>${fmt(r.D3,2)} kVA</b></p></div>
+    <div class="mc-bloco"><h4>D4 · Motores</h4>${r.moR.length ? r.moR.map(x=>`<p class="mc-l">${esc(x.n)||"Motor"}: ${fmt(x.qtd)} × ${fmt(num(x.cv),2)} CV (${fmt(x.kvaU,2)} kVA) = ${fmt(x.kva,2)} kVA</p>`).join("") : `<p class="mc-l">Sem motores.</p>`}
+      ${r.moR.length?`<p class="mc-l">Soma ${fmt(r.somaMo,2)} kVA × ${fmt(r.fdMo,2)}% (${fmt(r.nMo)} motores, tabela 5B) = ${fmt(r.calcMo,2)} kVA · maior linha = ${fmt(r.maiorMo,2)} kVA</p>`:""}
+      <p class="mc-l fim">D4 = maior valor = <b>${fmt(r.D4,2)} kVA</b></p></div>
+    <div class="mc-bloco"><h4>Demanda total</h4><p class="mc-l">Dt = ${fmt(r.D1,2)} + ${fmt(r.D2,2)} + ${fmt(r.D3,2)} + ${fmt(r.D4,2)} = <b>${fmt(r.Dt,2)} kVA</b> · I = Dt ÷ (√3 × 220 V) = ${fmt(r.I,0)} A</p>
+      <p class="mc-l fim">${r.cat?`Categoria <b>${r.cat[0]}</b> (${fmt(r.cat[1])} &lt; D ≤ ${fmt(r.cat[2])} kVA) → disjuntor <b>${r.cat[3]} A</b> trifásico`:r.acima?`<span class="mc-aviso">Demanda acima da tabela 10A — consultar a concessionária.</span>`:"Sem demanda."}</p></div>`;
+}
+function preencherDem(){
+  const D = S.dem;
+  $("dm-conc").innerHTML = `<option value="">— escolha a concessionária —</option>` + CONCESSIONARIAS.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.t?"":" (tabelas a cadastrar)"}</option>`).join("");
+  $("dm-tipo").value = D.tipo==="nres" ? "nres" : "res"; $("dm-fp").value = D.fp;
+  $("dm-fvlig").value = D.fvLig==="qta" ? "qta" : "entrada";
+  $("dm-hib").checked = !!D.hib; $("dm-hibpl").checked = D.hibPlacas!==false; $("dm-hibkw").value = D.hibKw ?? ""; $("dm-hibkwh").value = D.hibKwh ?? ""; $("dm-hibkwp").value = D.hibKwp ?? "";
+  $("dm-ger").checked = !!D.gerador; $("dm-gerkva").value = D.gerKva ?? ""; $("dm-fv").checked = !!D.fv; $("dm-fvkwp").value = D.fvKwp ?? "";
+  $("d-doc").value = D.doc; $("d-rev").value = D.rev; $("d-obs").value = D.obs;
+  DM.sel = D.quadros[0]?.id; renderDem();
+}
+function ligarDem(){
+  const D = () => S.dem, alt = () => { const R = Object.fromEntries(D().quadros.map(q=>[q.id, calcDemQ(q.id)])); if(concDe(D().conc)?.t){ renderDemRes(R, dmOrdem()); document.querySelectorAll("#dm-abas [data-dmq] small").forEach(el=>{ const id = el.parentElement.dataset.dmq; el.textContent = `${fmt(R[id]?.Dt||0,1)} kVA`; }); } resumo(); salvar(); };
+  const tudo = () => { renderDem(); resumo(); salvar(); };
+  $("dm-conc").addEventListener("change", e=>{ D().conc = e.target.value; tudo(); });
+  $("dm-tipo").addEventListener("change", e=>{ D().tipo = e.target.value; tudo(); });
+  $("dm-fp").addEventListener("input", e=>{ D().fp = e.target.value; alt(); });
+  $("dm-ger").addEventListener("change", e=>{ D().gerador = e.target.checked; tudo(); });
+  $("dm-fv").addEventListener("change", e=>{ D().fv = e.target.checked; tudo(); });
+  $("dm-gerkva").addEventListener("input", e=>{ D().gerKva = e.target.value; alt(); });
+  $("dm-fvkwp").addEventListener("input", e=>{ D().fvKwp = e.target.value; alt(); });
+  $("dm-fvlig").addEventListener("change", e=>{ D().fvLig = e.target.value; tudo(); });
+  $("dm-hib").addEventListener("change", e=>{ D().hib = e.target.checked; if(D().hib && !D().quadros.some(q=>q.id===D().hibQ)){ const c = D().quadros.find(q=>q.pai) || D().quadros[0]; D().hibQ = c?.id || ""; } tudo(); });
+  $("dm-hibq").addEventListener("change", e=>{ D().hibQ = e.target.value; tudo(); });
+  $("dm-hibpl").addEventListener("change", e=>{ D().hibPlacas = e.target.checked; tudo(); });
+  [["dm-hibkw","hibKw"],["dm-hibkwh","hibKwh"],["dm-hibkwp","hibKwp"]].forEach(([id,k])=>$(id).addEventListener("input", e=>{ D()[k] = e.target.value; alt(); }));
+  for(const k of ["doc","rev","obs"]) $("d-"+k).addEventListener("input", e=>{ D()[k] = e.target.value; salvar(); });
+  const clique = e=>{
+    const ab = e.target.closest("[data-dmq]"); if(ab){ DM.sel = ab.dataset.dmq; renderDem(); return; }
+    if(e.target.closest("#dm-add-q")){ const q = {id:uid(), nome:dmNovoNome(), pai: dmRaizes()[0]?.id || "", area:"", ilum:"", aq:[], ar:[], mo:[]}; D().quadros.push(q); DM.sel = q.id; tudo();
+      setTimeout(()=>{ const n = document.querySelector('#dm-quadro [data-qf="nome"]'); n?.focus(); n?.select(); }, 30); return; }
+  };
+  $("dm-abas").addEventListener("click", clique); $("dm-res").addEventListener("click", clique); $("dm-diag").addEventListener("click", clique);
+  $("dm-quadro").addEventListener("toggle", e=>{ if(e.target.classList?.contains("dm-det")) DM.det = e.target.open; }, true);
+  $("dm-quadro").addEventListener("click", e=>{
+    const q = D().quadros.find(x=>x.id===DM.sel); if(!q) return;
+    const add = e.target.closest("[data-dmadd]");
+    if(add){ const t = add.dataset.dmadd; q[t] = q[t] || []; q[t].push(t==="aq" ? {n:"", qtd:1, w:""} : t==="ar" ? {n:"", tipo:"split", qtd:1, kw:""} : {n:"", qtd:1, cv:""}); tudo();
+      setTimeout(()=>{ const l = document.querySelectorAll(`#dm-quadro [data-dml="${t}"] [data-df="n"]`); l[l.length-1]?.focus(); }, 30); return; }
+    const rm = e.target.closest("[data-dmrm]");
+    if(rm){ const l = rm.closest("[data-dml]"); q[l.dataset.dml].splice(+l.dataset.i, 1); tudo(); return; }
+    if(e.target.closest("[data-dmdel]")){
+      if(!confirm(`Excluir o quadro ${q.nome}? Os quadros ligados nele passam a ser alimentados pelo quadro de cima.`)) return;
+      D().quadros.forEach(x=>{ if(x.pai===q.id) x.pai = q.pai; }); D().quadros = D().quadros.filter(x=>x.id!==q.id); DM.sel = D().quadros[0]?.id; tudo(); }
+  });
+  const editar = e=>{
+    const q = D().quadros.find(x=>x.id===DM.sel); if(!q) return; const t = e.target;
+    if(e.type==="change" && t.tagName==="INPUT" && t.dataset.df!=="n") return;      // já tratado no "input"
+    if(t.dataset.qf){ q[t.dataset.qf] = t.value; if(t.dataset.qf==="pai"){ tudo(); return; } if(t.dataset.qf==="nome"){ const ab = document.querySelector(`#dm-abas [data-dmq="${q.id}"]`); if(ab && ab.firstChild) ab.firstChild.textContent = (ab.firstChild.textContent.match(/^(› )*/)[0]) + (t.value || "—"); } alt(); return; }
+    const l = t.closest("[data-dml]"); if(!l || !t.dataset.df) return;
+    const x = q[l.dataset.dml][+l.dataset.i]; x[t.dataset.df] = t.value;
+    if(t.dataset.df==="n" && e.type==="change"){ const p = DM_PADRAO[l.dataset.dml]?.[t.value.trim().toLowerCase()]; const f = l.dataset.dml==="aq"?"w":l.dataset.dml==="ar"?"kw":"cv";
+      if(p && !num(x[f])){ x[f] = p; const inp = l.querySelector(`[data-df="${f}"]`); if(inp) inp.value = p; } }
+    alt();
+  };
+  $("dm-quadro").addEventListener("input", editar); $("dm-quadro").addEventListener("change", editar);
+}
+const DM_PADRAO = {aq:{"sauna":21000, "bomba de calor":5500, "evaporador adega":1320, "forno":4000, "boiler":4000, "carregador de carro elétrico":7400},
+  mo:{"exaustores":0.25, "piscina":3, "reúso":1.5, "reuso":1.5, "recalque":1, "irrigação":3, "pressurização":2}};
+function resumoDemParte(){
+  const T = concDe(S.dem.conc)?.t; if(!T) return null;
+  const raiz = dmRaizes()[0]; if(!raiz) return null; const r = calcDemQ(raiz.id); if(!r || !(r.Dt>0)) return null;
+  return {det:`${raiz.nome} ${fmt(r.Dt,1)} kVA · ${r.cat?`${r.cat[0]} · disjuntor ${r.cat[3]} A`:"acima da tabela"} · ${S.dem.quadros.length} quadro(s)`, ok: !!r.cat};
+}
+function relDem(){
+  const MREL = S.dem, D = S.dem, c = concDe(D.conc), T = c?.t, td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec;
+  if(!T) return `<div class="r">${relCarimbo("Cálculo de demanda", D.doc, D.rev, "Instalações elétricas")}${sec("Identificação", relIdent(MREL))}<p>Escolha uma concessionária com tabelas cadastradas.</p></div>`;
+  const ordem = dmOrdem(), R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)])), r0 = R[dmRaizes()[0]?.id];
+  const cargas = q => [num(q.area)?`área ${fmt(num(q.area),2)} m²`:null, num(q.ilum)?`iluminação e tomadas ${fmt(num(q.ilum),2)} kW`:null,
+    ...(q.aq||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"aquecimento"} ${fmt(num(x.w))} W`),
+    ...(q.ar||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"ar-cond."} ${fmt(num(x.kw),2)} kW (${x.tipo==="split"?"split":x.tipo==="cond"?"cond.":"evap."})`),
+    ...(q.mo||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"motor"} ${fmt(num(x.cv),2)} CV`)].filter(Boolean).join(" · ") || "sem cargas próprias";
+  return `<div class="r">${relCarimbo(`Cálculo de demanda · ${esc(c.nome)} (${T.norma})`, D.doc, D.rev, "Instalações elétricas")}
+    ${sec("Identificação", relIdent(MREL))}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Concessionária", `${esc(c.nome)} · ${T.norma}`)}${td("Fornecimento", T.fornecimento)}${td("Tipo de construção", D.tipo==="nres"?"Não residencial":"Residencial")}${td("Fator de potência do ar-condicionado", fmt(num(D.fp),2))}${td("Gerador", D.gerador ? `sim · QTA antes do QDG${num(D.gerKva)?` · ${fmt(num(D.gerKva),1)} kVA`:""}` : "não")}${td("Sistema fotovoltaico híbrido com bateria", D.hib ? `sim · chave by-pass alimentando ${esc(D.quadros.find(q=>q.id===D.hibQ)?.nome||"—")} (cargas críticas)${num(D.hibKw)?` · inversor ${fmt(num(D.hibKw),1)} kW`:""}${num(D.hibKwh)?` · bateria ${fmt(num(D.hibKwh),1)} kWh`:""}${D.hibPlacas!==false?` · com placas fotovoltaicas${num(D.hibKwp)?` ${fmt(num(D.hibKwp),2)} kWp`:""}`:" · sem placas"}` : "não")}${td("Geração fotovoltaica on grid", D.fv ? `sim${num(D.fvKwp)?` · ${fmt(num(D.fvKwp),2)} kWp`:""} · conectada ${D.gerador && D.fvLig==="qta" ? "no QTA" : "na entrada (medidor)"}` : "não")}</tbody></table>`)}
+    ${sec("Demanda por quadro", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Quadro</th><th class="n">Instalada (kVA)</th><th class="n">D1</th><th class="n">D2</th><th class="n">D3</th><th class="n">D4</th><th class="n">Dt (kVA)</th><th class="n">I (A)</th><th>Categoria</th><th class="n">Disjuntor</th></tr></thead><tbody>
+      ${ordem.map(({q, nivel})=>{ const r = R[q.id]; return `<tr ${nivel?"":'style="font-weight:700"'}><td>${"&nbsp;&nbsp;&nbsp;".repeat(nivel)}${nivel?"└ ":""}${esc(q.nome)}${q.local?` <small>(${esc(q.local)})</small>`:""}</td><td class="n">${fmt(r.instT,2)}</td><td class="n">${fmt(r.D1,2)}</td><td class="n">${fmt(r.D2,2)}</td><td class="n">${fmt(r.D3,2)}</td><td class="n">${fmt(r.D4,2)}</td><td class="n">${fmt(r.Dt,2)}</td><td class="n">${fmt(r.I,0)}</td><td>${r.cat?r.cat[0]:"—"}</td><td class="n">${r.cat?r.cat[3]+" A":"—"}</td></tr>`; }).join("")}</tbody></table>
+      <div class="r-concl ${r0&&r0.cat?"":"falha"}"><b>Conclusão:</b> ${r0&&r0.cat?`carga instalada de ${fmt(r0.instT,2)} kVA e demanda total de ${fmt(r0.Dt,2)} kVA, categoria <b>${r0.cat[0]}</b>, disjuntor geral <b>${r0.cat[3]} A trifásico</b>.`:"demanda fora da tabela da concessionária — consultar."}</div></div>`)}
+    ${sec("Diagrama de alimentação dos quadros", `<div class="dm-diag-r">${dmDiagrama(R, false)}</div>`)}
+    ${sec("Cargas por quadro", `<table class="r-t"><tbody>${ordem.map(({q})=>td(esc(q.nome)+(q.local?`<br><small>${esc(q.local)}</small>`:"")+(q.pai?` <small>(ligado em ${esc(D.quadros.find(x=>x.id===q.pai)?.nome||"—")})</small>`:""), cargas(q))).join("")}</tbody></table>`)}
+    ${dmRaizes().map(q=>sec(`Memorial de cálculo · ${esc(q.nome)}`, memorialDem(R[q.id]))).join("")}
+    ${linhasObs(D.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(D.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(MREL)}</div>`;
+}
+
+/* =====================================================================
    RESPONSÁVEIS TÉCNICOS (cadastro neste computador)
    ===================================================================== */
 const CHAVE_RESP = "equiper-responsaveis";
@@ -6332,6 +6742,7 @@ function renderResp(){
   $("r-resp").innerHTML = opcoesResp(S.res.respId);
   $("k-resp").innerHTML = opcoesResp(S.cmx.respId);
   $("b-resp").innerHTML = opcoesResp(S.cgl.respId);
+  $("d-resp").innerHTML = opcoesResp(S.dem.respId);
   $("resp-lista").innerHTML = RESP.length ? RESP.map(r=>`
     <div class="resp-lin" data-id="${r.id}">
       <label class="campo">Nome<input data-f="nome" value="${esc(r.nome)}" placeholder="Nome do engenheiro"></label>
@@ -6340,7 +6751,7 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl"};
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl", d:"dem"};
   Object.entries(PRE).forEach(([pre,k])=>{
     $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
   });
@@ -6351,8 +6762,8 @@ function ligarResp(){
   $("resp-lista").addEventListener("input", e=>{
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
-    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
-    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
+    [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl, S.dem].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
+    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"],["d","dem"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
   $("resp-lista").addEventListener("click", e=>{
@@ -6366,7 +6777,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", dem:"dem", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -6401,6 +6812,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="res") preencherRes();
     if(k==="cmx") preencherCmx();
     if(k==="cgl") preencherCgl();
+    if(k==="dem") preencherDem();
     aplicarNA(); resumo();
     gravarS();
     if(typeof bibAtualizar==="function") bibAtualizar();
@@ -6569,7 +6981,7 @@ function entrarLivre(limpar){
   const mod = S.modulo;
   if(!LIVRE) gravarS();                               // a obra aberta fica guardada como estava
   LIVRE = true;
-  S = estadoNovo(); S.modulo = mod; [S.esg, S.gas, S.plu, S.hid, S.est, S.ele, S.pis, S.res, S.cmx, S.cgl].forEach(respPadrao);
+  S = estadoNovo(); S.modulo = mod; [S.esg, S.gas, S.plu, S.hid, S.est, S.ele, S.pis, S.res, S.cmx, S.cgl, S.dem].forEach(respPadrao);
   livreUI(); preencherTudo(); fecharClientes(); trocarModulo(mod); renderTudo(); window.scrollTo({top:0});
   aviso(limpar ? "Dimensionamento livre limpo" : "Modo livre: nada será salvo");
 }
@@ -6609,14 +7021,37 @@ ligarCatsPis();
 ligarRes();
 ligarCmx();
 ligarCgl();
+ligarDem();
 ligarImp();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
 document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]")) abrirTecnicos(); });
-ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); renderResp();
+ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
+
+var EMBUTIDO = false;
+try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
+if(EMBUTIDO){
+  document.body.classList.add("embutido-painel");
+  var estiloEmbutido = document.createElement("style");
+  estiloEmbutido.textContent = "body.embutido-painel [data-view=\"clientes\"], body.embutido-painel #tela-clientes{display:none!important}";
+  document.head.appendChild(estiloEmbutido);
+  var campoClienteEl = $("cliente"); if(campoClienteEl) campoClienteEl.readOnly = true;
+  var _pontePronta = false, _ponteTimer;
+  function ponteAvisarSalvo(){ if(!_pontePronta) return; clearTimeout(_ponteTimer);
+    _ponteTimer = setTimeout(function(){ try{ window.parent.postMessage({tipo:"dimensionamento-salvo", clienteId:S.obra.clienteIdExterno||"", dados:clone(S)}, "*"); }catch(e){} }, 400); }
+  var _salvarOriginal = salvar; salvar = function(){ _salvarOriginal(); ponteAvisarSalvo(); };
+  window.addEventListener("message", function(e){ var msg=e.data; if(!msg||msg.tipo!=="carregar-dimensionamento") return;
+    S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
+    if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
+    preencherTudo(); renderLateralObra(); _pontePronta = true; });
+  var _tituloPai = null;
+  addEventListener("beforeprint", function(){ try{ _tituloPai = window.parent.document.title; window.parent.document.title = nomePDF(); }catch(e){} });
+  addEventListener("afterprint", function(){ try{ if(_tituloPai!==null) window.parent.document.title = _tituloPai; _tituloPai = null; }catch(e){} });
+  try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
+}
 </script>
 </body>
 </html>
