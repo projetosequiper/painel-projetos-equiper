@@ -137,6 +137,8 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-diag{border:1px solid var(--cinza-2);border-radius:4px;background:#fafafa;overflow:auto;margin:0 0 16px;padding:10px;max-height:78vh}
 .dm-diag .dm-arr{cursor:grab}.dm-diag.arrastando,.dm-diag.arrastando .dm-arr{cursor:grabbing;user-select:none}
 .dm-ferr{margin:0 0 8px;align-items:center}.dm-dica{font-size:13px;color:var(--cinza-4)}
+.dm-copia{margin:14px 0 0;padding:14px 16px;border:1px solid var(--vermelho);border-left:5px solid var(--vermelho);border-radius:3px;background:#fff}
+.dm-copia h4{margin:0 0 10px;font-size:16px}
 .dm-niveis{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px;font-size:14px}
 .dm-niveis b{font-weight:600;margin-right:4px}.dm-niv{display:inline-flex;align-items:center;border:1px solid var(--cinza-3);border-radius:3px;background:var(--branco)}
 .dm-niv input{border:0;padding:6px 8px;width:130px;font-size:14px;background:transparent}.dm-niv button{border:0;border-left:1px solid var(--cinza-2);background:none;padding:6px 9px;cursor:pointer;color:var(--cinza-4)}
@@ -6841,6 +6843,11 @@ function dmNeo(A, T){
   const instKW = C + kw(cats.b) + kw(cats.c) + kw(cats.d) + kw(cats.e) + kw(cats.j) + o + A.ar.reduce((s,x)=>s+x.qtd*num(x.kw),0) + mot.reduce((s,x)=>s+x.w,0)/1000 + wi;
   return {partes, Dt, instKW, avisos, formula:`D = ${partes.filter(p=>p.d>0).map(p=>`${p.k} ${fmt(p.d,2)}`).join(" + ") || "0"} = <b>${fmt(Dt,2)} kVA</b>`};
 }
+function dmNomeCopia(nome){                                 // QDC2 → QDC3 (próximo livre); outros nomes → "nome (cópia)"
+  const nomes = new Set(S.dem.quadros.map(q=>q.nome)), m = (nome||"").match(/^(.*?)(\d+)$/);
+  if(m){ let n = +m[2] + 1; while(nomes.has(m[1]+n)) n++; return m[1]+n; }
+  let t = `${nome||"Quadro"} (cópia)`, k = 2; while(nomes.has(t)) t = `${nome||"Quadro"} (cópia ${k++})`; return t;
+}
 function dmNovoNome(){ let n = 1; while(S.dem.quadros.some(q=>q.nome===`QDC${n}`)) n++; return `QDC${n}`; }
 function renderDem(){
   if(!$("dm-conc")) return;
@@ -6937,7 +6944,15 @@ function renderDemQuadro(){
       <label class="campo" style="width:190px">Quadros iguais a este<input data-qf="iguais" type="number" min="1" max="500" step="1" inputmode="numeric" value="${esc(q.iguais??1)}"></label>
       <span class="fonte" style="padding-bottom:12px;flex:1 1 300px">Ex.: 8 apartamentos iguais → informe 8. Os quadros não são criados: o diagrama mostra “×8” e o quadro que alimenta este recebe a carga 8 vezes${dmFilhos(q.id).length?" (junto com os quadros ligados neste)":""}.</span>
     </div>
-    <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap">${S.dem.quadros.length>1?`<button type="button" class="btn sec peq" data-dmdel>Excluir ${esc(q.nome)||"quadro"}</button>`:""}</p></div>`;
+    <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn sec peq" data-dmcopia>Copiar ${esc(q.nome)||"quadro"}</button>${S.dem.quadros.length>1?`<button type="button" class="btn sec peq" data-dmdel>Excluir ${esc(q.nome)||"quadro"}</button>`:""}</p>
+    ${DM.copia===q.id ? (()=>{ const fs = dmDesc(q.id).length - 1;
+      return `<div class="dm-copia" id="dm-copia"><h4>Copiar ${esc(q.nome)||"quadro"}</h4>
+        <div class="grade">
+          <label class="campo c2">Nome da cópia<input id="dm-cp-nome" value="${esc(dmNomeCopia(q.nome))}"></label>
+          <label class="campo c3">Quem alimenta a cópia?<select id="dm-cp-pai"><option value="">Entrada (medidor)</option>${D.quadros.map(x=>`<option value="${x.id}" ${x.id===(q.pai||"")?"selected":""}>${esc(x.nome)||"—"}${x.local?` · ${esc(x.local)}`:""}</option>`).join("")}</select></label>
+          ${fs ? `<label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-cp-fs" checked> Copiar também ${fs>1?`os ${fs} quadros ligados`:"o quadro ligado"} nele</label>` : ""}
+        </div>
+        <p style="margin:12px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn peq" data-dmcp="ok">Copiar</button><button type="button" class="btn sec peq" data-dmcp="nao">Cancelar</button></p></div>`; })() : ""}</div>`;
 }
 function dmDiagrama(R, interativo){                         // diagrama do prédio: entrada embaixo, quadros subindo pelos andares (níveis)
   const W = 176, H = 82, GX = 30, D = S.dem;
@@ -7189,6 +7204,18 @@ function ligarDem(){
       setTimeout(()=>{ const l = document.querySelectorAll(`#dm-quadro [data-dml="${t}"] [data-df="n"]`); l[l.length-1]?.focus(); }, 30); return; }
     const rm = e.target.closest("[data-dmrm]");
     if(rm){ const l = rm.closest("[data-dml]"); q[l.dataset.dml].splice(+l.dataset.i, 1); tudo(); return; }
+    if(e.target.closest("[data-dmcopia]")){ DM.copia = DM.copia===q.id ? null : q.id; renderDemQuadro(); if(DM.copia) setTimeout(()=>{ $("dm-copia")?.scrollIntoView({block:"center", behavior:"smooth"}); $("dm-cp-pai")?.focus(); }, 30); return; }
+    const cp = e.target.closest("[data-dmcp]");
+    if(cp){ if(cp.dataset.dmcp==="ok"){
+        const comFs = !!$("dm-cp-fs")?.checked, pai = $("dm-cp-pai").value, nome = $("dm-cp-nome").value.trim() || dmNomeCopia(q.nome);
+        const ids = comFs ? dmDesc(q.id) : [q.id], novo = new Map(ids.map(id=>[id, uid()]));
+        const copias = ids.map(id=>{ const o = D().quadros.find(x=>x.id===id), c = JSON.parse(JSON.stringify(o)); c.id = novo.get(id); delete c.dg;
+          if(id===q.id){ c.nome = nome; c.pai = pai; } else { c.pai = novo.get(o.pai) || o.pai; c.nome = dmNomeCopia(o.nome); }
+          return c; });
+        // nomes dos ligados copiados sem repetir entre si
+        copias.slice(1).forEach(c=>{ const usados = new Set([...D().quadros, ...copias.filter(x=>x!==c)].map(x=>x.nome)); if(usados.has(c.nome)){ const m = c.nome.match(/^(.*?)(\d+)$/); let n = m ? +m[2] : 1; const base = m ? m[1] : c.nome + " "; while(usados.has(base+n)) n++; c.nome = base+n; } });
+        D().quadros.push(...copias); DM.sel = copias[0].id; }
+      DM.copia = null; tudo(); return; }
     if(e.target.closest("[data-dmdel]")){
       if(!confirm(`Excluir o quadro ${q.nome}? Os quadros ligados nele passam a ser alimentados pelo quadro de cima.`)) return;
       D().quadros.forEach(x=>{ if(x.pai===q.id) x.pai = q.pai; }); D().quadros = D().quadros.filter(x=>x.id!==q.id); DM.sel = D().quadros[0]?.id; tudo(); }
