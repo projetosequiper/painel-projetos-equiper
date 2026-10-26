@@ -6641,9 +6641,11 @@ function dmEnelAgrup(id, T, c){
   avisos.push(...rs.avisos);
   const DPG = DTC, DR = Ds > 0 ? (DTC + Ds)*0.9 : DTC;
   const row = DPG > 0 ? T.t16.find(r=>DPG <= r[0] + 1e-9) : null, rowR = DR > 0 ? T.t16.find(r=>DR <= r[0] + 1e-9) : null;
-  const catTri = T.cat.filter(k=>k[0]==="Trifásico"), catS = Ds > 0 ? catTri.find(k=>Ds <= k[2] + 1e-9) : null;
+  const catTri = T.cat.filter(k=>k[0]==="Trifásico"), lim15 = catTri[catTri.length-1][2];
+  let catS = Ds > 0 ? catTri.find(k=>Ds <= k[2] + 1e-9) : null;
+  if(!catS && Ds > lim15){ const t = T.t16.find(x=>Ds <= x[0] + 1e-9); if(t) catS = ["Trifásico", lim15, t[0], t[2], `Trifásico · tabela 16 (acima de ${fmt(lim15,0)} kVA): chave geral blindada ${t[1]} A · fusível NH ou disjuntor ${t[2]} A`]; }
   if(DPG > T.t16[T.t16.length-1][0] || DR > T.t16[T.t16.length-1][0]) avisos.push(`Demanda acima de ${fmt(T.t16[T.t16.length-1][0],0)} kVA (fim da tabela 16): consultar a ${nomeC} (transformador exclusivo / subestação).`);
-  if(Ds > catTri[catTri.length-1][2]) avisos.push(`Demanda do serviço (${fmt(Ds,2)} kVA) acima da tabela 15: consultar a ${nomeC}.`);
+  if(Ds > lim15 && !catS) avisos.push(`Demanda do serviço (${fmt(Ds,2)} kVA) acima das tabelas 15 e 16: consultar a ${nomeC}.`);
   if(q0.fases && q0.fases!=="tri") avisos.push("A entrada coletiva com medição agrupada é trifásica: o cálculo usa alimentação trifásica.");
   if(As.nPrev) avisos.push(`${As.nPrev} carga${As.nPrev>1?"s":""} do serviço marcada${As.nPrev>1?"s":""} como <b>previsão</b>: confirmar a potência exata antes da emissão final.`);
   const nPrevU = U.reduce((s,x)=>s+(x.ru?.A?.nPrev||0),0); if(nPrevU) avisos.push(`Há cargas marcadas como <b>previsão</b> nas unidades: confirmar a potência exata antes da emissão final.`);
@@ -6655,7 +6657,7 @@ function dmEnelAgrup(id, T, c){
   ];
   const memExtra = [
     {t:"Demanda do serviço (Dserv)", mem:[`Dserv = 100% da maior entre a, b, c, d + 70% das demais = ${fmt(ord[0][1],2)} (${ord[0][0]}) + 0,70 × (${ord.slice(1).map(x=>fmt(x[1],2)).join(" + ")}) = <b>${fmt(Ds,2)} kVA</b>`,
-      Ds > 0 ? (catS ? `Medição do serviço (tabela 15): <b>${catS[4]}</b>` : `<span class="mc-aviso">Demanda do serviço acima da tabela 15 — consultar.</span>`) : "Sem cargas de serviço."]},
+      Ds > 0 ? (catS ? `Medição do serviço (${Ds > lim15 ? "tabela 16" : "tabela 15"}): <b>${catS[4]}</b>` : `<span class="mc-aviso">Demanda do serviço acima da tabela 15 — consultar.</span>`) : "Sem cargas de serviço."]},
     {t:"Proteção geral (DPG) e ramal de entrada (DR)", mem:[`DPG = DTC = <b>${fmt(DPG,2)} kVA</b> → ${row ? `tabela 16: chave geral blindada ${row[1]} A · fusível NH ou disjuntor <b>${row[2]} A</b>` : "acima da tabela 16"}`,
       Ds > 0 ? `DR = (DTC + Dserv) × 0,90 = (${fmt(DTC,2)} + ${fmt(Ds,2)}) × 0,90 = <b>${fmt(DR,2)} kVA</b>` : `Sem cargas de serviço: DR = DTC = <b>${fmt(DR,2)} kVA</b>`,
       rowR ? `Tabela 16 para ${fmt(DR,2)} kVA: ${[rowR[3] && `ramal aéreo até a chave geral ${rowR[3]} mm²`, rowR[4] && `ramal de ligação (pré-reunido) ${rowR[4]} mm²`, rowR[5] && `ramal de entrada ${rowR[5]} mm²`, rowR[6] && `eletroduto ${rowR[6]} mm`, rowR[7] && `ramal subterrâneo ${rowR[7]} mm²`].filter(Boolean).join(" · ")}` : (DR > 0 ? `<span class="mc-aviso">DR acima da tabela 16 — consultar.</span>` : "")]}
@@ -6708,6 +6710,14 @@ function calcDemQ(id){
   if(T.limiteKW && r.instKW > T.limiteKW) r.avisos.push(`Carga instalada de ${fmt(r.instKW,1)} kW, acima de ${T.limiteKW} kW: fora do atendimento individual em baixa tensão — consultar a ${c.nome.replace(/ \(.*\)$/,"")}.`);
   if(A.nPrev) r.avisos.push(`${A.nPrev} carga${A.nPrev>1?"s":""} marcada${A.nPrev>1?"s":""} como <b>previsão</b>: confirmar a potência exata antes da emissão final.`);
   if(D.tipo==="nres" && T.metodo==="enel") r.avisos.push("Cálculo feito pelo método residencial (o método comercial da Enel RJ — item 6.3, tabelas 11 a 14 — ainda não está no app).");
+  // Enel RJ: demanda acima da tabela 15 (75 kVA) → tabela 16 (trifásico)
+  if(T.metodo==="enel" && T.t16 && r.acima && r.Dt > 0){
+    const lim15 = T.cat[T.cat.length-1][2], t = T.t16.find(x=>r.Dt <= x[0] + 1e-9);
+    if(fases!=="tri"){ if(r.Dt > lim15) r.avisos.push(`Acima de ${fmt(lim15,0)} kVA o atendimento é pela tabela 16, que é trifásica: use alimentação trifásica.`); }
+    else if(t){ r.cat = ["Trifásico", lim15, t[0], t[2], `tabela 16 · chave geral blindada ${t[1]} A · fusível NH ou disjuntor ${t[2]} A`]; r.acima = false; r.t16 = t;
+      r.memFinal = `Demanda de ${fmt(r.Dt,2)} kVA, acima da tabela 15 (até ${fmt(lim15,0)} kVA) → tabela 16 (${fmt(lim15,0)} &lt; D ≤ ${fmt(t[0],1)} kVA): chave geral blindada ${t[1]} A → <b>disjuntor geral ${r.polos||"3P"} ${num(A.q0?.disj) > 0 ? num(A.q0.disj) : t[2]} A</b>${num(A.q0?.disj) > 0 && num(A.q0.disj)!==t[2] ? ` (adotado; calculado ${t[2]} A)` : ""} · ${[t[3] && `ramal aéreo ${t[3]} mm²`, t[4] && `ramal de ligação ${t[4]} mm²`, t[5] && `ramal de entrada ${t[5]} mm²`, t[7] && `ramal subterrâneo ${t[7]} mm²`].filter(Boolean).join(" · ")}`; }
+    else r.avisos.push(`Demanda de ${fmt(r.Dt,1)} kVA acima da tabela 16 (${fmt(T.t16[T.t16.length-1][0],0)} kVA): consultar a ${c.nome.replace(/ \(.*\)$/,"")}.`);
+  }
   r.disjCalc = r.cat ? r.cat[3] : null; r.disj = num(A.q0?.disj) > 0 ? num(A.q0.disj) : r.disjCalc; r.disjManual = num(A.q0?.disj) > 0 && num(A.q0.disj) !== r.disjCalc;
   r.polos = {mono:"1P", bi:"2P", tri:"3P"}[fases];
   return r;
