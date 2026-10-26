@@ -143,6 +143,7 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-det summary{cursor:pointer;font-size:14px;color:var(--cinza-4);margin-top:10px}
 .dm-ger-aviso{margin:8px 0 0;padding:10px 14px;background:#fff8e6;border-left:4px solid #e0a000;font-size:14px}
 .dm-avisos{margin:12px 0 0;padding:10px 14px;background:#fff4f4;border-left:4px solid var(--vermelho);font-size:14px}.dm-avisos p{margin:2px 0}
+.dm-dup{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin:22px 0 0;padding:14px 0 0;border-top:1px solid var(--cinza-2)}
 .dm-q{background:var(--cinza-1);border-radius:4px;padding:14px 16px}
 .dm-sub{font-family:var(--cond);font-weight:700;font-size:18px;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .dm-sub span{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cinza-4)}
@@ -1135,7 +1136,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Tipo de construção<select id="dm-tipo"><option value="res">Residencial</option><option value="nres">Não residencial</option></select></label>
         <label class="campo c1" id="dm-fp-c">FP do ar-condicionado<input id="dm-fp" type="number" min="0.5" max="1" step="0.01" inputmode="decimal"></label>
         <label class="campo c3" id="dm-loc-c">Fator de localização (bairro)<select id="dm-loc"><option value="1">Alto consumo · 1,00</option><option value="0.88">Médio consumo · 0,88</option><option value="0.75">Baixo consumo · 0,75</option><option value="0.55">Baixíssimo consumo · 0,55</option></select></label>
-        <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-ger"> Terá gerador (QTA antes do QDG)</label>
+        <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="dm-ger"> Terá gerador (com QTA)</label>
+        <label class="campo c3 dm-ger-c">Gerador / QTA entra antes do quadro<select id="dm-gerq"></select></label>
         <label class="campo c3" id="dm-ger-pot">Gerador sugerido<span class="unid"><input id="dm-gerkva" type="number" min="0" step="any" inputmode="decimal" placeholder="opcional"><b>kVA</b></span></label>
         <div class="c6 dm-ger-c">
           <div class="grade">
@@ -1721,7 +1723,7 @@ function estadoNovo(){
       pontos:[], trechos:[], modelo:2, pavMedidor:0, pavNomes:{}, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
-    dem:{conc:"", tipo:"res", fp:0.7, loc:1, gerador:false, gerKva:"", gerMin:"", gerMax:"", gerObs:"", fv:false, fvKwp:"", fvLig:"entrada", hib:false, hibQ:"", hibPlacas:true, hibKw:"", hibKwh:"", hibKwp:"", quadros:[{id:"qdg", nome:"QDG", pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    dem:{conc:"", tipo:"res", fp:0.7, loc:1, gerador:false, gerQ:"", gerKva:"", gerMin:"", gerMax:"", gerObs:"", fv:false, fvKwp:"", fvLig:"entrada", hib:false, hibQ:"", hibPlacas:true, hibKw:"", hibKwh:"", hibKwp:"", quadros:[{id:"qdg", nome:"QDG", pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cgl:{itens:[], base:"adot", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:0, hMaxPool:24, hMaxSpa:4, poolspa:false, bcPS:"", alvo:3, fator24:0.2,
@@ -1783,7 +1785,15 @@ function carregar(){
 let S = carregar();
 let LIVRE = false;                                   // dimensionamento livre: sem cliente e sem salvar
 function gravarS(){ if(LIVRE) return; try{ localStorage.setItem(CHAVE, JSON.stringify(S)); }catch(e){} }
-function salvar(){ gravarS(); if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
+// o título da página fica sempre "Cliente_Planilha": é o nome que o navegador sugere ao salvar o PDF
+function nomePDF(){
+  const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
+  const cli = (S.obra.cliente||"").trim() || (LIVRE ? "Dimensionamento livre" : "");
+  const kI = HIST_CHAVE[S.modulo];
+  return (`${cli || "Sem cliente"}_${plan}` + (instMultiplo(kI) ? ` - ${instNomeAtivo(kI)}` : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
+}
+function atualizarTitulo(){ try{ document.title = nomePDF(); }catch(e){} }
+function salvar(){ atualizarTitulo(); gravarS(); if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
 
 /* =====================================================================
    ESGOTO: cálculo e interface
@@ -2927,18 +2937,11 @@ function ligar(){
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
     $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : relEsgoto());
-    window.print();
+    atualizarTitulo();
+    setTimeout(()=>window.print(), 60);                     // dá tempo do navegador assumir o novo título (nome do arquivo)
   });
-  // nome do PDF = planilha + cliente (o navegador usa o título da página como nome do arquivo)
-  const tituloOriginal = document.title;
-  const nomePDF = () => {
-    const plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
-    const cli = (S.obra.cliente||"").trim() || (LIVRE ? "Dimensionamento livre" : "");
-    const kI = HIST_CHAVE[S.modulo];
-    return (`${cli || "Sem cliente"}_${plan}` + (instMultiplo(kI) ? ` - ${instNomeAtivo(kI)}` : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
-  };
-  addEventListener("beforeprint", ()=>{ document.title = nomePDF(); });
-  addEventListener("afterprint", ()=>{ document.title = tituloOriginal; });
+  // nome do PDF = cliente + planilha (o navegador usa o título da página como nome do arquivo)
+  addEventListener("beforeprint", atualizarTitulo);
   $("novo").addEventListener("click", ()=>{
     if(LIVRE){ if(!confirm("Limpar o dimensionamento livre e começar outro?")) return; entrarLivre(true); return; }
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
@@ -6509,9 +6512,9 @@ function dmGrupos(aq){
 }
 const tagPrev = x => x && x.prev ? ` <span class="dm-prev-tag">(previsão)</span>` : "";
 const dmItensIl = (A, base, unid) => A.il.length ? [`${base ? `Carga informada ${fmt(base,2)} kW + ` : ""}itens: ${A.il.map(x=>`${esc(x.n)||"carga"}${tagPrev(x)} ${fmt(x.qtd)} × ${fmt(num(x.w))} W`).join(" · ")} = ${fmt(A.il.reduce((a,x)=>a+x.qtd*num(x.w),0)/1000,2)} kW`] : [];
-function dmSoma(wInst, dKva, fp = 1, nome = ""){            // somatório instalado e demandado em W, kW e kVA
+function dmSoma(wInst, dKva, fp = 1, nome = ""){            // somatório instalado e demandado em kW e kVA
   const kW = wInst/1000, kVA = kW/fp, dKW = dKva*fp;
-  return `<b>Somatório${nome?" "+nome:""}</b> · instalado: ${fmt(wInst,0)} W = ${fmt(kW,2)} kW = ${fmt(kVA,2)} kVA${fp!==1?` (FP ${fmt(fp,2)})`:""} · demandado: ${fmt(dKW*1000,0)} W = ${fmt(dKW,2)} kW = <b>${fmt(dKva,2)} kVA</b>`;
+  return `<b>Somatório${nome?" "+nome:""}</b> · instalado: ${fmt(kW,2)} kW = ${fmt(kVA,2)} kVA${fp!==1?` (FP ${fmt(fp,2)})`:""} · demandado: ${fmt(dKW,2)} kW = <b>${fmt(dKva,2)} kVA</b>`;
 }
 const txtGrupo = g => g.w!=null ? `${fmt(g.qtd)} × ${fmt(g.w)} W` : `${fmt(g.qtd)} aparelhos, ${fmt(g.tot)} W no total`;
 function calcDemQ(id){
@@ -6662,13 +6665,16 @@ function renderDem(){
   $("dm-loc-c").style.display = T && T.metodo==="enel" ? "" : "none"; $("dm-fp-c").style.display = T && T.metodo==="enel" ? "none" : "";
   $("dm-ger-pot").style.visibility = D.gerador ? "" : "hidden";
   document.querySelectorAll(".dm-ger-c").forEach(el=>el.style.display = D.gerador ? "" : "none");
-  if(D.gerador && T){ const rz = dmRaizes()[0], rr = rz && calcDemQ(rz.id);
-    $("dm-ger-ref").innerHTML = `<b>Sugestão Equiper — precisa ser validada com o fornecedor do gerador.</b> Referência: demanda ${rr?`do ${esc(rz.nome)} = <b>${fmt(rr.Dt,1)} kVA</b>`:"ainda não calculada"}. A potência final depende das cargas que o gerador vai atender, das partidas de motores e da regulagem do fabricante.`; } $("dm-fv-pot").style.visibility = D.fv ? "" : "hidden";
+  const rzIds = dmRaizes().map(q=>q.id); if(!D.quadros.some(q=>q.id===D.gerQ)) D.gerQ = rzIds[0] || "";
+  $("dm-gerq").innerHTML = D.quadros.map(q=>`<option value="${q.id}" ${q.id===D.gerQ?"selected":""}>${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}${rzIds.includes(q.id)?" (entrada)":""}</option>`).join("");
+  $("dm-fvlig").innerHTML = `<option value="entrada">Entrada (medidor)</option><option value="qta" ${D.gerador?"":"disabled"}>QTA${D.gerador?"":" (marque o gerador)"}</option>` + D.quadros.map(q=>`<option value="${q.id}">Quadro ${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}</option>`).join("");
+  $("dm-fvlig").value = D.fvLig==="qta" ? (D.gerador ? "qta" : "entrada") : D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : "entrada";
+  if(D.gerador && T){ const gq = D.quadros.find(q=>q.id===D.gerQ) || dmRaizes()[0], rz = gq, rr = rz && calcDemQ(rz.id);
+    $("dm-ger-ref").innerHTML = `<b>Sugestão Equiper — precisa ser validada com o fornecedor do gerador.</b> Referência: demanda ${rr?`do ${esc(rz.nome)} (quadro atendido pelo gerador) = <b>${fmt(rr.Dt,1)} kVA</b>`:"ainda não calculada"}. A potência final depende das cargas que o gerador vai atender, das partidas de motores e da regulagem do fabricante.`; } $("dm-fv-pot").style.visibility = D.fv ? "" : "hidden";
   $("dm-fv-lig-c").hidden = !D.fv;
   document.querySelectorAll(".dm-hib-c").forEach(el=>el.style.display = D.hib ? "" : "none"); $("dm-hibkwp-c").style.display = D.hib && D.hibPlacas!==false ? "" : "none";
   $("dm-fv-lig-c").style.display = D.fv ? "" : "none";
-  $("dm-hibq").innerHTML = D.quadros.map(q=>`<option value="${q.id}" ${q.id===D.hibQ?"selected":""}>${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}</option>`).join(""); const opQ = $("dm-fvlig").querySelector('[value="qta"]'); opQ.disabled = !D.gerador; opQ.textContent = D.gerador ? "QTA" : "QTA (marque o gerador)";
-  $("dm-fvlig").value = D.fvLig==="qta" && D.gerador ? "qta" : "entrada";
+  $("dm-hibq").innerHTML = D.quadros.map(q=>`<option value="${q.id}" ${q.id===D.hibQ?"selected":""}>${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}</option>`).join("");
   if(!T) return;
   if(!D.quadros.some(q=>q.id===DM.sel)) DM.sel = D.quadros[0]?.id;
   const ordem = dmOrdem(), R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)]));
@@ -6719,6 +6725,12 @@ function renderDemQuadro(){
     ${subs[1] ? `<div class="dm-sub">${subs[1][0]}<span>${subs[1][1]}</span></div>${lin("ar","ar")}<button type="button" class="dm-addl" data-dmadd="ar">+ Ar-condicionado</button>`
       : (q.ar||[]).length ? `<p class="fonte" style="margin-top:14px">Este quadro tem ${q.ar.length} ar-condicionado lançado(s), que não entram no cálculo da Enel RJ (já estão nos módulos).</p>` : ""}
     <div class="dm-sub">${subs[2][0]}<span>${subs[2][1]}</span></div>${lin("mo","mo")}<button type="button" class="dm-addl" data-dmadd="mo">+ Motor</button>
+    <div class="dm-dup">
+      <button type="button" class="btn peq" data-dmdup>Duplicar ${esc(q.nome)||"quadro"}</button>
+      <label class="campo" style="width:110px">Quantas cópias<input data-dupn type="number" min="1" max="200" step="1" inputmode="numeric" value="1"></label>
+      ${dmFilhos(q.id).length?`<label class="chave" style="padding-bottom:10px"><input type="checkbox" data-dupf checked> levar junto os quadros ligados nele</label>`:""}
+      <span class="fonte" style="padding-bottom:12px">As cópias ficam ligadas no mesmo quadro e com as mesmas cargas (ex.: apartamentos iguais).</span>
+    </div>
     <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap">${S.dem.quadros.length>1?`<button type="button" class="btn sec peq" data-dmdel>Excluir ${esc(q.nome)||"quadro"}</button>`:""}</p></div>`;
 }
 function dmDiagrama(R, interativo){                         // árvore: entrada → (QTA) → quadros → quadros ligados
@@ -6727,14 +6739,21 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
   const WI = 120, HI = 70, HC = 58, HP = 48, HB = 48, GI = 46;  // híbrido: inversor, chave by-pass, placas, bateria
   const hib = D.hib && D.quadros.some(q=>q.id===D.hibQ) ? D.hibQ : null, placas = hib && D.hibPlacas;
   const temHibIrmao = q => !!hib && q.id!==hib && (D.quadros.find(x=>x.id===hib)?.pai||"") === (q.pai||"");
+  // gerador: QTA na linha principal (antes dos quadros de entrada) ou logo antes de um quadro escolhido
+  const raizIds = new Set(dmRaizes().map(q=>q.id));
+  const qtaNo = D.gerador && D.gerQ && D.quadros.some(q=>q.id===D.gerQ) && !raizIds.has(D.gerQ) ? D.gerQ : null, qtaTopo = D.gerador && !qtaNo;
+  const fvQ = D.fv && D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : null, fvNoQtaNo = D.fv && D.fvLig==="qta" && !!qtaNo;
   // posição horizontal: cursor em pixels; o quadro de cargas críticas reserva uma coluna à esquerda para inversor/bateria/placas
   let cur = 0; const vis = new Set();
   const arr = q => { if(vis.has(q.id)) return null; vis.add(q.id);
     let col = null; if(q.id===hib){ const folga = placas ? 50 : 0; col = cur + folga; cur += WI + GI + folga; }
+    let colFv = null; if(q.id===qtaNo && fvNoQtaNo){ colFv = cur; cur += WS + 34; }
     const fs = dmFilhos(q.id).map(arr).filter(Boolean);
     let x; if(fs.length) x = (fs[0].x + fs[fs.length-1].x)/2; else { x = cur; cur += W + GX; }
     if(col!=null) x = Math.max(x, col + WI + GI);
-    return {q, x, fs, col}; };
+    if(colFv!=null) x = Math.max(x, colFv + WS + 34);
+    const dir = Math.max(q.id===qtaNo ? WS + 30 + 34 : 0, q.id===fvQ ? WS + 34 : 0); if(dir) cur = Math.max(cur, x + W + dir + GX);
+    return {q, x, fs, col, colFv}; };
   const raizes = dmRaizes().map(arr).filter(Boolean);
   S.dem.quadros.forEach(q=>{ if(!vis.has(q.id)){ const n = arr(q); if(n) raizes.push(n); } });
   const largura = Math.max(W, cur - GX), cxE = raizes.length ? (raizes[0].x + raizes[raizes.length-1].x)/2 + W/2 : W/2;
@@ -6743,10 +6762,15 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
   out.push(`<g><rect x="${cxE-W/2}" y="0" width="${W}" height="${H}" rx="4" fill="#000"/><text x="${cxE}" y="34" class="t1 inv">Entrada · medidor</text><text x="${cxE}" y="56" class="t2 inv">${esc(c?.nome?.replace(/ \(.*\)$/,"")||"")}</text></g>`);
   let yFim = H, xDir = Math.max(largura, cxE + W/2), xEsq = 0, yMax = H;
   const lado = cxE + W/2 + 40, ladoE = cxE - W/2 - 40 - WS;
-  const fvNoQta = D.fv && D.gerador && D.fvLig==="qta";
+  const fvNoQta = D.fv && qtaTopo && D.fvLig==="qta";
   const caixaFV = (x, yC) => `<g><rect x="${x}" y="${yC-HS/2}" width="${WS}" height="${HS}" rx="4" fill="#fff" stroke="#d10a1e" stroke-width="1.5" stroke-dasharray="6 3"/><text x="${x+WS/2}" y="${yC-5}" class="t1">Fotovoltaico</text><text x="${x+WS/2}" y="${yC+14}" class="t3">on grid${num(D.fvKwp)?` · ${fmt(num(D.fvKwp),2)} kWp`:""}</text></g>`;
-  if(D.fv && !fvNoQta){ out.push(`<path d="M${cxE+W/2} ${H/2} H${lado}" class="lig"/>${caixaFV(lado, H/2)}`); xDir = Math.max(xDir, lado + WS); }
-  if(D.gerador){                                             // QTA antes do QDG, com o gerador ligado nele
+  if(D.fv && !fvNoQta && !fvNoQtaNo && !fvQ){ out.push(`<path d="M${cxE+W/2} ${H/2} H${lado}" class="lig"/>${caixaFV(lado, H/2)}`); xDir = Math.max(xDir, lado + WS); }
+  const caixaGer = (x, yC) => `<g><rect x="${x}" y="${yC-40}" width="${WS+30}" height="80" rx="4" fill="#fff" stroke="#000" stroke-width="1.5" stroke-dasharray="6 3"/><text x="${x+(WS+30)/2}" y="${yC-20}" class="t1">Gerador (sugestão)</text>
+        <text x="${x+(WS+30)/2}" y="${yC-2}" class="t2">${num(D.gerKva)?`${fmt(num(D.gerKva),1)} kVA`:"potência a definir"}</text>
+        <text x="${x+(WS+30)/2}" y="${yC+15}" class="t3">${num(D.gerMin)||num(D.gerMax)?`faixa ${num(D.gerMin)?fmt(num(D.gerMin),0):"—"} a ${num(D.gerMax)?fmt(num(D.gerMax),0):"—"} kVA`:"faixa a definir"}</text>
+        <text x="${x+(WS+30)/2}" y="${yC+31}" class="t3 no">validar com o fornecedor</text></g>`;
+  const caixaQta = (x, y) => `<g><rect x="${x}" y="${y}" width="${W}" height="${HQ}" rx="4" fill="#fff" stroke="#000" stroke-width="2.5"/><text x="${x+W/2}" y="${y+24}" class="t1">QTA</text><text x="${x+W/2}" y="${y+42}" class="t3">transferência automática</text></g>`;
+  if(qtaTopo){                                               // QTA antes dos quadros de entrada, com o gerador ligado nele
     const yQ = yFim + 36;
     out.push(`<path d="M${cxE} ${yFim} V${yQ}" class="lig"/>`);
     if(fvNoQta){ out.push(`<path d="M${cxE-W/2} ${yQ+HQ/2} H${ladoE+WS}" class="lig"/>${caixaFV(ladoE, yQ+HQ/2)}`); xEsq = Math.min(xEsq, ladoE); }
@@ -6760,10 +6784,10 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
   }
   // altura de cada quadro: o de cargas críticas desce para dar lugar à chave by-pass (e às placas)
   const extraHib = (placas ? HP + 34 : 14) + HC + 40;
-  const posY = (n, yPaiFim) => { n.y = yPaiFim + GY + (n.q.id===hib ? extraHib : 0); n.fs.forEach(f=>posY(f, n.y + H)); };
+  const posY = (n, yPaiFim) => { n.yIni = yPaiFim + GY; n.y = n.yIni + (n.q.id===qtaNo ? HQ + 40 : 0) + (n.q.id===hib ? extraHib : 0); n.fs.forEach(f=>posY(f, n.y + H)); };
   raizes.forEach(r=>posY(r, yFim));
   const liga = (x1, y1, x2, y2) => { const ym = y1 + GY/2; return `<path d="M${x1} ${y1} V${ym} H${x2} V${y2}" class="lig"/>`; };
-  const destino = n => n.q.id===hib ? n.y - 40 - HC : n.y;   // a linha do quadro de cima chega na chave by-pass
+  const destino = n => n.q.id===qtaNo ? n.yIni : n.q.id===hib ? n.y - 40 - HC : n.y;   // a linha do quadro de cima chega no QTA ou na chave by-pass
   raizes.forEach(r=>out.push(liga(cxE, yFim, r.x + W/2, destino(r))));
   const desenha = n => {
     const r = R[n.q.id], x = n.x, y = n.y, sel = interativo && n.q.id===DM.sel, cat = r && r.cat;
@@ -6783,6 +6807,13 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
         out.push(`<g><rect x="${xP}" y="${yP}" width="${WP}" height="${HP}" rx="2" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="${xP+WP/2}" y="${yP+20}" class="t1">Placas fotovoltaicas</text><text x="${xP+WP/2}" y="${yP+37}" class="t3">${num(D.hibKwp)?`${fmt(num(D.hibKwp),2)} kWp`:"potência a definir"}</text></g>
           <path d="M${xP+22} ${yP+HP} V${yI+HI/2} H${xI}" class="lig"/>`); xEsq = Math.min(xEsq, xP); }
     }
+    if(n.q.id===qtaNo){                                      // QTA logo antes deste quadro, com o gerador ao lado
+      const yQ = n.yIni, cx = x + W/2, ateY = n.q.id===hib ? n.y - 40 - HC : n.y, xg = x + W + 34;
+      out.push(`${caixaQta(x, yQ)}<path d="M${cx} ${yQ+HQ} V${ateY}" class="lig"/><path d="M${x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${caixaGer(xg, yQ+HQ/2)}`);
+      xDir = Math.max(xDir, xg + WS + 30);
+      if(fvNoQtaNo){ const xf = n.colFv; out.push(`<path d="M${x} ${yQ+HQ/2} H${xf+WS}" class="lig"/>${caixaFV(xf, yQ+HQ/2)}`); xEsq = Math.min(xEsq, xf); }
+    }
+    if(n.q.id===fvQ){ const xf = x + W + 34; out.push(`<path d="M${x+W} ${y+H/2} H${xf}" class="lig"/>${caixaFV(xf, y+H/2)}`); xDir = Math.max(xDir, xf + WS); }
     const crit = n.q.id===hib ? "cargas críticas" : temHibIrmao(n.q) ? "cargas não críticas" : "";
     if(r && r.disj){ const cx = x + W/2, yb = y - 13;          // disjuntor geral na entrada do quadro
       out.push(`<g><rect x="${cx-7}" y="${yb-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${cx-7} ${yb+7} L${cx+7} ${yb-7}" class="lig"/>
@@ -6862,6 +6893,7 @@ function ligarDem(){
   [["dm-germin","gerMin"],["dm-germax","gerMax"],["dm-gerobs","gerObs"]].forEach(([id,k])=>$(id).addEventListener("input", e=>{ D()[k] = e.target.value; alt(); }));
   $("dm-fvkwp").addEventListener("input", e=>{ D().fvKwp = e.target.value; alt(); });
   $("dm-fvlig").addEventListener("change", e=>{ D().fvLig = e.target.value; tudo(); });
+  $("dm-gerq").addEventListener("change", e=>{ D().gerQ = e.target.value; tudo(); });
   $("dm-hib").addEventListener("change", e=>{ D().hib = e.target.checked; if(D().hib && !D().quadros.some(q=>q.id===D().hibQ)){ const c = D().quadros.find(q=>q.pai) || D().quadros[0]; D().hibQ = c?.id || ""; } tudo(); });
   $("dm-hibq").addEventListener("change", e=>{ D().hibQ = e.target.value; tudo(); });
   $("dm-hibpl").addEventListener("change", e=>{ D().hibPlacas = e.target.checked; tudo(); });
@@ -6881,6 +6913,22 @@ function ligarDem(){
       setTimeout(()=>{ const l = document.querySelectorAll(`#dm-quadro [data-dml="${t}"] [data-df="n"]`); l[l.length-1]?.focus(); }, 30); return; }
     const rm = e.target.closest("[data-dmrm]");
     if(rm){ const l = rm.closest("[data-dml]"); q[l.dataset.dml].splice(+l.dataset.i, 1); tudo(); return; }
+    if(e.target.closest("[data-dmdup]")){
+      const n = Math.max(1, Math.min(200, Math.round(num(document.querySelector("#dm-quadro [data-dupn]")?.value)) || 1));
+      const comFilhos = !!document.querySelector("#dm-quadro [data-dupf]")?.checked;
+      const ids = comFilhos ? dmDesc(q.id) : [q.id], usados = new Set(D().quadros.map(x=>x.nome));
+      const proxNome = nome => { const m = /^(.*?)(\d+)(\D*)$/.exec(nome||""); let k = 2, c;
+        if(m){ let v = +m[2]; do{ v++; c = `${m[1]}${String(v).padStart(m[2].length,"0")}${m[3]}`; }while(usados.has(c)); }
+        else { do{ c = `${nome||"Quadro"} (${k++})`; }while(usados.has(c)); }
+        usados.add(c); return c; };
+      let primeiro = null;
+      for(let k=0; k<n; k++){
+        const mapa = {}; ids.forEach(id=>mapa[id] = uid());
+        ids.forEach(id=>{ const o = D().quadros.find(x=>x.id===id); const c = clone(o); c.id = mapa[id]; c.nome = proxNome(o.nome); if(id!==q.id) c.pai = mapa[o.pai] || o.pai; D().quadros.push(c); if(!primeiro) primeiro = c; });
+      }
+      aviso(`${n} cópia${n>1?"s":""} de ${q.nome}${comFilhos && ids.length>1?` (com ${ids.length-1} quadro(s) ligado(s))`:""}`);
+      tudo(); return;
+    }
     if(e.target.closest("[data-dmdel]")){
       if(!confirm(`Excluir o quadro ${q.nome}? Os quadros ligados nele passam a ser alimentados pelo quadro de cima.`)) return;
       D().quadros.forEach(x=>{ if(x.pai===q.id) x.pai = q.pai; }); D().quadros = D().quadros.filter(x=>x.id!==q.id); DM.sel = D().quadros[0]?.id; tudo(); }
@@ -6923,7 +6971,7 @@ function relDem(){
     ...(q.mo||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"motor"} ${cvTxt(num(x.cv))} CV${T.metodo!=="light"?(x.cls==="mono"?" mono":x.cls==="bomba"?" (bomba)":" tri"):""}${x.prev?" <i>(previsão)</i>":""}`)].filter(Boolean).join(" · ") || "sem cargas próprias";
   return `<div class="r">${relCarimbo(`Cálculo de demanda · ${esc(c.nome)} (${T.norma})`, D.doc, D.rev, "Instalações elétricas")}
     ${sec("Identificação", relIdent(MREL))}
-    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Concessionária", `${esc(c.nome)} · ${T.norma}`)}${td("Fornecimento", T.fornecimento)}${td("Tipo de construção", D.tipo==="nres"?"Não residencial":"Residencial")}${T.metodo==="enel" ? td("Fator de localização", fmt(num(D.loc)||1,2)) : td("Fator de potência do ar-condicionado", fmt(num(D.fp),2))}${td("Gerador", D.gerador ? `sim · QTA antes do QDG${num(D.gerKva)?` · sugerido <b>${fmt(num(D.gerKva),1)} kVA</b>`:""}${num(D.gerMin)||num(D.gerMax)?` · faixa ${num(D.gerMin)?fmt(num(D.gerMin),0):"—"} a ${num(D.gerMax)?fmt(num(D.gerMax),0):"—"} kVA`:""}${D.gerObs?` · ${esc(D.gerObs)}`:""}<br><small><b>Sugestão da Equiper, que precisa ser validada com o fornecedor do gerador.</b></small>` : "não")}${td("Sistema fotovoltaico híbrido com bateria", D.hib ? `sim · chave by-pass alimentando ${esc(D.quadros.find(q=>q.id===D.hibQ)?.nome||"—")} (cargas críticas)${num(D.hibKw)?` · inversor ${fmt(num(D.hibKw),1)} kW`:""}${num(D.hibKwh)?` · bateria ${fmt(num(D.hibKwh),1)} kWh`:""}${D.hibPlacas!==false?` · com placas fotovoltaicas${num(D.hibKwp)?` ${fmt(num(D.hibKwp),2)} kWp`:""}`:" · sem placas"}` : "não")}${td("Geração fotovoltaica on grid", D.fv ? `sim${num(D.fvKwp)?` · ${fmt(num(D.fvKwp),2)} kWp`:""} · conectada ${D.gerador && D.fvLig==="qta" ? "no QTA" : "na entrada (medidor)"}` : "não")}</tbody></table>`)}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Concessionária", `${esc(c.nome)} · ${T.norma}`)}${td("Fornecimento", T.fornecimento)}${td("Tipo de construção", D.tipo==="nres"?"Não residencial":"Residencial")}${T.metodo==="enel" ? td("Fator de localização", fmt(num(D.loc)||1,2)) : td("Fator de potência do ar-condicionado", fmt(num(D.fp),2))}${td("Gerador", D.gerador ? `sim · QTA antes do ${esc((D.quadros.find(q=>q.id===D.gerQ) || dmRaizes()[0])?.nome || "QDG")}${num(D.gerKva)?` · sugerido <b>${fmt(num(D.gerKva),1)} kVA</b>`:""}${num(D.gerMin)||num(D.gerMax)?` · faixa ${num(D.gerMin)?fmt(num(D.gerMin),0):"—"} a ${num(D.gerMax)?fmt(num(D.gerMax),0):"—"} kVA`:""}${D.gerObs?` · ${esc(D.gerObs)}`:""}<br><small><b>Sugestão da Equiper, que precisa ser validada com o fornecedor do gerador.</b></small>` : "não")}${td("Sistema fotovoltaico híbrido com bateria", D.hib ? `sim · chave by-pass alimentando ${esc(D.quadros.find(q=>q.id===D.hibQ)?.nome||"—")} (cargas críticas)${num(D.hibKw)?` · inversor ${fmt(num(D.hibKw),1)} kW`:""}${num(D.hibKwh)?` · bateria ${fmt(num(D.hibKwh),1)} kWh`:""}${D.hibPlacas!==false?` · com placas fotovoltaicas${num(D.hibKwp)?` ${fmt(num(D.hibKwp),2)} kWp`:""}`:" · sem placas"}` : "não")}${td("Geração fotovoltaica on grid", D.fv ? `sim${num(D.fvKwp)?` · ${fmt(num(D.fvKwp),2)} kWp`:""} · conectada ${D.gerador && D.fvLig==="qta" ? "no QTA" : D.quadros.some(q=>q.id===D.fvLig) ? `no quadro ${esc(D.quadros.find(q=>q.id===D.fvLig).nome)}` : "na entrada (medidor)"}` : "não")}</tbody></table>`)}
     ${sec("Demanda por quadro", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Quadro</th><th class="n">Instalada (kVA)</th>${cols.map(([k])=>`<th class="n">${k}</th>`).join("")}<th class="n">Demanda (kVA)</th><th class="n">I (A)</th><th>Categoria</th><th class="n">Disjuntor</th></tr></thead><tbody>
       ${ordem.map(({q, nivel})=>{ const r = R[q.id]; return `<tr ${nivel?"":'style="font-weight:700"'}><td>${"&nbsp;&nbsp;&nbsp;".repeat(nivel)}${nivel?"└ ":""}${esc(q.nome)}${q.local?` <small>(${esc(q.local)})</small>`:""}</td><td class="n">${fmt(r.instT,2)}</td>${cols.map(([k])=>`<td class="n">${fmt(r.P[k]?.d||0,2)}</td>`).join("")}<td class="n">${fmt(r.Dt,2)}</td><td class="n">${fmt(r.I,0)}</td><td>${r.cat?r.cat[0]:"—"}</td><td class="n">${r.disj?`${r.polos} ${r.disj} A${r.disjManual?` (calc. ${r.disjCalc} A)`:""}`:"—"}</td></tr>`; }).join("")}</tbody></table>
       <div class="r-concl ${r0&&r0.cat?"":"falha"}"><b>Conclusão:</b> ${r0&&r0.cat?`carga instalada de ${fmt(r0.instT,2)} kVA e demanda total de ${fmt(r0.Dt,2)} kVA, categoria <b>${r0.cat[0]}</b>, disjuntor geral <b>${r0.polos} ${r0.disj} A</b>${r0.disjManual?` (adotado; calculado ${r0.disjCalc} A)`:""} · ${r0.cat[4]||""}.`:"demanda fora da tabela da concessionária — consultar."}${D.gerador?`<br>Gerador: ${num(D.gerKva)?`sugerido <b>${fmt(num(D.gerKva),1)} kVA</b>`:"potência a definir"}${num(D.gerMin)||num(D.gerMax)?` (faixa ${num(D.gerMin)?fmt(num(D.gerMin),0):"—"} a ${num(D.gerMax)?fmt(num(D.gerMax),0):"—"} kVA)`:""} — <b>sugestão da Equiper, a ser validada com o fornecedor do gerador</b>.`:""}</div>
@@ -7281,9 +7329,19 @@ if(EMBUTIDO){
     S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
     if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
     preencherTudo(); renderLateralObra(); _pontePronta = true; });
+  function nomePDFPainel(){
+    var plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
+    var cli = (S.obra.cliente || "").trim();
+    var kI = HIST_CHAVE[S.modulo];
+    return ((cli || "Sem cliente") + "_" + plan + (instMultiplo(kI) ? " - " + instNomeAtivo(kI) : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
+  }
   var _tituloPai = null;
-  addEventListener("beforeprint", function(){ try{ _tituloPai = window.parent.document.title; window.parent.document.title = nomePDF(); }catch(e){} });
-  addEventListener("afterprint", function(){ try{ if(_tituloPai!==null) window.parent.document.title = _tituloPai; _tituloPai = null; }catch(e){} });
+  function definirTituloPai(){ try{ if(_tituloPai === null) _tituloPai = window.parent.document.title; window.parent.document.title = nomePDFPainel(); }catch(e){} }
+  function restaurarTituloPai(){ try{ if(_tituloPai !== null) window.parent.document.title = _tituloPai; _tituloPai = null; }catch(e){} }
+  var _printOriginal = window.print.bind(window);
+  window.print = function(){ definirTituloPai(); _printOriginal(); };
+  addEventListener("beforeprint", definirTituloPai);
+  addEventListener("afterprint", restaurarTituloPai);
   try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
 }
 </script>
