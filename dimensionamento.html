@@ -6745,16 +6745,23 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
   const fvQ = D.fv && D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : null, fvNoQtaNo = D.fv && D.fvLig==="qta" && !!qtaNo;
   // posição horizontal: cursor em pixels; o quadro de cargas críticas reserva uma coluna à esquerda para inversor/bateria/placas
   let cur = 0; const vis = new Set();
-  const arr = q => { if(vis.has(q.id)) return null; vis.add(q.id);
+  // quadros duplicados e ainda iguais (mesmas cargas, inclusive dos quadros ligados neles) aparecem uma vez só, com "×N"
+  const refs = new Set([D.hibQ, D.gerQ, D.fvLig].filter(Boolean));
+  const assin = q => JSON.stringify({il:q.il||[], aq:q.aq||[], ar:q.ar||[], mo:q.mo||[], ilum:num(q.ilum), area:num(q.area), com:q.com||{}, ilE:num(q.ilE), ilEd:!!q.ilEd, disj:num(q.disj), f:dmFilhos(q.id).map(assin)});
+  const chaveDup = q => !q.grp || dmDesc(q.id).some(id=>refs.has(id)) ? null : q.grp + "|" + assin(q);
+  const agrupa = lista => { const grupos = [], mapa = new Map();
+    lista.forEach(k=>{ const ch = chaveDup(k); if(ch && mapa.has(ch)) mapa.get(ch).push(k); else { const g = [k]; grupos.push(g); if(ch) mapa.set(ch, g); } });
+    return grupos; };
+  const arr = (q, mult = 1, grupo = null) => { if(vis.has(q.id)) return null; vis.add(q.id);
     let col = null; if(q.id===hib){ const folga = placas ? 50 : 0; col = cur + folga; cur += WI + GI + folga; }
     let colFv = null; if(q.id===qtaNo && fvNoQtaNo){ colFv = cur; cur += WS + 34; }
-    const fs = dmFilhos(q.id).map(arr).filter(Boolean);
+    const fs = agrupa(dmFilhos(q.id)).map(g=>{ g.slice(1).forEach(o=>dmDesc(o.id).forEach(id=>vis.add(id))); return arr(g[0], mult*g.length, g.length>1 ? g : null); }).filter(Boolean);
     let x; if(fs.length) x = (fs[0].x + fs[fs.length-1].x)/2; else { x = cur; cur += W + GX; }
     if(col!=null) x = Math.max(x, col + WI + GI);
     if(colFv!=null) x = Math.max(x, colFv + WS + 34);
     const dir = Math.max(q.id===qtaNo ? WS + 30 + 34 : 0, q.id===fvQ ? WS + 34 : 0); if(dir) cur = Math.max(cur, x + W + dir + GX);
-    return {q, x, fs, col, colFv}; };
-  const raizes = dmRaizes().map(arr).filter(Boolean);
+    return {q, x, fs, col, colFv, mult, grupo}; };
+  const raizes = agrupa(dmRaizes()).map(g=>{ g.slice(1).forEach(o=>dmDesc(o.id).forEach(id=>vis.add(id))); return arr(g[0], g.length, g.length>1 ? g : null); }).filter(Boolean);
   S.dem.quadros.forEach(q=>{ if(!vis.has(q.id)){ const n = arr(q); if(n) raizes.push(n); } });
   const largura = Math.max(W, cur - GX), cxE = raizes.length ? (raizes[0].x + raizes[raizes.length-1].x)/2 + W/2 : W/2;
   const out = [], c = concDe(D.conc);
@@ -6820,7 +6827,8 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
         <text x="${cx+12}" y="${yb+5}" class="dj">${r.polos} ${r.disj} A</text></g>`); }
     out.push(`<g ${interativo?`data-dmq="${n.q.id}"`:""}><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="4" fill="#fff" stroke="${sel?"#d10a1e":"#000"}" stroke-width="${sel?2.5:1.5}"/>
       <text x="${x+W/2}" y="${y+22}" class="t1">${esc(n.q.nome)||"—"}</text>
-      <text x="${x+W/2}" y="${y+38}" class="t4">${esc((n.q.local||"").trim().slice(0,26))||"local não informado"}</text>
+      ${n.mult>1?`<g><title>${n.grupo?n.grupo.map(g=>esc(g.nome)).join(", "):`${n.mult} quadros iguais`}</title><rect x="${x+W-30}" y="${y-11}" width="40" height="22" rx="11" fill="#d10a1e"/><text x="${x+W-10}" y="${y+5}" class="mult">×${n.mult}</text></g>`:""}${n.mult>1?(xDir = Math.max(xDir, x+W+14), ""):""}
+      <text x="${x+W/2}" y="${y+38}" class="t4">${n.grupo ? (t=>t.length>30?t.slice(0,29)+"…":t)("iguais: " + n.grupo.map(g=>esc((g.nome||"").match(/(\d+\D*)$/)?.[1] || g.nome)).join(", ")) : esc((n.q.local||"").trim().slice(0,26))||"local não informado"}</text>
       <text x="${x+W/2}" y="${y+56}" class="t2">${r?`Inst. ${fmt(r.instT,1)} · Dem. ${fmt(r.Dt,1)} kVA`:"—"}</text>
       <text x="${x+W/2}" y="${y+72}" class="t3 ${r&&r.disj?"dg":"no"}">${r&&r.disj?`Disjuntor geral ${r.polos} ${r.disj} A${cat?` · ${cat[0]}`:""}`:r&&r.acima?"acima da tabela":"sem demanda"}</text></g>
       ${crit?`<text x="${n.fs.length ? x+W/2+10 : x+W/2}" y="${y+H+18}" class="crit" ${n.fs.length?'text-anchor="start" style="text-anchor:start"':""}>${crit}</text>`:""}`);
@@ -6830,7 +6838,7 @@ function dmDiagrama(R, interativo){                         // árvore: entrada 
   raizes.forEach(desenha);
   const Wt = xDir - xEsq, Ht = yMax;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${xEsq-6} -6 ${Wt+12} ${Ht+12}" width="${Wt+12}" height="${Ht+12}" role="img" aria-label="Diagrama de alimentação dos quadros">
-    <style>.t1{font:700 15px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t2{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t3{font:500 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.t3.no{fill:#d10a1e}.t4{font:italic 400 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.inv{fill:#fff}.lig{fill:none;stroke:#000;stroke-width:1.5}.sim{font:700 20px Arial,sans-serif;text-anchor:middle;fill:#000}.crit{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#1f6fd1}.dj{font:700 13px Barlow,Arial,sans-serif;fill:#d10a1e}.t3.dg{font-weight:700;fill:#000}</style>
+    <style>.t1{font:700 15px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t2{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#000}.t3{font:500 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.t3.no{fill:#d10a1e}.t4{font:italic 400 11.5px Barlow,Arial,sans-serif;text-anchor:middle;fill:#555}.inv{fill:#fff}.lig{fill:none;stroke:#000;stroke-width:1.5}.sim{font:700 20px Arial,sans-serif;text-anchor:middle;fill:#000}.crit{font:600 13px Barlow,Arial,sans-serif;text-anchor:middle;fill:#1f6fd1}.dj{font:700 13px Barlow,Arial,sans-serif;fill:#d10a1e}.mult{font:700 13px Barlow,Arial,sans-serif;fill:#fff;text-anchor:middle}.t3.dg{font-weight:700;fill:#000}</style>
     ${out.join("")}</svg>`;
 }
 function dmResumoQ(r){
@@ -6924,7 +6932,7 @@ function ligarDem(){
       let primeiro = null;
       for(let k=0; k<n; k++){
         const mapa = {}; ids.forEach(id=>mapa[id] = uid());
-        ids.forEach(id=>{ const o = D().quadros.find(x=>x.id===id); const c = clone(o); c.id = mapa[id]; c.nome = proxNome(o.nome); if(id!==q.id) c.pai = mapa[o.pai] || o.pai; D().quadros.push(c); if(!primeiro) primeiro = c; });
+        ids.forEach(id=>{ const o = D().quadros.find(x=>x.id===id); if(!o.grp) o.grp = o.id; const c = clone(o); c.id = mapa[id]; c.grp = o.grp; c.nome = proxNome(o.nome); if(id!==q.id) c.pai = mapa[o.pai] || o.pai; D().quadros.push(c); if(!primeiro) primeiro = c; });
       }
       aviso(`${n} cópia${n>1?"s":""} de ${q.nome}${comFilhos && ids.length>1?` (com ${ids.length-1} quadro(s) ligado(s))`:""}`);
       tudo(); return;
