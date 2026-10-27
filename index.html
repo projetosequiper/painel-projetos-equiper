@@ -1911,7 +1911,35 @@
   async function saveUsuariosFinanceiro(){ try{ await window.storage.set('clm-usuarios-financeiro', JSON.stringify(state.usuariosFinanceiro), true); }catch(e){ mostrarErroSalvamento('usuário do financeiro', saveUsuariosFinanceiro); } }
   async function saveEmailsFinanceiroInd(){ try{ await window.storage.set('clm-emails-financeiro-ind', JSON.stringify(state.emailsFinanceiroInd), true); }catch(e){ mostrarErroSalvamento('cadastro do financeiro', saveEmailsFinanceiroInd); } }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){ mostrarErroSalvamento('link do painel', saveLinkPainel); } }
-  async function saveFinanceiro(){ if(financeiroBloqueado){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){ mostrarErroSalvamento('dados financeiros', saveFinanceiro); } }
+  // ---- "Gaveta pequena": lista de clientes só com o que projetistas precisam (sem o financeiro completo) ----
+  var CAMPOS_CLIENTE_EQUIPE = ['id','cliente','numeroProposta','areaM2','qtdPavimentos','enderecoCompleto','localidade','valorTotal','valorPorDisciplina'];
+  var ultimoClientesEquipeGravado = null;
+  function montarClientesEquipe(){
+    return (state.financeiro || []).map(function(f){
+      var o = {}; CAMPOS_CLIENTE_EQUIPE.forEach(function(c){ if(f[c] !== undefined) o[c] = f[c]; }); return o;
+    });
+  }
+  async function salvarClientesEquipe(){
+    try{
+      if(!state.financeiro || !state.financeiro.length || financeiroBloqueado) return;
+      var txt = JSON.stringify(montarClientesEquipe());
+      if(txt === ultimoClientesEquipeGravado) return;
+      await window.storage.set('clm-clientes-equipe', txt, true);
+      ultimoClientesEquipeGravado = txt;
+    }catch(e){}   // enquanto as regras novas não estiverem publicadas, falha em silêncio
+  }
+  // projetista lê a gaveta pequena (se ainda não existir, tenta a antiga); gerente/financeiro leem a completa
+  async function garantirClientes(){
+    if(financeiroCarregado || (state.financeiro && state.financeiro.length)) return;
+    var chaves = modoDesenhista ? ['clm-clientes-equipe','clm-financeiro'] : ['clm-financeiro'];
+    for(var i = 0; i < chaves.length; i++){
+      try{
+        var r = await window.storage.get(chaves[i], true);
+        if(r && r.value){ var v = JSON.parse(r.value); if(v && v.length){ state.financeiro = v; return; } }
+      }catch(e){}
+    }
+  }
+  async function saveFinanceiro(){ if(financeiroBloqueado){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); salvarClientesEquipe(); }catch(e){ mostrarErroSalvamento('dados financeiros', saveFinanceiro); } }
   var financeiroFoiCarregadoAlgumaVez = false;
   async function carregarFinanceiro(){
     var rs = await lerChaveSegura('clm-financeiro');
@@ -1941,6 +1969,7 @@
       if(avaliarAutoCobranca(rec)) algumaMudanca = true;
     });
     await saveFinanceiro();
+    salvarClientesEquipe();
     if(projetosCarregado){
       if(sincronizarProjetosComFinanceiro()){ render(); }
     }
@@ -3890,12 +3919,7 @@
   }
 
   async function abrirFormRegistroArt(existenteId){
-    if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
-      try{
-        var rf = await window.storage.get('clm-financeiro', true);
-        if(rf && rf.value){ state.financeiro = JSON.parse(rf.value); }
-      }catch(e){}
-    }
+    await garantirClientes();
     var existente = existenteId ? state.registrosArt.find(function(x){ return x.id === existenteId; }) : null;
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
@@ -4596,12 +4620,7 @@
   async function renderStatusClientes(){
     var el = document.getElementById('statusClientesLista');
     if(!el) return;
-    if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
-      try{
-        var rf = await window.storage.get('clm-financeiro', true);
-        if(rf && rf.value){ state.financeiro = JSON.parse(rf.value); }
-      }catch(e){}
-    }
+    await garantirClientes();
     var busca = (document.getElementById('statusClientesBusca').value || '').toLowerCase();
     var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
     var html = '';
@@ -4635,12 +4654,7 @@
   }
 
   async function renderResumo(){
-    if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
-      try{
-        var rfResumo = await window.storage.get('clm-financeiro', true);
-        if(rfResumo && rfResumo.value){ state.financeiro = JSON.parse(rfResumo.value); }
-      }catch(e){}
-    }
+    await garantirClientes();
     document.getElementById('resLabel').textContent = MESES_PT[resMes] + ' de ' + resAno;
     var chave = resAno + '-' + pad2(resMes+1);
 
@@ -5237,12 +5251,7 @@
       dimensionamentosCarregados = true;
       var okD = await carregarTopicoSeguro('clm-dimensionamentos', 'dimensionamentosCarregados', 'dim', function(v){ state.dimensionamentos = v; }, id);
       if(!okD) dimensionamentosCarregados = false;
-      if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
-        try{
-          var rf2 = await window.storage.get('clm-financeiro', true);
-          if(rf2 && rf2.value){ state.financeiro = JSON.parse(rf2.value); }
-        }catch(e){}
-      }
+      await garantirClientes();
       renderDimensionamentosLista();
     }
     if(id === 'chat'){ chatAoAbrirTopico(); }
@@ -7109,7 +7118,7 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '27/10/2026 · fase 2';
+  var VERSAO_APP = '27/10/2026 · fase 3a';
   (function(){
     var sel = document.getElementById('selInatividade');
     if(sel){ sel.value = String(minutosInatividade()); sel.onchange = function(){ try{ localStorage.setItem(INATIV_CHAVE, sel.value); }catch(e){} ultimaAtividade = Date.now(); avisar('Salvo.'); }; }
