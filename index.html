@@ -1,5 +1,5 @@
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -609,11 +609,40 @@
     .chat-flut-body .chat-lado{width:100%;}
     .chat-flut-body .chat-wrap{width:100%;}
   }
+  header #botaoTema, header #botaoFaceId{position:static; top:auto; right:auto; box-shadow:none; padding:5px 10px; font-size:12px; border-radius:var(--r-sm);}
+  #chatFlutBtn.escondido{display:none !important;}
+  .prazos-bar{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .chip-prazo{font-family:'Inter',sans-serif; font-size:13px; font-weight:600; padding:7px 12px; border-radius:20px; border:1px solid var(--border); background:var(--sheet); color:var(--ink); cursor:pointer;}
+  .chip-prazo b{font-family:'IBM Plex Mono',monospace; margin-left:4px;}
+  .chip-prazo.atrasadas b{color:var(--red);}
+  .chip-prazo.ativo{background:var(--red); color:#fff; border-color:var(--red);}
+  .chip-prazo.ativo b{color:#fff;}
+  #fSelWrap{display:contents;}
+  #btnFiltrosToggle{display:none;}
+  .abas-quadro{display:none;}
+  @media (max-width:720px){
+    #btnFiltrosToggle{display:inline-block;}
+    #fSearch{flex:1; min-width:0 !important;}
+    #fSelWrap{display:none; width:100%; flex-direction:column; gap:8px;}
+    #toolbarQuadro.filtros-abertos #fSelWrap{display:flex;}
+    .topico-conteudo-wrap, #projetosConteudo, .app{min-width:0; max-width:100%;}
+    section[data-topico]{min-width:0; max-width:100%;}
+    .prazos-bar{flex-wrap:nowrap; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch;}
+    .chip-prazo{flex:0 0 auto; white-space:nowrap;}
+    .abas-quadro{max-width:100%; min-width:0; display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:2px; -webkit-overflow-scrolling:touch;}
+    .aba-q{flex:0 0 auto; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; padding:8px 12px; border-radius:20px; border:1px solid var(--border); background:var(--sheet); color:var(--ink); cursor:pointer; white-space:nowrap;}
+    .aba-q.ativa{background:var(--btn-bg,#222); color:var(--btn-text,#fff); border-color:var(--btn-bg,#222);}
+    .board.com-abas .column.aba-oculta{display:none;}
+    .board.com-abas .column > h3{display:none;}
+  }
+  .toast-aviso{position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); z-index:9100; max-width:min(92vw,460px); background:var(--btn-bg,#222); color:var(--btn-text,#fff); padding:12px 18px; border-radius:var(--r-md); box-shadow:var(--shadow-lg); font-size:14px; line-height:1.35; cursor:pointer;}
+  @media (min-width:901px){ .toast-aviso{bottom:24px;} }
+  #bannerAlteracoes{position:fixed; top:calc(8px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); z-index:9050; background:#1d4ed8; color:#fff; padding:9px 12px; border-radius:var(--r-md); box-shadow:var(--shadow-lg); font-size:13.5px; display:flex; gap:10px; align-items:center; max-width:94vw;}
+  #bannerAlteracoes button{border:1px solid #fff; background:transparent; color:#fff; border-radius:6px; padding:4px 10px; font-size:13px; cursor:pointer;}
+  .hist-mini{font-size:11.5px; color:var(--ink-soft); margin:8px 0 4px; line-height:1.4;}
 </style>
 
-<button id="botaoTema" type="button">🌙 Escuro</button>
 <button id="botaoInstalar" type="button" style="display:none;">⬇ Baixar app</button>
-<button id="botaoFaceId" type="button" style="display:none;">🔓 Ativar Face ID</button>
 
 <div id="senhaGate"></div>
 <div id="barraInferiorMobile" class="barra-inferior-mobile"></div>
@@ -646,14 +675,10 @@
     <div style="display:flex; gap:6px; flex-wrap:wrap;">
       <button class="btn secondary small" id="btnAtualizar">↻ Atualizar</button>
       <button class="btn secondary small" id="btnBloquear">🔒 Bloquear projetos</button>
-      <button class="btn secondary small apenas-gerente" id="btnExportar">⬇ Exportar backup</button>
-      <button class="btn secondary small apenas-gerente" id="btnImportar">⬆ Importar backup</button>
-      <button class="btn secondary small apenas-gerente" id="btnVerBackupsAuto">🗓 Backups automáticos</button>
-      <input type="file" id="inputImportar" accept=".json,application/json" style="display:none;">
+      <button id="botaoFaceId" type="button" style="display:none;">🔓 Ativar Face ID</button>
+      <button id="botaoTema" type="button">🌙 Escuro</button>
     </div>
   </header>
-  <div id="importarStatus" class="hint" style="margin:-8px 0 12px;"></div>
-  <div id="backupsAutoPanel" style="display:none;"></div>
   <div id="avisoEnvioPendente" style="display:none;"></div>
   <div id="avisoReuniaoHoje" style="display:none;"></div>
 
@@ -711,14 +736,19 @@
   <section data-topico="quadro">
     <h2>Quadro de tarefas</h2>
     <div id="formPanelTarefa"></div>
-    <div class="toolbar">
+    <div id="prazosBar" class="prazos-bar"></div>
+    <div class="toolbar" id="toolbarQuadro">
       <input type="text" id="fSearch" placeholder="Buscar por projeto ou cliente" style="min-width:220px" />
-      <select id="fResp"><option value="">Todos os responsáveis</option></select>
-      <select id="fTipo"><option value="">Todas as disciplinas</option></select>
-      <select id="fProjeto"><option value="">Todos os projetos</option></select>
-      <button class="btn secondary small" id="btnClearFilters">Limpar filtros</button>
+      <button class="btn secondary small" id="btnFiltrosToggle" type="button">⚙ Filtros</button>
+      <div id="fSelWrap">
+        <select id="fResp"><option value="">Todos os responsáveis</option></select>
+        <select id="fTipo"><option value="">Todas as disciplinas</option></select>
+        <select id="fProjeto"><option value="">Todos os projetos</option></select>
+        <button class="btn secondary small" id="btnClearFilters">Limpar filtros</button>
+      </div>
     </div>
-    <div class="board" id="board"></div>
+    <div id="abasQuadro" class="abas-quadro"></div>
+    <div class="board com-abas" id="board"></div>
   </section>
 
   <section data-topico="calendario">
@@ -758,8 +788,8 @@
   </section>
 
   <section id="secRegistrosArt" style="display:none;" data-topico="art">
-    <h2><span id="lblRegistrosArt" style="cursor:pointer; user-select:none;">▸ ART</span> <button class="btn small" id="btnNovoRegistroArt">+ Nova ART</button></h2>
-    <div id="registrosArtConteudo" style="display:none; margin-top:10px;">
+    <h2><span id="lblRegistrosArt" style="cursor:pointer; user-select:none;">▾ ART</span> <button class="btn small" id="btnNovoRegistroArt">+ Nova ART</button></h2>
+    <div id="registrosArtConteudo" style="margin-top:10px;">
       <input type="text" id="registrosArtBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
       <div id="registrosArtLista"></div>
     </div>
@@ -779,16 +809,16 @@
   </section>
 
   <section id="secConsideracoesIniciais" style="display:none;" data-topico="consideracoes">
-    <h2><span id="lblConsideracoesIniciais" style="cursor:pointer; user-select:none;">▸ Considerações iniciais</span> <button class="btn small" id="btnNovaConsideracaoInicial">+ Nova consideração inicial</button></h2>
-    <div id="consideracoesIniciaisConteudo" style="display:none; margin-top:10px;">
+    <h2><span id="lblConsideracoesIniciais" style="cursor:pointer; user-select:none;">▾ Considerações iniciais</span> <button class="btn small" id="btnNovaConsideracaoInicial">+ Nova consideração inicial</button></h2>
+    <div id="consideracoesIniciaisConteudo" style="margin-top:10px;">
       <input type="text" id="consideracoesIniciaisBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
       <div id="consideracoesIniciaisLista"></div>
     </div>
   </section>
 
   <section id="secRelatoriosVisita" style="display:none;" data-topico="relatorios">
-    <h2><span id="lblRelatoriosVisita" style="cursor:pointer; user-select:none;">▸ Relatórios de visita</span> <button class="btn small" id="btnNovoRelatorioVisita">+ Novo relatório</button></h2>
-    <div id="relatoriosVisitaConteudo" style="display:none; margin-top:10px;">
+    <h2><span id="lblRelatoriosVisita" style="cursor:pointer; user-select:none;">▾ Relatórios de visita</span> <button class="btn small" id="btnNovoRelatorioVisita">+ Novo relatório</button></h2>
+    <div id="relatoriosVisitaConteudo" style="margin-top:10px;">
       <input type="text" id="relatoriosVisitaBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
       <div id="relatoriosVisitaLista"></div>
     </div>
@@ -800,17 +830,37 @@
   </section>
 
   <section class="apenas-gerente" data-topico="status">
-    <span class="label" id="lblStatusClientes" style="cursor:pointer; user-select:none;">▸ Status de projeto por cliente</span>
-    <div id="statusClientesConteudo" style="display:none; margin-top:10px;">
+    <span class="label" id="lblStatusClientes" style="cursor:pointer; user-select:none;">▾ Status de projeto por cliente</span>
+    <div id="statusClientesConteudo" style="margin-top:10px;">
       <input type="text" id="statusClientesBusca" placeholder="Buscar cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
       <button class="btn small secondary" id="btnStatusClientesFinal" style="margin-bottom:10px;">⬇ Ir para o final</button>
       <div id="statusClientesLista"></div>
     </div>
   </section>
 
+  <section class="apenas-gerente" data-topico="config" id="secBackupConfig">
+    <h2>💾 Backup e dados</h2>
+    <div class="hint" style="margin-bottom:8px;">O sistema guarda um backup automático por dia (últimos 14 dias). Aqui você também pode baixar ou restaurar um backup completo.</div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="btn secondary small" id="btnExportar">⬇ Exportar backup</button>
+      <button class="btn secondary small" id="btnImportar">⬆ Importar backup</button>
+      <button class="btn secondary small" id="btnVerBackupsAuto">🗓 Backups automáticos</button>
+      <input type="file" id="inputImportar" accept=".json,application/json" style="display:none;">
+    </div>
+    <div id="importarStatus" class="hint" style="margin:8px 0;"></div>
+    <div id="backupsAutoPanel" style="display:none;"></div>
+    <h2 style="margin-top:18px;">🔐 Segurança e problemas</h2>
+    <div class="hint" style="margin-bottom:6px;">Bloquear o painel sozinho após ficar parado (vale só neste aparelho):</div>
+    <select id="selInatividade" style="font-size:13.5px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet);">
+      <option value="10">10 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="0">Nunca</option>
+    </select>
+    <div style="margin-top:10px;"><button class="btn secondary small" id="btnCopiarProblemas">📋 Copiar relatório de problemas</button> <span class="hint" id="problemasStatus"></span></div>
+    <div class="hint" style="margin-top:14px;">Versão do app: <b id="versaoApp"></b> · <button class="btn small secondary" id="btnAtualizarApp">Atualizar o app (limpar cache)</button></div>
+  </section>
+
   <div class="team-row apenas-gerente" style="margin-top:20px; opacity:0.85;" data-topico="config">
-    <span class="label" id="lblLinkPainel" style="cursor:pointer; user-select:none;">▸ Link do painel:</span>
-    <div id="linkPainelContent" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
+    <span class="label" id="lblLinkPainel" style="cursor:pointer; user-select:none;">▾ Link do painel:</span>
+    <div id="linkPainelContent" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
       <input type="text" id="inLinkPainel" placeholder="Cole aqui o link público do painel" style="width:340px; max-width:100%;" />
       <button class="btn small secondary" id="btnSalvarLinkPainel">Salvar</button>
       <span class="hint" id="linkPainelStatus"></span>
@@ -1076,7 +1126,10 @@
   var colapsadosFinLetra = {};
   var colapsadosFinCliente = {};
   var form = { mode:null, projetoId:null, tarefaId:null };
-  var filters = { search:"", resp:"", tipo:"", projeto:"" };
+  var filters = { search:"", resp:"", tipo:"", projeto:"", atalho:"" };
+  var abaQuadro = 'A fazer';
+  var ABAS_QUADRO = ["A fazer","Em andamento","Em espera","Concluído","Fechar quadro"];
+  function ehMovel(){ try{ return window.matchMedia('(max-width:720px)').matches; }catch(e){ return false; } }
   var colapsados = { "Concluído": true };
   var concluidoSel = { ano:null, mes:null, semana:null, dia:null };
   var minimizados = {};
@@ -1213,7 +1266,9 @@
     if(mudouProjetos) saveProjetos();
     return mudouProjetos;
   }
-  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  // Data LOCAL (hora do aparelho, Brasília), não UTC: depois das 21h o toISOString() já devolvia o dia seguinte.
+  function dataLocalISO(d){ return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function todayISO(){ return dataLocalISO(new Date()); }
   function daysUntil(dateStr){
     if(!dateStr) return null;
     var today = new Date(todayISO()+'T00:00:00');
@@ -1231,6 +1286,31 @@
     if(!dateStr) return '—';
     var p = dateStr.split('-');
     return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  // ---- Quem mudou o quê (autor/data de criação, status, prazo e responsável) ----
+  function nomeAtor(){ return nomeProjetistaAtual || 'Gerente'; }
+  function registrarMudanca(t, campo, de, para){
+    if(!t.historico) t.historico = [];
+    t.historico.push({ em: Date.now(), por: nomeAtor(), campo: campo, de: de || '', para: para || '' });
+    if(t.historico.length > 20) t.historico = t.historico.slice(-20);
+  }
+  function comAuditoria(t, fn){
+    var a = { status: t.status, prazo: t.prazo, responsavel: t.responsavel };
+    fn();
+    ['status','prazo','responsavel'].forEach(function(c){
+      if((a[c] || '') !== (t[c] || '')) registrarMudanca(t, c, a[c], t[c]);
+    });
+  }
+  function histMiniHtml(t){
+    var linhas = [];
+    if(t.criadoPor){ linhas.push('Criada por <b>'+escapeHtml(t.criadoPor)+'</b>'+(t.criadoEm ? ' em '+escapeHtml(fmtDate(t.criadoEm)) : '')); }
+    (t.historico || []).slice(-3).reverse().forEach(function(h){
+      var d = new Date(h.em), quando = pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());
+      var f = function(v){ return h.campo === 'prazo' ? fmtDate(v) : (v || '—'); };
+      linhas.push(escapeHtml(h.campo)+': '+escapeHtml(f(h.de))+' → '+escapeHtml(f(h.para))+' · '+escapeHtml(h.por)+' · '+quando);
+    });
+    if(!linhas.length) return '';
+    return '<div class="hist-mini">'+linhas.join('<br>')+'</div>';
   }
   function aplicarStatus(t, novoStatus, dataManual){
     t.status = novoStatus;
@@ -1281,6 +1361,37 @@
   // ===== Proteção de concorrência (Grupos A+B+C) via Firebase Transaction real =====
   // Núcleo: recebe o valor ATUAL do servidor a cada tentativa (inclusive em retries
   // automáticos do Firebase quando há conflito), nunca uma cópia local antiga.
+  var meuIdSessao = 's' + Math.random().toString(36).slice(2, 10);
+  function sinalizarMudancaTarefas(){
+    try{ _fbDb.ref('chat/avisos/tarefas').set({ ts: firebase.database.ServerValue.TIMESTAMP, por: nomeAtor(), id: meuIdSessao }).catch(function(){}); }catch(e){}
+  }
+  var avisoRef = null, avisoPrimeiro = true, avisoFn = null;
+  function avisosIniciar(){
+    avisosParar();
+    try{
+      avisoPrimeiro = true;
+      avisoRef = _fbDb.ref('chat/avisos/tarefas');
+      avisoFn = function(snap){
+        var v = snap && snap.val ? snap.val() : null;
+        if(avisoPrimeiro){ avisoPrimeiro = false; return; }
+        if(!v || v.id === meuIdSessao) return;
+        mostrarBannerAlteracoes(v.por);
+      };
+      avisoRef.on('value', avisoFn, function(){});
+    }catch(e){}
+  }
+  function avisosParar(){
+    try{ if(avisoRef && avisoFn) avisoRef.off('value', avisoFn); }catch(e){}
+    avisoRef = null; avisoFn = null;
+    var b = document.getElementById('bannerAlteracoes'); if(b) b.remove();
+  }
+  function mostrarBannerAlteracoes(quem){
+    var b = document.getElementById('bannerAlteracoes');
+    if(!b){ b = document.createElement('div'); b.id = 'bannerAlteracoes'; document.body.appendChild(b); }
+    b.innerHTML = '<span>🔄 '+escapeHtml(quem || 'Alguém')+' alterou o quadro de tarefas.</span><button type="button" id="btnAtualizarAlteracoes">Atualizar agora</button><button type="button" id="btnFecharAlteracoes" title="Fechar">✕</button>';
+    document.getElementById('btnAtualizarAlteracoes').onclick = function(){ b.remove(); loadAll(); };
+    document.getElementById('btnFecharAlteracoes').onclick = function(){ b.remove(); };
+  }
   function transacionarTarefas(funcaoDeMudanca){
     return _fbDb.ref('storage/clm-tarefas').transaction(function(valorAtual){
       // O SDK chama esta função primeiro com o cache local, que costuma ser null
@@ -1294,7 +1405,7 @@
       // se ele estava desatualizado e o SDK repete) em vez de abortar às cegas.
       if(resultado === undefined) return valorAtual;
       return JSON.stringify(resultado);
-    });
+    }).then(function(res){ if(res && res.committed) sinalizarMudancaTarefas(); return res; });
   }
 
   // Grupos A e C: acha a tarefa pelo id no array vindo do servidor e aplica uma
@@ -1310,7 +1421,7 @@
         abortadaPorExclusao = false;
         var idx = lista.findIndex(function(t){ return t.id === taskId; });
         if(idx === -1){ abortadaPorExclusao = true; return undefined; }
-        funcaoDeCampo(lista[idx]);
+        comAuditoria(lista[idx], function(){ funcaoDeCampo(lista[idx]); });
         return lista;
       });
     }catch(e){ erro = e; }
@@ -1377,7 +1488,7 @@
         if(idx === -1){ abortadaPorExclusao = true; return undefined; }
         var tarefa = lista[idx];
         if(opcoes.novoStatus){
-          aplicarStatus(tarefa, opcoes.novoStatus);
+          comAuditoria(tarefa, function(){ aplicarStatus(tarefa, opcoes.novoStatus); });
           reindexOrdemNaLista(lista, 'A fazer');
           reindexOrdemNaLista(lista, 'Em espera');
           reindexOrdemNaLista(lista, 'Em andamento');
@@ -1447,33 +1558,114 @@
   }
 
   var projetosFoiCarregadoAlgumaVez = false;
-  async function loadAll(){
-    function buscarChave(chave){
-      return window.storage.get(chave, true).then(function(r){ return r ? r.value : null; }).catch(function(){ return null; });
+  // ---- Carga protegida: falha de leitura NUNCA vira "lista vazia" (isso permitia apagar dados no próximo salvamento) ----
+  var cargaBloqueada = false, financeiroBloqueado = false;
+  function lerChaveSegura(chave, ms){
+    return new Promise(function(resolve){
+      var t = setTimeout(function(){ resolve({ ok: false }); }, ms || 25000);
+      window.storage.get(chave, true).then(function(r){
+        clearTimeout(t); resolve({ ok: true, valor: r ? r.value : null });
+      }, function(e){
+        clearTimeout(t);
+        if(e && /not found/i.test(String(e.message || ''))) resolve({ ok: true, valor: null }); else resolve({ ok: false });
+      });
+    });
+  }
+  function atualizarBannerCarga(){
+    var el = document.getElementById('bannerCarga');
+    if(!cargaBloqueada && !financeiroBloqueado){ if(el) el.remove(); return; }
+    if(!el){
+      el = document.createElement('div'); el.id = 'bannerCarga';
+      el.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9400; background:#b3261e; color:#fff; padding:calc(8px + env(safe-area-inset-top, 0px)) 12px 8px; font-size:12.5px; font-weight:600; text-align:center; display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;';
+      document.body.appendChild(el);
     }
-    var res = await Promise.all([
-      buscarChave('clm-projetos'), buscarChave('clm-tarefas'), buscarChave('clm-equipe'),
-      buscarChave('clm-tipos'), buscarChave('clm-ferias'), buscarChave('clm-reunioes'),
-      buscarChave('clm-emails-projetistas'), buscarChave('clm-link-painel')
-    ]);
-    var vProjetos=res[0], vTarefas=res[1], vEquipe=res[2], vTipos=res[3], vFerias=res[4], vReunioes=res[5], vEmailsProj=res[6], vLink=res[7];
+    el.innerHTML = '<span></span><button type="button" style="border:1px solid #fff; background:transparent; color:#fff; border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; cursor:pointer;">Tentar de novo</button>';
+    el.firstChild.textContent = '⚠️ Não foi possível carregar os dados (conexão fraca?). Para sua segurança, salvar está bloqueado até carregar.';
+    el.querySelector('button').onclick = function(){
+      if(cargaBloqueada) loadAll();
+      if(financeiroBloqueado) carregarFinanceiro().then(function(){ try{ renderFinanceiro(); }catch(e){} });
+    };
+  }
+  function avisarSalvamentoBloqueado(){
+    mostrarErroSalvamento('os dados ainda não foram carregados. Toque em "Tentar de novo" no aviso vermelho do topo', null);
+  }
 
-    if(vProjetos){ try{ state.projetos = JSON.parse(vProjetos); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.projetos = []; }
-    if(vTarefas){ try{ state.tarefas = JSON.parse(vTarefas); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.tarefas = []; }
-    if(vEquipe){ try{ state.equipe = JSON.parse(vEquipe); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.equipe = []; }
-    if(!state.equipe || state.equipe.length === 0){ state.equipe = EQUIPE_PADRAO.slice(); saveEquipe(); }
-    if(vTipos){ try{ state.tipos = JSON.parse(vTipos); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.tipos = TIPOS_PADRAO.slice(); }
-    if(!state.tipos || state.tipos.length === 0){ state.tipos = TIPOS_PADRAO.slice(); }
-    if(vFerias){ try{ state.ferias = JSON.parse(vFerias); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.ferias = []; }
-    if(vReunioes){ try{ state.reunioes = JSON.parse(vReunioes); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.reunioes = []; }
-    if(vEmailsProj){ try{ state.emailsProjetistas = JSON.parse(vEmailsProj); }catch(e){} } else if(!projetosFoiCarregadoAlgumaVez){ state.emailsProjetistas = {}; }
-    if(vLink){ state.linkPainel = vLink; } else if(!projetosFoiCarregadoAlgumaVez){ state.linkPainel = LINK_ARTEFATO; }
+  async function loadAll(){
+    var chaves = ['clm-projetos','clm-tarefas','clm-equipe','clm-tipos','clm-ferias','clm-reunioes','clm-emails-projetistas','clm-link-painel'];
+    var res = await Promise.all(chaves.map(function(c){ return lerChaveSegura(c); }));
+    var falhou = res.some(function(r){ return !r.ok; });
+    var primeira = !projetosFoiCarregadoAlgumaVez;
+    function aplicar(idx, alvo, tipo){
+      var r = res[idx];
+      if(!r.ok) return null;
+      if(r.valor === null){ return 'ausente'; }
+      if(tipo === 'texto'){ state[alvo] = r.valor; return 'ok'; }
+      try{ state[alvo] = JSON.parse(r.valor); return 'ok'; }catch(e){ falhou = true; return null; }
+    }
+    var sProj = aplicar(0, 'projetos'), sTar = aplicar(1, 'tarefas'), sEq = aplicar(2, 'equipe'), sTip = aplicar(3, 'tipos'),
+        sFer = aplicar(4, 'ferias'), sReu = aplicar(5, 'reunioes'), sEm = aplicar(6, 'emailsProjetistas'), sLink = aplicar(7, 'linkPainel', 'texto');
+    if(falhou){
+      cargaBloqueada = true; atualizarBannerCarga();
+      if(primeira){ reindexAtivos(); render(); }   // mostra a tela (vazia) mas com salvamento travado
+      return false;
+    }
+    cargaBloqueada = false; atualizarBannerCarga();
+    // chaves que realmente não existem no servidor: valores iniciais (só na primeira carga)
+    if(primeira){
+      if(sProj === 'ausente') state.projetos = [];
+      if(sTar === 'ausente') state.tarefas = [];
+      if(sEq === 'ausente') state.equipe = [];
+      if(sFer === 'ausente') state.ferias = [];
+      if(sReu === 'ausente') state.reunioes = [];
+      if(sEm === 'ausente') state.emailsProjetistas = {};
+      if(sLink === 'ausente') state.linkPainel = LINK_ARTEFATO;
+    }
+    if(sEq === 'ausente' && (!state.equipe || state.equipe.length === 0)){ state.equipe = EQUIPE_PADRAO.slice(); saveEquipe(); }
+    if(sTip === 'ausente' || !state.tipos || state.tipos.length === 0){ state.tipos = TIPOS_PADRAO.slice(); }
 
     projetosFoiCarregadoAlgumaVez = true;
     reindexAtivos();
     if(financeiroCarregado){ sincronizarProjetosComFinanceiro(); }
     render();
+    return true;
   }
+  // ---- avisos padronizados (no lugar de alert) ----
+  function avisar(msg){
+    var antigo = document.querySelector('.toast-aviso'); if(antigo) antigo.remove();
+    var el = document.createElement('div'); el.className = 'toast-aviso'; el.textContent = String(msg);
+    el.onclick = function(){ el.remove(); };
+    document.body.appendChild(el);
+    setTimeout(function(){ if(el.parentNode) el.remove(); }, Math.min(12000, 4000 + String(msg).length * 40));
+  }
+  // ---- registro dos últimos erros inesperados (fica só neste aparelho) ----
+  var LOG_ERROS_CHAVE = 'equiper-erros';
+  function registrarErroApp(origem, msg){
+    try{
+      var l = JSON.parse(localStorage.getItem(LOG_ERROS_CHAVE) || '[]');
+      l.push({ em: new Date().toISOString(), onde: origem, msg: String(msg || '').slice(0, 300), tela: (typeof topicoProjetosAtivo !== 'undefined' ? topicoProjetosAtivo : ''), versao: (typeof VERSAO_APP !== 'undefined' ? VERSAO_APP : '') });
+      localStorage.setItem(LOG_ERROS_CHAVE, JSON.stringify(l.slice(-30)));
+    }catch(e){}
+  }
+  window.addEventListener('error', function(ev){ registrarErroApp('erro', (ev && ev.message) + ' @' + (ev && ev.lineno)); });
+  window.addEventListener('unhandledrejection', function(ev){ registrarErroApp('promessa', ev && ev.reason && (ev.reason.message || ev.reason)); });
+  function relatorioDeProblemas(){
+    var l = []; try{ l = JSON.parse(localStorage.getItem(LOG_ERROS_CHAVE) || '[]'); }catch(e){}
+    return 'Equiper — relatório de problemas\nVersão: ' + (typeof VERSAO_APP !== 'undefined' ? VERSAO_APP : '') + '\nAparelho: ' + navigator.userAgent + '\n\n' + (l.length ? l.map(function(x){ return x.em + ' | ' + x.onde + ' | ' + x.tela + ' | ' + x.msg; }).join('\n') : 'Nenhum erro registrado.');
+  }
+  // ---- bloqueio automático por inatividade ----
+  var INATIV_CHAVE = 'equiper-inatividade-min';
+  function minutosInatividade(){ try{ var v = localStorage.getItem(INATIV_CHAVE); return v === null ? 15 : parseInt(v, 10) || 0; }catch(e){ return 15; } }
+  var ultimaAtividade = Date.now();
+  ['pointerdown','keydown','touchstart','scroll','wheel'].forEach(function(ev){ window.addEventListener(ev, function(){ ultimaAtividade = Date.now(); }, { passive: true, capture: true }); });
+  setInterval(function(){
+    var min = minutosInatividade(); if(!min) return;
+    if(Date.now() - ultimaAtividade < min * 60000) return;
+    var algo = false;
+    try{ if(projetosDesbloqueado){ bloquearProjetos(); algo = true; } }catch(e){}
+    try{ if(financeiroDesbloqueado){ bloquearFinanceiro(); algo = true; } }catch(e){}
+    if(algo){ ultimaAtividade = Date.now(); setTimeout(function(){ avisar('O painel foi bloqueado por ' + min + ' min sem uso.'); }, 400); }
+  }, 20000);
+
   function mostrarErroSalvamento(mensagem, tentarDeNovo){
     var antigo = document.querySelector('.toast-erro-salvar');
     if(antigo) antigo.remove();
@@ -1491,12 +1683,12 @@
     setTimeout(function(){ if(el.parentNode) el.remove(); }, 10000);
   }
 
-  async function saveProjetos(){ try{ await window.storage.set('clm-projetos', JSON.stringify(state.projetos), true); }catch(e){ mostrarErroSalvamento('projetos', saveProjetos); } }
-  async function saveTarefas(){ try{ await window.storage.set('clm-tarefas', JSON.stringify(state.tarefas), true); }catch(e){ mostrarErroSalvamento('tarefas', saveTarefas); } }
-  async function saveEquipe(){ try{ await window.storage.set('clm-equipe', JSON.stringify(state.equipe), true); }catch(e){ mostrarErroSalvamento('equipe', saveEquipe); } }
-  async function saveTipos(){ try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){ mostrarErroSalvamento('disciplinas', saveTipos); } }
-  async function saveFerias(){ try{ await window.storage.set('clm-ferias', JSON.stringify(state.ferias), true); }catch(e){ mostrarErroSalvamento('férias', saveFerias); } }
-  async function saveReunioes(){ try{ await window.storage.set('clm-reunioes', JSON.stringify(state.reunioes), true); }catch(e){ mostrarErroSalvamento('reuniões', saveReunioes); } }
+  async function saveProjetos(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-projetos', JSON.stringify(state.projetos), true); }catch(e){ mostrarErroSalvamento('projetos', saveProjetos); } }
+  async function saveTarefas(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-tarefas', JSON.stringify(state.tarefas), true); sinalizarMudancaTarefas(); }catch(e){ mostrarErroSalvamento('tarefas', saveTarefas); } }
+  async function saveEquipe(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-equipe', JSON.stringify(state.equipe), true); }catch(e){ mostrarErroSalvamento('equipe', saveEquipe); } }
+  async function saveTipos(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){ mostrarErroSalvamento('disciplinas', saveTipos); } }
+  async function saveFerias(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-ferias', JSON.stringify(state.ferias), true); }catch(e){ mostrarErroSalvamento('férias', saveFerias); } }
+  async function saveReunioes(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-reunioes', JSON.stringify(state.reunioes), true); }catch(e){ mostrarErroSalvamento('reuniões', saveReunioes); } }
   async function saveEmailsProjetistas(){ try{ await window.storage.set('clm-emails-projetistas', JSON.stringify(state.emailsProjetistas), true); }catch(e){ mostrarErroSalvamento('cadastro do projetista', saveEmailsProjetistas); } }
   async function saveEmailGerente(){ try{ await window.storage.set('clm-email-gerente', state.emailGerente, true); }catch(e){ mostrarErroSalvamento('email do gerente', saveEmailGerente); } }
   async function savePermissoesProjetista(){ try{ await window.storage.set('clm-permissoes-projetista', JSON.stringify(state.permissoesProjetista), true); }catch(e){ mostrarErroSalvamento('permissões', savePermissoesProjetista); } }
@@ -1637,8 +1829,8 @@
       if(filaTotal()){ ev.preventDefault(); ev.returnValue = 'Há itens ainda não enviados. Se sair agora, eles ficam guardados neste aparelho e serão enviados na próxima vez que abrir o app com internet.'; return ev.returnValue; }
     });
   }
-  async function saveRegistrosArt(){ try{ await window.storage.set('clm-registros-art', JSON.stringify(state.registrosArt), true); }catch(e){ mostrarErroSalvamento('ART', saveRegistrosArt); } }
-  async function saveDimensionamentos(){ try{ await window.storage.set('clm-dimensionamentos', JSON.stringify(state.dimensionamentos), true); }catch(e){ mostrarErroSalvamento('dimensionamento', saveDimensionamentos); } }
+  async function saveRegistrosArt(){ if(!dadosOk.art){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-registros-art', JSON.stringify(state.registrosArt), true); }catch(e){ mostrarErroSalvamento('ART', saveRegistrosArt); } }
+  async function saveDimensionamentos(){ if(!dadosOk.dim){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-dimensionamentos', JSON.stringify(state.dimensionamentos), true); }catch(e){ mostrarErroSalvamento('dimensionamento', saveDimensionamentos); } }
 
   var CONSIDERACAO_ESQUEMA = [
     { chave:'esgoto', titulo:'Esgoto Sanitário', campos:[
@@ -1719,14 +1911,21 @@
   async function saveUsuariosFinanceiro(){ try{ await window.storage.set('clm-usuarios-financeiro', JSON.stringify(state.usuariosFinanceiro), true); }catch(e){ mostrarErroSalvamento('usuário do financeiro', saveUsuariosFinanceiro); } }
   async function saveEmailsFinanceiroInd(){ try{ await window.storage.set('clm-emails-financeiro-ind', JSON.stringify(state.emailsFinanceiroInd), true); }catch(e){ mostrarErroSalvamento('cadastro do financeiro', saveEmailsFinanceiroInd); } }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){ mostrarErroSalvamento('link do painel', saveLinkPainel); } }
-  async function saveFinanceiro(){ try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){ mostrarErroSalvamento('dados financeiros', saveFinanceiro); } }
+  async function saveFinanceiro(){ if(financeiroBloqueado){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-financeiro', JSON.stringify(state.financeiro), true); }catch(e){ mostrarErroSalvamento('dados financeiros', saveFinanceiro); } }
   var financeiroFoiCarregadoAlgumaVez = false;
   async function carregarFinanceiro(){
-    var r = null;
-    try{ r = await window.storage.get('clm-financeiro', true); }catch(e){ r = null; }
-    if(r && r.value){
-      try{ state.financeiro = JSON.parse(r.value); }catch(e){ if(!financeiroFoiCarregadoAlgumaVez){ state.financeiro = []; } }
-    } else if(!financeiroFoiCarregadoAlgumaVez){
+    var rs = await lerChaveSegura('clm-financeiro');
+    var corrompido = false;
+    if(rs.ok && rs.valor){
+      try{ state.financeiro = JSON.parse(rs.valor); }catch(e){ corrompido = true; }
+    }
+    if(!rs.ok || corrompido){
+      financeiroBloqueado = true; atualizarBannerCarga();
+      if(!state.financeiro) state.financeiro = [];
+      return false;
+    }
+    financeiroBloqueado = false; atualizarBannerCarga();
+    if(!rs.valor && !financeiroFoiCarregadoAlgumaVez){
       state.financeiro = FINANCEIRO_PADRAO.map(function(rec, i){
         return Object.assign({ id: 'fin' + i + '_' + Date.now().toString(36) }, rec);
       });
@@ -1850,9 +2049,9 @@
         var email = state.emailsProjetistas[btn.getAttribute('data-nome')];
         try{
           await _fbAuth.sendPasswordResetEmail(email);
-          alert('Email de redefinição enviado para ' + email + '.');
+          avisar('Email de redefinição enviado para ' + email + '.');
         }catch(e){
-          alert('Não foi possível enviar o email agora.');
+          avisar('Não foi possível enviar o email agora.');
         }
       });
     });
@@ -1993,7 +2192,7 @@
     fProjeto.value = curP;
   }
 
-  function tarefasComProjeto(){
+  function tarefasComProjeto(ignorarAtalho){
     return state.tarefas.map(function(t){
       var pj = state.projetos.find(function(p){ return p.id === t.projetoId; }) || { nome:'(projeto removido)', cliente:'' };
       return Object.assign({}, t, { projetoNome: pj.nome, cliente: pj.cliente });
@@ -2011,7 +2210,43 @@
       if(filters.resp && t.responsavel !== filters.resp) return false;
       if(filters.tipo && t.tipo !== filters.tipo) return false;
       if(filters.projeto && t.projetoId !== filters.projeto) return false;
+      if(!ignorarAtalho && filters.atalho && !atalhoCasa(t, filters.atalho)) return false;
       return true;
+    });
+  }
+  function tarefaEmAberto(t){ return t.status === 'A fazer' || t.status === 'Em espera' || t.status === 'Em andamento'; }
+  function atalhoCasa(t, a){
+    if(!tarefaEmAberto(t) || !t.prazo) return false;
+    var hoje = todayISO();
+    if(a === 'atrasadas') return t.prazo < hoje;
+    if(a === 'hoje') return t.prazo === hoje;
+    if(a === 'semana'){ var d = new Date(); d.setDate(d.getDate() + 7); return t.prazo > hoje && t.prazo <= dataLocalISO(d); }
+    return true;
+  }
+  function renderPrazosBar(){
+    var el = document.getElementById('prazosBar'); if(!el) return;
+    var base = tarefasComProjeto(true);
+    var defs = [['atrasadas','🔴 Atrasadas'],['hoje','🟠 Hoje'],['semana','📅 7 dias']];
+    el.innerHTML = defs.map(function(d){
+      var n = base.filter(function(t){ return atalhoCasa(t, d[0]); }).length;
+      return '<button type="button" class="chip-prazo '+d[0]+(filters.atalho===d[0]?' ativo':'')+'" data-atalho="'+d[0]+'">'+d[1]+'<b>'+n+'</b></button>';
+    }).join('');
+    el.querySelectorAll('[data-atalho]').forEach(function(b){
+      b.onclick = function(){ var a = b.getAttribute('data-atalho'); filters.atalho = (filters.atalho === a) ? '' : a; renderBoard(); };
+    });
+  }
+  function renderAbasQuadro(list){
+    var el = document.getElementById('abasQuadro'); if(!el) return;
+    if(filters.atalho && list.filter(function(t){ return t.status === abaQuadro; }).length === 0){
+      var alvo = ABAS_QUADRO.filter(function(st){ return list.some(function(t){ return t.status === st; }); })[0];
+      if(alvo) abaQuadro = alvo;
+    }
+    el.innerHTML = ABAS_QUADRO.map(function(st){
+      var n = list.filter(function(t){ return t.status === st; }).length;
+      return '<button type="button" class="aba-q'+(abaQuadro===st?' ativa':'')+'" data-aba="'+st+'">'+st+' ('+n+')</button>';
+    }).join('');
+    el.querySelectorAll('[data-aba]').forEach(function(b){
+      b.onclick = function(){ abaQuadro = b.getAttribute('data-aba'); renderBoard(); };
     });
   }
 
@@ -2195,6 +2430,8 @@
     var board = document.getElementById('board');
     board.innerHTML = '';
     var list = tarefasComProjeto();
+    var movel = ehMovel();
+    renderPrazosBar(); renderAbasQuadro(list);
     STATUSES.forEach(function(status){
       var col = document.createElement('div');
       col.className = 'column';
@@ -2208,7 +2445,8 @@
           }
           return (a.prazo||'9999').localeCompare(b.prazo||'9999');
         });
-      var isColapsada = !!colapsados[status];
+      var isColapsada = movel ? false : !!colapsados[status];
+      if(status !== abaQuadro) col.classList.add('aba-oculta');
       var h3 = document.createElement('h3');
       h3.style.cursor = 'pointer';
       h3.style.userSelect = 'none';
@@ -2239,7 +2477,8 @@
     var colFQ = document.createElement('div');
     colFQ.className = 'column';
     colFQ.setAttribute('data-status', 'Fechar quadro');
-    var isColapsadaFQ = !!colapsados['Fechar quadro'];
+    var isColapsadaFQ = movel ? false : !!colapsados['Fechar quadro'];
+    if(abaQuadro !== 'Fechar quadro') colFQ.classList.add('aba-oculta');
     var h3FQ = document.createElement('h3');
     h3FQ.style.cursor = 'pointer';
     h3FQ.style.userSelect = 'none';
@@ -2503,6 +2742,7 @@
           '</div>'+
         '</div></div>'+
       '</div>'+
+      histMiniHtml(t)+
       (t.status==='Concluído' ? (
         (t.tipo==='Elétrica' ? '<label class="envio-row" style="cursor:pointer;"><input type="checkbox" class="check-fechar-quadro"> Precisa fechar quadro</label>' : '') +
         '<label class="envio-row '+(t.enviado?'enviado':'pendente')+'"><input type="checkbox" class="check-enviado" '+(t.enviado?'checked':'')+'> '+(t.enviado?'✓ Enviado ao cliente':'Ainda não enviado ao cliente')+'</label>'+
@@ -2835,14 +3075,16 @@
         if(!tipo){ errEl.textContent = 'Selecione a disciplina.'; errEl.style.display='block'; return; }
         errEl.style.display = 'none';
         if(editingT.obsHtml && obs !== (editingT.obs||'').trim()){ editingT.obsHtml = textoParaHtmlObs(obs); }
-        editingT.tipo = tipo; editingT.responsavel = responsavel; editingT.prazo = prazo; editingT.obs = obs;
-        aplicarStatus(editingT, status, dataConclusaoManual);
+        comAuditoria(editingT, function(){
+          editingT.tipo = tipo; editingT.responsavel = responsavel; editingT.prazo = prazo; editingT.obs = obs;
+          aplicarStatus(editingT, status, dataConclusaoManual);
+        });
       } else {
         var tipos = Array.prototype.slice.call(document.querySelectorAll('#inTipos input:checked')).map(function(i){ return i.value; });
         if(tipos.length === 0){ errEl.textContent = 'Marque ao menos uma disciplina.'; errEl.style.display='block'; return; }
         errEl.style.display = 'none';
         tipos.forEach(function(tipo){
-          var novo = { id: uid('t'), projetoId: form.projetoId, tipo:tipo, responsavel:responsavel, prazo:prazo, obs:obs, dataConclusao:'', criadoEm: todayISO(), anexos:[], enviado:false };
+          var novo = { id: uid('t'), projetoId: form.projetoId, tipo:tipo, responsavel:responsavel, prazo:prazo, obs:obs, dataConclusao:'', criadoEm: todayISO(), criadoPor: nomeAtor(), anexos:[], enviado:false };
           aplicarStatus(novo, status, dataConclusaoManual);
           state.tarefas.push(novo);
         });
@@ -3434,7 +3676,7 @@
     document.getElementById('btnFecharFormRelatorio').onclick = fecharDiaModal;
     document.getElementById('btnSalvarRelatorio').onclick = function(){
       var clienteDigitado = document.getElementById('relClienteBusca').value.trim();
-      if(!clienteDigitado){ alert('Digite o nome do cliente.'); return; }
+      if(!clienteDigitado){ avisar('Digite o nome do cliente.'); return; }
       var pj = projetoSelId ? state.projetos.find(function(p){ return p.id === projetoSelId; }) : null;
       if(!pj){ pj = state.projetos.find(function(p){ return normBusca(p.nome) === normBusca(clienteDigitado); }) || null; }
       var registro = {
@@ -3448,7 +3690,7 @@
       };
       if(modo === 'livre'){
         var texto = document.getElementById('relTexto').value.trim();
-        if(!texto){ alert('Escreva alguma observação.'); return; }
+        if(!texto){ avisar('Escreva alguma observação.'); return; }
         registro.texto = texto;
         registro.fotos = fotos;
       } else {
@@ -3457,7 +3699,7 @@
           var elTexto = document.querySelector('.rel-item-texto[data-id="'+it.id+'"]');
           return { id: it.id, titulo: elTitulo ? elTitulo.value.trim() : '', texto: elTexto ? elTexto.value.trim() : '', fotos: it.fotos };
         }).filter(function(it){ return it.titulo || it.texto || it.fotos.length; });
-        if(itensValidos.length === 0){ alert('Preencha pelo menos um item.'); return; }
+        if(itensValidos.length === 0){ avisar('Preencha pelo menos um item.'); return; }
         registro.itens = itensValidos;
       }
       var plantasValidas = plantas.map(function(p){
@@ -3630,7 +3872,7 @@
     });
     lista.querySelectorAll('.btn-remover-relatorio').forEach(function(btn){
       armConfirm(btn, 'Confirmar?', function(){
-        if(!estaOnline()){ alert('Sem internet: não dá para excluir agora. Tente de novo quando a conexão voltar.'); return; }
+        if(!estaOnline() || !dadosOk.rel){ avisar('Não dá para excluir agora: sem internet ou a lista ainda não carregou. Tente de novo quando a conexão voltar.'); return; }
         filaRemoverPendente('rel', btn.getAttribute('data-id'));
         state.relatoriosVisita = state.relatoriosVisita.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
         saveRelatoriosVisita();
@@ -4159,8 +4401,8 @@
     document.getElementById('btnSalvarCI').onclick = function(){
       var clienteSel = document.getElementById('ciClienteSelect').value;
       var clienteAvulso = document.getElementById('ciClienteAvulso').value.trim();
-      if(!clienteSel){ alert('Selecione um cliente ou escolha "Outro".'); return; }
-      if(clienteSel === '__avulso__' && !clienteAvulso){ alert('Digite o nome do cliente.'); return; }
+      if(!clienteSel){ avisar('Selecione um cliente ou escolha "Outro".'); return; }
+      if(clienteSel === '__avulso__' && !clienteAvulso){ avisar('Digite o nome do cliente.'); return; }
       var pj = clienteSel !== '__avulso__' ? state.projetos.find(function(p){ return p.id === clienteSel; }) : null;
       var dados = {};
       CONSIDERACAO_ESQUEMA.forEach(function(sec){
@@ -4342,7 +4584,7 @@
     });
     lista.querySelectorAll('.btn-remover-ci').forEach(function(btn){
       armConfirm(btn, 'Confirmar?', function(){
-        if(!estaOnline()){ alert('Sem internet: não dá para excluir agora. Tente de novo quando a conexão voltar.'); return; }
+        if(!estaOnline() || !dadosOk.ci){ avisar('Não dá para excluir agora: sem internet ou a lista ainda não carregou. Tente de novo quando a conexão voltar.'); return; }
         filaRemoverPendente('ci', btn.getAttribute('data-id'));
         state.consideracoesIniciais = state.consideracoesIniciais.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
         saveConsideracoesIniciais();
@@ -4646,7 +4888,7 @@
     document.getElementById('chatFotoInput').onchange = function(){
       var f = this.files && this.files[0]; this.value = '';
       if(!f) return;
-      chatReduzirFoto(f).then(function(url){ chat.fotoPend = url; chatRenderFotoPend(); }).catch(function(){ alert('Não consegui ler essa imagem.'); });
+      chatReduzirFoto(f).then(function(url){ chat.fotoPend = url; chatRenderFotoPend(); }).catch(function(){ avisar('Não consegui ler essa imagem.'); });
     };
     document.getElementById('chatVoltar').onclick = function(){ document.getElementById('chatWrap').classList.add('mostra-lista'); };
   }
@@ -4839,13 +5081,16 @@
   }
   function chatFlutAtualizar(){
     var b = document.getElementById('chatFlutBtn'); if(!b) return;
-    var mostrarBotao = chat.ativo && topicoProjetosAtivo !== 'chat' && !chat.flutAberto;
+    var ov = document.getElementById('diaModalOverlay');
+    var formAberto = (ov && ov.style.display === 'flex') || form.mode !== null;
+    var mostrarBotao = chat.ativo && topicoProjetosAtivo !== 'chat' && !chat.flutAberto && !formAberto;
     b.style.display = mostrarBotao ? 'flex' : 'none';
     var n = chatTotalNaoLidos(), bd = document.getElementById('chatFlutBadge');
     if(bd){ bd.style.display = n ? 'inline-block' : 'none'; bd.textContent = n; }
     var p = document.getElementById('chatFlutPainel');
     if(p && (!chat.ativo || topicoProjetosAtivo === 'chat')){ p.style.display = 'none'; chat.flutAberto = false; }
   }
+  setInterval(function(){ try{ if(document.getElementById('chatFlutBtn')) chatFlutAtualizar(); }catch(e){} }, 1000);
   function chatFlutAbrir(canal){
     if(!chat.ativo) return;
     chatFlutCriar(); chatMontar();
@@ -4866,6 +5111,7 @@
 
   function chatIniciar(){
     chatParar();
+    avisosIniciar();
     chat.eu = nomeProjetistaAtual || 'Gerente';
     chatFlutCriar();
     chat.ativo = true; chat.erro = false; chat.primeiraMeta = true; chat.limpos = {};
@@ -4906,6 +5152,7 @@
     chatAtualizarBadges();
   }
   function chatParar(){
+    avisosParar();
     try{ var rz = document.getElementById('chatRaiz'), sc = document.getElementById('secChat'); if(rz && sc && rz.parentNode !== sc){ sc.appendChild(rz); } }catch(e){}
     chat.flutAberto = false;
     chat.refs.forEach(function(r){ try{ r.ref.off(r.ev, r.fn); }catch(e){} });
@@ -4954,39 +5201,42 @@
   }
 
   var relatoriosCarregados = false, consideracoesCarregadas = false, artCarregado = false, dimensionamentosCarregados = false;
+  var dadosOk = { rel: false, ci: false, art: false, dim: false };   // true = leitura do servidor deu certo (libera excluir/regravar tudo)
+  async function carregarTopicoSeguro(chave, flagNome, okChave, aplicar, id){
+    var r = await lerChaveSegura(chave);
+    if(!r.ok){
+      mostrarErroSalvamento('carregar esta lista (conexão fraca?)', function(){ garantirDadosDoTopico(id); });
+      return false;
+    }
+    if(r.valor){ try{ aplicar(JSON.parse(r.valor)); }catch(e){ return false; } }
+    dadosOk[okChave] = true;
+    return true;
+  }
   async function garantirDadosDoTopico(id){
     if(id === 'relatorios' && !relatoriosCarregados){
       relatoriosCarregados = true;
-      try{
-        var r = await window.storage.get('clm-relatorios-visita', true);
-        if(r && r.value){ state.relatoriosVisita = JSON.parse(r.value); }
-      }catch(e){}
+      var okR = await carregarTopicoSeguro('clm-relatorios-visita', 'relatoriosCarregados', 'rel', function(v){ state.relatoriosVisita = v; }, id);
+      if(!okR) relatoriosCarregados = false;
       filaAplicarNoEstado('rel');
       renderRelatoriosVisitaLista();
     }
     if(id === 'consideracoes' && !consideracoesCarregadas){
       consideracoesCarregadas = true;
-      try{
-        var rc = await window.storage.get('clm-consideracoes-iniciais', true);
-        if(rc && rc.value){ state.consideracoesIniciais = JSON.parse(rc.value); }
-      }catch(e){}
+      var okC = await carregarTopicoSeguro('clm-consideracoes-iniciais', 'consideracoesCarregadas', 'ci', function(v){ state.consideracoesIniciais = v; }, id);
+      if(!okC) consideracoesCarregadas = false;
       filaAplicarNoEstado('ci');
       renderConsideracoesIniciaisLista();
     }
     if(id === 'art' && !artCarregado){
       artCarregado = true;
-      try{
-        var ra = await window.storage.get('clm-registros-art', true);
-        if(ra && ra.value){ state.registrosArt = JSON.parse(ra.value); }
-      }catch(e){}
+      var okA = await carregarTopicoSeguro('clm-registros-art', 'artCarregado', 'art', function(v){ state.registrosArt = v; }, id);
+      if(!okA) artCarregado = false;
       renderRegistrosArtLista();
     }
     if(id === 'dimensionamentos' && !dimensionamentosCarregados){
       dimensionamentosCarregados = true;
-      try{
-        var rd = await window.storage.get('clm-dimensionamentos', true);
-        if(rd && rd.value){ state.dimensionamentos = JSON.parse(rd.value); }
-      }catch(e){}
+      var okD = await carregarTopicoSeguro('clm-dimensionamentos', 'dimensionamentosCarregados', 'dim', function(v){ state.dimensionamentos = v; }, id);
+      if(!okD) dimensionamentosCarregados = false;
       if(!financeiroCarregado && (!state.financeiro || state.financeiro.length === 0)){
         try{
           var rf2 = await window.storage.get('clm-financeiro', true);
@@ -4996,6 +5246,7 @@
       renderDimensionamentosLista();
     }
     if(id === 'chat'){ chatAoAbrirTopico(); }
+    if(id === 'status'){ try{ renderStatusClientes(); }catch(e){} }
     if(id === 'quadro' && form.mode === null){
       loadAll();
     }
@@ -5215,9 +5466,9 @@
         var email = state.emailsFinanceiroInd[btn.getAttribute('data-nome')];
         try{
           await _fbAuth.sendPasswordResetEmail(email);
-          alert('Email de redefinição enviado para ' + email + '.');
+          avisar('Email de redefinição enviado para ' + email + '.');
         }catch(e){
-          alert('Não foi possível enviar o email agora.');
+          avisar('Não foi possível enviar o email agora.');
         }
       });
     });
@@ -6173,7 +6424,7 @@
       if(dataSinal && prazo){
         var d = new Date(dataSinal + 'T00:00:00');
         d.setDate(d.getDate() + prazo);
-        document.getElementById('fnEntrega').value = d.toISOString().slice(0,10);
+        document.getElementById('fnEntrega').value = dataLocalISO(d);
       }
     }
     document.getElementById('fnDataSinal').addEventListener('change', recalcularDataEntrega);
@@ -6338,7 +6589,7 @@
       var data = document.getElementById('reuniaoData').value;
       var horario = document.getElementById('reuniaoHorario').value;
       var descricao = document.getElementById('reuniaoDescricao').value.trim();
-      if(!data || !descricao){ alert('Preencha a data e com quem é a reunião.'); return; }
+      if(!data || !descricao){ avisar('Preencha a data e com quem é a reunião.'); return; }
       state.reunioes.push({ id: uid('reu'), data: data, horario: horario, descricao: descricao, criador: nomeProjetistaAtual || 'gerente' });
       saveReunioes();
       fecharDiaModal();
@@ -6655,7 +6906,7 @@
       if(tarefa && tarefa.prazo !== calDragState.overDate){
         var snapshotAntes = JSON.parse(JSON.stringify(state.tarefas));
         var novoPrazo = calDragState.overDate;
-        tarefa.prazo = novoPrazo;
+        comAuditoria(tarefa, function(){ tarefa.prazo = novoPrazo; });
         renderCalendario();
         renderBoard();
         aplicarNaTarefaTransacional(calDragState.taskId, function(t2){ t2.prazo = novoPrazo; }, snapshotAntes);
@@ -6850,12 +7101,38 @@
   document.getElementById('fTipo').addEventListener('change', function(e){ filters.tipo = e.target.value; renderBoard(); });
   document.getElementById('fProjeto').addEventListener('change', function(e){ filters.projeto = e.target.value; renderBoard(); });
   document.getElementById('btnClearFilters').onclick = function(){
-    filters = { search:'', resp:'', tipo:'', projeto:'' };
+    filters = { search:'', resp:'', tipo:'', projeto:'', atalho:'' };
     document.getElementById('fSearch').value=''; document.getElementById('fResp').value=''; document.getElementById('fTipo').value=''; document.getElementById('fProjeto').value='';
     renderBoard();
   };
 
+  document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
+  try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
+  var VERSAO_APP = '27/10/2026 · fase 2';
+  (function(){
+    var sel = document.getElementById('selInatividade');
+    if(sel){ sel.value = String(minutosInatividade()); sel.onchange = function(){ try{ localStorage.setItem(INATIV_CHAVE, sel.value); }catch(e){} ultimaAtividade = Date.now(); avisar('Salvo.'); }; }
+    var bp = document.getElementById('btnCopiarProblemas');
+    if(bp) bp.onclick = function(){
+      var txt = relatorioDeProblemas(), st = document.getElementById('problemasStatus');
+      var ok = function(){ st.textContent = 'Copiado — cole numa mensagem para mim.'; };
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok).catch(function(){ st.textContent = ''; avisar(txt.slice(0, 600)); }); }
+      else { avisar(txt.slice(0, 600)); }
+    };
+  })();
+  (function(){
+    var v = document.getElementById('versaoApp'); if(v) v.textContent = VERSAO_APP;
+    var b = document.getElementById('btnAtualizarApp');
+    if(b) b.onclick = async function(){
+      b.disabled = true; b.textContent = 'Atualizando…';
+      try{
+        if('serviceWorker' in navigator){ var regs = await navigator.serviceWorker.getRegistrations(); for(var i=0;i<regs.length;i++){ await regs[i].unregister(); } }
+        if(window.caches){ var ks = await caches.keys(); for(var j=0;j<ks.length;j++){ await caches.delete(ks[j]); } }
+      }catch(e){}
+      location.reload();
+    };
+  })();
   document.getElementById('btnBloquear').onclick = function(){ bloquearProjetos(); };
 
   document.getElementById('navProjetos').onclick = function(){
@@ -6911,9 +7188,9 @@
   };
   document.getElementById('btnAddUsuarioFin').onclick = function(){
     var nome = document.getElementById('novoUsuarioFin').value.trim();
-    if(!nome){ alert('Digite o nome.'); return; }
+    if(!nome){ avisar('Digite o nome.'); return; }
     if(state.usuariosFinanceiro.some(function(n){ return n.toLowerCase() === nome.toLowerCase(); })){
-      alert('Já existe um usuário com esse nome.');
+      avisar('Já existe um usuário com esse nome.');
       return;
     }
     state.usuariosFinanceiro.push(nome);
@@ -7041,28 +7318,54 @@
   };
   document.getElementById('finBusca').addEventListener('input', function(e){ buscaFinanceiroTexto = e.target.value; renderFinanceiroLista(); });
 
-  document.getElementById('btnExportar').onclick = async function(){
-    if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
-    var backup = {
-      versao: 2,
-      exportadoEm: new Date().toISOString(),
-      projetos: state.projetos,
-      tarefas: state.tarefas,
-      equipe: state.equipe,
-      tipos: state.tipos,
-      linkPainel: state.linkPainel,
-      financeiro: state.financeiro
-    };
-    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  var CHAVES_BACKUP = ['clm-projetos','clm-tarefas','clm-equipe','clm-tipos','clm-link-painel','clm-financeiro','clm-ferias','clm-reunioes','clm-relatorios-visita','clm-consideracoes-iniciais','clm-registros-art','clm-dimensionamentos','clm-permissoes-projetista','clm-emails-projetistas','clm-email-gerente','clm-usuarios-financeiro','clm-emails-financeiro-ind'];
+  var CHAVES_RESTAURAVEIS_EXTRA = ['clm-ferias','clm-reunioes','clm-relatorios-visita','clm-consideracoes-iniciais','clm-registros-art','clm-dimensionamentos'];
+  // lê TODOS os blocos direto do servidor; se algum falhar por conexão, devolve ok:false (nunca grava backup incompleto como se fosse completo)
+  async function lerTudoParaBackup(){
+    var dados = {}, falhas = [];
+    for(var i=0; i<CHAVES_BACKUP.length; i++){
+      var r = await lerChaveSegura(CHAVES_BACKUP[i]);
+      if(!r.ok){ falhas.push(CHAVES_BACKUP[i]); continue; }
+      dados[CHAVES_BACKUP[i]] = r.valor;
+    }
+    return { dados: dados, falhas: falhas };
+  }
+  function baixarJson(obj, nome){
+    var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url;
-    var hoje = todayISO();
-    a.download = 'backup-painel-projetos-' + hoje + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+  function parseOuNulo(s){ try{ return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+  function backupParaArquivo(dadosBrutos, extra){
+    var d = dadosBrutos;
+    var o = {
+      versao: 3,
+      projetos: parseOuNulo(d['clm-projetos']) || [],
+      tarefas: parseOuNulo(d['clm-tarefas']) || [],
+      equipe: parseOuNulo(d['clm-equipe']) || [],
+      tipos: parseOuNulo(d['clm-tipos']) || [],
+      linkPainel: d['clm-link-painel'] || '',
+      financeiro: parseOuNulo(d['clm-financeiro']) || [],
+      dadosBrutos: d
+    };
+    for(var k in extra){ o[k] = extra[k]; }
+    return o;
+  }
+
+  document.getElementById('btnExportar').onclick = async function(){
+    var btn = this, txt = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Preparando…';
+    try{
+      var t = await lerTudoParaBackup();
+      if(t.falhas.length){
+        avisar('Não consegui ler tudo do servidor (' + t.falhas.length + ' bloco(s) falharam — conexão fraca?). O backup NÃO foi gerado. Tente de novo.');
+        return;
+      }
+      baixarJson(backupParaArquivo(t.dados, { exportadoEm: new Date().toISOString() }), 'backup-painel-projetos-' + todayISO() + '.json');
+    }finally{ btn.disabled = false; btn.textContent = txt; }
   };
 
   var arquivoImportarPendente = null;
@@ -7073,8 +7376,8 @@
     painel.style.display = 'block';
     painel.innerHTML = '<div class="panel"><h3>Backups automáticos (guardados dos últimos 14 dias)</h3><div class="hint">Carregando...</div></div>';
     var lista = null;
-    try{ lista = await window.storage.list('clm-backup-auto-', true); }catch(e){}
-    var datas = (lista && lista.keys ? lista.keys.map(function(k){ return k.replace('clm-backup-auto-',''); }) : []).sort().reverse();
+    var datas = await lerIndiceBackups();
+    datas = datas.slice().sort().reverse();
     if(datas.length === 0){
       painel.innerHTML = '<div class="panel"><h3>Backups automáticos</h3><div class="empty-hint">Nenhum backup automático guardado ainda — o primeiro é criado assim que alguém abrir o painel hoje.</div><button class="btn secondary" id="btnFecharBackupsAuto">Fechar</button></div>';
     } else {
@@ -7094,28 +7397,7 @@
         try{ res = await window.storage.get('clm-backup-auto-'+data, true); }catch(e){}
         if(!res){ btn.textContent = 'Erro ao carregar'; return; }
         var bruto = JSON.parse(res.value);
-        var d = bruto.dadosBrutos || {};
-        function parseOuVazio(s){ try{ return s ? JSON.parse(s) : []; }catch(e){ return []; } }
-        var backupFormatado = {
-          versao: 2,
-          exportadoEm: bruto.exportadoEm,
-          automatico: true,
-          projetos: parseOuVazio(d['clm-projetos']),
-          tarefas: parseOuVazio(d['clm-tarefas']),
-          equipe: parseOuVazio(d['clm-equipe']),
-          tipos: parseOuVazio(d['clm-tipos']),
-          linkPainel: d['clm-link-painel'] || '',
-          financeiro: parseOuVazio(d['clm-financeiro'])
-        };
-        var blob = new Blob([JSON.stringify(backupFormatado, null, 2)], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'backup-automatico-' + data + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+        baixarJson(backupParaArquivo(bruto.dadosBrutos || {}, { exportadoEm: bruto.exportadoEm, automatico: true, parcial: !!bruto.parcial }), 'backup-automatico-' + data + '.json');
       };
     });
   };
@@ -7160,6 +7442,16 @@
         state.tipos = (dados.tipos && dados.tipos.length) ? dados.tipos : TIPOS_PADRAO.slice();
         state.linkPainel = dados.linkPainel || state.linkPainel;
         var promessas = [saveProjetos(), saveTarefas(), saveEquipe(), saveTipos(), saveLinkPainel()];
+        if(dados.dadosBrutos && !dados.parcial){
+          CHAVES_RESTAURAVEIS_EXTRA.forEach(function(k){
+            var v = dados.dadosBrutos[k];
+            if(typeof v === 'string' && v){
+              promessas.push(window.storage.set(k, v, true).catch(function(){}));
+              relatoriosCarregados = consideracoesCarregadas = artCarregado = dimensionamentosCarregados = false;
+              dadosOk = { rel:false, ci:false, art:false, dim:false };
+            }
+          });
+        }
         var msgFinanceiro = '';
         if(Array.isArray(dados.financeiro)){
           state.financeiro = dados.financeiro;
@@ -7292,8 +7584,8 @@
     var resp = document.getElementById('feriasResp').value;
     var inicio = document.getElementById('feriasInicio').value;
     var fim = document.getElementById('feriasFim').value;
-    if(!resp || !inicio || !fim){ alert('Preencha responsável, início e fim.'); return; }
-    if(fim < inicio){ alert('A data de fim precisa ser depois do início.'); return; }
+    if(!resp || !inicio || !fim){ avisar('Preencha responsável, início e fim.'); return; }
+    if(fim < inicio){ avisar('A data de fim precisa ser depois do início.'); return; }
     state.ferias.push({ id: uid('fer'), responsavel: resp, inicio: inicio, fim: fim });
     saveFerias();
     document.getElementById('feriasInicio').value = '';
@@ -7315,10 +7607,10 @@
     return !!localStorage.getItem('clm_faceid_cred');
   }
   async function ativarFaceIdNesteAparelho(){
-    if(!faceIdDisponivelNesteDispositivo()){ alert('Esse navegador não tem suporte a Face ID/biometria.'); return; }
+    if(!faceIdDisponivelNesteDispositivo()){ avisar('Esse navegador não tem suporte a Face ID/biometria.'); return; }
     try{
       var suportado = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      if(!suportado){ alert('Esse aparelho não tem Face ID, Touch ID ou impressão digital configurados.'); return; }
+      if(!suportado){ avisar('Esse aparelho não tem Face ID, Touch ID ou impressão digital configurados.'); return; }
       var challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
       var userId = new Uint8Array(16); crypto.getRandomValues(userId);
       var cred = await navigator.credentials.create({
@@ -7333,10 +7625,10 @@
       });
       var idB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
       localStorage.setItem('clm_faceid_cred', idB64);
-      alert('Ativado! Da próxima vez que abrir o app neste aparelho, vai pedir Face ID/biometria em vez de senha.');
+      avisar('Ativado! Da próxima vez que abrir o app neste aparelho, vai pedir Face ID/biometria em vez de senha.');
       atualizarBotaoFaceId();
     }catch(err){
-      alert('Não foi possível ativar agora.');
+      avisar('Não foi possível ativar agora.');
     }
   }
   async function pedirFaceId(){
@@ -7983,6 +8275,11 @@
     montar();
   }
 
+  async function lerIndiceBackups(){
+    var r = await lerChaveSegura('clm-backup-auto-indice');
+    var v = r.ok ? parseOuNulo(r.valor) : null;
+    return Array.isArray(v) ? v : [];
+  }
   async function criarBackupAutomaticoSeNecessario(){
     try{
       var hoje = todayISO();
@@ -7990,26 +8287,30 @@
       try{ var r = await window.storage.get('clm-ultimo-backup-auto', true); ultimo = r ? r.value : null; }catch(e){ ultimo = null; }
       if(ultimo === hoje) return;
 
-      var chaves = ['clm-projetos','clm-tarefas','clm-equipe','clm-tipos','clm-link-painel','clm-financeiro'];
-      var dadosBrutos = {};
-      for(var i=0; i<chaves.length; i++){
-        try{ var res = await window.storage.get(chaves[i], true); dadosBrutos[chaves[i]] = res ? res.value : null; }catch(e){ dadosBrutos[chaves[i]] = null; }
+      var t = await lerTudoParaBackup();
+      if(t.falhas.length) return;            // conexão ruim: tenta de novo na próxima abertura, sem gravar backup pela metade
+      var dadosBrutos = t.dados, parcial = false;
+      var backup = { versao:3, automatico:true, exportadoEm: new Date().toISOString(), dadosBrutos: dadosBrutos };
+      var texto = JSON.stringify(backup);
+      if(texto.length > 9500000){              // limite do Firebase: 10 MB por valor — tira os blocos com fotos e avisa que é parcial
+        ['clm-relatorios-visita','clm-consideracoes-iniciais','clm-registros-art','clm-dimensionamentos'].forEach(function(k){ dadosBrutos[k] = null; });
+        backup.parcial = parcial = true;
+        texto = JSON.stringify(backup);
+        if(texto.length > 9500000) return;
       }
-      var backup = { versao:2, automatico:true, exportadoEm: new Date().toISOString(), dadosBrutos: dadosBrutos };
-      await window.storage.set('clm-backup-auto-'+hoje, JSON.stringify(backup), true);
+      await window.storage.set('clm-backup-auto-'+hoje, texto, true);
       await window.storage.set('clm-ultimo-backup-auto', hoje, true);
 
-      var lista = await window.storage.list('clm-backup-auto-', true);
-      if(lista && lista.keys){
-        lista.keys.forEach(function(k){
-          var dataStr = k.replace('clm-backup-auto-','');
-          var d1 = new Date(dataStr+'T00:00:00'), d2 = new Date(hoje+'T00:00:00');
-          var dias = Math.round((d2-d1)/86400000);
-          if(!isNaN(dias) && dias > 14){
-            window.storage.delete(k, true).catch(function(){});
-          }
-        });
-      }
+      var indice = await lerIndiceBackups();
+      if(indice.indexOf(hoje) < 0) indice.push(hoje);
+      var manter = [];
+      indice.forEach(function(dataStr){
+        var d1 = new Date(dataStr+'T00:00:00'), d2 = new Date(hoje+'T00:00:00');
+        var dias = Math.round((d2-d1)/86400000);
+        if(!isNaN(dias) && dias > 14){ window.storage.delete('clm-backup-auto-'+dataStr, true).catch(function(){}); }
+        else manter.push(dataStr);
+      });
+      await window.storage.set('clm-backup-auto-indice', JSON.stringify(manter.sort()), true);
     }catch(e){}
   }
 
