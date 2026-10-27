@@ -1746,7 +1746,7 @@ function estadoNovo(){
     hid:{pav:[{id:"p0", nome:"Térreo", cota:0},{id:"p1", nome:"1º pav.", cota:3}], dcalc:"interno", vmax:3, dmin:20, pmaxEst:400, els:[], tubos:[], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     cmx:{tensao:127, curva:"C", metodo:"B1", agrup:1, capac:true, smin:1.5, circs:[{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:""}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     dem:{conc:"", tipo:"res", fp:0.7, loc:1, gerador:false, gerQ:"", gerKva:"", gerMin:"", gerMax:"", gerObs:"", fv:false, fvKwp:"", fvLig:"entrada", hib:false, hibQ:"", hibPlacas:true, hibKw:"", hibKwh:"", hibKwp:"", quadros:[{id:"qdg", nome:"QDG", pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}], respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
-    cgl:{itens:[], base:"adot", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
+    cgl:{itens:[], base:"media", vap:"pratica", cil:"", qtdUso:"", reserva:true, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     res:{linhas:[{tipo:"res50m", qtd:""}], cisterna:true, superior:true, adotado:3, respId:"", resp:"", crea:"", doc:"", rev:"00", obs:""},
     pis:{pool:{vol:"", temp:30}, spa:{vol:"", temp:35}, construcao:1, capa:2, vento:3, tar:15, uso:2, periodo:1, freq:2, desclas:2, escala:2, dT:0, hMaxPool:24, hMaxSpa:4, poolspa:false, bcPS:"", alvo:3, fator24:0.2,
       custos:{ele:1.2, glp:8.46, gn:9.5, diesel:6.71}, filtro:{corpo:"pool", tempo:6, aquecida:true, bc:"", nbc:1, inst:"paralelo"}, cloro:{corpo:"pool", margem:10},
@@ -6306,13 +6306,15 @@ function calcCgl(){
   const itens = G.itens.map(it=>{ const c = it.equip && CAT.find(x=>x.n===it.equip); if(c) it.k = +kcalCat(c).kglp.toFixed(1);
     const q = Math.max(0, num(it.qtd)), k = Math.max(0, num(it.k)); return {it, q, k, t:q*k}; });
   const C = itens.reduce((a,x)=>a+x.t, 0), F = C>0 ? fSim13932(C) : 100, A = C*F/100;
-  const base = G.base==="calc" ? "calc" : "adot", P = base==="calc" ? C : A, kgh = P*60/PCI_GLP_KG;
+  const M = (A + C)/2;                                      // meio-termo entre o adotado e o calculado: base da recomendação
+  const base = G.base==="calc" ? "calc" : G.base==="adot2" ? "adot" : "media", P = base==="calc" ? C : base==="adot" ? A : M, kgh = P*60/PCI_GLP_KG;
   const teor = G.vap==="teorica";
   const opcoes = CILINDROS.map(c=>{ const v = teor ? c.teo : c.pra, n = kgh>0 ? Math.ceil(kgh/v - 1e-9) : 0; return {...c, v, n}; });
   const rec = opcoes.find(o=>o.id!=="P13" && o.n<=CG_MAX_USO) || opcoes[opcoes.length-1];
   const sel = opcoes.find(o=>o.id===G.cil) || rec;
-  const nUso = Math.max(sel.n, Math.floor(num(G.qtdUso))), nRes = G.reserva ? nUso : 0, total = nUso + nRes;
-  return {itens, C, F, A, base, P, kgh, teor, opcoes, rec, sel, nUso, nRes, total, massa: total*sel.kg, capVap: nUso*sel.v,
+  const qAd = Math.floor(num(G.qtdUso)), adotou = qAd > 0;
+  const nUso = adotou ? qAd : sel.n, nRes = G.reserva ? nUso : 0, total = nUso + nRes, falta = adotou && nUso*sel.v < kgh - 1e-9;
+  return {itens, C, F, A, M, base, P, kgh, teor, opcoes, rec, sel, nUso, nRes, total, massa: total*sel.kg, capVap: nUso*sel.v, adotou, falta,
     erro: !C ? "Informe os equipamentos a gás e o consumo" : null};
 }
 function renderCglLista(){
@@ -6332,21 +6334,21 @@ function renderCgl(){
   if(!$("gl-params")) return;
   const R = calcCgl(), G = S.cgl;
   document.querySelectorAll("#gl-lista .cg-it").forEach((el,i)=>{ const x = R.itens[i]; if(x) el.querySelector("[data-cgt]").textContent = kcm(x.t); });
-  $("gl-params").innerHTML = [["Consumo calculado (C)", fmt(R.C,0), "kcal/min"], ["Fator de simultaneidade (F)", fmt(R.F,1), "%"], ["Consumo adotado (A)", fmt(R.A,0), "kcal/min"], ["Consumo de GLP", fmt(R.kgh,2), "kg/h"]]
+  $("gl-params").innerHTML = [["Consumo calculado (C)", fmt(R.C,0), "kcal/min"], ["Consumo adotado (A)", `${fmt(R.A,0)}`, `kcal/min · F ${fmt(R.F,1)}%`], ["Meio-termo (A + C) ÷ 2", fmt(R.M,0), "kcal/min"], ["Consumo de GLP", fmt(R.kgh,2), `kg/h · ${R.base==="media"?"meio-termo":R.base==="calc"?"calculado":"adotado"}`]]
     .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
   $("gl-vap").value = G.vap==="teorica" ? "teorica" : "pratica";
   $("gl-res").checked = !!G.reserva; if(document.activeElement!==$("gl-qtd")) $("gl-qtd").value = G.qtdUso ?? "";
   if(R.erro){ $("gl-pot").innerHTML = `<p class="vazio">${R.erro}.</p>`; $("gl-cil").innerHTML = ""; $("gl-fim").innerHTML = ""; $("gl-memorial").innerHTML = ""; return; }
-  const op = (b, tit, sub, P) => `<button type="button" class="rs-op ${R.base===b?"on":""}" data-cg-base="${b}"><small>${tit}</small><strong>${kcm(P)}</strong>
-      <span>${sub}</span><span>Consumo: <b>${fmt(P*60/PCI_GLP_KG,2)} kg/h</b> (${fmt(P*60,0)} kcal/h)</span><em>${R.base===b?"usada nos cilindros":"clique para usar"}</em></button>`;
-  $("gl-pot").innerHTML = `<div class="rs-ops">${op("adot","Consumo adotado (A)","Consumo máximo provável · com simultaneidade", R.A)}${op("calc","Consumo calculado (C)","Consumo máximo possível · tudo ligado", R.C)}</div>`;
+  const op = (b, tit, sub, P) => `<button type="button" class="rs-op ${R.base===(b==="adot2"?"adot":b)?"on":""}" data-cg-base="${b}"><small>${tit}</small><strong>${kcm(P)}</strong>
+      <span>${sub}</span><span>Consumo: <b>${fmt(P*60/PCI_GLP_KG,2)} kg/h</b> (${fmt(P*60,0)} kcal/h)</span><em>${R.base===(b==="adot2"?"adot":b)?"usado nos cilindros":"clique para usar"}</em></button>`;
+  $("gl-pot").innerHTML = `<div class="rs-ops">${op("media","Meio-termo (A + C) ÷ 2 · recomendado","Média entre o consumo adotado e o calculado", R.M)}${op("adot2","Consumo adotado (A)","Consumo máximo provável · com simultaneidade", R.A)}${op("calc","Consumo calculado (C)","Consumo máximo possível · tudo ligado", R.C)}</div>`;
   $("gl-cil").innerHTML = `<div class="rs-ops">${R.opcoes.map(o=>{ const on = o.id===R.sel.id;
     return `<button type="button" class="rs-op ${on?"on":""} ${o.id==="P13"&&!on?"cg-op-x":""}" data-cg-cil="${o.id}">
       ${o.id===R.rec.id?`<span class="cg-rec">Recomendado</span>`:""}<small>${o.id} · ${o.kg} kg · vaporiza ${fmt(o.v,1)} kg/h</small>
       <strong>${o.n} em uso</strong><span>${G.reserva?`+ ${o.n} reserva = <b>${o.n*2} cilindros</b>`:`<b>${o.n} cilindro${o.n!==1?"s":""}</b>`}</span>
       <span>Capacidade: ${fmt(o.n*o.v,1)} kg/h ≥ ${fmt(R.kgh,2)} kg/h</span><em>${on?(G.cil?"escolhido":"escolhido (recomendação)"):"clique para escolher"}</em></button>`; }).join("")}</div>
-    <p class="fonte" style="margin-top:10px">Recomendação: o menor cilindro que atende com até ${CG_MAX_USO} em uso (o P13 não entra na recomendação de central).${G.cil?` <button type="button" class="lnk" data-cg-cil="">voltar para a recomendação</button>`:""}</p>`;
-  $("gl-fim").innerHTML = `<div class="conclusao ok" style="padding:14px 16px;background:var(--cinza-1);border-left:4px solid var(--preto)"><b>Casa de gás:</b> ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} em uso${R.nRes?` + ${R.nRes} de reserva`:""} = <b>${R.total} cilindros ${R.sel.id}</b> · ${fmt(R.massa,0)} kg de GLP armazenados · vaporização ${fmt(R.capVap,1)} kg/h para ${fmt(R.kgh,2)} kg/h.</div>`;
+    <p class="fonte" style="margin-top:10px">Recomendação: o menor cilindro que atende ${R.base==="media"?"o meio-termo entre o consumo adotado e o calculado":`o consumo ${R.base==="calc"?"calculado":"adotado"} escolhido acima`} com até ${CG_MAX_USO} em uso (o P13 não entra na recomendação de central).${G.cil?` <button type="button" class="lnk" data-cg-cil="">voltar para a recomendação</button>`:""}</p>`;
+  $("gl-fim").innerHTML = `${R.falta?`<p class="dm-conc-msg" style="margin:0 0 10px">⚠ ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} adotado${R.nUso!==1?"s":""} vaporiza${R.nUso!==1?"m":""} ${fmt(R.capVap,1)} kg/h, menos que o consumo de ${fmt(R.kgh,2)} kg/h: o mínimo calculado é ${R.sel.n}.</p>`:""}<div class="conclusao ok" style="padding:14px 16px;background:var(--cinza-1);border-left:4px solid var(--preto)"><b>Casa de gás:</b> ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} em uso${R.adotou?" (adotado)":""}${R.nRes?` + ${R.nRes} de reserva`:""} = <b>${R.total} cilindros ${R.sel.id}</b> · ${fmt(R.massa,0)} kg de GLP armazenados · vaporização ${fmt(R.capVap,1)} kg/h para ${fmt(R.kgh,2)} kg/h.</div>`;
   $("gl-memorial").innerHTML = memorialCgl(R);
 }
 function memorialCgl(R){
@@ -6357,8 +6359,9 @@ function memorialCgl(R){
   return `<div class="mc-bloco"><h4>Consumo calculado (consumo máximo possível)</h4>${R.itens.filter(x=>x.t>0).map(x=>`<p class="mc-l">${esc(x.it.nome||x.it.equip||"Equipamento")}${x.it.nome&&x.it.equip?` (${esc(x.it.equip)})`:""}: ${fmt(x.q)} × ${fmt(x.k,1)} = ${kcm(x.t)}</p>`).join("")}
       <p class="mc-l">C = <b>${kcm(C)}</b> (${fmt(C*60,0)} kcal/h)</p></div>
     <div class="mc-bloco"><h4>Fator de simultaneidade e consumo adotado (NBR 13932, anexo D)</h4><p class="mc-l">${fTxt}</p><p class="mc-l">A = C × F / 100 = ${fmt(C,1)} × ${fmt(R.F,2)} / 100 = <b>${kcm(R.A)}</b></p></div>
-    <div class="mc-bloco"><h4>Consumo de GLP em massa</h4><p class="mc-l">Consumo usado: ${R.base==="calc"?"calculado (C)":"adotado (A)"} = ${kcm(R.P)}</p><p class="mc-l">Consumo = ${fmt(R.P,1)} × 60 / ${fmt(PCI_GLP_KG)} kcal/kg = <b>${fmt(R.kgh,2)} kg/h</b></p></div>
-    <div class="mc-bloco"><h4>Quantidade de cilindros</h4><p class="mc-l">${R.sel.id}: vaporização ${R.teor?"teórica":"prática"} ${fmt(R.sel.v,1)} kg/h → n = ${fmt(R.kgh,2)} / ${fmt(R.sel.v,1)} = ${fmt(R.kgh/R.sel.v,2)} → <b>${R.sel.n} em uso</b>${R.nUso>R.sel.n?` (adotados ${R.nUso})`:""}</p>
+    <div class="mc-bloco"><h4>Consumo de GLP em massa</h4>${R.base==="media"?`<p class="mc-l">Meio-termo entre o adotado e o calculado: (A + C) / 2 = (${fmt(R.A,1)} + ${fmt(C,1)}) / 2 = <b>${kcm(R.M)}</b></p>`:""}<p class="mc-l">Consumo usado: ${R.base==="calc"?"calculado (C)":R.base==="adot"?"adotado (A)":"meio-termo (A + C) / 2"} = ${kcm(R.P)}</p><p class="mc-l">Consumo = ${fmt(R.P,1)} × 60 / ${fmt(PCI_GLP_KG)} kcal/kg = <b>${fmt(R.kgh,2)} kg/h</b></p></div>
+    <div class="mc-bloco"><h4>Quantidade de cilindros</h4><p class="mc-l">${R.sel.id}: vaporização ${R.teor?"teórica":"prática"} ${fmt(R.sel.v,1)} kg/h → n = ${fmt(R.kgh,2)} / ${fmt(R.sel.v,1)} = ${fmt(R.kgh/R.sel.v,2)} → <b>${R.sel.n} em uso</b> (mínimo calculado)</p>
+      ${R.adotou?`<p class="mc-l">Adotado: <b>${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} em uso</b> → capacidade de vaporização = ${R.nUso} × ${fmt(R.sel.v,1)} kg/h = <b>${fmt(R.capVap,1)} kg/h</b> ${R.falta?`&lt; ${fmt(R.kgh,2)} kg/h <span class="mc-aviso">— não atende o consumo; o mínimo é ${R.sel.n}</span>`:`≥ ${fmt(R.kgh,2)} kg/h ✓${R.nUso>R.sel.n?` · folga de ${fmt((R.capVap/R.kgh-1)*100,0)}% (${R.nUso - R.sel.n} cilindro${R.nUso-R.sel.n!==1?"s":""} acima do mínimo)`:""}`}</p>`:""}
       ${R.nRes?`<p class="mc-l">Reserva: ${R.nRes} → total <b>${R.total} cilindros ${R.sel.id}</b> (${fmt(R.massa,0)} kg)</p>`:""}</div>`;
 }
 function preencherCgl(){ const G = S.cgl; $("b-doc").value = G.doc; $("b-rev").value = G.rev; $("b-obs").value = G.obs; renderCglLista(); }
@@ -6394,7 +6397,7 @@ function ligarCgl(){
   $("gl-qtd").addEventListener("input", e=>{ G().qtdUso = e.target.value; alt(); });
 }
 function resumoCglParte(){ const R = calcCgl(); if(R.erro) return null;
-  return {det:`${kcm(R.P)} (${R.base==="calc"?"calculado":"adotado"}) · ${fmt(R.kgh,2)} kg/h · ${R.nUso} ${R.sel.id} em uso${R.nRes?` + ${R.nRes} reserva`:""}`, ok:true}; }
+  return {det:`${kcm(R.P)} (${R.base==="calc"?"calculado":R.base==="adot"?"adotado":"meio-termo"}) · ${fmt(R.kgh,2)} kg/h · ${R.nUso} ${R.sel.id} em uso${R.adotou?" (adotado)":""}${R.nRes?` + ${R.nRes} reserva`:""}`, ok:!R.falta}; }
 function relCgl(){
   const MREL = S.cgl, G = S.cgl, R = calcCgl(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec;
   return `<div class="r">${relCarimbo("Casa de gás · central de GLP · quantidade de cilindros", G.doc, G.rev, "Instalações de gás")}
@@ -6404,10 +6407,10 @@ function relCgl(){
       ${R.itens.filter(x=>x.t>0).map(x=>`<tr><td>${esc(x.it.nome)||"—"}</td><td>${esc(x.it.equip)||"Outro"}</td><td class="n">${fmt(x.q)}</td><td class="n">${fmt(x.k,1)}</td><td class="n">${fmt(x.t,0)}</td></tr>`).join("")}
       <tr style="font-weight:700"><td colspan="4">Consumo calculado (C)</td><td class="n">${fmt(R.C,0)}</td></tr></tbody></table>`)}
     ${sec("Consumos", `<table class="r-t"><tbody>${td("Consumo calculado (C) · consumo máximo possível", `${kcm(R.C)} (${fmt(R.C*60,0)} kcal/h)`)}${td("Fator de simultaneidade (F)", `${fmt(R.F,2)}%`)}${td("Consumo adotado (A) · consumo máximo provável", `${kcm(R.A)} (${fmt(R.A*60,0)} kcal/h)`)}
-      ${td("Consumo usado nos cilindros", `<b>${R.base==="calc"?"calculado (C)":"adotado (A)"} = ${kcm(R.P)}</b>`)}${td("Consumo de GLP", `<b>${fmt(R.kgh,2)} kg/h</b> (PCI ${fmt(PCI_GLP_KG)} kcal/kg)`)}</tbody></table>`)}
+      ${td("Meio-termo (A + C) / 2", `${kcm(R.M)} (${fmt(R.M*60,0)} kcal/h)`)}${td("Consumo usado nos cilindros", `<b>${R.base==="calc"?"calculado (C)":R.base==="adot"?"adotado (A)":"meio-termo (A + C) / 2"} = ${kcm(R.P)}</b>`)}${td("Consumo de GLP", `<b>${fmt(R.kgh,2)} kg/h</b> (PCI ${fmt(PCI_GLP_KG)} kcal/kg)`)}</tbody></table>`)}
     ${sec("Cilindros", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Cilindro</th><th class="n">Vaporização ${R.teor?"teórica":"prática"} (kg/h)</th><th class="n">Em uso</th>${G.reserva?`<th class="n">Reserva</th>`:""}<th class="c">Adotado</th></tr></thead><tbody>
       ${R.opcoes.map(o=>{ const on = o.id===R.sel.id; return `<tr ${on?'style="font-weight:700"':""}><td>${o.id} (${o.kg} kg)</td><td class="n">${fmt(o.v,1)}</td><td class="n">${on?R.nUso:o.n}</td>${G.reserva?`<td class="n">${on?R.nRes:o.n}</td>`:""}<td class="c">${on?"✓":""}</td></tr>`; }).join("")}</tbody></table>
-      <div class="r-concl"><b>Conclusão:</b> ${R.erro?"informar os equipamentos a gás.":`casa de gás com <b>${R.total} cilindros ${R.sel.id}</b> (${R.nUso} em uso${R.nRes?` + ${R.nRes} de reserva`:""}), ${fmt(R.massa,0)} kg de GLP armazenados; capacidade de vaporização ${fmt(R.capVap,1)} kg/h para consumo de ${fmt(R.kgh,2)} kg/h.`}</div></div>`)}
+      <div class="r-concl"><b>Conclusão:</b> ${R.erro?"informar os equipamentos a gás.":`casa de gás com <b>${R.total} cilindros ${R.sel.id}</b> (${R.nUso} em uso${R.adotou?` adotados — mínimo calculado ${R.sel.n}`:""}${R.nRes?` + ${R.nRes} de reserva`:""}), ${fmt(R.massa,0)} kg de GLP armazenados; capacidade de vaporização ${fmt(R.capVap,1)} kg/h para consumo de ${fmt(R.kgh,2)} kg/h.`}</div></div>`)}
     ${sec("Memorial de cálculo", memorialCgl(R))}
     ${linhasObs(G.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(G.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
     ${relAssinatura(MREL)}</div>`;
