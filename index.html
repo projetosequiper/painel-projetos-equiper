@@ -592,6 +592,23 @@
     .chat-wrap:not(.mostra-lista) .chat-lado{display:none;}
     .chat-voltar{display:inline-block;}
   }
+  #chatFlutBtn{position:fixed; right:18px; bottom:18px; z-index:6400; width:56px; height:56px; border-radius:50%; background:var(--red); color:#fff; border:none; font-size:24px; cursor:pointer; box-shadow:var(--shadow-lg); display:none; align-items:center; justify-content:center;}
+  #chatFlutBtn .chat-nb{position:absolute; top:-4px; right:-4px; background:var(--btn-bg); color:var(--btn-text); border:2px solid var(--paper);}
+  .chat-flut{position:fixed; right:16px; bottom:16px; z-index:6400; width:460px; max-width:calc(100vw - 24px); height:540px; max-height:calc(100vh - 32px); flex-direction:column; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-lg); border:1px solid var(--border); background:var(--sheet);}
+  .chat-flut-head{display:flex; align-items:center; justify-content:space-between; padding:9px 14px; background:var(--red); color:#fff; font-weight:700; font-size:14px;}
+  .chat-flut-head button{background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1; padding:0 4px;}
+  .chat-flut-body{flex:1; min-height:0; display:flex; flex-direction:column;}
+  .chat-flut-body #chatRaiz{flex:1; min-height:0; display:flex; flex-direction:column;}
+  .chat-flut-body .chat-wrap{flex:1; height:auto; min-height:0; border:none; border-radius:0; box-shadow:none;}
+  .chat-flut-body .chat-lado{width:150px; padding:6px;}
+  .chat-flut-body .chat-item{font-size:12.5px; padding:6px 7px;}
+  .chat-flut-body .chat-head{padding:8px 12px; font-size:13px;}
+  @media (max-width:900px){
+    #chatFlutBtn{bottom:calc(78px + env(safe-area-inset-bottom, 0px)); right:14px;}
+    .chat-flut{left:8px; right:8px; width:auto; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); height:calc(100dvh - 160px); max-height:none;}
+    .chat-flut-body .chat-lado{width:100%;}
+    .chat-flut-body .chat-wrap{width:100%;}
+  }
 </style>
 
 <button id="botaoTema" type="button">🌙 Escuro</button>
@@ -4565,6 +4582,7 @@
   }
   function chatAtualizarBadges(){
     try{ renderNavProjetos(); }catch(e){}
+    try{ chatFlutAtualizar(); }catch(e){}
     var n = chatTotalNaoLidos();
     var base = document.title.replace(/^\(\d+\)\s*/, '');
     document.title = n ? '(' + n + ') ' + base : base;
@@ -4702,7 +4720,7 @@
   }
 
   function chatMarcarLido(){
-    if(!chat.ativo) return;
+    if(!chat.ativo || !chatVisivel()) return;
     var m = chat.meta[chat.canal];
     if(!m || !m.ts) return;
     if((chat.lidos[chat.canal] || 0) >= m.ts) return;
@@ -4797,14 +4815,59 @@
     var antigo = document.querySelector('.toast-chat'); if(antigo) antigo.remove();
     var el = document.createElement('div'); el.className = 'toast-chat toast-erro-salvar'; el.style.background = '#1C1C1E'; el.style.cursor = 'pointer';
     el.innerHTML = '<span>💬 <b>' + escapeHtml(m.de || '') + '</b> (' + escapeHtml(info.titulo) + '): ' + escapeHtml(m.txt || '') + '</span>';
-    el.onclick = function(){ el.remove(); ativarTopicoProjetos('chat'); chatAbrirCanal(canal); };
+    el.onclick = function(){ el.remove(); if(topicoProjetosAtivo === 'chat'){ chatAbrirCanal(canal); } else { chatFlutAbrir(canal); } };
     document.body.appendChild(el);
     setTimeout(function(){ if(el.parentNode) el.remove(); }, 7000);
+  }
+
+  // ----- Janela flutuante do chat (botão no canto + painel, como na foto de referência) -----
+  chat.flutAberto = false;
+  function chatVisivel(){
+    if(document.hidden) return false;
+    return topicoProjetosAtivo === 'chat' || chat.flutAberto;
+  }
+  function chatFlutCriar(){
+    if(document.getElementById('chatFlutBtn')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'chatFlutBtn'; b.title = 'Chat da equipe';
+    b.innerHTML = '💬<span id="chatFlutBadge" class="chat-nb" style="display:none;"></span>';
+    b.onclick = function(){ chatFlutAbrir(); };
+    document.body.appendChild(b);
+    var p = document.createElement('div'); p.id = 'chatFlutPainel'; p.className = 'chat-flut'; p.style.display = 'none';
+    p.innerHTML = '<div class="chat-flut-head"><span>💬 Chat da equipe</span><button type="button" id="chatFlutMin" title="Minimizar">—</button></div><div id="chatFlutBody" class="chat-flut-body"></div>';
+    document.body.appendChild(p);
+    document.getElementById('chatFlutMin').onclick = function(){ chatFlutFechar(); };
+  }
+  function chatFlutAtualizar(){
+    var b = document.getElementById('chatFlutBtn'); if(!b) return;
+    var mostrarBotao = chat.ativo && topicoProjetosAtivo !== 'chat' && !chat.flutAberto;
+    b.style.display = mostrarBotao ? 'flex' : 'none';
+    var n = chatTotalNaoLidos(), bd = document.getElementById('chatFlutBadge');
+    if(bd){ bd.style.display = n ? 'inline-block' : 'none'; bd.textContent = n; }
+    var p = document.getElementById('chatFlutPainel');
+    if(p && (!chat.ativo || topicoProjetosAtivo === 'chat')){ p.style.display = 'none'; chat.flutAberto = false; }
+  }
+  function chatFlutAbrir(canal){
+    if(!chat.ativo) return;
+    chatFlutCriar(); chatMontar();
+    var raiz = document.getElementById('chatRaiz'), corpo = document.getElementById('chatFlutBody');
+    corpo.appendChild(raiz);
+    document.getElementById('chatFlutPainel').style.display = 'flex';
+    chat.flutAberto = true;
+    chatFlutAtualizar();
+    if(canal){ chatAbrirCanal(canal); }
+    else if(!chat.msgRef){ chatAbrirCanal(chat.canal); document.getElementById('chatWrap').classList.add('mostra-lista'); }
+    else { chatRenderLado(); var m = document.getElementById('chatMsgs'); if(m) m.scrollTop = m.scrollHeight; chatMarcarLido(); }
+  }
+  function chatFlutFechar(){
+    chat.flutAberto = false;
+    var p = document.getElementById('chatFlutPainel'); if(p) p.style.display = 'none';
+    chatFlutAtualizar();
   }
 
   function chatIniciar(){
     chatParar();
     chat.eu = nomeProjetistaAtual || 'Gerente';
+    chatFlutCriar();
     chat.ativo = true; chat.erro = false; chat.primeiraMeta = true; chat.limpos = {};
     var euKey = chatKey(chat.eu);
     function ouvir(ref, ev, fn){
@@ -4820,14 +4883,14 @@
           if(m && m.ts && (!a || a.ts !== m.ts) && m.de !== chat.eu){
             var info = chatCanalInfo(id);
             if(info.tipo === 'dm' && !info.envolvido) return;
-            var aberto = topicoProjetosAtivo === 'chat' && chat.canal === id && !document.hidden;
+            var aberto = chatVisivel() && chat.canal === id;
             if(!aberto) chatToastNova(id, m);
           }
         });
       }
       chat.primeiraMeta = false;
       chatRenderLado(); chatAtualizarBadges();
-      if(topicoProjetosAtivo === 'chat') chatMarcarLido();
+      chatMarcarLido();
     });
     ouvir(_fbDb.ref('chat/lidos/' + euKey), 'value', function(snap){ chat.lidos = snap.val() || {}; chatRenderLado(); chatAtualizarBadges(); });
     ouvir(_fbDb.ref('chat/online'), 'value', function(snap){ chat.online = snap.val() || {}; chatRenderLado(); });
@@ -4843,15 +4906,21 @@
     chatAtualizarBadges();
   }
   function chatParar(){
+    try{ var rz = document.getElementById('chatRaiz'), sc = document.getElementById('secChat'); if(rz && sc && rz.parentNode !== sc){ sc.appendChild(rz); } }catch(e){}
+    chat.flutAberto = false;
     chat.refs.forEach(function(r){ try{ r.ref.off(r.ev, r.fn); }catch(e){} });
     chat.refs = [];
     if(chat.msgRef){ try{ chat.msgRef.off(); }catch(e){} chat.msgRef = null; }
     if(chat.ativo && chat.eu){ try{ _fbDb.ref('chat/online/' + chatKey(chat.eu)).remove(); }catch(e){} }
     chat.ativo = false; chat.meta = {}; chat.lidos = {}; chat.online = {};
+    try{ chatFlutAtualizar(); }catch(e){}
     var base = document.title.replace(/^\(\d+\)\s*/, ''); document.title = base;
   }
   function chatAoAbrirTopico(){
     chatMontar();
+    var raizAba = document.getElementById('chatRaiz'), secAba = document.getElementById('secChat');
+    if(raizAba && secAba && raizAba.parentNode !== secAba){ secAba.appendChild(raizAba); }
+    chat.flutAberto = false; chatFlutAtualizar();
     chatMostrarAviso();
     chatRenderLado();
     if(!chat.msgRef){ chatAbrirCanal(chat.canal); document.getElementById('chatWrap').classList.add('mostra-lista'); }
@@ -4956,6 +5025,7 @@
     aplicarTopicoProjetos();
     renderBarraInferiorMobile();
     renderSidebarDesktop();
+    try{ chatFlutAtualizar(); }catch(e){}
   }
 
   function render(){
