@@ -426,7 +426,7 @@
   .ci-form-secao h3{background:#1C1C1E; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:9px 14px; margin:0 0 12px; border-radius:6px;}
   .lightbox-overlay img{max-width:100%; max-height:85vh; border-radius:4px;}
   /* ===== Visualizador de imagens (anexos das tarefas) ===== */
-  .viz-img{ position:fixed; inset:0; z-index:1300; display:flex; flex-direction:column; background:rgba(10,10,10,.94); }
+  .viz-img{ position:fixed; inset:0; z-index:8000; display:flex; flex-direction:column; background:rgba(10,10,10,.94); }
   .viz-img:fullscreen{ background:#0a0a0a; }
   .viz-barra{ display:flex; align-items:center; gap:6px; padding:8px 10px; color:#fff; flex-wrap:wrap; }
   .viz-barra .tit{ flex:1; min-width:80px; font-size:13px; opacity:.85; }
@@ -1433,8 +1433,143 @@
   async function saveEmailsProjetistas(){ try{ await window.storage.set('clm-emails-projetistas', JSON.stringify(state.emailsProjetistas), true); }catch(e){ mostrarErroSalvamento('cadastro do projetista', saveEmailsProjetistas); } }
   async function saveEmailGerente(){ try{ await window.storage.set('clm-email-gerente', state.emailGerente, true); }catch(e){ mostrarErroSalvamento('email do gerente', saveEmailGerente); } }
   async function savePermissoesProjetista(){ try{ await window.storage.set('clm-permissoes-projetista', JSON.stringify(state.permissoesProjetista), true); }catch(e){ mostrarErroSalvamento('permissões', savePermissoesProjetista); } }
-  async function saveRelatoriosVisita(){ try{ await window.storage.set('clm-relatorios-visita', JSON.stringify(state.relatoriosVisita), true); }catch(e){ mostrarErroSalvamento('relatório de visita', saveRelatoriosVisita); } }
-  async function saveConsideracoesIniciais(){ try{ await window.storage.set('clm-consideracoes-iniciais', JSON.stringify(state.consideracoesIniciais), true); }catch(e){ mostrarErroSalvamento('consideração inicial', saveConsideracoesIniciais); } }
+  async function saveRelatoriosVisita(){ try{ await window.storage.set('clm-relatorios-visita', JSON.stringify(state.relatoriosVisita), true); return true; }catch(e){ mostrarErroSalvamento('relatório de visita', saveRelatoriosVisita); return false; } }
+  async function saveConsideracoesIniciais(){ try{ await window.storage.set('clm-consideracoes-iniciais', JSON.stringify(state.consideracoesIniciais), true); return true; }catch(e){ mostrarErroSalvamento('consideração inicial', saveConsideracoesIniciais); return false; } }
+
+  // ================= Fila de envio (sem internet / sinal fraco) =================
+  // Relatórios de visita e considerações iniciais salvos sem conexão ficam guardados NESTE aparelho
+  // (IndexedDB) como "pendentes" e são enviados sozinhos quando a internet volta.
+  var FILA_COL = {
+    rel: { chave: 'clm-relatorios-visita',     nome: 'relatório de visita',     lista: function(){ return state.relatoriosVisita; },     definir: function(v){ state.relatoriosVisita = v; },     render: function(){ renderRelatoriosVisitaLista(); } },
+    ci:  { chave: 'clm-consideracoes-iniciais', nome: 'consideração inicial',    lista: function(){ return state.consideracoesIniciais; }, definir: function(v){ state.consideracoesIniciais = v; }, render: function(){ renderConsideracoesIniciaisLista(); } }
+  };
+  var filaPend = { rel: {}, ci: {} }, filaEnviando = { rel: null, ci: null }, filaRepetir = { rel: false, ci: false };
+  var fbConectado = null, filaCarregada = false, filaTimer = null;
+  function estaOnline(){ return navigator.onLine !== false && fbConectado !== false; }
+  function filaTotal(){ return Object.keys(filaPend.rel).length + Object.keys(filaPend.ci).length; }
+  function filaPersistir(col){ return rascunhoSalvar('fila-' + col, filaPend[col]); }
+  function filaComTimeout(promessa, ms, tok){
+    return new Promise(function(resolve, reject){
+      var t = setTimeout(function(){ tok.cancelado = true; reject(new Error('tempo esgotado')); }, ms);
+      promessa.then(function(v){ clearTimeout(t); resolve(v); }, function(e){ clearTimeout(t); reject(e); });
+    });
+  }
+  function filaEtiqueta(col, id){
+    return filaPend[col] && filaPend[col][id] ? ' <span style="background:#fff3cd; color:#7a5b00; border:1px solid #e6c65c; border-radius:10px; padding:1px 8px; font-size:11px; font-weight:600; white-space:nowrap;">⏳ pendente de envio</span>' : '';
+  }
+  function filaAtualizarBanner(){
+    var el = document.getElementById('bannerFila');
+    var n = filaTotal(), on = estaOnline();
+    if(on && n === 0){ if(el) el.remove(); return; }
+    if(!el){
+      el = document.createElement('div'); el.id = 'bannerFila';
+      el.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9500; padding:calc(6px + env(safe-area-inset-top, 0px)) 12px 6px; font-size:12.5px; font-weight:600; text-align:center; display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;';
+      document.body.appendChild(el);
+    }
+    el.style.background = on ? '#fff3cd' : '#b3261e';
+    el.style.color = on ? '#7a5b00' : '#fff';
+    var txt = on
+      ? '⏳ ' + n + (n === 1 ? ' item aguardando envio' : ' itens aguardando envio') + ' — guardado' + (n === 1 ? '' : 's') + ' neste aparelho. Enviando...'
+      : '📴 Sem internet — o que você salvar fica guardado neste aparelho e será enviado quando a conexão voltar.' + (n ? ' (' + n + ' pendente' + (n === 1 ? '' : 's') + ')' : '');
+    el.innerHTML = '<span></span>' + (on && n ? '<button type="button" style="border:1px solid currentColor; background:transparent; color:inherit; border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; cursor:pointer;">Enviar agora</button>' : '');
+    el.firstChild.textContent = txt;
+    var b = el.querySelector('button'); if(b){ b.onclick = function(){ filaEnviarTudo(); }; }
+  }
+  function filaToast(msg){
+    var antigo = document.querySelector('.toast-fila'); if(antigo) antigo.remove();
+    var el = document.createElement('div'); el.className = 'toast-fila toast-erro-salvar';
+    el.style.background = '#1f6f3f'; el.textContent = msg; document.body.appendChild(el);
+    setTimeout(function(){ if(el.parentNode) el.remove(); }, 6000);
+  }
+  function filaAplicarNoEstado(col){
+    var c = FILA_COL[col], lista = c.lista() || [], mudou = false;
+    Object.keys(filaPend[col]).forEach(function(id){
+      var item = filaPend[col][id], i = lista.findIndex(function(x){ return x.id === id; });
+      if(i === -1){ lista.push(item); mudou = true; } else if(lista[i] !== item){ lista[i] = item; mudou = true; }
+    });
+    if(mudou) c.definir(lista);
+  }
+  function filaEnviar(col){
+    var c = FILA_COL[col];
+    if(Object.keys(filaPend[col]).length === 0) return Promise.resolve(true);
+    if(!estaOnline()) return Promise.resolve(false);
+    if(filaEnviando[col]){ filaRepetir[col] = true; return filaEnviando[col]; }
+    var enviados = {}; Object.keys(filaPend[col]).forEach(function(id){ enviados[id] = filaPend[col][id]; });
+    var tok = { cancelado: false };
+    filaEnviando[col] = filaComTimeout(
+      window.storage.get(c.chave, true).then(function(r){ return JSON.parse(r.value); }, function(e){ if(e && /not found/i.test(e.message)) return []; throw e; }),
+      15000, tok
+    ).then(function(servidor){
+      if(tok.cancelado) throw new Error('cancelado');
+      if(!Array.isArray(servidor)) servidor = [];
+      Object.keys(enviados).forEach(function(id){
+        var i = servidor.findIndex(function(x){ return x.id === id; });
+        if(i === -1) servidor.push(enviados[id]); else servidor[i] = enviados[id];
+      });
+      return filaComTimeout(window.storage.set(c.chave, JSON.stringify(servidor), true), 30000, tok).then(function(){ return servidor; });
+    }).then(function(servidor){
+      // confirmado pelo servidor: tira da fila só o que foi realmente enviado (se foi editado de novo, continua pendente)
+      Object.keys(enviados).forEach(function(id){ if(filaPend[col][id] === enviados[id]) delete filaPend[col][id]; });
+      var atual = c.lista() || [];
+      servidor.forEach(function(x){ if(!atual.some(function(y){ return y.id === x.id; })) atual.push(x); });
+      c.definir(atual);
+      return filaPersistir(col).then(function(){ return true; });
+    }).catch(function(){ return false; }).then(function(ok){
+      filaEnviando[col] = null;
+      filaAtualizarBanner(); c.render();
+      if(filaRepetir[col]){ filaRepetir[col] = false; if(Object.keys(filaPend[col]).length) return filaEnviar(col); }
+      return ok;
+    });
+    return filaEnviando[col];
+  }
+  function filaEnviarTudo(){
+    return Promise.all([filaEnviar('rel'), filaEnviar('ci')]).then(function(r){ filaAtualizarBanner(); return r[0] && r[1]; });
+  }
+  // Guarda o item no aparelho (fila) e tenta enviar. Devolve {guardado, enviado}.
+  function salvarItemComFila(col, item, aoGuardar){
+    filaPend[col][item.id] = item;
+    filaAtualizarBanner();
+    var jaOnline = estaOnline();
+    return filaPersistir(col).then(function(guardado){
+      if(guardado && aoGuardar) aoGuardar();
+      if(!jaOnline){
+        filaToast('Sem internet: ' + FILA_COL[col].nome + ' guardado neste aparelho. Será enviado quando a conexão voltar.');
+        FILA_COL[col].render();
+        return { guardado: guardado, enviado: false };
+      }
+      return filaEnviar(col).then(function(ok){
+        if(ok){ if(aoGuardar) aoGuardar(); }
+        else { filaToast('Conexão fraca: ' + FILA_COL[col].nome + ' guardado neste aparelho. Será enviado quando a conexão voltar.'); }
+        return { guardado: guardado, enviado: !!ok };
+      });
+    });
+  }
+  function filaRemoverPendente(col, id){
+    if(filaPend[col][id]){ delete filaPend[col][id]; filaPersistir(col); filaAtualizarBanner(); }
+  }
+  function filaIniciar(){
+    Promise.all([rascunhoLer('fila-rel'), rascunhoLer('fila-ci')]).then(function(r){
+      if(r[0]) Object.keys(r[0]).forEach(function(id){ if(!filaPend.rel[id]) filaPend.rel[id] = r[0][id]; });
+      if(r[1]) Object.keys(r[1]).forEach(function(id){ if(!filaPend.ci[id]) filaPend.ci[id] = r[1][id]; });
+      filaCarregada = true;
+      filaAplicarNoEstado('rel'); filaAplicarNoEstado('ci');
+      FILA_COL.rel.render(); FILA_COL.ci.render();
+      filaAtualizarBanner();
+      filaEnviarTudo();
+    });
+    window.addEventListener('online', function(){ filaAtualizarBanner(); filaEnviarTudo(); });
+    window.addEventListener('offline', function(){ filaAtualizarBanner(); });
+    try{
+      _fbDb.ref('.info/connected').on('value', function(snap){
+        fbConectado = snap.val() === true; filaAtualizarBanner();
+        if(fbConectado) filaEnviarTudo();
+      });
+    }catch(e){}
+    filaTimer = setInterval(function(){ if(filaTotal() && estaOnline()) filaEnviarTudo(); }, 20000);
+    window.addEventListener('beforeunload', function(ev){
+      if(filaTotal()){ ev.preventDefault(); ev.returnValue = 'Há itens ainda não enviados. Se sair agora, eles ficam guardados neste aparelho e serão enviados na próxima vez que abrir o app com internet.'; return ev.returnValue; }
+    });
+  }
   async function saveRegistrosArt(){ try{ await window.storage.set('clm-registros-art', JSON.stringify(state.registrosArt), true); }catch(e){ mostrarErroSalvamento('ART', saveRegistrosArt); } }
   async function saveDimensionamentos(){ try{ await window.storage.set('clm-dimensionamentos', JSON.stringify(state.dimensionamentos), true); }catch(e){ mostrarErroSalvamento('dimensionamento', saveDimensionamentos); } }
 
@@ -2684,8 +2819,51 @@
     '</g>';
   }
 
+  // ---------- Rascunho automático (backup local no aparelho) ----------
+  function rascunhosAbrir(){
+    return new Promise(function(resolve, reject){
+      try{
+        var rq = indexedDB.open('equiper-rascunhos', 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore('r'); };
+        rq.onsuccess = function(){ resolve(rq.result); };
+        rq.onerror = function(){ reject(rq.error); };
+      }catch(e){ reject(e); }
+    });
+  }
+  function rascunhoSalvar(chave, valor){
+    return rascunhosAbrir().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction('r', 'readwrite');
+        tx.objectStore('r').put(valor, chave);
+        tx.oncomplete = function(){ db.close(); resolve(true); };
+        tx.onerror = function(){ db.close(); reject(tx.error); };
+      });
+    }).catch(function(){ return false; });
+  }
+  function rascunhoLer(chave){
+    return rascunhosAbrir().then(function(db){
+      return new Promise(function(resolve, reject){
+        var rq = db.transaction('r', 'readonly').objectStore('r').get(chave);
+        rq.onsuccess = function(){ db.close(); resolve(rq.result || null); };
+        rq.onerror = function(){ db.close(); reject(rq.error); };
+      });
+    }).catch(function(){ return null; });
+  }
+  function rascunhoApagar(chave){
+    return rascunhosAbrir().then(function(db){
+      return new Promise(function(resolve){
+        var tx = db.transaction('r', 'readwrite');
+        tx.objectStore('r').delete(chave);
+        tx.oncomplete = function(){ db.close(); resolve(true); };
+        tx.onerror = function(){ db.close(); resolve(false); };
+      });
+    }).catch(function(){ return false; });
+  }
+
   function abrirFormRelatorioVisita(existenteId){
     var existente = existenteId ? state.relatoriosVisita.find(function(x){ return x.id === existenteId; }) : null;
+    var chaveRascunho = 'rv-' + (existente ? existente.id : 'novo');
+    var relAtualizarHint = function(){};
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
     box.innerHTML =
@@ -2727,7 +2905,7 @@
           '<div id="relPlantasLista"></div>'+
           '<button type="button" class="btn small secondary" id="btnAddPlanta">+ Adicionar pavimento</button>'+
         '</div>'+
-        '<div class="form-actions"><button class="btn" id="btnSalvarRelatorio">Salvar relatório</button></div>'+
+        '<div class="form-actions" style="align-items:center; flex-wrap:wrap;"><button class="btn" id="btnSalvarRelatorio">Salvar relatório</button><span class="hint" id="relRascunhoInfo" style="font-size:11px;">💾 Backup automático neste aparelho ativado.</span></div>'+
       '</div>';
     overlay.style.display = 'flex';
     box.classList.add('dia-modal-grande');
@@ -2778,6 +2956,7 @@
       });
       document.getElementById('diaModalBox').addEventListener('click', function(e){ if(!e.target.closest('#relClienteBusca') && !e.target.closest('#relClienteSugestoes')) fechar(); });
       atualizarHint();
+      relAtualizarHint = atualizarHint;
     })();
 
     var modo = (existente && existente.modo) || 'livre';
@@ -3122,6 +3301,72 @@
       });
       e.target.value = '';
     });
+    // ----- Rascunho automático: guarda tudo (texto, itens, fotos, plantas) a cada poucos segundos -----
+    var rascunhoPronto = false, rascunhoAssinatura = '';
+    function coletarRascunho(){
+      sincronizarItensDoDom();
+      plantas.forEach(function(pl){ var el = document.querySelector('.rel-planta-nome[data-id="'+pl.id+'"]'); if(el) pl.nome = el.value; });
+      return {
+        v: 1,
+        existenteId: existente ? existente.id : null,
+        atualizadoEm: Date.now(),
+        clienteTexto: document.getElementById('relClienteBusca').value,
+        projetoSelId: projetoSelId,
+        modo: modo,
+        texto: document.getElementById('relTexto').value,
+        fotos: fotos.slice(),
+        itens: itens.map(function(it){ return { id: it.id, titulo: it.titulo || '', texto: it.texto || '', fotos: (it.fotos||[]).slice() }; }),
+        plantas: plantas.map(function(pl){ return { id: pl.id, nome: pl.nome || '', imagem: pl.imagem, pins: (pl.pins||[]).slice() }; })
+      };
+    }
+    function rascunhoTemConteudo(d){
+      return !!(d && ((d.clienteTexto||'').trim() || (d.texto||'').trim() || (d.fotos||[]).length ||
+        (d.itens||[]).some(function(it){ return (it.titulo||'').trim() || (it.texto||'').trim() || (it.fotos||[]).length; }) ||
+        (d.plantas||[]).some(function(pl){ return pl.imagem || (pl.nome||'').trim(); })));
+    }
+    function rascunhoAssinaturaDe(d){
+      return JSON.stringify([d.clienteTexto, d.modo, d.texto, d.fotos.map(function(f){ return f.length; }),
+        d.itens.map(function(it){ return [it.titulo, it.texto, it.fotos.map(function(f){ return f.length; })]; }),
+        d.plantas.map(function(pl){ return [pl.nome, pl.imagem ? pl.imagem.length : 0, pl.pins.length]; })]);
+    }
+    function aplicarRascunho(d){
+      var inp = document.getElementById('relClienteBusca');
+      inp.value = d.clienteTexto || '';
+      projetoSelId = d.projetoSelId || null;
+      relAtualizarHint();
+      fotos = (d.fotos || []).slice();
+      itens = (d.itens || []).map(function(it){ return { id: it.id || uid('itemrel'), titulo: it.titulo, texto: it.texto, fotos: (it.fotos||[]).slice() }; });
+      plantas = (d.plantas || []).map(function(pl){ return { id: pl.id || uid('planta'), nome: pl.nome, imagem: pl.imagem, pins: (pl.pins||[]).slice(), _zoom: 1 }; });
+      document.getElementById('relTexto').value = d.texto || '';
+      renderFotosPreview();
+      ativarModo(d.modo || 'livre');
+      renderItensLista();
+      renderPlantasLista();
+    }
+    function infoRascunho(txt){ var el = document.getElementById('relRascunhoInfo'); if(el) el.textContent = txt; }
+    var timerRascunho = setInterval(function(){
+      if(!document.getElementById('relClienteBusca')){ clearInterval(timerRascunho); return; }
+      if(!rascunhoPronto) return;
+      var d = coletarRascunho();
+      var sig = rascunhoAssinaturaDe(d);
+      if(sig === rascunhoAssinatura) return;
+      rascunhoAssinatura = sig;
+      if(!rascunhoTemConteudo(d)) return;
+      rascunhoSalvar(chaveRascunho, d).then(function(ok){
+        var h = new Date();
+        infoRascunho(ok ? '💾 Rascunho salvo neste aparelho às ' + pad2(h.getHours()) + ':' + pad2(h.getMinutes()) : '⚠️ Não foi possível salvar o backup neste aparelho.');
+      });
+    }, 3000);
+    rascunhoLer(chaveRascunho).then(function(d){
+      if(d && rascunhoTemConteudo(d) && document.getElementById('relClienteBusca')){
+        var q = new Date(d.atualizadoEm || Date.now());
+        var msg = 'Encontramos um rascunho deste relatório, salvo automaticamente em ' + q.toLocaleDateString('pt-BR') + ' às ' + pad2(q.getHours()) + ':' + pad2(q.getMinutes()) +
+          (d.clienteTexto ? ' (cliente: ' + d.clienteTexto + ')' : '') + '.\n\nRestaurar o rascunho?';
+        if(confirm(msg)){ aplicarRascunho(d); rascunhoAssinatura = rascunhoAssinaturaDe(coletarRascunho()); }
+      }
+      rascunhoPronto = true;
+    });
+
     document.getElementById('btnFecharFormRelatorio').onclick = fecharDiaModal;
     document.getElementById('btnSalvarRelatorio').onclick = function(){
       var clienteDigitado = document.getElementById('relClienteBusca').value.trim();
@@ -3162,17 +3407,17 @@
       } else {
         state.relatoriosVisita.push(registro);
       }
-      saveRelatoriosVisita();
+      rascunhoPronto = false;
+      salvarItemComFila('rel', registro, function(){ rascunhoApagar(chaveRascunho); });
       fecharDiaModal();
       renderRelatoriosVisitaLista();
     };
   }
 
+  // Abre a foto numa camada por cima, SEM mexer no formulário (antes o formulário era
+  // apagado e recriado, o que deixava os botões mortos e perdia o que foi digitado).
   function abrirImagemModalMantendo(dataUrl){
-    var box = document.getElementById('diaModalBox');
-    var htmlAnterior = box.innerHTML;
-    box.innerHTML = '<div style="text-align:right;margin-bottom:8px;"><button class="btn small secondary" id="btnVoltarRelatorio">‹ Voltar</button></div><img src="'+dataUrl+'" style="max-width:100%; border-radius:var(--r-md); display:block; margin:0 auto;">';
-    document.getElementById('btnVoltarRelatorio').onclick = function(){ box.innerHTML = htmlAnterior; };
+    abrirVisualizadorImagens([dataUrl], 0);
   }
 
   function mostrarPdfRelatorioVisita(registro){
@@ -3289,7 +3534,7 @@
       }).join('') : '';
       return '<div class="projeto-row" style="flex-direction:column; align-items:flex-start; gap:6px;">'+
         '<div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">'+
-          '<b>'+escapeHtml(r.clienteNome)+'</b>'+
+          '<b>'+escapeHtml(r.clienteNome)+filaEtiqueta('rel', r.id)+'</b>'+
           '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(r.autor)+'</span>'+
         '</div>'+
         conteudoHtml+
@@ -3322,6 +3567,8 @@
     lista.querySelectorAll('.btn-remover-relatorio').forEach(function(btn){
       btn.onclick = function(){
         armConfirm(btn, 'Confirmar?', function(){
+          if(!estaOnline()){ alert('Sem internet: não dá para excluir agora. Tente de novo quando a conexão voltar.'); return; }
+          filaRemoverPendente('rel', btn.getAttribute('data-id'));
           state.relatoriosVisita = state.relatoriosVisita.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
           saveRelatoriosVisita();
           renderRelatoriosVisitaLista();
@@ -3649,6 +3896,7 @@
 
   function abrirFormConsideracaoInicial(existenteId){
     var existente = existenteId ? state.consideracoesIniciais.find(function(x){ return x.id === existenteId; }) : null;
+    var chaveRascunho = 'ci-' + (existente ? existente.id : 'novo');
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
     var opcoesClientes = state.projetos.map(function(p){ return '<option value="'+p.id+'"'+((existente&&existente.projetoId===p.id)?' selected':'')+'>'+escapeHtml(p.nome)+'</option>'; }).join('');
@@ -3695,7 +3943,7 @@
         '<div><label>Data preenchimento</label><input type="date" id="ciDataPreenchimento" value="'+((existente&&existente.dataPreenchimento)||todayISO())+'"></div>'+
       '</div></div>'+
       htmlSecoes+
-      '<div class="form-actions" style="margin-top:16px;"><button class="btn" id="btnSalvarCI">Salvar consideração inicial</button></div>';
+      '<div class="form-actions" style="margin-top:16px; align-items:center; flex-wrap:wrap;"><button class="btn" id="btnSalvarCI">Salvar consideração inicial</button><span class="hint" id="ciRascunhoInfo" style="font-size:11px;">💾 Backup automático neste aparelho ativado.</span></div>';
 
     overlay.style.display = 'flex';
     box.classList.add('dia-modal-grande');
@@ -3780,6 +4028,73 @@
     document.getElementById('ciClienteSelect').addEventListener('change', function(){
       document.getElementById('ciClienteAvulsoWrap').style.display = (this.value === '__avulso__') ? 'block' : 'none';
     });
+    // ----- Rascunho automático (backup local): guarda todos os campos e fotos a cada poucos segundos -----
+    var rascunhoPronto = false, rascunhoAssinatura = '';
+    function coletarRascunhoCI(){
+      var campos = {};
+      box.querySelectorAll('input[id], select[id], textarea[id]').forEach(function(el){
+        if(el.type === 'file') return;
+        campos[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? !!el.checked : el.value;
+      });
+      var fotos = {};
+      Object.keys(fotosPorSecao).forEach(function(k){ fotos[k] = fotosPorSecao[k].map(function(f){ return { url: f.url, legenda: f.legenda || '' }; }); });
+      return { v: 1, existenteId: existente ? existente.id : null, atualizadoEm: Date.now(), campos: campos, fotos: fotos };
+    }
+    function rascunhoCITemConteudo(d){
+      if(!d) return false;
+      var temFoto = Object.keys(d.fotos || {}).some(function(k){ return (d.fotos[k] || []).length; });
+      var inicial = ['ciClienteSelect','ciTipoEdificacao','ciDataPreenchimento','ciPartEquiper'];
+      var temTexto = Object.keys(d.campos || {}).some(function(id){
+        var v = d.campos[id];
+        if(inicial.indexOf(id) !== -1) return id === 'ciClienteSelect' && !!v;
+        return (typeof v === 'string') ? v.trim() !== '' && !/^\d+$/.test(v.trim()) : false;
+      });
+      var marcou = Object.keys(d.campos || {}).some(function(id){ return d.campos[id] === true && id.indexOf('_naotera') !== -1; });
+      return temFoto || temTexto || marcou;
+    }
+    function rascunhoCIAssinatura(d){
+      return JSON.stringify([d.campos, Object.keys(d.fotos).map(function(k){ return [k, d.fotos[k].map(function(f){ return [f.url.length, f.legenda]; })]; })]);
+    }
+    function aplicarRascunhoCI(d){
+      var campos = d.campos || {};
+      Object.keys(campos).forEach(function(id){
+        var el = document.getElementById(id);
+        if(!el || el.type === 'file') return;
+        if(el.type === 'checkbox' || el.type === 'radio'){ el.checked = !!campos[id]; } else { el.value = campos[id]; }
+      });
+      Object.keys(fotosPorSecao).forEach(function(k){
+        fotosPorSecao[k] = ((d.fotos && d.fotos[k]) || []).map(function(f){ return { url: f.url, legenda: f.legenda || '' }; });
+        renderFotosPreviewSecao(k);
+      });
+      // dispara os "change" para os campos que mostram/escondem outros (não terá, Outro, quantidade, cliente avulso)
+      box.querySelectorAll('input[id], select[id]').forEach(function(el){
+        if(el.type === 'file' || el.type === 'text' || el.type === 'date' || el.type === 'number') return;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+    function infoRascunhoCI(txt){ var el = document.getElementById('ciRascunhoInfo'); if(el) el.textContent = txt; }
+    var timerRascunhoCI = setInterval(function(){
+      if(!document.getElementById('btnSalvarCI')){ clearInterval(timerRascunhoCI); return; }
+      if(!rascunhoPronto) return;
+      var d = coletarRascunhoCI();
+      var sig = rascunhoCIAssinatura(d);
+      if(sig === rascunhoAssinatura) return;
+      rascunhoAssinatura = sig;
+      if(!rascunhoCITemConteudo(d)) return;
+      rascunhoSalvar(chaveRascunho, d).then(function(ok){
+        var h = new Date();
+        infoRascunhoCI(ok ? '💾 Rascunho salvo neste aparelho às ' + pad2(h.getHours()) + ':' + pad2(h.getMinutes()) : '⚠️ Não foi possível salvar o backup neste aparelho.');
+      });
+    }, 3000);
+    rascunhoLer(chaveRascunho).then(function(d){
+      if(d && rascunhoCITemConteudo(d) && document.getElementById('btnSalvarCI')){
+        var q = new Date(d.atualizadoEm || Date.now());
+        var msg = 'Encontramos um rascunho desta consideração inicial, salvo automaticamente em ' + q.toLocaleDateString('pt-BR') + ' às ' + pad2(q.getHours()) + ':' + pad2(q.getMinutes()) + '.\n\nRestaurar o rascunho?';
+        if(confirm(msg)){ aplicarRascunhoCI(d); rascunhoAssinatura = rascunhoCIAssinatura(coletarRascunhoCI()); }
+      }
+      rascunhoPronto = true;
+    });
+
     document.getElementById('btnFecharFormCI').onclick = fecharDiaModal;
     document.getElementById('btnSalvarCI').onclick = function(){
       var clienteSel = document.getElementById('ciClienteSelect').value;
@@ -3821,7 +4136,8 @@
       } else {
         state.consideracoesIniciais.push(registro);
       }
-      saveConsideracoesIniciais();
+      rascunhoPronto = false;
+      salvarItemComFila('ci', registro, function(){ rascunhoApagar(chaveRascunho); });
       fecharDiaModal();
       renderConsideracoesIniciaisLista();
     };
@@ -3947,7 +4263,7 @@
     lista.innerHTML = itens.map(function(r){
       var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
       return '<div class="projeto-row" style="padding:8px 10px;">'+
-        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.dataPreenchimento)+' · '+escapeHtml(r.autor)+'</span></div>'+
+        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b>'+filaEtiqueta('ci', r.id)+' — <span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.dataPreenchimento)+' · '+escapeHtml(r.autor)+'</span></div>'+
         '<div class="acts">'+
           '<button type="button" class="btn-editar-ci" data-id="'+r.id+'">Ver/editar</button>'+
           '<button type="button" class="btn-pdf-ci" data-id="'+r.id+'">📄 PDF</button>'+
@@ -3967,6 +4283,8 @@
     lista.querySelectorAll('.btn-remover-ci').forEach(function(btn){
       btn.onclick = function(){
         armConfirm(btn, 'Confirmar?', function(){
+          if(!estaOnline()){ alert('Sem internet: não dá para excluir agora. Tente de novo quando a conexão voltar.'); return; }
+          filaRemoverPendente('ci', btn.getAttribute('data-id'));
           state.consideracoesIniciais = state.consideracoesIniciais.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
           saveConsideracoesIniciais();
           renderConsideracoesIniciaisLista();
@@ -4189,6 +4507,7 @@
         var r = await window.storage.get('clm-relatorios-visita', true);
         if(r && r.value){ state.relatoriosVisita = JSON.parse(r.value); }
       }catch(e){}
+      filaAplicarNoEstado('rel');
       renderRelatoriosVisitaLista();
     }
     if(id === 'consideracoes' && !consideracoesCarregadas){
@@ -4197,6 +4516,7 @@
         var rc = await window.storage.get('clm-consideracoes-iniciais', true);
         if(rc && rc.value){ state.consideracoesIniciais = JSON.parse(rc.value); }
       }catch(e){}
+      filaAplicarNoEstado('ci');
       renderConsideracoesIniciaisLista();
     }
     if(id === 'art' && !artCarregado){
@@ -7358,6 +7678,7 @@
     try{ localStorage.setItem('clm_local_tema', novoEscuro ? 'escuro' : 'claro'); }catch(e){}
   };
 
+  filaIniciar();
   prepararHashesEIniciar();
 })();
 </script>
