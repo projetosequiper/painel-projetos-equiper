@@ -7118,7 +7118,7 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '27/10/2026 · fase 3a';
+  var VERSAO_APP = '27/10/2026 · fase 3b';
   (function(){
     var sel = document.getElementById('selInatividade');
     if(sel){ sel.value = String(minutosInatividade()); sel.onchange = function(){ try{ localStorage.setItem(INATIV_CHAVE, sel.value); }catch(e){} ultimaAtividade = Date.now(); avisar('Salvo.'); }; }
@@ -8320,6 +8320,11 @@
         else manter.push(dataStr);
       });
       await window.storage.set('clm-backup-auto-indice', JSON.stringify(manter.sort()), true);
+      // limpeza dos backups antigos criados antes do índice existir: apaga por data (de 15 a 75 dias atrás); apagar o que não existe não faz nada
+      for(var n = 15; n <= 75; n++){
+        var dd = new Date(); dd.setDate(dd.getDate() - n);
+        window.storage.delete('clm-backup-auto-' + dataLocalISO(dd), true).catch(function(){});
+      }
     }catch(e){}
   }
 
