@@ -2795,15 +2795,16 @@
       fotoPasteAlvo = { adicionar: function(dataUrl){ planta.imagem = dataUrl; renderPlantaImagem(plantaId); } };
     }
 
+    function removerPopupsPin(){ document.querySelectorAll('.planta-pin-popup').forEach(function(el){ el.remove(); }); }
+
     function abrirPopupNovoPin(plantaId, x2, y2, wrapEl){
       var planta = plantas.find(function(p){ return p.id === plantaId; });
       var p1 = cliquesPendentes[plantaId];
-      var antigo = wrapEl.querySelector('.planta-pin-popup');
-      if(antigo) antigo.remove();
+      removerPopupsPin();
       var popup = document.createElement('div');
       popup.className = 'planta-pin-popup';
-      popup.style.left = Math.max(0, Math.min(x2, 70)) + '%';
-      popup.style.top = Math.max(0, Math.min(y2, 70)) + '%';
+      // fixo no topo da tela (fora da planta): nunca fica cortado nem escondido pelo teclado do celular
+      popup.style.cssText = 'position:fixed; left:50%; transform:translateX(-50%); top:max(12px, env(safe-area-inset-top)); width:min(92vw, 380px); z-index:7000; max-height:80vh; overflow:auto;';
       var campoHtml;
       if(modo === 'itens'){
         campoHtml = '<select id="pinItemSelect"><option value="">— Escolha o item —</option>' +
@@ -2816,8 +2817,9 @@
         campoHtml = '<input type="text" id="pinLabelInput" placeholder="O que tem aqui?">';
       }
       popup.innerHTML = '<div class="hint" style="margin-bottom:6px;">Foto tirada aqui, apontando nessa direção</div>'+campoHtml + '<div style="display:flex; gap:6px;"><button type="button" class="btn small" id="pinConfirmar" style="flex:1;">Marcar</button><button type="button" class="btn small secondary" id="pinCancelar" style="flex:1;">Cancelar</button></div>';
-      wrapEl.appendChild(popup);
-      document.getElementById('pinCancelar').onclick = function(e){ e.stopPropagation(); delete cliquesPendentes[plantaId]; renderPlantaImagem(plantaId); };
+      document.body.appendChild(popup);
+      var campoFoco = popup.querySelector('input, select'); if(campoFoco){ try{ campoFoco.focus({ preventScroll:true }); }catch(e){} }
+      document.getElementById('pinCancelar').onclick = function(e){ e.stopPropagation(); removerPopupsPin(); delete cliquesPendentes[plantaId]; renderPlantaImagem(plantaId); };
       document.getElementById('pinConfirmar').onclick = function(e){
         e.stopPropagation();
         var refItemId = null, texto = '';
@@ -2829,12 +2831,14 @@
           if(!texto){ return; }
         }
         planta.pins.push({ id: uid('pin'), x1: p1.x, y1: p1.y, x2: x2, y2: y2, refItemId: refItemId || null, texto: texto });
+        removerPopupsPin();
         delete cliquesPendentes[plantaId];
         renderPlantaImagem(plantaId);
       };
     }
 
     function renderPlantaImagem(plantaId){
+      removerPopupsPin();
       var planta = plantas.find(function(p){ return p.id === plantaId; });
       var container = document.getElementById('plantaImgArea_'+plantaId);
       if(!container || !planta) return;
@@ -2912,13 +2916,33 @@
       }).join('');
     }
 
+    function sincronizarNomesPlantas(){
+      plantas.forEach(function(p){
+        var el = document.querySelector('.rel-planta-nome[data-id="'+p.id+'"]');
+        if(el) p.nome = el.value;
+      });
+    }
+    function moverPlanta(plantaId, delta){
+      sincronizarNomesPlantas();
+      var i = plantas.findIndex(function(x){ return x.id === plantaId; });
+      var j = i + delta;
+      if(i < 0 || j < 0 || j >= plantas.length) return;
+      var tmp = plantas[i]; plantas[i] = plantas[j]; plantas[j] = tmp;
+      renderPlantasLista();
+      var bloco = document.querySelector('[data-planta-bloco="'+plantaId+'"]');
+      if(bloco && bloco.scrollIntoView) bloco.scrollIntoView({ block:'nearest', behavior:'smooth' });
+    }
     function renderPlantasLista(){
+      sincronizarNomesPlantas();
       var lista = document.getElementById('relPlantasLista');
-      lista.innerHTML = plantas.map(function(p){
+      lista.innerHTML = plantas.map(function(p, idxP){
         return '<div class="projeto-row" data-planta-bloco="'+p.id+'" style="flex-direction:column; align-items:stretch; gap:8px; margin-bottom:14px;">'+
           '<div style="display:flex; gap:8px; align-items:center;">'+
-            '<input type="text" class="rel-planta-nome" data-id="'+p.id+'" placeholder="Nome do pavimento (ex: Térreo, 1º Pav.)" style="flex:1;" value="'+escapeHtml(p.nome||'')+'">'+
-            '<button type="button" class="rel-planta-remover" data-id="'+p.id+'" style="color:var(--red); font-size:11px;">Remover</button>'+
+            '<span class="hint" style="font-weight:700; min-width:18px; text-align:center;">'+(idxP+1)+'</span>'+
+            '<input type="text" class="rel-planta-nome" data-id="'+p.id+'" placeholder="Nome do pavimento (ex: Térreo, 1º Pav.)" style="flex:1; min-width:0;" value="'+escapeHtml(p.nome||'')+'">'+
+            '<button type="button" class="rel-planta-subir" data-id="'+p.id+'" title="Mover para cima" style="font-size:14px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); cursor:pointer;"'+(idxP===0?' disabled':'')+'>▲</button>'+
+            '<button type="button" class="rel-planta-descer" data-id="'+p.id+'" title="Mover para baixo" style="font-size:14px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--sheet); cursor:pointer;"'+(idxP===plantas.length-1?' disabled':'')+'>▼</button>'+
+            '<button type="button" class="rel-planta-remover" data-id="'+p.id+'" style="color:var(--red); font-size:11px; font-weight:700; white-space:nowrap;">REMOVER PLANTA</button>'+
           '</div>'+
           '<div id="plantaImgArea_'+p.id+'"></div>'+
           '<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">'+
@@ -2946,9 +2970,20 @@
           e.target.value = '';
         });
       });
+      lista.querySelectorAll('.rel-planta-subir').forEach(function(btn){
+        btn.onclick = function(e){ e.stopPropagation(); moverPlanta(btn.getAttribute('data-id'), -1); };
+      });
+      lista.querySelectorAll('.rel-planta-descer').forEach(function(btn){
+        btn.onclick = function(e){ e.stopPropagation(); moverPlanta(btn.getAttribute('data-id'), 1); };
+      });
       lista.querySelectorAll('.rel-planta-remover').forEach(function(btn){
         btn.onclick = function(){
-          plantas = plantas.filter(function(x){ return x.id !== btn.getAttribute('data-id'); });
+          var plantaId = btn.getAttribute('data-id');
+          sincronizarNomesPlantas();
+          var alvo = plantas.find(function(x){ return x.id === plantaId; });
+          var nomeAlvo = alvo && alvo.nome && alvo.nome.trim() ? '"'+alvo.nome.trim()+'"' : 'este pavimento';
+          if(!confirm('Remover '+nomeAlvo+'? A planta e as marcações dela serão apagadas.')) return;
+          plantas = plantas.filter(function(x){ return x.id !== plantaId; });
           renderPlantasLista();
         };
       });
@@ -5787,6 +5822,7 @@
   }
   function fecharDiaModal(){
     if(typeof obsEditorFlush === 'function' && obsEditorFlush){ var _f = obsEditorFlush; obsEditorFlush = null; try{ _f(); }catch(e){} }
+    document.querySelectorAll('.planta-pin-popup').forEach(function(el){ el.remove(); });
     document.getElementById('diaModalOverlay').style.display = 'none';
     document.getElementById('diaModalBox').classList.remove('dia-modal-grande');
     fotoPasteAlvo = null;
