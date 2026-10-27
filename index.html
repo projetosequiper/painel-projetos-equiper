@@ -2688,7 +2688,6 @@
     var existente = existenteId ? state.relatoriosVisita.find(function(x){ return x.id === existenteId; }) : null;
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
-    var opcoesClientes = state.projetos.map(function(p){ return '<option value="'+p.id+'">'+escapeHtml(p.nome)+'</option>'; }).join('');
     box.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'+
         '<h3 style="margin:0;">📝 '+(existente?'Editar':'Novo')+' relatório de visita</h3>'+
@@ -2696,9 +2695,12 @@
       '</div>'+
       '<div class="form-grid">'+
         '<div class="full"><label>Cliente</label>'+
-          '<select id="relClienteSelect"><option value="">— Selecionar cliente cadastrado —</option>'+opcoesClientes+'<option value="__avulso__">Outro (não cadastrado)</option></select>'+
+          '<div style="position:relative;">'+
+            '<input type="text" id="relClienteBusca" autocomplete="off" placeholder="Digite o nome para buscar ou escreva um cliente novo" value="'+escapeHtml((existente&&existente.clienteNome)||'')+'">'+
+            '<div id="relClienteSugestoes" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:30; margin-top:2px; max-height:220px; overflow:auto; background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-sm); box-shadow:var(--shadow-lg);"></div>'+
+          '</div>'+
+          '<div class="hint" id="relClienteHint" style="margin-top:4px;"></div>'+
         '</div>'+
-        '<div class="full" id="relClienteAvulsoWrap" style="display:none;"><label>Nome do cliente</label><input type="text" id="relClienteAvulso" placeholder="Nome do cliente" value="'+escapeHtml((existente&&!existente.projetoId)?existente.clienteNome:'')+'"></div>'+
         '<div class="full">'+
           '<label>Como você quer preencher?</label>'+
           '<div style="display:flex; gap:6px; margin:4px 0 10px;">'+
@@ -2729,10 +2731,54 @@
       '</div>';
     overlay.style.display = 'flex';
     box.classList.add('dia-modal-grande');
-    if(existente){
-      document.getElementById('relClienteSelect').value = existente.projetoId || '__avulso__';
-      if(!existente.projetoId) document.getElementById('relClienteAvulsoWrap').style.display = 'block';
-    }
+    // Cliente: busca por digitação; se não existir no cadastro, vale o nome digitado
+    var projetoSelId = existente ? (existente.projetoId || null) : null;
+    function normBusca(t){ return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); }
+    (function(){
+      var inp = document.getElementById('relClienteBusca');
+      var lista = document.getElementById('relClienteSugestoes');
+      var hint = document.getElementById('relClienteHint');
+      var ativo = -1, sugestoes = [];
+      function atualizarHint(){
+        var txt = inp.value.trim();
+        if(!txt){ hint.textContent = ''; return; }
+        var pj = projetoSelId ? state.projetos.find(function(x){ return x.id === projetoSelId; }) : null;
+        if(pj){ hint.textContent = '✔ Cliente cadastrado'; }
+        else { hint.textContent = 'Cliente ainda não cadastrado — o relatório será salvo com este nome.'; }
+      }
+      function fechar(){ lista.style.display = 'none'; ativo = -1; }
+      function escolher(pj){ inp.value = pj.nome; projetoSelId = pj.id; fechar(); atualizarHint(); }
+      function mostrar(){
+        var q = normBusca(inp.value);
+        sugestoes = state.projetos.filter(function(pj){ return !q || normBusca(pj.nome).indexOf(q) !== -1; })
+          .sort(function(a,b){ var ia = normBusca(a.nome).indexOf(q), ib = normBusca(b.nome).indexOf(q); return (ia - ib) || a.nome.localeCompare(b.nome,'pt-BR'); })
+          .slice(0, 8);
+        if(!sugestoes.length){ fechar(); return; }
+        lista.innerHTML = sugestoes.map(function(pj, i){
+          return '<div class="rel-sug-item" data-i="'+i+'" style="padding:8px 10px; cursor:pointer; font-size:13px; '+(i===ativo?'background:var(--paper);':'')+'">'+escapeHtml(pj.nome)+'</div>';
+        }).join('');
+        lista.style.display = 'block';
+      }
+      inp.addEventListener('input', function(){
+        var pj = projetoSelId ? state.projetos.find(function(x){ return x.id === projetoSelId; }) : null;
+        if(!pj || normBusca(pj.nome) !== normBusca(inp.value)) projetoSelId = null;
+        ativo = -1; mostrar(); atualizarHint();
+      });
+      inp.addEventListener('focus', function(){ mostrar(); });
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'ArrowDown'){ e.preventDefault(); ativo = Math.min(ativo+1, sugestoes.length-1); mostrar(); }
+        else if(e.key === 'ArrowUp'){ e.preventDefault(); ativo = Math.max(ativo-1, 0); mostrar(); }
+        else if(e.key === 'Enter' && ativo >= 0 && sugestoes[ativo]){ e.preventDefault(); escolher(sugestoes[ativo]); }
+        else if(e.key === 'Escape' && lista.style.display !== 'none'){ e.stopPropagation(); fechar(); }
+      });
+      lista.addEventListener('mousedown', function(e){ e.preventDefault(); });
+      lista.addEventListener('click', function(e){
+        var el = e.target.closest('.rel-sug-item'); if(!el) return;
+        escolher(sugestoes[parseInt(el.getAttribute('data-i'),10)]);
+      });
+      document.getElementById('diaModalBox').addEventListener('click', function(e){ if(!e.target.closest('#relClienteBusca') && !e.target.closest('#relClienteSugestoes')) fechar(); });
+      atualizarHint();
+    })();
 
     var modo = (existente && existente.modo) || 'livre';
     var fotos = (existente && existente.modo !== 'itens' && existente.fotos) ? existente.fotos.slice() : [];
@@ -3034,9 +3080,6 @@
     if(fotos.length){ renderFotosPreview(); }
     renderPlantasLista();
 
-    document.getElementById('relClienteSelect').addEventListener('change', function(){
-      document.getElementById('relClienteAvulsoWrap').style.display = (this.value === '__avulso__') ? 'block' : 'none';
-    });
     document.getElementById('btnAddFotoRelatorio').onclick = function(){ document.getElementById('relFotoInput').click(); };
     document.getElementById('relFotoInput').addEventListener('change', function(e){
       Array.prototype.forEach.call(e.target.files, function(file){
@@ -3046,15 +3089,14 @@
     });
     document.getElementById('btnFecharFormRelatorio').onclick = fecharDiaModal;
     document.getElementById('btnSalvarRelatorio').onclick = function(){
-      var clienteSel = document.getElementById('relClienteSelect').value;
-      var clienteAvulso = document.getElementById('relClienteAvulso').value.trim();
-      if(!clienteSel){ alert('Selecione um cliente ou escolha "Outro".'); return; }
-      if(clienteSel === '__avulso__' && !clienteAvulso){ alert('Digite o nome do cliente.'); return; }
-      var pj = clienteSel !== '__avulso__' ? state.projetos.find(function(p){ return p.id === clienteSel; }) : null;
+      var clienteDigitado = document.getElementById('relClienteBusca').value.trim();
+      if(!clienteDigitado){ alert('Digite o nome do cliente.'); return; }
+      var pj = projetoSelId ? state.projetos.find(function(p){ return p.id === projetoSelId; }) : null;
+      if(!pj){ pj = state.projetos.find(function(p){ return normBusca(p.nome) === normBusca(clienteDigitado); }) || null; }
       var registro = {
         id: existente ? existente.id : uid('relv'),
         projetoId: pj ? pj.id : null,
-        clienteNome: pj ? pj.nome : clienteAvulso,
+        clienteNome: pj ? pj.nome : clienteDigitado,
         modo: modo,
         autor: existente ? existente.autor : (nomeProjetistaAtual || 'Gerente'),
         data: existente ? existente.data : todayISO(),
