@@ -136,7 +136,10 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-aba.dm-adq{border-style:dashed;color:var(--cinza-4)}
 .dm-diag{border:1px solid var(--cinza-2);border-radius:4px;background:#fafafa;overflow:auto;margin:0 0 16px;padding:10px;max-height:78vh}
 .dm-diag .dm-arr{cursor:grab}.dm-diag.arrastando,.dm-diag.arrastando .dm-arr{cursor:grabbing;user-select:none}
-.dm-ferr{margin:0 0 8px;align-items:center}.dm-dica{font-size:13px;color:var(--cinza-4)}
+.dm-ferr{margin:0 0 8px;align-items:center}
+.dm-diag-caixa:fullscreen,.dm-diag-caixa.cheio{background:#fff;padding:14px 16px;display:flex;flex-direction:column;overflow:hidden}
+.dm-diag-caixa.cheio{position:fixed;inset:0;z-index:9999}
+.dm-diag-caixa:fullscreen .dm-diag,.dm-diag-caixa.cheio .dm-diag{flex:1 1 auto;max-height:none;margin:0}.dm-dica{font-size:13px;color:var(--cinza-4)}
 .dm-copia{margin:14px 0 0;padding:14px 16px;border:1px solid var(--vermelho);border-left:5px solid var(--vermelho);border-radius:3px;background:#fff}
 .dm-copia h4{margin:0 0 10px;font-size:16px}
 .dm-niveis{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px;font-size:14px}
@@ -1175,11 +1178,14 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <section class="etapas">
         <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Quadros e cargas</h3><span class="nbr">cada quadro soma as próprias cargas e as dos quadros ligados nele</span></div>
           <div class="dm-niveis" id="dm-niveis"></div>
+          <div class="dm-diag-caixa" id="dm-diag-caixa">
           <div class="pl-ferr dm-ferr" data-zoomde="dm" role="toolbar" aria-label="Ferramentas do diagrama">
+            <button type="button" id="dm-cheio" title="Abrir o diagrama em tela cheia">⛶ Tela cheia</button>
             <button type="button" id="dm-reorg" title="Desfaz os arrastes e volta à posição automática">⟲ Organizar automaticamente</button>
             <span class="dm-dica">Arraste os quadros (e a entrada) para ajustar o desenho · clique para editar</span>
           </div>
           <div class="dm-diag" id="dm-diag"></div>
+          </div>
           <div class="dm-abas" id="dm-abas"></div><div id="dm-quadro"></div></div></article>
         <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Demanda por quadro</h3></div><div class="rolar" id="dm-res"></div></div></article>
         <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3><span class="nbr" id="dm-mem-q"></span></div><div id="dm-memorial"></div></div></article>
@@ -6618,32 +6624,28 @@ function dmEnelServ(A, T){
     formula:`Dserv = 100% da maior entre a, b, c, d + 70% das demais = ${fmt(ord[0][1],2)} (${ord[0][0]}) + 0,70 × (${ord.slice(1).map(x=>fmt(x[1],2)).join(" + ")}) = <b>${fmt(Ds,2)} kVA</b> (IT 263, demanda do serviço)`};
 }
 // quadro geral do prédio: alimenta um ou mais quadros de medição agrupada
-const dmEhGeral = q => !!q && !q.agrup && dmFilhos(q.id).some(f=>f.agrup);
-function dmPredioN(G){                                      // nº total de clientes do prédio (todos os agrupados do quadro geral)
-  return dmFilhos(G.id).reduce((s,f)=>s + (f.agrup ? dmFilhos(f.id).filter(u=>!u.serv).reduce((a,u)=>a + dmIguais(u),0)*dmIguais(f) : f.serv ? 0 : dmIguais(f)), 0);
-}
+// (marcado ou não como medição agrupada): junta os clientes de todos os agrupados de baixo num agrupamento novo
+const dmEhGeral = q => !!q && dmFilhos(q.id).some(f=>f.agrup);
 function dmEnelAgrup(id, T, c, geral = false){
   const D = S.dem, q0 = D.quadros.find(q=>q.id===id), filhos = dmFilhos(id), nomeC = c.nome.replace(/ \(.*\)$/,""), avisos = [];
   // unidades e serviço: no quadro geral, todos os agrupados ligados nele viram um agrupamento só
   let unid, qmS;
   if(geral){
-    unid = []; qmS = [[q0,1]];
-    filhos.forEach(f=>{
-      if(f.agrup){ const m = dmIguais(f); qmS.push([f, m]);
-        dmFilhos(f.id).forEach(u=>{ if(u.serv) qmS.push(...dmDescMult(u.id, m, new Set(), false)); else unid.push({u, n:dmIguais(u)*m, em:f}); }); }
-      else if(f.serv) qmS.push(...dmDescMult(f.id, 1, new Set(), false));
-      else unid.push({u:f, n:dmIguais(f)}); });
+    unid = []; qmS = [[q0,1]]; const vis = new Set([q0.id]);
+    const junta = (pai, m, em) => dmFilhos(pai.id).forEach(f=>{ if(vis.has(f.id)) return; vis.add(f.id);
+      if(f.agrup || dmEhGeral(f)){ const mf = m*dmIguais(f); qmS.push([f, mf]); junta(f, mf, f); }       // agrupado de baixo: entram as unidades dele
+      else if(f.serv) qmS.push(...dmDescMult(f.id, m, new Set(), false));
+      else unid.push({u:f, n:dmIguais(f)*m, em}); });
+    junta(q0, 1, null);
   } else {
     unid = filhos.filter(f=>!f.serv).map(u=>({u, n:dmIguais(u)}));
     qmS = [[q0,1], ...filhos.filter(f=>f.serv).flatMap(s=>dmDescMult(s.id, 1, new Set(), false))];
   }
-  // nº de clientes: o do prédio inteiro quando este agrupado está ligado num quadro geral (item 6.4.1.1)
-  const G = !geral && dmPai(q0) && dmEhGeral(dmPai(q0)) ? dmPai(q0) : null;
   // 1 · unidades de consumo: demanda individual (módulos) → tipo de fornecimento (tabela 15) → DDI (tabelas 4 a 10)
   const U = unid.map(({u, n, em})=>{ const ru = calcDemQ(u.id), tipo = ru?.nomeF;
     const dj = ru && T.agrupTab[`${tipo}|${ru.disj}`] ? ru.disj : ru?.disjCalc, tab = ru && T.agrupTab[`${tipo}|${dj}`];
     return {u, ru, n, em, tipo, dj, tab}; });
-  const Nq = U.reduce((s,x)=>s+x.n,0), N = G ? dmPredioN(G) : Nq, Nt = Math.min(Math.max(N,3),200);
+  const Nq = U.reduce((s,x)=>s+x.n,0), N = Nq, Nt = Math.min(Math.max(N,3),200);
   U.forEach(x=>{
     if(!x.ru || !(x.ru.Dt>0)){ x.ddi = 0; x.d = 0; x.semDem = true; return; }
     if(N < 3 || !x.tab){ x.ddi = x.ru.Dt; x.d = x.n*x.ru.Dt; x.semTab = true; return; }
@@ -6670,7 +6672,7 @@ function dmEnelAgrup(id, T, c, geral = false){
   const linU = x => `${esc(x.u.nome)}${x.em?` <small>(em ${esc(x.em.nome)}${dmIguais(x.em)>1?` ×${dmIguais(x.em)}`:""})</small>`:""}${x.n>1?` ×${x.n}`:""}: demanda individual ${x.ru ? fmt(x.ru.Dt,2) : "—"} kVA${x.semDem ? " — sem demanda" : x.semTab ? ` → ${fmt(x.n)} × ${fmt(x.ddi,2)} kVA (sem diversificação) = ${fmt(x.d,2)} kVA` : ` → ${x.tipo} ${x.dj} A (tabela 15) → tabela ${x.tab}, ${fmt(Nt)} clientes: DDI = ${fmt(x.ddi,2)} kVA${x.impr!=null?` (interpolado; impresso ${fmt(x.impr,2)})`:""} → ${fmt(x.n)} × ${fmt(x.ddi,2)} = ${fmt(x.d,2)} kVA`}`;
   const instU = U.reduce((s,x)=>s + x.n*(x.ru?.instT||0),0), instKWU = U.reduce((s,x)=>s + x.n*(x.ru?.instKW||0),0);
   const partes = [
-    {k:"a", t:"Unidades de consumo · DTC (tabelas 4 a 10)", inst:instU, d:DTC, mem:[...(U.length ? U.map(linU) : ["Nenhuma unidade ligada neste quadro."]), `${fmt(N)} cliente${N!==1?"s":""} no prédio${G?` (todos os quadros agrupados ligados no ${esc(G.nome)}; ${fmt(Nq)} neste quadro)`:geral?" (todos os quadros agrupados ligados neste quadro, considerados como um agrupamento só)":""}${N>200?" (tabela até 200)":""} · DTC = Σ nº de unidades × DDI = <b>${fmt(DTC,2)} kVA</b>`]},
+    {k:"a", t:"Unidades de consumo · DTC (tabelas 4 a 10)", inst:instU, d:DTC, mem:[...(U.length ? U.map(linU) : ["Nenhuma unidade ligada neste quadro."]), `${fmt(N)} cliente${N!==1?"s":""} no prédio${geral?" (todos os quadros agrupados ligados neste quadro, considerados como um agrupamento só)":""}${N>200?" (tabela até 200)":""} · DTC = Σ nº de unidades × DDI = <b>${fmt(DTC,2)} kVA</b>`]},
     ...rs.partes.slice(1)
   ];
   const memExtra = [
@@ -6697,7 +6699,7 @@ function dmEnelAgrup(id, T, c, geral = false){
 }
 function calcDemQ(id){
   const D = S.dem, c = concDe(D.conc), T = c && c.t; if(!T) return null;
-  if(T.metodo==="enel"){ const qq = D.quadros.find(q=>q.id===id); if(qq?.agrup) return dmEnelAgrup(id, T, c); if(dmEhGeral(qq)) return dmEnelAgrup(id, T, c, true); }
+  if(T.metodo==="enel"){ const qq = D.quadros.find(q=>q.id===id); if(dmEhGeral(qq)) return dmEnelAgrup(id, T, c, true); if(qq?.agrup) return dmEnelAgrup(id, T, c); }
   const A = dmAgrega(id);
   const serv = T.metodo==="enel" && dmEhServ(A.q0);
   const r = serv ? dmEnelServ(A, T) : T.metodo==="enel" ? dmEnel(A, T) : T.metodo==="neo" ? dmNeo(A, T) : dmLight(A, T);
@@ -7205,6 +7207,17 @@ function ligarDem(){
   });
   $("dm-niveis").addEventListener("input", e=>{ const id = e.target.dataset.niv; if(!id) return; const v = (D().niveis||[]).find(x=>x.id===id); if(v){ v.nome = e.target.value; alt(); } });
   $("dm-niveis").addEventListener("change", e=>{ if(e.target.dataset.niv) renderDemQuadro(); });
+  // tela cheia do diagrama (Fullscreen API; sem ela, ocupa a janela inteira)
+  { const cx = $("dm-diag-caixa"), bt = $("dm-cheio");
+    const cheio = () => document.fullscreenElement===cx || cx.classList.contains("cheio");
+    const rot = () => { bt.textContent = cheio() ? "✕ Sair da tela cheia" : "⛶ Tela cheia"; };
+    bt.addEventListener("click", ()=>{
+      if(cheio()){ if(document.fullscreenElement) document.exitFullscreen?.(); cx.classList.remove("cheio"); rot(); return; }
+      if(cx.requestFullscreen) cx.requestFullscreen().catch(()=>{ cx.classList.add("cheio"); rot(); }); else { cx.classList.add("cheio"); rot(); }
+    });
+    document.addEventListener("fullscreenchange", rot);
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape" && cx.classList.contains("cheio")){ cx.classList.remove("cheio"); rot(); } });
+  }
   $("dm-reorg").addEventListener("click", ()=>{ D().quadros.forEach(q=>{ delete q.dg; }); delete D().dgEnt; tudo(); });
   // arrastar quadros no diagrama (as ligações acompanham)
   { const diag = $("dm-diag"); let ar = null;
