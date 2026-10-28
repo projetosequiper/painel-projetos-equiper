@@ -56,7 +56,11 @@ body.livre .obra,body.livre #inst{display:none}
 .cli-disc .lnk.cli-inst:hover b{text-decoration:underline}
 .cli-inst b{font-weight:600}
 .inst-ed input{flex:1 1 140px}
-@media(min-width:720px){.obra{grid-template-columns:1fr 1.4fr}}
+@media(min-width:720px){.obra{grid-template-columns:1fr 1.4fr auto}}
+.obra .inst{margin:0}
+.obra .inst:not(.um){grid-column:1/-1}
+.obra .inst.um{align-self:end;padding:0;border:0;background:none}
+.obra .inst.um .btn{min-height:46px;white-space:nowrap}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--cinza-2);margin:0 0 26px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .abas::-webkit-scrollbar{display:none}
 .aba{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px 9px;font-family:var(--cond);font-weight:600;font-size:21px;color:var(--cinza-3);cursor:pointer;white-space:nowrap}
@@ -140,13 +144,24 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-diag-caixa:fullscreen,.dm-diag-caixa.cheio{background:#fff;padding:14px 16px;display:flex;flex-direction:column;overflow:hidden}
 .dm-diag-caixa.cheio{position:fixed;inset:0;z-index:9999}
 .dm-diag-caixa:fullscreen .dm-diag,.dm-diag-caixa.cheio .dm-diag{flex:1 1 auto;max-height:none;margin:0}.dm-dica{font-size:13px;color:var(--cinza-4)}
+
+.fs-alvo:fullscreen,.fs-alvo.cheio{background:#fff;overflow:auto;padding:14px 16px}
+.fs-alvo.cheio{position:fixed;inset:0;z-index:9999}
+.fs-alvo:fullscreen .diag-caixa,.fs-alvo:fullscreen .diag-rolar,.fs-alvo.cheio .diag-caixa,.fs-alvo.cheio .diag-rolar{max-height:none}
+.r-pag + .r-pag{break-before:page}
+.r-capa{text-align:center;padding-top:30mm}.r-capa-logo{height:28mm;width:auto;margin:0 auto 12mm;display:block}
+.r-capa h1{font-size:26pt;margin:0 0 6mm}.r-capa .r-capa-cli{font-size:15pt;font-weight:700;margin:0 0 2mm}
+.r-capa .r-t{margin:14mm auto 0;text-align:left;max-width:170mm}.r-capa .r-capa-data{margin-top:12mm;color:#555}
+.conf-tot{padding:12px 16px;border-left:5px solid var(--preto);background:var(--cinza-1);font-weight:600;margin:0 0 12px}
+.conf-tot.falha{border-left-color:var(--vermelho);background:#fff4f4;color:var(--vermelho)}
+.conf-t tr.falha td{background:#fff4f4}.conf-t td.c{font-weight:700}
 .dm-copia{margin:14px 0 0;padding:14px 16px;border:1px solid var(--vermelho);border-left:5px solid var(--vermelho);border-radius:3px;background:#fff}
 .dm-copia h4{margin:0 0 10px;font-size:16px}
 .dm-niveis{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px;font-size:14px}
 .dm-niveis b{font-weight:600;margin-right:4px}.dm-niv{display:inline-flex;align-items:center;border:1px solid var(--cinza-3);border-radius:3px;background:var(--branco)}
 .dm-niv input{border:0;padding:6px 8px;width:130px;font-size:14px;background:transparent}.dm-niv button{border:0;border-left:1px solid var(--cinza-2);background:none;padding:6px 9px;cursor:pointer;color:var(--cinza-4)}
 .dm-niv-seta{color:var(--cinza-3)}
-.dm-diag svg{display:block;margin:0 auto;max-width:none}
+.dm-diag svg{display:block;margin:0 auto;max-width:none;touch-action:none;user-select:none;-webkit-user-select:none}
 .dm-diag [data-dmq]{cursor:pointer}.dm-diag [data-dmq]:hover rect{stroke-width:2.5}
 .r .dm-diag-r svg{max-width:100%;height:auto;max-height:120mm;display:block;margin:0 auto}
 .dm-resumo{margin:0 0 16px;padding:0 0 14px;border-bottom:1px solid var(--cinza-2)}
@@ -314,7 +329,6 @@ svg.diag{display:block;max-width:none}
 .nav-grupo i{font-style:normal;font-family:var(--cond);font-weight:700;font-size:12px;min-width:34px;text-align:center;padding:2px 0;border-radius:3px;background:var(--cinza-1);color:var(--cinza-4)}
 .nav-it.nsub{padding:7px 10px 7px 54px;font-size:14px;font-weight:500}
 .nav-it.nsub.on{font-weight:600}
-@media(max-width:900px){.nav-grupo{display:none}.nav-g,.nav-sub,.nav-g.fechado .nav-sub{display:contents}.nav-it.nsub{padding:8px 10px}.nav-it.nsub[data-mod="esgoto"]::before{content:"Esgoto · "}.nav-it.nsub[data-mod="est"]::before{content:"Esgoto · "}.nav-g[data-g="pis"] .nav-it.nsub::before{content:"Piscina · "}.nav-g[data-g="hid"] .nav-it.nsub::before{content:"Hidráulica · "}.nav-g[data-g="ele"] .nav-it.nsub::before{content:"Elétrica · "}}
 #es-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 #es-canvas[data-modo="caixa"],#es-canvas[data-modo="saida"]{cursor:crosshair}#es-canvas[data-modo="ligar"]{cursor:alias}#es-canvas[data-modo="apagar"]{cursor:not-allowed}
 .es-item{grid-template-columns:1fr 60px 34px}
@@ -381,6 +395,17 @@ details, details *{box-sizing:border-box}
 .rs-op strong{font-family:var(--cond);font-size:28px;font-weight:700;line-height:1.05}
 .rs-op em{font-style:normal;font-size:13px;color:var(--cinza-4)}
 .cg-op-x{opacity:.55}
+.btn.bt-hist{padding-left:14px;padding-right:14px;font-size:18px;line-height:1}
+.cg-tab{width:100%;border-collapse:collapse;font-size:15px;min-width:560px}
+.cg-tab th{text-align:left;font-size:13px;font-weight:600;color:var(--cinza-4);padding:6px 10px;border-bottom:1px solid var(--preto);white-space:nowrap}
+.cg-tab td{padding:9px 10px;border-bottom:1px solid var(--cinza-2);vertical-align:middle}
+.cg-tab .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.cg-tab .c{text-align:center;width:34px}
+.cg-tab small{color:var(--cinza-4)}
+.cg-ol{cursor:pointer}.cg-ol:hover td{background:var(--cinza-1)}
+.cg-ol.on td{background:#fff;font-weight:600}.cg-ol.on{outline:2px solid var(--preto);outline-offset:-2px}
+.cg-radio{display:inline-block;width:16px;height:16px;border:2px solid var(--cinza-3);border-radius:50%;vertical-align:middle}
+.cg-ol.on .cg-radio{border-color:var(--preto);background:radial-gradient(var(--preto) 0 4px,transparent 5px)}
+.cg-tab .cg-rec{margin-left:6px;background:var(--vermelho);color:var(--branco);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:3px;vertical-align:middle}
 .rs-op small{font-size:13px;color:var(--cinza-4);font-weight:600}
 .rs-op strong{font-family:var(--cond);font-size:34px;line-height:1}
 .rs-op span{font-size:14px}
@@ -496,13 +521,17 @@ details, details *{box-sizing:border-box}
 .lat-arq{display:grid;gap:6px}
 .conteudo{min-width:0}
 .conteudo .barra{left:239px}
+.lat-menu,.lat-atual{display:none}
 @media(max-width:900px){
   .layout{grid-template-columns:1fr}
-  .lateral{position:sticky;top:0;z-index:20;height:auto;flex-direction:row;align-items:center;gap:10px;padding:8px 12px;border-right:0;border-bottom:3px solid var(--vermelho);overflow-x:auto;overflow-y:hidden}
-  .lat-marca{flex-direction:row;padding:0;flex:none}.lat-marca img{height:36px}.lat-marca span{display:none}
-  .lat-nav{flex-direction:row;gap:4px;flex:none}.lat-sec,.lat-obra{display:none}
-  .nav-it{width:auto;padding:8px 10px;white-space:nowrap;font-size:14px}.nav-it i{display:none}
-  .lat-arq{display:flex;flex:none;margin-left:auto}.lat-arq .btn{white-space:nowrap}
+  .lateral:not(.aberta){position:sticky;top:0;z-index:20;height:auto;flex-direction:row;align-items:center;gap:10px;padding:8px 12px;border-right:0;border-bottom:3px solid var(--vermelho);overflow:hidden}
+  .lateral:not(.aberta) .lat-marca{flex-direction:row;padding:0;flex:none}.lateral:not(.aberta) .lat-marca img{height:36px}.lateral:not(.aberta) .lat-marca span{display:none}
+  .lateral:not(.aberta) .lat-nav,.lateral:not(.aberta) .lat-obra,.lateral:not(.aberta) .lat-arq{display:none}
+  .lat-atual{display:block;flex:1;min-width:0;font-family:var(--cond);font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lat-menu{display:inline-flex;align-items:center;gap:6px;flex:none;border:1px solid var(--preto);background:var(--branco);border-radius:3px;padding:8px 12px;font-weight:600;font-size:15px;cursor:pointer}
+  .lateral.aberta{position:fixed;inset:0;z-index:60;height:auto;border-right:0;overflow-y:auto}
+  .lateral.aberta .lat-atual{display:none}
+  .lateral.aberta .lat-menu{position:absolute;top:18px;right:14px}
   .conteudo .barra{left:0}
 }
 .abrevs{display:inline-flex;flex-wrap:wrap;gap:4px}
@@ -523,7 +552,8 @@ details, details *{box-sizing:border-box}
 .cli-novo-form[hidden]{display:none}
 .cli-novo-form .campo{flex:1}
 .cli-novo-form .btn{height:44px}
-.cli-legenda{font-size:13px;color:var(--cinza-4);margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;align-items:center}
+.cli-legenda{font-size:13px;color:var(--cinza-4);margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;align-items:center}
+.cli-legenda .leg-i{white-space:nowrap}
 .cli-vazio{text-align:center;padding:30px 0}
 #cli-lista .cli{border-top:1px solid var(--cinza-2);margin:0;padding:0}
 #cli-lista .cli:last-child{border-bottom:1px solid var(--cinza-2)}
@@ -605,7 +635,7 @@ details, details *{box-sizing:border-box}
 .btn:hover{background:#222}
 .btn.sec:hover{background:var(--cinza-1)}
 .btn.peq{padding:8px 12px;font-size:14px}
-@media(max-width:560px){.barra-in{flex-wrap:wrap;gap:10px}.resumo{flex-wrap:nowrap;overflow:hidden}.botoes{width:100%}.botoes .btn{flex:1;padding:11px 10px}}
+@media(max-width:560px){.barra{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}.barra-in{gap:8px}.resumo{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1;font-size:13px}.botoes .btn{padding:10px 14px}}
 @media(max-width:480px){.acoes-topo .btn.peq{padding:7px 9px;font-size:13px}.marca span{display:none}}
 
 .aviso{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translate(-50%,-160%);background:#000;color:#fff;padding:10px 16px;border-radius:3px;font-size:15px;font-weight:500;z-index:30;transition:transform .2s ease,visibility .2s;max-width:calc(100% - 32px);visibility:hidden}
@@ -683,7 +713,9 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <img src="data:image/jpeg;base64,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" alt="Equiper" id="logo-img">
     <span>Dimensionamentos</span>
   </a>
-  <nav class="lat-nav">
+  <span class="lat-atual" id="lat-atual" aria-hidden="true"></span>
+  <button class="lat-menu" id="lat-menu" type="button" aria-expanded="false" aria-controls="lat-nav-cel">☰ Menu</button>
+  <nav class="lat-nav" id="lat-nav-cel">
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
     <button class="nav-it" type="button" data-view="tecnicos"><i aria-hidden="true">✎</i>Responsáveis técnicos</button>
     <button class="nav-it" type="button" data-view="livre" title="Dimensionar sem cliente e sem salvar"><i aria-hidden="true">⚡</i>Dimensionamento livre</button>
@@ -731,7 +763,9 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   </nav>
   <div class="lat-obra" id="lat-obra"></div>
   <div class="lat-arq">
-    <button class="btn sec peq" id="abrir" type="button" title="Abrir obra de um arquivo .equiper">Abrir arquivo</button>
+    <button class="btn sec peq" id="imprimir-obra" type="button" title="Imprime as memórias de todos os dimensionamentos desta obra num PDF só, com capa">Imprimir obra inteira</button>
+<button class="btn sec peq" id="novo" type="button" title="Começar uma obra nova (a atual continua salva em Clientes)">Nova obra</button>
+<button class="btn sec peq" id="abrir" type="button" title="Abrir obra de um arquivo .equiper">Abrir arquivo</button>
     <button class="btn sec peq" id="salvar" type="button" title="Salvar obra em arquivo .equiper">Salvar arquivo</button>
     <input type="file" id="arquivo" accept=".equiper,.biocalc,.json,application/json" hidden>
   </div>
@@ -748,8 +782,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <label class="campo">Cliente<input id="cliente" autocomplete="off" list="lista-clientes" placeholder="Escolha ou digite o cliente"></label>
     <datalist id="lista-clientes"></datalist>
     <label class="campo">Local da obra<input id="endereco" autocomplete="off" placeholder="Endereço da obra"></label>
+    <div class="inst" id="inst" aria-label="Dimensionamentos separados deste cliente"></div>
   </div>
-  <div class="inst" id="inst" aria-label="Dimensionamentos separados deste cliente"></div>
 
 
 
@@ -830,7 +864,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="h-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="h-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="h-doc" autocomplete="off" placeholder="Ex.: MC-HID-001"></label>
         <label class="campo c2">Revisão<input id="h-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="h-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -889,7 +923,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="t-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="t-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="t-doc" autocomplete="off" placeholder="Ex.: MC-ESG-002"></label>
         <label class="campo c2">Revisão<input id="t-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="t-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -951,7 +985,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="l-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="l-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="l-doc" autocomplete="off" placeholder="Ex.: MC-ELE-001"></label>
         <label class="campo c2">Revisão<input id="l-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="l-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1096,7 +1130,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="q-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="q-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="q-doc" autocomplete="off" placeholder="Ex.: MC-PIS-001"></label>
         <label class="campo c2">Revisão<input id="q-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="q-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1128,7 +1162,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="r-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="r-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="r-doc" autocomplete="off" placeholder="Ex.: MC-RES-001"></label>
         <label class="campo c2">Revisão<input id="r-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="r-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1197,7 +1231,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="d-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="d-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="d-doc" autocomplete="off" placeholder="Ex.: MC-ELE-003"></label>
         <label class="campo c2">Revisão<input id="d-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="d-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1237,7 +1271,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="k-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="k-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="k-doc" autocomplete="off" placeholder="Ex.: MC-ELE-002"></label>
         <label class="campo c2">Revisão<input id="k-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="k-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1248,7 +1282,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   <!-- ================= GÁS · CASA DE GÁS (GLP) ================= -->
   <section class="modulo" id="mod-cgl" hidden>
     <h1>Gás · casa de gás (GLP)</h1>
-    <p class="sub">Consumo calculado e adotada dos equipamentos (NBR 13932), consumo em kg/h e quantidade de cilindros pela capacidade de vaporização.</p>
+    <p class="sub">Consumo calculado e adotado dos equipamentos (NBR 13932), consumo em kg/h e quantidade de cilindros pela capacidade de vaporização.</p>
     <div class="mod-na"><label class="chave"><input type="checkbox" data-na="cgl"> Esta obra não terá casa de gás (GLP)</label>
       <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
     <section class="bloco-dados">
@@ -1276,7 +1310,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="b-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="b-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="b-doc" autocomplete="off" placeholder="Ex.: MC-GAS-002"></label>
         <label class="campo c2">Revisão<input id="b-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="b-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1378,7 +1412,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:12px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="e-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="e-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="e-doc" autocomplete="off" placeholder="Ex.: MC-ESG-001"></label>
         <label class="campo c2">Revisão<input id="e-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="e-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1388,7 +1422,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 
   <!-- ================= GÁS ================= -->
   <section class="modulo" id="mod-gas" hidden>
-    <h1>Tubulação de gás - RIP</h1>
+    <h1>Gás · tubulação (RIP)</h1>
     <p class="sub">Soma dos consumos por trecho (Pc), potência adotada pela tabela de simultaneidade (Pa) e diâmetro pela tabela de comprimento e consumo.</p>
     <div class="mod-na"><label class="chave"><input type="checkbox" data-na="gas"> Esta obra não terá instalação de gás</label>
       <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
@@ -1479,7 +1513,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="g-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="g-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="g-doc" autocomplete="off" placeholder="Ex.: MC-GAS-001"></label>
         <label class="campo c2">Revisão<input id="g-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="g-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1552,7 +1586,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
-        <label class="campo c2">Responsável técnico<select id="p-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button></label>
+        <label class="campo c2">Responsável técnico<select id="p-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="p-doc" autocomplete="off" placeholder="Ex.: MC-APL-001"></label>
         <label class="campo c2">Revisão<input id="p-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="p-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
@@ -1566,7 +1600,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   <div class="barra-in">
     <div class="resumo" id="resumo"></div>
     <div class="botoes">
-      <button class="btn sec" id="novo" type="button">Nova obra</button>
+      <button class="btn sec bt-hist" type="button" data-hist="-1" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">↶</button>
+      <button class="btn sec bt-hist" type="button" data-hist="1" title="Refazer (Ctrl+Y)" aria-label="Refazer">↷</button>
       <button class="btn" id="imprimir" type="button">Imprimir memória</button>
     </div>
   </div>
@@ -1587,6 +1622,12 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <div class="grade"><label class="campo c3">Local de emissão<input id="local" autocomplete="off" placeholder="Cidade/UF"></label></div>
     <p class="fonte" style="margin-top:8px">Aparece junto da data, acima da assinatura, em todos os relatórios.</p>
   </section>
+  <section class="bloco-dados tec-bloco" style="margin-top:12px" id="conf">
+    <h2>Conferência dos cálculos</h2>
+    <p class="fonte" style="margin:0 0 12px">Refaz casos de teste de todas as planilhas e compara com os resultados de referência. Use depois de cada atualização do app: tudo verde = as contas continuam exatamente iguais. Não altera nenhuma obra.</p>
+    <button class="btn peq" type="button" id="conf-rodar">Conferir agora</button>
+    <div id="conf-res" style="margin-top:14px"></div>
+  </section>
 </main>
 <main id="tela-clientes" hidden>
   <div class="cli-centro">
@@ -1602,7 +1643,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <button class="btn" id="cli-novo-ok" type="button">Criar cliente</button>
     </div>
     <p class="fonte" id="cli-conta"></p>
-    <p class="cli-legenda"><span class="abrev">HID</span> Hidráulica <span class="abrev">ESG</span> Esgoto (tratamento e tubulação) <span class="abrev">GÁS</span> Gás <span class="abrev">PLU</span> Pluvial <span class="abrev">ELE</span> Elétrica <span class="abrev">PIS</span> Piscina · <span class="abrev">ok</span> feito <span class="abrev falha">!</span> revisar <span class="abrev pend">…</span> não iniciado <span class="abrev na">n/a</span> não se aplica</p>
+    <p class="cli-legenda"><span class="leg-i"><span class="abrev">HID</span> Hidráulica</span><span class="leg-i"><span class="abrev">ESG</span> Esgoto (tratamento e tubulação)</span><span class="leg-i"><span class="abrev">GÁS</span> Gás</span><span class="leg-i"><span class="abrev">PLU</span> Pluvial</span><span class="leg-i"><span class="abrev">ELE</span> Elétrica</span><span class="leg-i"><span class="abrev">PIS</span> Piscina</span></p>
+    <p class="cli-legenda"><span class="leg-i"><span class="abrev">ok</span> feito</span><span class="leg-i"><span class="abrev falha">!</span> revisar</span><span class="leg-i"><span class="abrev pend">…</span> não iniciado</span><span class="leg-i"><span class="abrev na">n/a</span> não se aplica</span></p>
   </div>
   <div id="cli-lista"></div>
 </main>
@@ -1814,7 +1856,34 @@ function nomePDF(){
   const kI = HIST_CHAVE[S.modulo];
   return (`${cli || "Sem cliente"}_${plan}` + (instMultiplo(kI) ? ` - ${instNomeAtivo(kI)}` : "")).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 150);
 }
-function atualizarTitulo(){ try{ document.title = nomePDF(); }catch(e){} }
+function atualizarTitulo(){ try{ document.title = OBRA_INTEIRA ? `${(S.obra.cliente||"").trim() || "Sem cliente"}_Memórias de cálculo`.replace(/[\\/:*?"<>|]+/g, "-") : nomePDF(); }catch(e){} }
+let OBRA_INTEIRA = false;
+const relDe = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : relEsgoto();
+// todas as memórias da obra num PDF só (cada dimensionamento e cada edificação começa numa página)
+function htmlObraInteira(){
+  const ordem = ["hid","res","esgoto","est","gas","cgl","plu","ele","cmx","dem","paq","pfi","pcl","phi"];
+  const itens = resumoObra(S).filter(r=>!S.naoAplica?.[r.mod]).sort((a,b)=>ordem.indexOf(a.mod)-ordem.indexOf(b.mod));
+  // lista de equipamentos da piscina: uma por piscina que tenha alguma parte dimensionada
+  const pis = itens.filter(r=>HIST_CHAVE[r.mod]==="pis"); const vistos = new Set();
+  pis.forEach(r=>{ const k = r.inst||"_"; if(!vistos.has(k)){ vistos.add(k); itens.push({...r, mod:"pls"}); } });
+  if(!itens.length) return "";
+  const pags = [], sumario = [];
+  itens.forEach(r=>{
+    const k = HIST_CHAVE[r.mod], bak = S;
+    try{
+      const S2 = migrar(clone(S));
+      if(r.inst && S2.inst?.[k] && r.inst!==S2.inst[k].ativo){ const it = S2.inst[k].lista.find(x=>x.id===r.inst); if(it){ S2[k] = instNormalizar(k, it.dados || estadoNovo()[k]); S2.inst[k].ativo = r.inst; } }
+      S2.modulo = r.mod; S = S2;
+      pags.push(`<div class="r-pag">${relDe(r.mod)}</div>`);
+      sumario.push(`<tr><td>${esc(NOME_MOD[r.mod]||r.mod)}${r.instNome?` · ${esc(r.instNome)}`:""}</td><td>${r.mod==="pls" ? "lista de equipamentos" : esc(r.det||"")}</td></tr>`);
+    } finally { S = bak; }
+  });
+  const capa = `<div class="r r-capa"><img src="${$("logo-img")?.src||""}" alt="Equiper" class="r-capa-logo"><h1>Memórias de cálculo</h1>
+    <p class="r-capa-cli">${esc(S.obra.cliente||"Sem cliente")}</p>${S.obra.endereco?`<p>${esc(S.obra.endereco)}</p>`:""}
+    <table class="r-t"><thead><tr><th>Dimensionamento</th><th>Resultado</th></tr></thead><tbody>${sumario.join("")}</tbody></table>
+    <p class="r-capa-data">${new Date().toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"})}</p></div>`;
+  return `<div class="r-pag">${capa}</div>` + pags.join("");
+}
 function salvar(){ atualizarTitulo(); gravarS(); if(typeof histRegistrar==="function") histRegistrar(); if(typeof bibAtualizar==="function") bibAtualizar(); }
 
 /* =====================================================================
@@ -2831,7 +2900,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); else if(m==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } });
 
   // Esgoto
   const E = () => S.esg;
@@ -2964,6 +3033,13 @@ function ligar(){
   });
   // nome do PDF = cliente + planilha (o navegador usa o título da página como nome do arquivo)
   addEventListener("beforeprint", atualizarTitulo);
+  { const lat = document.querySelector(".lateral"), bt = $("lat-menu");                       // menu do celular
+    const fecha = () => { lat.classList.remove("aberta"); bt.setAttribute("aria-expanded","false"); bt.textContent = "☰ Menu"; document.body.style.overflow = ""; };
+    bt.addEventListener("click", ()=>{ if(lat.classList.contains("aberta")) return fecha(); lat.classList.add("aberta"); bt.setAttribute("aria-expanded","true"); bt.textContent = "✕ Fechar"; document.body.style.overflow = "hidden"; lat.scrollTop = 0; });
+    lat.addEventListener("click", e=>{ if(e.target.closest(".nav-it,.lat-marca,.lat-arq .btn,.lat-obra a,.lat-obra button")) fecha(); });
+    addEventListener("keydown", e=>{ if(e.key==="Escape" && lat.classList.contains("aberta")) fecha(); });
+    matchMedia("(min-width:901px)").addEventListener?.("change", fecha);
+  }
   $("novo").addEventListener("click", ()=>{
     if(LIVRE){ if(!confirm("Limpar o dimensionamento livre e começar outro?")) return; entrarLivre(true); return; }
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
@@ -2981,7 +3057,12 @@ function ligar(){
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
   addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : relEsgoto()); });
-  addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; });
+  addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; OBRA_INTEIRA = false; atualizarTitulo(); });
+  $("imprimir-obra").addEventListener("click", ()=>{
+    const h = htmlObraInteira(); if(!h){ aviso("Esta obra ainda não tem nenhum dimensionamento preenchido.", true); return; }
+    $("memoria").innerHTML = h; OBRA_INTEIRA = true; atualizarTitulo();
+    setTimeout(()=>window.print(), 60);
+  });
 }
 
 /* =====================================================================
@@ -3114,6 +3195,9 @@ function ligarGruposNav(){
 }
 function marcarNav(){
   const tec = !$("tela-tecnicos").hidden, cli = !$("tela-clientes").hidden || tec;
+  { const nb = document.querySelector(`.nav-it[data-mod="${S.modulo}"]`), g = nb?.closest(".nav-g")?.querySelector(".nav-grupo");   // nome do que está aberto (barra do celular)
+    const txt = el => el ? [...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join("").trim() : "";
+    const at = $("lat-atual"); if(at) at.textContent = tec ? "Responsáveis técnicos" : !$("tela-clientes").hidden ? "Clientes" : `${g ? txt(g)+" · " : ""}${txt(nb)}`; }
   document.querySelectorAll(".nav-it").forEach(b=>{
     const on = tec ? b.dataset.view==="tecnicos" : cli ? b.dataset.view==="clientes" : b.dataset.mod===S.modulo;
     b.classList.toggle("on", on); b.setAttribute("aria-current", on ? "page" : "false");
@@ -3122,7 +3206,7 @@ function marcarNav(){
 }
 function abrirTecnicos(){
   $("tela-tecnicos").hidden = false; $("tela-clientes").hidden = true; document.querySelector(".app").hidden = true;
-  renderResp(); $("local").value = localEmissao(); marcarNav(); window.scrollTo({top:0});
+  renderResp(); renderConferencia(false); $("local").value = localEmissao(); marcarNav(); window.scrollTo({top:0});
   try{ history.replaceState(null,"","#tecnicos"); }catch(e){}
 }
 function abrirClientes(){
@@ -5497,6 +5581,8 @@ function renderPis(){
   $("pis-titulo").textContent = `Piscina · ${PIS_PARTES[part].toLowerCase()}`;
   document.querySelectorAll("#mod-pis .pis-na").forEach(el=>el.hidden = el.dataset.na!==part);
   document.querySelector("#mod-pis .pis-memo").hidden = part==="pls";
+  { const v = document.querySelector(`#mod-pis [data-parte="${part}"]`), n = v ? v.querySelectorAll(".etapa > .num").length : 0;   // memorial numerado depois das etapas da parte aberta
+    document.querySelector("#mod-pis .pis-memo .num").textContent = n + 1; }
   if(part==="pls") $("pls-res").innerHTML = htmlListaPis(listaEquipPis(), false);
   const A = calcCarga("pool"), B = calcCarga("spa");
   if(part==="paq"){
@@ -5912,7 +5998,7 @@ function renderCmxLista(){
   $("cm-lista").innerHTML = K.circs.length ? K.circs.map((c,i)=>`<div class="trecho cm-c" data-i="${i}">
     <div class="cm-cab">
       <label class="campo">Circuito<input data-cf="nome" value="${esc(c.nome)}" placeholder="Ex.: C1 · Chuveiro"></label>
-      <label class="campo">Tipo<select data-cf="tipo">${TIPOS_CIRC.map(t=>`<option value="${t[0]}" ${t[0]===c.tipo?"selected":""}>${t[1]}</option>`).join("")}</select></label>
+      <label class="campo">Tipo<select data-cf="tipo" title="${esc((TIPOS_CIRC.find(t=>t[0]===c.tipo)||TIPOS_CIRC[0])[1])}">${TIPOS_CIRC.map(t=>`<option value="${t[0]}" ${t[0]===c.tipo?"selected":""} title="${t[1]}">${({mn:"Mono + N", ms:"Mono F-F", tn:"Tri + N", ts:"Tri sem N"})[t[0]]||t[1]}</option>`).join("")}</select></label>
       <label class="campo">Tensão<span class="unid"><input data-cf="tensao" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.tensao)}" placeholder="${esc(K.tensao)}"><b>V</b></span></label>
       <label class="campo">Disjuntor<span class="unid"><input data-cf="disj" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.disj)}" placeholder="0"><b>A</b></span></label>
       <label class="campo">Curva<select data-cf="curva"><option value="">Padrão (${K.curva})</option>${["B","C","D"].map(x=>`<option ${c.curva===x?"selected":""}>${x}</option>`).join("")}</select></label>
@@ -6339,15 +6425,17 @@ function renderCgl(){
   $("gl-vap").value = G.vap==="teorica" ? "teorica" : "pratica";
   $("gl-res").checked = !!G.reserva; if(document.activeElement!==$("gl-qtd")) $("gl-qtd").value = G.qtdUso ?? "";
   if(R.erro){ $("gl-pot").innerHTML = `<p class="vazio">${R.erro}.</p>`; $("gl-cil").innerHTML = ""; $("gl-fim").innerHTML = ""; $("gl-memorial").innerHTML = ""; return; }
-  const op = (b, tit, sub, P) => `<button type="button" class="rs-op ${R.base===(b==="adot2"?"adot":b)?"on":""}" data-cg-base="${b}"><small>${tit}</small><strong>${kcm(P)}</strong>
-      <span>${sub}</span><span>Consumo: <b>${fmt(P*60/PCI_GLP_KG,2)} kg/h</b> (${fmt(P*60,0)} kcal/h)</span><em>${R.base===(b==="adot2"?"adot":b)?"usado nos cilindros":"clique para usar"}</em></button>`;
-  $("gl-pot").innerHTML = `<div class="rs-ops">${op("media","Meio-termo (A + C) ÷ 2 · recomendado","Média entre o consumo adotado e o calculado", R.M)}${op("adot2","Consumo adotado (A)","Consumo máximo provável · com simultaneidade", R.A)}${op("calc","Consumo calculado (C)","Consumo máximo possível · tudo ligado", R.C)}</div>`;
-  $("gl-cil").innerHTML = `<div class="rs-ops">${R.opcoes.map(o=>{ const on = o.id===R.sel.id;
-    return `<button type="button" class="rs-op ${on?"on":""} ${o.id==="P13"&&!on?"cg-op-x":""}" data-cg-cil="${o.id}">
-      ${o.id===R.rec.id?`<span class="cg-rec">Recomendado</span>`:""}<small>${o.id} · ${o.kg} kg · vaporiza ${fmt(o.v,1)} kg/h</small>
-      <strong>${o.n} em uso</strong><span>${G.reserva?`+ ${o.n} reserva = <b>${o.n*2} cilindros</b>`:`<b>${o.n} cilindro${o.n!==1?"s":""}</b>`}</span>
-      <span>Capacidade: ${fmt(o.n*o.v,1)} kg/h ≥ ${fmt(R.kgh,2)} kg/h</span><em>${on?(G.cil?"escolhido":"escolhido (recomendação)"):"clique para escolher"}</em></button>`; }).join("")}</div>
-    <p class="fonte" style="margin-top:10px">Recomendação: o menor cilindro que atende ${R.base==="media"?"o meio-termo entre o consumo adotado e o calculado":`o consumo ${R.base==="calc"?"calculado":"adotado"} escolhido acima`} com até ${CG_MAX_USO} em uso (o P13 não entra na recomendação de central).${G.cil?` <button type="button" class="lnk" data-cg-cil="">voltar para a recomendação</button>`:""}</p>`;
+  const baseOn = b => R.base===(b==="adot2"?"adot":b);
+  const op = (b, tit, sub, P) => `<tr class="cg-ol ${baseOn(b)?"on":""}" data-cg-base="${b}" tabindex="0" role="radio" aria-checked="${baseOn(b)}">
+      <td class="c"><span class="cg-radio"></span></td><td><b>${tit}</b><br><small>${sub}</small></td><td class="n"><b>${kcm(P)}</b></td><td class="n">${fmt(P*60/PCI_GLP_KG,2)} kg/h</td><td class="n">${fmt(P*60,0)} kcal/h</td></tr>`;
+  $("gl-pot").innerHTML = `<div class="rolar"><table class="cg-tab" role="radiogroup" aria-label="Consumo usado nos cilindros"><thead><tr><th></th><th>Consumo</th><th class="n">kcal/min</th><th class="n">GLP</th><th class="n">kcal/h</th></tr></thead><tbody>
+    ${op("media","Meio-termo (A + C) ÷ 2 <span class=\"cg-rec\">recomendado</span>","média entre o consumo adotado e o calculado", R.M)}${op("adot2","Consumo adotado (A)","consumo máximo provável · com simultaneidade", R.A)}${op("calc","Consumo calculado (C)","consumo máximo possível · tudo ligado", R.C)}</tbody></table></div>`;
+  $("gl-cil").innerHTML = `<div class="rolar"><table class="cg-tab" role="radiogroup" aria-label="Cilindro"><thead><tr><th></th><th>Cilindro</th><th class="n">Vaporização</th><th class="n">Em uso</th>${G.reserva?`<th class="n">Reserva</th><th class="n">Total</th>`:""}<th class="n">Capacidade</th></tr></thead><tbody>
+    ${R.opcoes.map(o=>{ const on = o.id===R.sel.id;
+      return `<tr class="cg-ol ${on?"on":""} ${o.id==="P13"&&!on?"cg-op-x":""}" data-cg-cil="${o.id}" tabindex="0" role="radio" aria-checked="${on}">
+        <td class="c"><span class="cg-radio"></span></td><td><b>${o.id}</b> · ${o.kg} kg ${o.id===R.rec.id?`<span class="cg-rec">recomendado</span>`:""}</td><td class="n">${fmt(o.v,1)} kg/h</td>
+        <td class="n"><b>${o.n}</b></td>${G.reserva?`<td class="n">${o.n}</td><td class="n"><b>${o.n*2}</b></td>`:""}<td class="n">${fmt(o.n*o.v,1)} ≥ ${fmt(R.kgh,2)} kg/h</td></tr>`; }).join("")}</tbody></table></div>
+    <p class="fonte" style="margin-top:10px">Recomendação: o menor cilindro que atende ${R.base==="media"?"o meio-termo entre o consumo adotado e o calculado":`o consumo ${R.base==="calc"?"calculado":"adotado"} escolhido acima`} com até ${CG_MAX_USO} em uso (o P13 não entra na recomendação de central). Clique numa linha para escolher.${G.cil?` <button type="button" class="lnk" data-cg-cil="">voltar para a recomendação</button>`:""}</p>`;
   $("gl-fim").innerHTML = `${R.falta?`<p class="dm-conc-msg" style="margin:0 0 10px">⚠ ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} adotado${R.nUso!==1?"s":""} vaporiza${R.nUso!==1?"m":""} ${fmt(R.capVap,1)} kg/h, menos que o consumo de ${fmt(R.kgh,2)} kg/h: o mínimo calculado é ${R.sel.n}.</p>`:""}<div class="conclusao ok" style="padding:14px 16px;background:var(--cinza-1);border-left:4px solid var(--preto)"><b>Casa de gás:</b> ${R.nUso} cilindro${R.nUso!==1?"s":""} ${R.sel.id} em uso${R.adotou?" (adotado)":""}${R.nRes?` + ${R.nRes} de reserva`:""} = <b>${R.total} cilindros ${R.sel.id}</b> · ${fmt(R.massa,0)} kg de GLP armazenados · vaporização ${fmt(R.capVap,1)} kg/h para ${fmt(R.kgh,2)} kg/h.</div>`;
   $("gl-memorial").innerHTML = memorialCgl(R);
 }
@@ -6392,6 +6480,7 @@ function ligarCgl(){
   $("gl-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; G().itens.splice(+e.target.closest(".cg-it").dataset.i,1); renderCglLista(); resumo(); salvar(); });
   $("gl-pot").addEventListener("click", e=>{ const b = e.target.closest("[data-cg-base]"); if(!b) return; G().base = b.dataset.cgBase; alt(); });
   $("gl-cil").addEventListener("click", e=>{ const b = e.target.closest("[data-cg-cil]"); if(!b) return; G().cil = b.dataset.cgCil; alt(); });
+  ["gl-pot","gl-cil"].forEach(id=>$(id).addEventListener("keydown", e=>{ if((e.key==="Enter"||e.key===" ") && e.target.closest(".cg-ol")){ e.preventDefault(); e.target.click(); } }));
   $("gl-vap").addEventListener("change", e=>{ G().vap = e.target.value; alt(); });
   $("gl-res").addEventListener("change", e=>{ G().reserva = e.target.checked; alt(); });
   $("gl-qtd").addEventListener("input", e=>{ G().qtdUso = e.target.value; alt(); });
@@ -6919,6 +7008,7 @@ function renderDemNiveis(){
   el.innerHTML = `<b>Andares do prédio</b><span class="fonte">de baixo para cima:</span>
     ${L.map((v,i)=>`${i?'<span class="dm-niv-seta">›</span>':""}<span class="dm-niv"><input data-niv="${v.id}" value="${esc(v.nome)}" aria-label="Nome do nível"><button type="button" data-nivrm="${v.id}" title="Remover nível" aria-label="Remover nível">×</button></span>`).join("")}
     <button type="button" class="btn sec peq" data-nivadd="0">+ Nível abaixo</button><button type="button" class="btn sec peq" data-nivadd="1">+ Nível acima</button>
+    ${(S.hid.pav||[]).length ? `<button type="button" class="btn sec peq" data-nivhid title="Usa os pavimentos cadastrados na hidráulica desta obra">Usar os pavimentos da hidráulica</button>` : ""}
     ${L.length ? "" : `<span class="fonte" style="flex-basis:100%">Sem andares cadastrados, cada quadro fica um nível acima do quadro que o alimenta. Cadastre os andares e escolha o nível de cada quadro para montar o diagrama do prédio.</span>`}`;
 }
 function renderDemQuadro(){
@@ -7201,6 +7291,14 @@ function ligarDem(){
   $("dm-niveis").addEventListener("click", e=>{
     const rm = e.target.closest("[data-nivrm]");
     if(rm){ const id = rm.dataset.nivrm; D().niveis = (D().niveis||[]).filter(v=>v.id!==id); D().quadros.forEach(q=>{ if(q.nivel===id) q.nivel = ""; }); tudo(); return; }
+    if(e.target.closest("[data-nivhid]")){                  // mesmos andares da hidráulica (nomes, na ordem das cotas)
+      const pavs = [...(S.hid.pav||[])].sort((a,b)=>num(a.cota)-num(b.cota)), L = D().niveis = D().niveis || [];
+      if(L.length && !confirm("Substituir os andares cadastrados aqui pelos pavimentos da hidráulica? Os quadros com andar escolhido mantêm o andar de mesmo nome.")) return;
+      const porNome = new Map(L.map(v=>[(v.nome||"").trim().toLowerCase(), v.id]));
+      D().niveis = pavs.map(p=>({id: porNome.get((p.nome||"").trim().toLowerCase()) || uid(), nome:p.nome}));
+      const ids = new Set(D().niveis.map(v=>v.id)); D().quadros.forEach(q=>{ if(q.nivel && !ids.has(q.nivel)) q.nivel = ""; });
+      tudo(); aviso(`${pavs.length} andar${pavs.length!==1?"es":""} trazido${pavs.length!==1?"s":""} da hidráulica`); return;
+    }
     const ad = e.target.closest("[data-nivadd]"); if(!ad) return;
     const L = D().niveis = D().niveis || [], acima = ad.dataset.nivadd==="1", iT = L.findIndex(v=>/t[ée]rreo/i.test(v.nome||""));
     const nSub = L.filter(v=>/subsolo/i.test(v.nome||"")).length;
@@ -7373,6 +7471,7 @@ function ligarResp(){
   Object.entries(PRE).forEach(([pre,k])=>{
     $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
   });
+  $("conf-rodar").addEventListener("click", ()=>{ $("conf-res").innerHTML = `<p class="fonte">Conferindo…</p>`; setTimeout(()=>renderConferencia(true), 30); });
   $("resp-add").addEventListener("click", ()=>{
     RESP.push({id:uid(), nome:"", crea:""}); salvarResp(); renderResp();
     const ins = document.querySelectorAll('#resp-lista [data-f="nome"]'); ins[ins.length-1].focus();
@@ -7515,17 +7614,17 @@ function renderInst(){
   const I = instDe(k), nomeTipo = PIS_PARTES[S.modulo] ? "piscina" : "dimensionamento";
   if(I.lista.length < 2){
     el.className = "inst um";
-    el.innerHTML = `<span>Mais de uma edificação no mesmo terreno? Crie um ${nomeTipo} separado para cada uma, dentro deste cliente.</span>
-      <button class="btn sec peq" type="button" data-inst-novo>+ Outro ${nomeTipo}</button>`;
+    const pis = !!PIS_PARTES[S.modulo];
+    el.innerHTML = `<button class="btn sec peq" type="button" data-inst-novo title="Mais de uma ${pis ? "piscina" : "edificação"} no mesmo terreno? Crie ${pis ? "uma piscina separada" : "um dimensionamento separado"} para cada uma, dentro deste cliente.">${pis ? "+ Outra piscina" : "+ Outra edificação"}</button>`;
     return;
   }
   const at = I.lista.find(x=>x.id===I.ativo);
   el.className = "inst";
   el.innerHTML = `<small>${PIS_PARTES[S.modulo] ? "Piscinas" : "Edificações"}</small>
     ${I.lista.map(x=>`<button type="button" class="inst-tab ${x.id===I.ativo?"on":""}" data-inst-ir="${x.id}" aria-pressed="${x.id===I.ativo}">${esc(x.nome)||"—"}</button>`).join("")}
-    <button type="button" class="inst-tab inst-add" data-inst-novo title="Criar outro ${nomeTipo} em branco">+ Novo</button>
-    <span class="inst-ed"><input id="inst-nome" value="${esc(at.nome)}" aria-label="Nome deste ${nomeTipo}" placeholder="Nome (ex.: Casa 2)">
-      <button class="btn sec peq" type="button" data-inst-dup title="Criar uma cópia deste ${nomeTipo}">Duplicar</button>
+    <button type="button" class="inst-tab inst-add" data-inst-novo title="Criar ${PIS_PARTES[S.modulo] ? "outra piscina" : "outro dimensionamento"} em branco">+ Novo</button>
+    <span class="inst-ed"><input id="inst-nome" value="${esc(at.nome)}" aria-label="Nome ${PIS_PARTES[S.modulo] ? "desta piscina" : "deste dimensionamento"}" placeholder="Nome (ex.: Casa 2)">
+      <button class="btn sec peq" type="button" data-inst-dup title="Criar uma cópia ${PIS_PARTES[S.modulo] ? "desta piscina" : "deste dimensionamento"}">Duplicar</button>
       <button class="btn sec peq" type="button" data-inst-del>Excluir</button></span>`;
 }
 function ligarInst(){
@@ -7544,6 +7643,106 @@ function ligarInst(){
     salvar();
   });
   el.addEventListener("change", e=>{ if(e.target.id==="inst-nome" && !e.target.value.trim()){ const k = HIST_CHAVE[S.modulo], I = instDe(k); I.lista.find(x=>x.id===I.ativo).nome = "Sem nome"; renderInst(); salvar(); } });
+}
+
+/* =====================================================================
+   CONFERÊNCIA DOS CÁLCULOS — refaz casos de teste e compara com os resultados de referência
+   (exemplos das normas e obras de teste). Não grava nada: troca o estado só durante a conta.
+   ===================================================================== */
+const CONF_HID = {"pav":[{"id":"h22","nome":"Pavimento","cota":6},{"id":"h23","nome":"1º pav.","cota":3}],"els":[{"id":"h1","tipo":"res","nome":"RS","x":100,"y":140,"fundo":7.5,"lamina":0},{"id":"h2","tipo":"no","nome":"A","x":240,"y":60,"pav":"h22","alt":1.1,"aut":true},{"id":"h3","tipo":"aq","nome":"BL","tipoAq":"Boiler","x":240,"y":160,"pav":"h22","alt":1.5,"perda":""},{"id":"h4","tipo":"amb","nome":"TÉRREO","x":540,"y":140,"pav":"h22","alt":1,"itens":[]},{"id":"h5","tipo":"amb","nome":"Cozinha","x":760,"y":140,"pav":"h22","alt":1,"itens":[{"ap":"pia","qtd":1,"alt":1.1,"aq":true},{"ap":"maq","qtd":1,"alt":0.9,"aq":false}]},{"id":"h6","tipo":"amb","nome":"Banheiro social","x":960,"y":140,"pav":"h22","alt":1,"itens":[{"ap":"bs_cx","qtd":1,"alt":0.3,"aq":false},{"ap":"lav","qtd":1,"alt":0.6,"aq":true},{"ap":"chuv","qtd":1,"alt":2.2,"aq":true}]},{"id":"h7","tipo":"amb","nome":"Suíte","x":540,"y":380,"pav":"h23","alt":1,"itens":[{"ap":"bs_cx","qtd":2,"alt":0.3,"aq":false},{"ap":"lav","qtd":2,"alt":0.6,"aq":true},{"ap":"chuv","qtd":2,"alt":2.2,"aq":true}]},{"id":"h8","tipo":"no","nome":"B","x":380,"y":60,"pav":"h22","alt":1.1,"aut":true},{"id":"h9","tipo":"no","nome":"C","x":380,"y":60,"pav":"h22","alt":2.6,"aut":true},{"id":"h10","tipo":"no","nome":"D","x":380,"y":300,"pav":"h23","alt":2.6,"aut":true},{"id":"h11","tipo":"no","nome":"E","x":540,"y":60,"pav":"h22","alt":2.6,"aut":true},{"id":"h12","tipo":"no","nome":"F","x":760,"y":60,"pav":"h22","alt":2.6,"aut":true},{"id":"h13","tipo":"no","nome":"G","x":960,"y":60,"pav":"h22","alt":2.6,"aut":true},{"id":"h14","tipo":"no","nome":"H","x":540,"y":300,"pav":"h23","alt":2.6,"aut":true},{"id":"h15","tipo":"no","nome":"I","x":240,"y":220,"pav":"h22","alt":1.4999999999999998,"aut":true},{"id":"h16","tipo":"no","nome":"J","x":420,"y":220,"pav":"h22","alt":1.4999999999999998,"aut":true},{"id":"h17","tipo":"no","nome":"K","x":420,"y":220,"pav":"h22","alt":2.3,"aut":true},{"id":"h18","tipo":"no","nome":"L","x":420,"y":460,"pav":"h23","alt":2.3,"aut":true},{"id":"h19","tipo":"no","nome":"M","x":760,"y":220,"pav":"h22","alt":2.3,"aut":true},{"id":"h20","tipo":"no","nome":"N","x":960,"y":220,"pav":"h22","alt":2.3,"aut":true},{"id":"h21","tipo":"no","nome":"O","x":540,"y":460,"pav":"h23","alt":2.3,"aut":true}],"tubos":[{"id":"h24","de":"h1","para":"h2","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h25","de":"h2","para":"h3","L":0.4,"con":{},"outras":"","dman":"","rede":"af"},{"id":"h26","de":"h2","para":"h8","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h27","de":"h8","para":"h9","L":1.5,"con":{},"outras":"","dman":"","rede":"af"},{"id":"h28","de":"h9","para":"h10","L":3,"con":{},"outras":"","dman":"","rede":"af"},{"id":"h29","de":"h9","para":"h11","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h30","de":"h11","para":"h4","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h31","de":"h11","para":"h12","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h32","de":"h12","para":"h5","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h33","de":"h12","para":"h13","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h34","de":"h13","para":"h6","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h35","de":"h10","para":"h14","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h36","de":"h14","para":"h7","L":"","con":{},"outras":"","dman":"","rede":"af"},{"id":"h37","de":"h3","para":"h15","L":0,"con":{},"outras":"","dman":"","rede":"aq"},{"id":"h38","de":"h15","para":"h16","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h39","de":"h16","para":"h17","L":0.8,"con":{},"outras":"","dman":"","rede":"aq"},{"id":"h40","de":"h17","para":"h18","L":3,"con":{},"outras":"","dman":"","rede":"aq"},{"id":"h41","de":"h17","para":"h19","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h42","de":"h19","para":"h5","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h43","de":"h19","para":"h20","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h44","de":"h20","para":"h6","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h45","de":"h18","para":"h21","L":"","con":{},"outras":"","dman":"","rede":"aq"},{"id":"h46","de":"h21","para":"h7","L":"","con":{},"outras":"","dman":"","rede":"aq"}]};
+const CONF_CASOS = [
+  {mod:"esgoto", nome:"Esgoto · residência padrão (5 pessoas)", ini:s=>{}, f:()=>calcEsgoto(), ver:r=>`fossa ${fmt(r.fs.Vnec,0)} L · filtro ${fmt(r.fa.Vnec,0)} L`},
+  {mod:"esgoto", nome:"Esgoto · 24 contribuintes, caixa de gordura", ini:s=>{ Object.assign(s.esg,{predio:3, solo:1, n:24, limpeza:2, temp:15}); s.esg.cg.on = true; }, f:()=>calcEsgoto(), ver:r=>`fossa ${fmt(r.fs.Vnec,0)} L · filtro ${fmt(r.fa.Vnec,0)} L`},
+  {mod:"est", nome:"Esgoto · tubulação (3 caixas)", ini:s=>{ const E = s.est; E.caixas=[{id:"c1",nome:"CI1",x:100,y:100,itens:[{ap:"vaso",qtd:2},{ap:"lav_r",qtd:2},{ap:"chuv_r",qtd:2}]},{id:"c2",nome:"CI2",x:300,y:100,itens:[{ap:"pia_r",qtd:1},{ap:"tanque",qtd:1}]},{id:"c3",nome:"CI3",x:500,y:100,itens:[]}];
+    E.saidas=[{id:"s1",nome:"Rede",x:700,y:100}]; E.ligacoes=[{id:"l1",de:"c1",para:"c2",L:5},{id:"l2",de:"c2",para:"c3",L:8},{id:"l3",de:"c3",para:"s1",L:4,decl:2}]; }, f:()=>calcEst(), ver:r=>r.trechos.map(t=>`DN ${t.dn}`).join(" · ")},
+  {mod:"hid", nome:"Hidráulica · água fria (2 pavimentos, 3 ambientes)", ini:s=>{ Object.assign(s.hid, clone(CONF_HID)); }, f:()=>calcHid(), ver:r=>""},
+  {mod:"res", nome:"Reservatórios · 8 pessoas", ini:s=>{ s.res.linhas = [{tipo:s.res.linhas[0].tipo, qtd:"8"}]; }, f:()=>calcRes(), ver:r=>`${fmt(r.diario,0)} L/dia`},
+  {mod:"plu", nome:"Água pluvial · 3 caixas de areia", ini:s=>{ const P = s.plu; P.caixas=[{id:"a",nome:"CA1",x:100,y:100,areas:[{tipo:"telhado",area:120}]},{id:"b",nome:"CA2",x:300,y:100,areas:[{tipo:"piso",area:80},{tipo:"g1",area:200}]},{id:"c",nome:"CA3",x:500,y:100,areas:[]}];
+    P.saidas=[{id:"s",nome:"Rede",x:700,y:100}]; P.ligacoes=[{id:"1",de:"a",para:"b"},{id:"2",de:"b",para:"c"},{id:"3",de:"c",para:"s"}]; }, f:()=>calcPluvial(), ver:r=>r.trechos.map(t=>`Ø ${t.d} mm`).join(" · ")},
+  {mod:"gas", nome:"Gás · RIP gás natural, cobre", ini:s=>confGas(s), f:()=>calcRede(), ver:r=>r.map(x=>x.d).join(" · ")+" mm"},
+  {mod:"gas", nome:"Gás · RIP GLP, multicamada", ini:s=>{ confGas(s); s.gas.gas = "GLP"; s.gas.material = "multicamada"; }, f:()=>calcRede(), ver:r=>r.map(x=>x.d).join(" · ")+" mm"},
+  {mod:"cgl", nome:"Casa de gás · 1.750 kcal/min, meio-termo", ini:s=>confCgl(s), f:()=>calcCgl(), ver:r=>`${fmt(r.kgh,2)} kg/h · ${r.nUso} ${r.sel.id} em uso`},
+  {mod:"cgl", nome:"Casa de gás · consumo calculado, 4 adotados, vaporização teórica", ini:s=>{ confCgl(s); s.cgl.qtdUso = "4"; s.cgl.base = "calc"; s.cgl.vap = "teorica"; }, f:()=>calcCgl(), ver:r=>`${fmt(r.kgh,2)} kg/h · ${r.nUso} ${r.sel.id} em uso`},
+  {mod:"ele", nome:"Eletrodutos · 2 alimentadores", ini:s=>{ s.ele.alims=[{id:"a1",nome:"QDG → QDC1",fase:{q:3,b:16},neutro:{q:1,b:16},terra:{q:1,b:16},outros:{q:0,b:2.5}},{id:"a2",nome:"QDC1 → QDC2",fase:{q:3,b:6},neutro:{q:1,b:6},terra:{q:1,b:6},outros:{q:2,b:2.5}}]; }, f:()=>S.ele.alims.map(calcAlim), ver:r=>""},
+  {mod:"cmx", nome:"Comprimento de circuitos · 3 circuitos", ini:s=>{ s.cmx.circs=[{nome:"C1",tipo:"mn",tensao:"",disj:"10",curva:"",comp:"25"},{nome:"C2",tipo:"mn",tensao:"",disj:"20",curva:"",comp:"40"},{nome:"C3",tipo:"mn",tensao:"220",disj:"32",curva:"B",comp:"60"}]; }, f:()=>S.cmx.circs.map(calcCirc), ver:r=>r.map(x=>x.adot ? `${fmt(x.adot.s,1)} mm²` : "—").join(" · ")},
+  {mod:"dem", nome:"Demanda Light · planilha RECON (QDG + QDC1)", ini:s=>{ const D = s.dem; D.conc = "light"; D.fp = 0.7;
+    D.quadros=[{id:"qdg",nome:"QDG",pai:"",area:"",ilum:74.5,aq:[{n:"Sauna",qtd:1,w:21000},{n:"Forno",qtd:1,w:4000},{n:"Boiler",qtd:1,w:4000},{n:"Carregador de carro elétrico",qtd:1,w:7400}],
+      ar:[{n:"ar",tipo:"cond",qtd:1,kw:8.1},{n:"ar",tipo:"cond",qtd:1,kw:11.3},{n:"e1",tipo:"evap",qtd:6,kw:0.15},{n:"e2",tipo:"evap",qtd:3,kw:0.11},{n:"e3",tipo:"evap",qtd:6,kw:0.75},{n:"e4",tipo:"evap",qtd:1,kw:0.06},{n:"ar",tipo:"cond",qtd:1,kw:17}],
+      mo:[{n:"Exaustores",qtd:3,cv:0.25},{n:"Piscina",qtd:2,cv:3},{n:"Reúso",qtd:1,cv:1.5},{n:"Pressurização",qtd:1,cv:2}]},
+      {id:"q1",nome:"QDC1",pai:"qdg",area:"",ilum:15,aq:[{n:"Boiler",qtd:1,w:4000}],ar:[{n:"e2",tipo:"evap",qtd:1,kw:0.11},{n:"e4",tipo:"evap",qtd:1,kw:0.06},{n:"e5",tipo:"evap",qtd:2,kw:0.04}],mo:[{n:"Exaustores",qtd:1,cv:0.25}]}]; },
+    f:()=>S.dem.quadros.map(q=>calcDemQ(q.id)), ver:r=>`QDG ${fmt(r[0].Dt,2)} kVA · ${r[0].cat?.[0]||"—"} · ${r[0].polos} ${r[0].disj} A`, norma:"planilha Light: 113,07 kVA · TI3"},
+  {mod:"dem", nome:"Demanda Light · comercial, quadros iguais, bifásico", ini:s=>{ confDemL(s); s.dem.tipo = "nres"; }, f:()=>S.dem.quadros.map(q=>calcDemQ(q.id)), ver:r=>`QDG ${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`},
+  {mod:"dem", nome:"Demanda Light · residencial, quadros iguais, bifásico", ini:s=>confDemL(s), f:()=>S.dem.quadros.map(q=>calcDemQ(q.id)), ver:r=>`QDG ${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`},
+  {mod:"dem", nome:"Demanda Enel RJ · exemplo 1 da IT 263", ini:s=>{ const D = s.dem; D.conc = "enelrj"; D.loc = 0.88;
+    D.quadros=[{id:"qdg",nome:"QDG",pai:"",com:{qua:3,sal:2,ban:3,coz:1,ser:1,out:4},ilE:1.5,ilEd:true,aq:[{n:"Hidromassagem com aquecimento",qtd:1,w:4400},{n:"Fritadeira elétrica",qtd:1,w:1500}],ar:[],
+      mo:[{n:"Motor",qtd:2,cv:0.25,cls:"mono"},{n:"Bomba",qtd:2,cv:1/3,cls:"mono"},{n:"Piscina",qtd:1,cv:2,cls:"mono"}]}]; },
+    f:()=>[calcDemQ("qdg")], ver:r=>`${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`, norma:"IT 263: 23,69 kVA · trifásico 70 A"},
+  {mod:"dem", nome:"Demanda Enel RJ · exemplo 3 da IT 263 (16 aptos, medição agrupada)", ini:s=>{ const D = s.dem; D.conc = "enelrj";
+    D.quadros=[{id:"qdg",nome:"QDG",pai:"",agrup:true,ilE:4.03,aq:[{n:"Sauna",qtd:1,w:9000}],ar:[{n:"Ar",tipo:"jan",cap:"9000",qtd:2}],mo:[{n:"Piscina",qtd:2,cv:2},{n:"Bomba",qtd:2,cv:1},{n:"M",qtd:2,cv:0.5},{n:"M2",qtd:2,cv:0.25,cls:"mono"}]},
+      {id:"a",nome:"APTO",pai:"qdg",iguais:16,com:{qua:2,sal:1,ban:1,coz:1,ser:1,out:3},aq:[],ar:[],mo:[]}]; },
+    f:()=>[calcDemQ("qdg")], ver:r=>`DTC ${fmt(r[0].agr.DTC,2)} · Dserv ${fmt(r[0].agr.Ds,2)} · DR ${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`, norma:"IT 263: DTC 47,20 · Ds 18,86 · DR 59,46 (a norma arredonda o Ds antes) · 160 A"},
+  {mod:"dem", nome:"Demanda Enel RJ · serviço (exemplo da pág. 39)", ini:s=>{ const D = s.dem; D.conc = "enelrj";
+    D.quadros=[{id:"s",nome:"QD-SERV",pai:"",serv:true,ilE:6.08,aq:[{n:"Chuveiro",qtd:1,w:4400}],ar:[],mo:[{n:"Motor",qtd:1,cv:0.5},{n:"Bomba",qtd:1,cv:2}]}]; },
+    f:()=>[calcDemQ("s")], ver:r=>`${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`, norma:"IT 263 pág. 39: 10,86 kVA · 40 A"},
+  {mod:"dem", nome:"Demanda Enel RJ · 2 agrupados (14 + 13) + serviço", ini:s=>confDemE(s), f:()=>S.dem.quadros.map(q=>calcDemQ(q.id)),
+    ver:r=>`QGBT: ${r[0].agr.N} clientes · DR ${fmt(r[0].Dt,2)} kVA · ${r[0].polos} ${r[0].disj} A`},
+  {mod:"dem", nome:"Demanda Neoenergia · exemplo 3 da DIS-NOR-030", ini:s=>{ const D = s.dem; D.conc = "neodf"; D.fp = 0.9047619;
+    D.quadros=[{id:"qdg",nome:"QDG",pai:"",area:180,ilum:4.2,aq:[{n:"Chuveiro elétrico",qtd:4,w:4000},{n:"Torneira elétrica",qtd:1,w:3000},{n:"Ferro de passar",qtd:1,w:1000},{n:"Forno elétrico",qtd:1,w:1500},{n:"Máquina de lavar louças",qtd:1,w:2000},{n:"Máquina de secar roupas",qtd:1,w:2500}],
+      ar:[{n:"Split 14000",tipo:"split",qtd:2,kw:1.9}],mo:[{n:"Motor",qtd:2,cv:1,cls:"tri"}]}]; },
+    f:()=>[calcDemQ("qdg")], ver:r=>`${fmt(r[0].Dt,2)} kVA · ${r[0].cat?.[0]||"—"}`, norma:"DIS-NOR-030: 25,86 kVA · T7"},
+  {mod:"pis", nome:"Piscina 45 m³ + spa 3 m³ (separados)", ini:s=>confPis(s), f:()=>confPisR(), ver:r=>""},
+  {mod:"pis", nome:"Piscina · pool-spa, elevação 8 ºC, coberta", ini:s=>{ confPis(s); s.pis.poolspa = true; s.pis.dT = 8; s.pis.construcao = 2; }, f:()=>confPisR(), ver:r=>""}
+];
+function confGas(s){ const G = s.gas; G.trechos=[{id:"t1",L:5,de:0,dir:"h"},{id:"t2",L:8,de:1,dir:"u"},{id:"t3",L:6,de:2,dir:"h"}];
+  G.pontos=[{id:"p1",nome:"Fogão",equip:"",qtd:1,kgn:216,kglp:180,no:1,ramal:2},{id:"p2",nome:"Aquecedor",equip:"",qtd:1,kgn:400,kglp:330,no:2,ramal:1.5},{id:"p3",nome:"Churrasqueira",equip:"",qtd:2,kgn:150,kglp:125,no:3,ramal:3}]; }
+function confCgl(s){ s.cgl.itens=[{nome:"Cozinha",equip:"",qtd:1,k:150},{nome:"Banho",equip:"",qtd:2,k:400},{nome:"Piscina",equip:"",qtd:1,k:800}]; }
+function confDemL(s){ const D = s.dem; D.conc = "light"; D.quadros=[{id:"qdg",nome:"QDG",pai:"",area:250,ilum:12,aq:[{n:"Chuveiro",qtd:4,w:5500},{n:"Sauna",qtd:1,w:9000}],ar:[{n:"Split",tipo:"split",qtd:5,kw:1.2},{n:"Central",tipo:"evap",qtd:2,kw:3}],mo:[{n:"Piscina",qtd:2,cv:1.5}]},
+  {id:"q1",nome:"QDC1",pai:"qdg",area:80,ilum:5,aq:[{n:"Chuveiro",qtd:2,w:5500}],ar:[],mo:[],iguais:3,fases:"bi"}]; }
+function confDemE(s){ const D = s.dem; D.conc = "enelrj";
+  D.quadros=[{id:"g",nome:"QGBT",pai:"",aq:[],ar:[],mo:[]},
+    {id:"p1",nome:"PMD",pai:"g",agrup:true,aq:[],ar:[],mo:[]},{id:"u1",nome:"APTO A",pai:"p1",iguais:14,com:{qua:3,sal:1,ban:2,coz:1,ser:1,out:3},aq:[],ar:[],mo:[]},
+    {id:"p2",nome:"PMD 2",pai:"g",agrup:true,aq:[],ar:[],mo:[]},{id:"u2",nome:"APTO B",pai:"p2",iguais:13,com:{qua:2,sal:1,ban:1,coz:1,ser:1,out:3},aq:[{n:"Chuveiro",qtd:1,w:5500}],ar:[],mo:[]},
+    {id:"s",nome:"QD-SERV",pai:"g",serv:true,ilE:4.03,aq:[{n:"Sauna",qtd:1,w:9000}],ar:[{n:"Ar",tipo:"jan",cap:"9000",qtd:2}],mo:[{n:"Piscina",qtd:2,cv:2},{n:"M2",qtd:2,cv:0.25,cls:"mono"}]},
+    {id:"big",nome:"QD-GRANDE",pai:"",com:{qua:4,sal:2,ban:4,coz:1,ser:1},aq:[{n:"Sauna",qtd:2,w:30000}],ar:[],mo:[{n:"Bomba",qtd:2,cv:10}]}]; }
+function confPis(s){ Object.assign(s.pis.pool,{vol:45,temp:30}); Object.assign(s.pis.spa,{vol:3,temp:36}); s.pis.hidro.conjuntos=[{nome:"Conjunto 1",bicos:6},{nome:"Conjunto 2",bicos:4}]; }
+function confPisR(){ const A = calcCarga("pool"), B = calcCarga("spa"); return {A, B, cons: calcConsumo(A, B), filtro: calcFiltro(), cloro: calcCloro(), hidro: calcHidro()}; }
+// impressão digital: todos os números e textos curtos do resultado, em ordem fixa (os ids não entram)
+function confDigital(x){
+  const out = [], vis = new Set();
+  const anda = (v, prof) => {
+    if(v==null || prof>7) return;
+    if(typeof v==="number"){ out.push(isFinite(v) ? (Math.abs(v)<1e-9 ? "0" : (+v.toPrecision(10)).toString()) : String(v)); return; }
+    if(typeof v==="string"){ if(v.length<=60) out.push(v); return; }
+    if(typeof v==="boolean"){ out.push(v?"1":"0"); return; }
+    if(typeof v!=="object" || vis.has(v)) return; vis.add(v);
+    if(Array.isArray(v)){ v.forEach(y=>anda(y, prof+1)); return; }
+    Object.keys(v).sort().forEach(k=>{ if(k==="id"||k==="de"||k==="para"||k==="q"||k==="it") return; if(typeof v[k]==="function") return; anda(v[k], prof+1); });
+  };
+  anda(x, 0);
+  let h = 2166136261; const s = out.join("|"); for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h>>>0).toString(16).padStart(8,"0") + "·" + out.length;
+}
+function rodarConferencia(){
+  const salvo = S, salvoLivre = LIVRE, out = [];
+  try{
+    LIVRE = true;                                            // nada é gravado durante a conferência
+    CONF_CASOS.forEach((c,i)=>{
+      let dig = "", ver = "", erro = "";
+      try{ S = estadoNovo(); c.ini(S); const r = c.f(); dig = confDigital(r); try{ ver = c.ver(r); }catch(e){ ver = ""; } }catch(e){ erro = e.message || String(e); }
+      out.push({c, dig, ver, erro, ok: !erro && dig===CONF_ESPERADO[i]});
+    });
+  } finally { S = salvo; LIVRE = salvoLivre; }
+  return out;
+}
+// resultados de referência (versão de 27/10/2026): qualquer diferença aparece em vermelho
+const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "3f2b540e·294", "9cca39fd·168", "ba77772d·170", "d4a27761·106", "eb798bc5·128", "3cb77ab2·89", "ce48f8c8·572", "0f682af4·139", "c85c4e45·344", "5d40a4db·352"];
+function renderConferencia(rodar){
+  const el = $("conf-res"); if(!el) return;
+  if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
+  const R = rodarConferencia(), ok = R.filter(x=>x.ok).length, nomes = {esgoto:"Esgoto", est:"Esgoto", hid:"Hidráulica", res:"Hidráulica", plu:"Pluvial", gas:"Gás", cgl:"Gás", ele:"Elétrica", cmx:"Elétrica", dem:"Elétrica", pis:"Piscina"};
+  el.innerHTML = `<div class="conf-tot ${ok===R.length?"ok":"falha"}">${ok===R.length ? `✓ Todos os ${R.length} casos deram exatamente o resultado de referência.` : `✗ ${R.length-ok} de ${R.length} casos deram diferente da referência. Não use esta versão para emitir antes de conferir.`}</div>
+    <div class="rolar"><table class="quadro conf-t"><thead><tr><th>Disciplina</th><th>Caso</th><th>Resultado</th><th>Referência da norma</th><th class="c">Igual</th></tr></thead><tbody>
+    ${R.map(x=>`<tr class="${x.ok?"":"falha"}"><td>${nomes[x.c.mod]||""}</td><td>${esc(x.c.nome)}</td><td>${x.erro?`<span class="falha">erro: ${esc(x.erro)}</span>`:esc(x.ver)||"<span class=\"fonte\">todos os números do cálculo</span>"}</td><td>${esc(x.c.norma||"")}</td><td class="c">${x.ok?"✓":"✗"}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 /* =====================================================================
@@ -7576,11 +7775,43 @@ function zoomMudar(k, dir, cx, cy){
   if(tela){ const r = novo/atual; tela.scrollLeft = px*r - ox; tela.scrollTop = py*r - oy; }
   zoomRotulos();
 }
+// celular/tablet: um dedo no fundo do diagrama arrasta a tela; num elemento continua movendo o elemento
+function ligarPanToque(){
+  const alvos = [
+    [()=>$("pl-canvas")?.parentElement, ()=>PL.modo==="sel", "[data-tipo]"],
+    [()=>$("hd-canvas")?.parentElement, ()=>HD.modo==="sel", "[data-tipo]"],
+    [()=>$("es-canvas")?.parentElement, ()=>ES.modo==="sel", "[data-tipo]"],
+    [()=>$("el-canvas")?.parentElement, ()=>EC.modo==="sel", "[data-tipo]"],
+    [()=>$("g-diagrama"), ()=>GD.modo==="mover", "[data-gno],[data-gpt],[data-gtr]"],
+    [()=>$("dm-diag"), ()=>true, "[data-dmdrag]"]
+  ];
+  alvos.forEach(([tela, pode, elem])=>{
+    const t = tela(); if(!t) return; let p = null;
+    t.addEventListener("pointerdown", e=>{
+      if(e.pointerType!=="touch" || !pode() || e.target.closest(elem) || e.target.closest("button,input,select,textarea,.pl-pop,.no-menu")) return;
+      p = {x:e.clientX, y:e.clientY, sl:t.scrollLeft, st:t.scrollTop, id:e.pointerId};
+    }, true);
+    t.addEventListener("pointermove", e=>{ if(!p || e.pointerId!==p.id) return; t.scrollLeft = p.sl - (e.clientX - p.x); t.scrollTop = p.st - (e.clientY - p.y); }, true);
+    const fim = e=>{ if(p && e.pointerId===p.id) p = null; };
+    addEventListener("pointerup", fim); addEventListener("pointercancel", fim);
+  });
+}
 function ligarZoom(){
   document.querySelectorAll("[data-zoomde]").forEach(t=>{
     const k = t.dataset.zoomde;
     t.insertAdjacentHTML("beforeend", `<span class="pl-zoom" role="group" aria-label="Zoom do desenho"><button type="button" data-z="-1" title="Diminuir zoom (Ctrl + rolar o mouse)" aria-label="Diminuir zoom">−</button><button type="button" data-z="0" title="Voltar para 100%">100%</button><button type="button" data-z="1" title="Aumentar zoom (Ctrl + rolar o mouse)" aria-label="Aumentar zoom">+</button></span>`);
     t.querySelector(".pl-zoom").addEventListener("click", e=>{ const b = e.target.closest("[data-z]"); if(!b) return; e.stopPropagation(); zoomMudar(k, +b.dataset.z); });
+    if(k!=="dm"){                                            // tela cheia em todos os diagramas (a demanda tem o seu)
+      const alvo = t.parentElement; alvo.classList.add("fs-alvo");
+      t.insertAdjacentHTML("afterbegin", `<button type="button" class="fs-bt" title="Abrir o diagrama em tela cheia">⛶ Tela cheia</button>`);
+      const bt = t.querySelector(".fs-bt"), cheio = () => document.fullscreenElement===alvo || alvo.classList.contains("cheio");
+      const rot = () => { bt.textContent = cheio() ? "✕ Sair da tela cheia" : "⛶ Tela cheia"; };
+      bt.addEventListener("click", e=>{ e.stopPropagation();
+        if(cheio()){ if(document.fullscreenElement) document.exitFullscreen?.(); alvo.classList.remove("cheio"); rot(); return; }
+        if(alvo.requestFullscreen) alvo.requestFullscreen().catch(()=>{ alvo.classList.add("cheio"); rot(); }); else { alvo.classList.add("cheio"); rot(); } });
+      document.addEventListener("fullscreenchange", rot);
+      addEventListener("keydown", e=>{ if(e.key==="Escape" && alvo.classList.contains("cheio")){ alvo.classList.remove("cheio"); rot(); } });
+    }
     const tela = ZOOM_CONT[k] ? $(ZOOM_ALVO[k]) : $(ZOOM_ALVO[k])?.parentElement;
     tela?.addEventListener("wheel", e=>{ if(!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); zoomMudar(k, e.deltaY<0 ? 1 : -1, e.clientX, e.clientY); }, {passive:false});
   });
@@ -7631,7 +7862,7 @@ ligarHid();
 ligarImpHid();
 ligarInst();
 ligarLivre();
-ligarZoom();
+ligarZoom(); ligarPanToque();
 renderInst();
 ligarEst();
 ligarEle();
@@ -7647,9 +7878,17 @@ ligarGruposNav();
 ligarHist();
 ligarClientes();
 document.addEventListener("click", e=>{ if(e.target.closest("[data-ir-tecnicos]")) abrirTecnicos(); });
+document.addEventListener("click", e=>{                   // mesmo responsável técnico em todos os dimensionamentos da obra (inclusive outras edificações)
+  if(!e.target.closest("[data-resp-todos]")) return;
+  const k = HIST_CHAVE[S.modulo], id = k && S[k]?.respId; if(!id){ aviso("Escolha primeiro o responsável técnico neste dimensionamento.", true); return; }
+  const ks = [...new Set(Object.values(HIST_CHAVE))]; let n = 0;
+  ks.forEach(m=>{ if(S[m]){ aplicarResp(S[m], id); n++; }
+    (S.inst?.[m]?.lista||[]).forEach(x=>{ if(x.dados && x.id!==S.inst[m].ativo){ aplicarResp(x.dados, id); n++; } }); });
+  renderResp(); salvar(); aviso(`Responsável técnico aplicado em ${n} dimensionamento${n!==1?"s":""} desta obra`);
+});
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); if(h==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } renderLateralObra(); }
 
 var EMBUTIDO = false;
 try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
