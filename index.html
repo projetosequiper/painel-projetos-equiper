@@ -639,6 +639,8 @@
   @media (min-width:901px){ .toast-aviso{bottom:24px;} }
   #bannerAlteracoes{position:fixed; top:calc(8px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); z-index:9050; background:#1d4ed8; color:#fff; padding:9px 12px; border-radius:var(--r-md); box-shadow:var(--shadow-lg); font-size:13.5px; display:flex; gap:10px; align-items:center; max-width:94vw;}
   #bannerAlteracoes button{border:1px solid #fff; background:transparent; color:#fff; border-radius:6px; padding:4px 10px; font-size:13px; cursor:pointer;}
+  .banner-versao{position:fixed; left:50%; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); z-index:9200; background:#047857; color:#fff; padding:10px 14px; border-radius:var(--r-md); box-shadow:var(--shadow-lg); font-size:13.5px; display:flex; gap:10px; align-items:center;}
+  .banner-versao button{border:1px solid #fff; background:transparent; color:#fff; border-radius:6px; padding:4px 10px; cursor:pointer;}
   .hist-mini{font-size:11.5px; color:var(--ink-soft); margin:8px 0 4px; line-height:1.4;}
 </style>
 
@@ -5044,7 +5046,7 @@
   }
   function chatMostrarAviso(){
     var el = document.getElementById('chatAviso'); if(!el) return;
-    if(chat.erro){ el.style.display = 'block'; el.textContent = '⚠️ O chat ainda não está liberado no Firebase (falta publicar as regras do chat). Avise o administrador.'; }
+    if(chat.erro){ el.style.display = 'block'; el.textContent = '⚠️ O chat não abriu para a sua conta. Pode faltar publicar as regras do chat ou liberar o seu acesso no Firebase. Avise o administrador.'; }
     else { el.style.display = 'none'; }
   }
   function chatEnviar(){
@@ -7118,7 +7120,27 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '27/10/2026 · fase 3b';
+  var VERSAO_APP = '28/10/2026 · fase 3c';
+  // avisa quando há versão nova publicada (aparelho com o app aberto há dias continua na versão antiga)
+  async function verificarNovaVersao(){
+    try{
+      if(location.protocol === 'file:') return false;
+      var r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+      if(!r.ok) return false;
+      var m = (await r.text()).match(/var VERSAO_APP = '([^']+)'/);
+      if(m && m[1] !== VERSAO_APP){
+        var b = document.getElementById('bannerVersao');
+        if(!b){ b = document.createElement('div'); b.id = 'bannerVersao'; b.className = 'banner-versao'; document.body.appendChild(b); }
+        b.innerHTML = '<span>🆕 Há uma versão nova do painel.</span><button type="button" id="btnNovaVersao">Atualizar agora</button>';
+        document.getElementById('btnNovaVersao').onclick = function(){ location.reload(); };
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  setTimeout(verificarNovaVersao, 8000);
+  setInterval(verificarNovaVersao, 20 * 60 * 1000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) verificarNovaVersao(); });
   (function(){
     var sel = document.getElementById('selInatividade');
     if(sel){ sel.value = String(minutosInatividade()); sel.onchange = function(){ try{ localStorage.setItem(INATIV_CHAVE, sel.value); }catch(e){} ultimaAtividade = Date.now(); avisar('Salvo.'); }; }
