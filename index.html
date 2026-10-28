@@ -852,7 +852,11 @@
     <div id="importarStatus" class="hint" style="margin:8px 0;"></div>
     <div id="backupsAutoPanel" style="display:none;"></div>
     <h2 style="margin-top:18px;">🔐 Segurança e problemas</h2>
-    <div class="hint" style="margin-bottom:6px;">Bloquear o painel sozinho após ficar parado (vale só neste aparelho):</div>
+    <div class="hint" style="margin-bottom:6px;">Bloquear o painel sozinho após ficar parado — <b>para os projetistas</b> (vale para toda a equipe):</div>
+    <select id="selInatividadeEquipe" style="font-size:13.5px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet);">
+      <option value="10">10 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="60">60 minutos</option><option value="0">Nunca</option>
+    </select> <span class="hint" id="inatividadeEquipeStatus"></span>
+    <div class="hint" style="margin:12px 0 6px;">Neste aparelho (o seu, como gerente):</div>
     <select id="selInatividade" style="font-size:13.5px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet);">
       <option value="10">10 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="0">Nunca</option>
     </select>
@@ -1656,7 +1660,13 @@
   }
   // ---- bloqueio automático por inatividade ----
   var INATIV_CHAVE = 'equiper-inatividade-min';
-  function minutosInatividade(){ try{ var v = localStorage.getItem(INATIV_CHAVE); return v === null ? 15 : parseInt(v, 10) || 0; }catch(e){ return 15; } }
+  var configPainel = null;   // configuração central (gravada pelo gerente em clm-config-painel)
+  function minutosInatividade(){
+    try{
+      if(modoDesenhista && configPainel && configPainel.inatividadeMin !== undefined && configPainel.inatividadeMin !== null){ return parseInt(configPainel.inatividadeMin, 10) || 0; }
+      var v = localStorage.getItem(INATIV_CHAVE); return v === null ? 15 : parseInt(v, 10) || 0;
+    }catch(e){ return 15; }
+  }
   var ultimaAtividade = Date.now();
   ['pointerdown','keydown','touchstart','scroll','wheel'].forEach(function(ev){ window.addEventListener(ev, function(){ ultimaAtividade = Date.now(); }, { passive: true, capture: true }); });
   setInterval(function(){
@@ -4033,6 +4043,7 @@
       window.addEventListener('message', function(e){
         var msg = e.data;
         if(!msg) return;
+        ultimaAtividade = Date.now();
         if(msg.tipo === 'dimensionamento-pronto'){
           if(!dimensionamentoClienteAberto) return;
           var fAtual = state.financeiro.find(function(x){ return x.id === dimensionamentoClienteAberto; });
@@ -4051,6 +4062,14 @@
       });
     }
     // recarrega o quadro do zero pra garantir que o handshake "pronto" dispare pra este cliente
+    iframe.onload = function(){
+      try{   // a moldura é do mesmo site: o que a pessoa digita ali também conta como uso (senão o bloqueio por inatividade dispara no meio do trabalho)
+        var w = iframe.contentWindow;
+        ['pointerdown','keydown','touchstart','scroll','wheel','input','change'].forEach(function(ev){
+          w.addEventListener(ev, function(){ ultimaAtividade = Date.now(); }, { passive: true, capture: true });
+        });
+      }catch(e){}
+    };
     iframe.src = 'dimensionamento.html?embutido=1&t=' + Date.now();
   }
 
@@ -7120,7 +7139,7 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '28/10/2026 · fase 3c';
+  var VERSAO_APP = '28/10/2026 · fase 3d';
   // avisa quando há versão nova publicada (aparelho com o app aberto há dias continua na versão antiga)
   async function verificarNovaVersao(){
     try{
@@ -7142,6 +7161,21 @@
   setInterval(verificarNovaVersao, 20 * 60 * 1000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) verificarNovaVersao(); });
   (function(){
+    var selEq = document.getElementById('selInatividadeEquipe');
+    if(selEq){
+      (async function(){
+        try{ var r = await window.storage.get('clm-config-painel', true); if(r && r.value){ configPainel = JSON.parse(r.value); } }catch(e){}
+        selEq.value = String((configPainel && configPainel.inatividadeMin !== undefined && configPainel.inatividadeMin !== null) ? configPainel.inatividadeMin : 15);
+      })();
+      selEq.onchange = async function(){
+        var st = document.getElementById('inatividadeEquipeStatus');
+        try{
+          var nova = Object.assign({}, configPainel || {}, { inatividadeMin: parseInt(selEq.value, 10) });
+          await window.storage.set('clm-config-painel', JSON.stringify(nova), true);
+          configPainel = nova; st.textContent = 'Salvo para a equipe. Vale na próxima vez que cada projetista entrar.';
+        }catch(e){ st.textContent = ''; avisar('Não consegui salvar para a equipe. Falta publicar as regras novas do Firebase (arquivo do passo 3).'); }
+      };
+    }
     var sel = document.getElementById('selInatividade');
     if(sel){ sel.value = String(minutosInatividade()); sel.onchange = function(){ try{ localStorage.setItem(INATIV_CHAVE, sel.value); }catch(e){} ultimaAtividade = Date.now(); avisar('Salvo.'); }; }
     var bp = document.getElementById('btnCopiarProblemas');
@@ -8253,6 +8287,10 @@
     try{
       var rPerm = await window.storage.get('clm-permissoes-projetista', true);
       if(rPerm && rPerm.value){ state.permissoesProjetista = JSON.parse(rPerm.value); }
+    }catch(e){}
+    try{
+      var rCfg = await window.storage.get('clm-config-painel', true);
+      if(rCfg && rCfg.value){ configPainel = JSON.parse(rCfg.value); }
     }catch(e){}
     if(!modoDesenhista){ criarBackupAutomaticoSeNecessario(); }
     if(!projetosCarregado){ loadAll(); projetosCarregado = true; } else { render(); }
