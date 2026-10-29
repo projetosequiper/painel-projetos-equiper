@@ -914,6 +914,17 @@
       <div class="letra-header" id="lblFinLista" style="cursor:pointer; user-select:none; margin-bottom:8px;" data-topico-fin="clientes">▸ Clientes</div>
       <div id="finLista" style="display:none;" data-topico-fin="clientes"></div>
 
+      <div style="margin-top:8px;" data-topico-fin="art">
+        <h2 style="margin:0 0 10px;">📐 ART por cliente</h2>
+        <div style="margin-bottom:10px;"><button class="btn small secondary" id="btnImportarArts" type="button">📥 Importar ARTs de arquivo</button><input type="file" id="finArtArquivo" accept=".json,application/json" style="display:none;"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+          <input type="text" id="finArtBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); flex:1; min-width:160px; max-width:320px;">
+          <select id="finArtFiltro" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet);"><option value="todos">Todos</option><option value="com">Com ART emitida</option><option value="sem">Sem ART</option></select>
+        </div>
+        <div id="finArtResumo" style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;"></div>
+        <div id="finArtLista"></div>
+      </div>
+
       <div style="margin-top:32px; padding-top:18px; border-top:3px double var(--border);" data-topico-fin="resumo">
         <span class="label" id="lblFinResumo" style="cursor:pointer; user-select:none; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-weight:600;">▾ Resumo geral (clientes e valores)</span>
         <div class="fin-resumo" id="finResumo" style="display:block; margin-top:10px;"></div>
@@ -1294,7 +1305,12 @@
     return p[2]+'/'+p[1]+'/'+p[0];
   }
   // ---- Quem mudou o quê (autor/data de criação, status, prazo e responsável) ----
-  function nomeAtor(){ return nomeProjetistaAtual || 'Gerente'; }
+  // O gerente e o "Júlio Soares" são a mesma pessoa: um nome só. Registros antigos que dizem "Gerente" são lidos como Júlio Soares.
+  var NOME_GERENTE = 'Júlio Soares';
+  function nomeCanon(n){ return n === 'Gerente' ? NOME_GERENTE : n; }
+  function mesmaPessoa(a, b){ return !!a && !!b && nomeCanon(a) === nomeCanon(b); }
+  function nomeLogado(){ return nomeProjetistaAtual || NOME_GERENTE; }
+  function nomeAtor(){ return nomeLogado(); }
   function registrarMudanca(t, campo, de, para){
     if(!t.historico) t.historico = [];
     t.historico.push({ em: Date.now(), por: nomeAtor(), campo: campo, de: de || '', para: para || '' });
@@ -1309,11 +1325,11 @@
   }
   function histMiniHtml(t){
     var linhas = [];
-    if(t.criadoPor){ linhas.push('Criada por <b>'+escapeHtml(t.criadoPor)+'</b>'+(t.criadoEm ? ' em '+escapeHtml(fmtDate(t.criadoEm)) : '')); }
+    if(t.criadoPor){ linhas.push('Criada por <b>'+escapeHtml(nomeCanon(t.criadoPor))+'</b>'+(t.criadoEm ? ' em '+escapeHtml(fmtDate(t.criadoEm)) : '')); }
     (t.historico || []).slice(-3).reverse().forEach(function(h){
       var d = new Date(h.em), quando = pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());
       var f = function(v){ return h.campo === 'prazo' ? fmtDate(v) : (v || '—'); };
-      linhas.push(escapeHtml(h.campo)+': '+escapeHtml(f(h.de))+' → '+escapeHtml(f(h.para))+' · '+escapeHtml(h.por)+' · '+quando);
+      linhas.push(escapeHtml(h.campo)+': '+escapeHtml(f(h.de))+' → '+escapeHtml(f(h.para))+' · '+escapeHtml(nomeCanon(h.por))+' · '+quando);
     });
     if(!linhas.length) return '';
     return '<div class="hist-mini">'+linhas.join('<br>')+'</div>';
@@ -1924,7 +1940,7 @@
   async function saveEmailsFinanceiroInd(){ try{ await window.storage.set('clm-emails-financeiro-ind', JSON.stringify(state.emailsFinanceiroInd), true); }catch(e){ mostrarErroSalvamento('cadastro do financeiro', saveEmailsFinanceiroInd); } }
   async function saveLinkPainel(){ try{ await window.storage.set('clm-link-painel', state.linkPainel, true); }catch(e){ mostrarErroSalvamento('link do painel', saveLinkPainel); } }
   // ---- "Gaveta pequena": lista de clientes só com o que projetistas precisam (sem o financeiro completo) ----
-  var CAMPOS_CLIENTE_EQUIPE = ['id','cliente','numeroProposta','areaM2','qtdPavimentos','enderecoCompleto','localidade','valorTotal','valorPorDisciplina'];
+  var CAMPOS_CLIENTE_EQUIPE = ['id','cliente','numeroProposta','areaM2','qtdPavimentos','enderecoCompleto','localidade','valorTotal','valorPorDisciplina','artEmitidaManual','artNumero'];
   var ultimoClientesEquipeGravado = null;
   function montarClientesEquipe(){
     return (state.financeiro || []).map(function(f){
@@ -3725,7 +3741,7 @@
         projetoId: pj ? pj.id : null,
         clienteNome: pj ? pj.nome : clienteDigitado,
         modo: modo,
-        autor: existente ? existente.autor : (nomeProjetistaAtual || 'Gerente'),
+        autor: existente ? existente.autor : nomeLogado(),
         data: existente ? existente.data : todayISO(),
         criadoEm: existente ? existente.criadoEm : Date.now()
       };
@@ -3815,7 +3831,7 @@
       '<div class="eq-dados">'+
         celula('Cliente', registro.clienteNome, true)+
         celula('Data da visita', registro.data ? fmtDate(registro.data) : '')+
-        celula('Responsável', registro.autor)+
+        celula('Responsável', nomeCanon(registro.autor))+
       '</div>'+
       corpoHtml+
       plantasHtml+
@@ -3847,7 +3863,7 @@
       return;
     }
     lista.innerHTML = itens.map(function(r){
-      var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
+      var podeExcluir = !modoDesenhista || mesmaPessoa(r.autor, nomeProjetistaAtual);
       var conteudoHtml;
       if(r.modo === 'itens' && r.itens){
         conteudoHtml = r.itens.map(function(it){
@@ -3882,7 +3898,7 @@
       return '<div class="projeto-row" style="flex-direction:column; align-items:flex-start; gap:6px;">'+
         '<div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">'+
           '<b>'+escapeHtml(r.clienteNome)+filaEtiqueta('rel', r.id)+'</b>'+
-          '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(r.autor)+'</span>'+
+          '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(nomeCanon(r.autor))+'</span>'+
         '</div>'+
         conteudoHtml+
         plantasListHtml+
@@ -3922,6 +3938,11 @@
     });
   }
 
+  // Clientes que o financeiro marcou como "ART emitida" (com ou sem número) e que ainda não têm um registro na aba ART
+  function clientesArtDoFinanceiro(){
+    var jaTem = {}; (state.registrosArt||[]).forEach(function(a){ jaTem[a.clienteId] = true; });
+    return (state.financeiro||[]).filter(function(f){ return (f.artEmitidaManual || f.artNumero) && !jaTem[f.id]; });
+  }
   function podeUsarArt(){
     return !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{}).art;
   }
@@ -3930,13 +3951,13 @@
     if(sec) sec.style.display = podeUsarArt() ? 'block' : 'none';
   }
 
-  async function abrirFormRegistroArt(existenteId){
+  async function abrirFormRegistroArt(existenteId, clienteIdPre){
     await garantirClientes();
     var existente = existenteId ? state.registrosArt.find(function(x){ return x.id === existenteId; }) : null;
     var overlay = document.getElementById('diaModalOverlay');
     var box = document.getElementById('diaModalBox');
     var clientesOrdenados = (state.financeiro||[]).slice().sort(function(a,b){ return a.cliente.localeCompare(b.cliente,'pt-BR',{sensitivity:'base'}); });
-    var opcoesClientes = clientesOrdenados.map(function(f){ return '<option value="'+f.id+'"'+((existente&&existente.clienteId===f.id)?' selected':'')+'>'+escapeHtml(f.cliente)+'</option>'; }).join('');
+    var opcoesClientes = clientesOrdenados.map(function(f){ return '<option value="'+f.id+'"'+(((existente&&existente.clienteId===f.id)||(!existente&&clienteIdPre===f.id))?' selected':'')+'>'+escapeHtml(f.cliente)+'</option>'; }).join('');
 
     box.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'+
@@ -3946,7 +3967,7 @@
       '<div class="form-grid">'+
         '<div class="full"><label>Cliente</label><select id="artClienteSelect"><option value="">— Selecionar cliente —</option>'+opcoesClientes+'</select></div>'+
         '<div class="full" id="artDadosPuxados" style="display:none; background:var(--paper); border-radius:var(--r-sm); padding:10px 12px; font-size:12.5px; color:var(--ink-soft);"></div>'+
-        '<div><label>Número da ART</label><input type="text" id="artNumero" value="'+escapeHtml(existente?existente.numeroArt:'')+'" placeholder="Ex: RJ20260012345"></div>'+
+        '<div><label>Número da ART</label><input type="text" id="artNumero" value="'+escapeHtml(existente?existente.numeroArt:(((state.financeiro||[]).find(function(f){return f.id===clienteIdPre;})||{}).artNumero||''))+'" placeholder="Ex: RJ20260012345"></div>'+
         '<div><label>Data de emissão</label><input type="date" id="artDataEmissao" value="'+((existente&&existente.dataEmissao)||'')+'"></div>'+
         '<div class="full error" id="artErro" style="display:none"></div>'+
         '<div class="form-actions"><button class="btn" id="btnSalvarArt">Salvar ART</button></div>'+
@@ -3968,6 +3989,8 @@
     if(existente){
       var fExistente = (state.financeiro||[]).find(function(f){ return f.id === existente.clienteId; });
       mostrarDadosCliente(fExistente || existente.snapshot);
+    } else if(clienteIdPre){
+      mostrarDadosCliente((state.financeiro||[]).find(function(f){ return f.id === clienteIdPre; }));
     }
     document.getElementById('artClienteSelect').addEventListener('change', function(){
       var f = (state.financeiro||[]).find(function(x){ return x.id === document.getElementById('artClienteSelect').value; });
@@ -3987,7 +4010,7 @@
         numeroArt: document.getElementById('artNumero').value.trim(),
         dataEmissao: document.getElementById('artDataEmissao').value || null,
         snapshot: f ? { numeroProposta: f.numeroProposta, areaM2: f.areaM2, qtdPavimentos: f.qtdPavimentos, enderecoCompleto: f.enderecoCompleto, valorTotal: f.valorTotal } : (existente ? existente.snapshot : {}),
-        autor: nomeProjetistaAtual || 'Gerente',
+        autor: nomeLogado(),
         criadoEm: existente ? existente.criadoEm : Date.now()
       };
       if(existente){
@@ -4090,20 +4113,32 @@
     var busca = (buscaEl ? buscaEl.value : '').toLowerCase();
     var itens = (state.registrosArt||[]).filter(function(r){ return !busca || r.clienteNome.toLowerCase().indexOf(busca) !== -1; })
       .slice().sort(function(a,b){ return (b.criadoEm||0) - (a.criadoEm||0); });
-    if(itens.length === 0){
+    var extras = clientesArtDoFinanceiro().filter(function(f){ return !busca || (f.cliente||'').toLowerCase().indexOf(busca) !== -1; })
+      .sort(function(a,b){ return (a.cliente||'').localeCompare(b.cliente||'','pt-BR',{sensitivity:'base'}); });
+    if(itens.length === 0 && extras.length === 0){
       lista.innerHTML = '<div class="empty-hint">Nenhuma ART registrada ainda.</div>';
       return;
     }
-    lista.innerHTML = itens.map(function(r){
-      var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
+    var htmlExtras = extras.map(function(f){
       return '<div class="projeto-row" style="padding:8px 10px;">'+
-        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">ART '+escapeHtml(r.numeroArt||'(sem número)')+(r.dataEmissao?' · '+fmtDate(r.dataEmissao):'')+' · '+escapeHtml(r.autor)+'</span></div>'+
+        '<div class="info"><b>'+escapeHtml(f.cliente)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">'+(f.artNumero?'ART '+escapeHtml(f.artNumero)+' · ':'')+'</span>'+
+          '<span style="color:#fff;background:var(--green);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;">✓ ART EMITIDA</span></div>'+
+        '<div class="acts"><button type="button" class="btn-registrar-art" data-cli="'+escapeHtml(f.id)+'">'+(f.artNumero?'Registrar detalhes':'Informar número')+'</button></div>'+
+      '</div>';
+    }).join('');
+    lista.innerHTML = itens.map(function(r){
+      var podeExcluir = !modoDesenhista || mesmaPessoa(r.autor, nomeProjetistaAtual);
+      return '<div class="projeto-row" style="padding:8px 10px;">'+
+        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b> — <span style="color:var(--ink-soft); font-size:11.5px;">ART '+escapeHtml(r.numeroArt||'(sem número)')+(r.dataEmissao?' · '+fmtDate(r.dataEmissao):'')+' · '+escapeHtml(nomeCanon(r.autor))+'</span></div>'+
         '<div class="acts">'+
           '<button type="button" class="btn-editar-art" data-id="'+r.id+'">Ver/editar</button>'+
           (podeExcluir ? '<button type="button" class="btn-remover-art" data-id="'+r.id+'" style="color:var(--red);">Excluir</button>' : '')+
         '</div>'+
       '</div>';
-    }).join('');
+    }).join('') + htmlExtras;
+    lista.querySelectorAll('.btn-registrar-art').forEach(function(btn){
+      btn.onclick = function(){ abrirFormRegistroArt(null, btn.getAttribute('data-cli')); };
+    });
     lista.querySelectorAll('.btn-editar-art').forEach(function(btn){
       btn.onclick = function(){ abrirFormRegistroArt(btn.getAttribute('data-id')); };
     });
@@ -4474,7 +4509,7 @@
         dataPreenchimento: document.getElementById('ciDataPreenchimento').value,
         tipoEdificacao: document.getElementById('ciTipoEdificacao').value,
         dados: dados,
-        autor: nomeProjetistaAtual || 'Gerente',
+        autor: nomeLogado(),
         criadoEm: existente ? existente.criadoEm : Date.now()
       };
       if(existente){
@@ -4608,9 +4643,9 @@
       return;
     }
     lista.innerHTML = itens.map(function(r){
-      var podeExcluir = !modoDesenhista || r.autor === nomeProjetistaAtual;
+      var podeExcluir = !modoDesenhista || mesmaPessoa(r.autor, nomeProjetistaAtual);
       return '<div class="projeto-row" style="padding:8px 10px;">'+
-        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b>'+filaEtiqueta('ci', r.id)+' — <span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.dataPreenchimento)+' · '+escapeHtml(r.autor)+'</span></div>'+
+        '<div class="info"><b>'+escapeHtml(r.clienteNome)+'</b>'+filaEtiqueta('ci', r.id)+' — <span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.dataPreenchimento)+' · '+escapeHtml(nomeCanon(r.autor))+'</span></div>'+
         '<div class="acts">'+
           '<button type="button" class="btn-editar-ci" data-id="'+r.id+'">Ver/editar</button>'+
           '<button type="button" class="btn-pdf-ci" data-id="'+r.id+'">📄 PDF</button>'+
@@ -4820,8 +4855,8 @@
   function chatDmId(a, b){ var k = [chatKey(a), chatKey(b)].sort(); return 'dm-' + k[0] + '__' + k[1]; }
   function chatNomesPessoas(){
     var nomes = (state.equipe || []).slice();
-    if(nomes.indexOf('Gerente') === -1) nomes.push('Gerente');
-    return nomes.filter(function(n, i){ return n && nomes.indexOf(n) === i; });
+    if(nomes.indexOf(NOME_GERENTE) === -1) nomes.push(NOME_GERENTE);
+    return nomes.filter(function(n, i){ return n && n !== 'Gerente' && nomes.indexOf(n) === i; });
   }
   function chatNomePorKey(k){
     var achou = chatNomesPessoas().find(function(n){ return chatKey(n) === k; });
@@ -4842,9 +4877,14 @@
     }
     return { titulo: id, icone: '#', tipo: 'canal' };
   }
+  function chatIdLegado(id){ return id.indexOf('dm-') === 0 && id.slice(3).split('__').indexOf('Gerente') !== -1; }
+  function chatIdNovoDeLegado(id){
+    var p = id.slice(3).split('__').map(function(k){ return k === 'Gerente' ? chatKey(NOME_GERENTE) : k; });
+    return chatDmId(p[0], p[1]);
+  }
   function chatNaoLido(id){
     var m = chat.meta[id];
-    if(!m || !m.ts || m.de === chat.eu) return false;
+    if(!m || !m.ts || mesmaPessoa(m.de, chat.eu) || chatIdLegado(id)) return false;
     var info = chatCanalInfo(id);
     if(info.tipo === 'dm' && !info.envolvido) return false;
     return m.ts > (chat.lidos[id] || 0);
@@ -5041,27 +5081,27 @@
     if(!chat.chegouAlgo){ box.innerHTML = ''; chat.chegouAlgo = true; }
     if(box.querySelector('[data-msg="' + key + '"]')) return;
     var ts = m.ts || Date.now();
-    var perto = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || m.de === chat.eu;
+    var perto = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || mesmaPessoa(m.de, chat.eu);
     var html = '';
     var dia = chatDiaRotulo(ts);
     if(dia !== chat.ultimoDia){ html += '<div class="chat-dia"><span>' + dia + '</span></div>'; chat.ultimoDia = dia; chat.ultimoAutor = null; }
-    var agrupa = chat.ultimoAutor === m.de && (ts - chat.ultimoTs) < 5 * 60 * 1000;
-    chat.ultimoAutor = m.de; chat.ultimoTs = ts;
+    var agrupa = chat.ultimoAutor === nomeCanon(m.de) && (ts - chat.ultimoTs) < 5 * 60 * 1000;
+    chat.ultimoAutor = nomeCanon(m.de); chat.ultimoTs = ts;
     var corpo = (m.texto ? '<div class="chat-txt">' + escapeHtml(m.texto) + '</div>' : '') +
       (m.foto ? '<img class="chat-foto" src="' + m.foto + '">' : '');
-    var excluir = m.de === chat.eu ? '<button type="button" class="chat-excluir" title="Excluir mensagem">🗑</button>' : '';
+    var excluir = mesmaPessoa(m.de, chat.eu) ? '<button type="button" class="chat-excluir" title="Excluir mensagem">🗑</button>' : '';
     var el = document.createElement('div');
     el.setAttribute('data-msg', key);
     el.className = 'chat-msg' + (agrupa ? ' agrupa' : '');
-    el.innerHTML = (agrupa ? '<span style="width:32px; flex:none;"></span>' : chatAvatar(m.de || '?', 32)) +
-      '<div class="chat-corpo">' + (agrupa ? '' : '<div class="chat-cab"><b>' + escapeHtml(m.de || '?') + '</b> <span>' + chatHora(ts) + '</span></div>') + corpo + '</div>' + excluir;
+    el.innerHTML = (agrupa ? '<span style="width:32px; flex:none;"></span>' : chatAvatar(nomeCanon(m.de) || '?', 32)) +
+      '<div class="chat-corpo">' + (agrupa ? '' : '<div class="chat-cab"><b>' + escapeHtml(nomeCanon(m.de) || '?') + '</b> <span>' + chatHora(ts) + '</span></div>') + corpo + '</div>' + excluir;
     if(html){ var dv = document.createElement('div'); dv.innerHTML = html; box.appendChild(dv.firstChild); }
     box.appendChild(el);
     var img = el.querySelector('.chat-foto'); if(img){ img.onclick = function(){ abrirVisualizadorImagens([m.foto], 0); }; img.onload = function(){ if(perto) box.scrollTop = box.scrollHeight; }; }
     var bx = el.querySelector('.chat-excluir');
     if(bx){ armConfirm(bx, 'Excluir?', function(){ _fbDb.ref('chat/msgs/' + canalId + '/' + key).remove().catch(function(){}); }); }
     if(perto) box.scrollTop = box.scrollHeight;
-    if(m.de !== chat.eu){ chatMarcarLido(); }
+    if(!mesmaPessoa(m.de, chat.eu)){ chatMarcarLido(); }
   }
   function chatMostrarAviso(){
     var el = document.getElementById('chatAviso'); if(!el) return;
@@ -5091,7 +5131,7 @@
     var info = chatCanalInfo(canal);
     var antigo = document.querySelector('.toast-chat'); if(antigo) antigo.remove();
     var el = document.createElement('div'); el.className = 'toast-chat toast-erro-salvar'; el.style.background = '#1C1C1E'; el.style.cursor = 'pointer';
-    el.innerHTML = '<span>💬 <b>' + escapeHtml(m.de || '') + '</b> (' + escapeHtml(info.titulo) + '): ' + escapeHtml(m.txt || '') + '</span>';
+    el.innerHTML = '<span>💬 <b>' + escapeHtml(nomeCanon(m.de) || '') + '</b> (' + escapeHtml(info.titulo) + '): ' + escapeHtml(m.txt || '') + '</span>';
     el.onclick = function(){ el.remove(); if(topicoProjetosAtivo === 'chat'){ chatAbrirCanal(canal); } else { chatFlutAbrir(canal); } };
     document.body.appendChild(el);
     setTimeout(function(){ if(el.parentNode) el.remove(); }, 7000);
@@ -5144,10 +5184,43 @@
     chatFlutAtualizar();
   }
 
+  // Junta as conversas antigas do "Gerente" com as do Júlio Soares. Copia (não apaga nada) e só marca como feito depois de copiar.
+  async function chatMigrarGerente(){
+    try{
+      var flagRef = _fbDb.ref('chat/migracao/gerente1');
+      if((await flagRef.once('value')).exists()) return;
+      var meta = (await _fbDb.ref('chat/meta').once('value')).val() || {};
+      var lidosTodos = (await _fbDb.ref('chat/lidos').once('value')).val() || {};
+      var jKey = chatKey(NOME_GERENTE), lidosG = lidosTodos['Gerente'] || {}, lidosJ = lidosTodos[jKey] || {};
+      var legados = Object.keys(meta).filter(chatIdLegado), up = {};
+      for(var i = 0; i < legados.length; i++){
+        var id = legados[i], novo = chatIdNovoDeLegado(id);
+        var msgs = (await _fbDb.ref('chat/msgs/' + id).once('value')).val() || {};
+        Object.keys(msgs).forEach(function(k){
+          var m = Object.assign({}, msgs[k]); if(m.de === 'Gerente') m.de = NOME_GERENTE;
+          up['msgs/' + novo + '/' + k] = m;
+        });
+        var mo = meta[id], mn = meta[novo];
+        up['meta/' + novo] = (!mn || (mo.ts || 0) > (mn.ts || 0)) ? Object.assign({}, mo, { de: nomeCanon(mo.de) }) : mn;
+        Object.keys(lidosTodos).forEach(function(pessoa){
+          var v = (lidosTodos[pessoa] || {})[id] || 0;
+          if(pessoa === 'Gerente') pessoa = jKey;
+          var atual = (up['lidos/' + pessoa + '/' + novo] !== undefined) ? up['lidos/' + pessoa + '/' + novo] : ((lidosTodos[pessoa] || {})[novo] || 0);
+          if(v > atual) up['lidos/' + pessoa + '/' + novo] = v;
+        });
+      }
+      Object.keys(lidosG).forEach(function(id){   // grupos: o que o "Gerente" já leu vale para o Júlio
+        if(chatIdLegado(id)) return;
+        if((lidosG[id] || 0) > (lidosJ[id] || 0)) up['lidos/' + jKey + '/' + id] = lidosG[id];
+      });
+      if(Object.keys(up).length){ await _fbDb.ref('chat').update(up); }
+      await flagRef.set({ em: firebase.database.ServerValue.TIMESTAMP, por: nomeLogado(), conversasCopiadas: legados.length });
+    }catch(e){}   // se falhar, tenta de novo na próxima entrada; nada foi apagado
+  }
   function chatIniciar(){
     chatParar();
     avisosIniciar();
-    chat.eu = nomeProjetistaAtual || 'Gerente';
+    chat.eu = nomeLogado();
     chatFlutCriar();
     chat.ativo = true; chat.erro = false; chat.primeiraMeta = true; chat.limpos = {};
     var euKey = chatKey(chat.eu);
@@ -5161,7 +5234,7 @@
       if(!chat.primeiraMeta){
         Object.keys(novo).forEach(function(id){
           var m = novo[id], a = antigo[id];
-          if(m && m.ts && (!a || a.ts !== m.ts) && m.de !== chat.eu){
+          if(m && m.ts && (!a || a.ts !== m.ts) && !mesmaPessoa(m.de, chat.eu) && !chatIdLegado(id)){
             var info = chatCanalInfo(id);
             if(info.tipo === 'dm' && !info.envolvido) return;
             var aberto = chatVisivel() && chat.canal === id;
@@ -5185,6 +5258,7 @@
       });
     }catch(e){}
     chatAtualizarBadges();
+    if(chat.eu === NOME_GERENTE){ chatMigrarGerente(); }
   }
   function chatParar(){
     avisosParar();
@@ -5266,8 +5340,8 @@
       artCarregado = true;
       var okA = await carregarTopicoSeguro('clm-registros-art', 'artCarregado', 'art', function(v){ state.registrosArt = v; }, id);
       if(!okA) artCarregado = false;
-      renderRegistrosArtLista();
     }
+    if(id === 'art'){ await garantirClientes(); renderRegistrosArtLista(); }
     if(id === 'dimensionamentos' && !dimensionamentosCarregados){
       dimensionamentosCarregados = true;
       var okD = await carregarTopicoSeguro('clm-dimensionamentos', 'dimensionamentosCarregados', 'dim', function(v){ state.dimensionamentos = v; }, id);
@@ -5517,6 +5591,7 @@
   var TOPICOS_FINANCEIRO = [
     { id:'usuarios', label:'Usuários com acesso', icone:'👥' },
     { id:'clientes', label:'Clientes', icone:'💳' },
+    { id:'art', label:'ART', icone:'📐' },
     { id:'resumo', label:'Resumo geral', icone:'📊' },
     { id:'fechamentos', label:'Fechamentos por mês', icone:'📅' },
     { id:'recebido', label:'Valor recebido', icone:'💵' },
@@ -5553,10 +5628,94 @@
     renderSidebarDesktop();
   }
 
+  function renderFinArt(){
+    var lista = document.getElementById('finArtLista');
+    if(!lista) return;
+    var busca = (document.getElementById('finArtBusca').value || '').toLowerCase();
+    var filtro = document.getElementById('finArtFiltro').value;
+    var todos = (state.financeiro || []);
+    var com = todos.filter(function(f){ return f.artEmitidaManual || f.artNumero; }).length;
+    document.getElementById('finArtResumo').textContent = com + ' com ART emitida · ' + (todos.length - com) + ' sem ART · ' + todos.length + ' clientes';
+    var itens = todos.filter(function(f){
+      var tem = !!(f.artEmitidaManual || f.artNumero);
+      if(filtro === 'com' && !tem) return false;
+      if(filtro === 'sem' && tem) return false;
+      return !busca || (f.cliente || '').toLowerCase().indexOf(busca) !== -1;
+    }).sort(function(a, b){ return (a.cliente || '').localeCompare(b.cliente || '', 'pt-BR', { sensitivity: 'base' }); });
+    if(!itens.length){ lista.innerHTML = '<div class="empty-hint">Nenhum cliente encontrado.</div>'; return; }
+    lista.innerHTML = itens.map(function(f){
+      var tem = !!(f.artEmitidaManual || f.artNumero);
+      return '<div class="projeto-row" style="padding:8px 10px; gap:8px; flex-wrap:wrap;">'+
+        '<label style="display:flex; align-items:center; gap:6px; flex:1; min-width:180px; cursor:pointer;"><input type="checkbox" class="fin-art-chk" data-id="'+escapeHtml(f.id)+'"'+(tem?' checked':'')+'> <b>'+escapeHtml(f.cliente)+'</b></label>'+
+        '<input type="text" class="fin-art-num" data-id="'+escapeHtml(f.id)+'" value="'+escapeHtml(f.artNumero || '')+'" placeholder="Número da ART" style="font-size:13px; padding:6px 8px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); width:170px;">'+
+      '</div>';
+    }).join('');
+    function achar(el){ return todos.find(function(x){ return x.id === el.getAttribute('data-id'); }); }
+    lista.querySelectorAll('.fin-art-chk').forEach(function(c){
+      c.onchange = function(){ var f = achar(c); if(!f) return; f.artEmitidaManual = c.checked; if(!c.checked) f.artNumero = ''; saveFinanceiro(); renderFinArt(); renderFinanceiroLista(); };
+    });
+    lista.querySelectorAll('.fin-art-num').forEach(function(i){
+      i.onchange = function(){ var f = achar(i); if(!f) return; f.artNumero = i.value.trim(); if(f.artNumero) f.artEmitidaManual = true; saveFinanceiro(); renderFinArt(); renderFinanceiroLista(); };
+    });
+  }
+  var ARTS_IMPORTAR = [{"id":"fin136_mu15bfxn","cliente":"Camila Vianna - BARRACÃO (007619) BIM","arts":["2020230261142"]},{"id":"fin90_mu15bfxn","cliente":"Walcyr Carrasco (006530)  - BIM","arts":["2020230238032"]},{"id":"fin108_mu15bfxn","cliente":"Leonardo Yamamoto (006951) - BIM","arts":["2020260099897","2020260165345"]},{"id":"fin126_mu15bfxn","cliente":"Patricia Andrade (007423) - BIM","arts":["2020230238056"]},{"id":"fin273_mu15bfxn","cliente":"Joaquim Monteiro (009835)","arts":["2020200216484"]},{"id":"fin265_mu15bfxn","cliente":"Brudani (010294)","arts":["2020200220654"]},{"id":"fin0_mu15bfxn","cliente":"Bruno Pandolfi","arts":["2020200220636"]},{"id":"fin1_mu15bfxn","cliente":"Paulo Fernando Oliveira - (BIM)","arts":["2020200220644"]},{"id":"fin51_mu15bfxn","cliente":"FIOTEC","arts":["2020230306845"]},{"id":"fin105_mu15bfxn","cliente":"Ylan Adler e Jessica Kimelblat (006784) - BIM","arts":["2020230253967"]},{"id":"fin120_mu15bfxn","cliente":"Juliana Hammes (006738) - BIM","arts":["2020230129192"]},{"id":"fin113_mu15bfxn","cliente":"Heleno Palmieri (007030) - BIM","arts":["2020230129170"]},{"id":"fin22_mu15bfxn","cliente":"Paulo Cezar Antunes  (005202)","arts":["2020230076334"]},{"id":"fin82_mu15bfxn","cliente":"Luiza Lopes (006567) BIM","arts":["2020230054492"]},{"id":"fin66_mu15bfxn","cliente":"Diego Ribas (006115) BIM","arts":["2020220205235"]},{"id":"fin20_mu15bfxn","cliente":"Jose Carlos Ramos (005003) DWG","arts":["2020210246896"]},{"id":"fin17_mu15bfxn","cliente":"Luiz Eduardo Leite (005193) BIM","arts":["2020210241378"]},{"id":"fin8_mu15bfxn","cliente":"Wilson  Scot","arts":["2020210219845"]},{"id":"fin14_mu15bfxn","cliente":"Ítalo Ignácio (005075)","arts":["2020210123878"]},{"id":"fin186_mu15bfxn","cliente":"Leonhard Ammon (008484)","arts":["2020200220656"]},{"id":"fin157_mu15bfxn","cliente":"Guilherme Pacheco (007983)","arts":["2020250047363"]},{"id":"fin218_mu15bfxn","cliente":"Marcelo Lopes (009104)","arts":["2020250228003"]},{"id":"fin246_mu15bfxn","cliente":"Andre Barreto (004951)","arts":["2020250229714"]},{"id":"fin187_mu15bfxn","cliente":"Matilde Pereira (008259)","arts":["2020250262648"]},{"id":"fin167_mu15bfxn","cliente":"Guareô (008135)","arts":["2020250316319"]},{"id":"fin209_mu15bfxn","cliente":"Aline da Mata (009010)","arts":["2020250328067"]},{"id":"fin170_mu15bfxn","cliente":"Katia Barros (008196)","arts":["2020250375113"]},{"id":"fin236_mu15bfxn","cliente":"Rafael Levy (009297)","arts":["2020260042210"]},{"id":"fin179_mu15bfxn","cliente":"Dorivaldo (007924)","arts":["2020260042311"]},{"id":"fin252_mu15bfxn","cliente":"Antônio - Casa concha (009701)","arts":["2020260060091"]},{"id":"fin254_mu15bfxn","cliente":"Andre de Botton (009920)","arts":["2020260076522"]},{"id":"fin261_mu15bfxn","cliente":"Victória empreendimentos (009945)","arts":["2020260131785"]},{"id":"fin207_mu15bfxn","cliente":"Marcelo Marques (008994)","arts":["2020260143494"]},{"id":"fin238_mu15bfxn","cliente":"Helena e Rafael (009258)","arts":["2020260160990"]},{"id":"fin239_mu15bfxn","cliente":"Elkeson (009395)","arts":["2020260226932"]},{"id":"fin76_mu15bfxn","cliente":"Maria Jakurski (006514) BIM","arts":["2020230238043"]},{"id":"fin91_mu15bfxn","cliente":"Fabio Landi (006855) - BIM","arts":["2020230003180"]},{"id":"fin63_mu15bfxn","cliente":"Marcelo Salmon (006170) BIM","arts":["2020220282077"]},{"id":"fin156_mu15bfxn","cliente":"Marco Freire (007926)","arts":["2020250088762"]},{"id":"fin188_mu15bfxn","cliente":"Bruno Coutinho (008249)","arts":["2020250262677"]},{"id":"fin169_mu15bfxn","cliente":"Victor Hara (008133)","arts":["2020250328018"]}];
+  // Grava o número da ART dentro do cliente (só se o id e o nome baterem; nunca repete número já cadastrado). Devolve quantos clientes mudaram.
+  function aplicarImportacaoArts(lista, perguntar){
+    if(financeiroBloqueado){ avisarSalvamentoBloqueado(); return 0; }
+    var ja = 0, naoAchou = [], plano = [];
+    lista.forEach(function(it){
+      var rec = (state.financeiro || []).find(function(f){ return f.id === it.id && f.cliente === it.cliente; });
+      if(!rec){ naoAchou.push(it.cliente); return; }
+      var atuais = (rec.artNumero || '').split('/').map(function(x){ return x.trim(); }).filter(Boolean);
+      var faltam = (it.arts || []).filter(function(a){ return atuais.indexOf(String(a)) === -1; });
+      if(!faltam.length){ ja++; return; }
+      plano.push({ rec: rec, nums: atuais.concat(faltam) });
+    });
+    if(!plano.length){ if(perguntar) alert('Nada a cadastrar. Já cadastrados: ' + ja + (naoAchou.length ? ' · Clientes não encontrados: ' + naoAchou.length : '')); return 0; }
+    if(perguntar && !confirm('Vai gravar o número da ART em ' + plano.length + ' cliente(s). Já estavam cadastrados: ' + ja + '. Não encontrados no painel: ' + naoAchou.length + '. Continuar?')) return 0;
+    plano.forEach(function(x){ x.rec.artNumero = x.nums.join(' / '); x.rec.artEmitidaManual = true; });
+    saveFinanceiro(); renderFinArt(); renderFinanceiroLista();
+    avisar('ARTs cadastradas em ' + plano.length + ' cliente(s).');
+    return plano.length;
+  }
+  // Uma única vez (marcado no banco e neste navegador): cadastra as ARTs vindas das planilhas.
+  async function importarArtsUmaVez(){
+    try{
+      if(financeiroBloqueado || !state.financeiro || !state.financeiro.length) return;
+      var jaFeito = false;
+      try{ jaFeito = localStorage.getItem('equiper-import-arts-1') === '1'; }catch(e){}
+      var cfg = null;
+      try{ var r = await window.storage.get('clm-config-painel', true); if(r && r.value) cfg = JSON.parse(r.value); }catch(e){}
+      if(cfg && cfg.importArts1) jaFeito = true;
+      if(jaFeito) return;
+      aplicarImportacaoArts(ARTS_IMPORTAR, false);
+      try{ localStorage.setItem('equiper-import-arts-1', '1'); }catch(e){}
+      try{ await window.storage.set('clm-config-painel', JSON.stringify(Object.assign({}, cfg || configPainel || {}, { importArts1: true })), true); }catch(e){}
+    }catch(e){}
+  }
+  // Importa ARTs (arquivo preparado: [{id, cliente, arts:[...]}]) para dentro do cliente. Só grava se o id existir e o nome bater.
+  document.getElementById('btnImportarArts').onclick = function(){ document.getElementById('finArtArquivo').click(); };
+  document.getElementById('finArtArquivo').onchange = function(ev){
+    var arq = ev.target.files && ev.target.files[0]; ev.target.value = '';
+    if(!arq) return;
+    var leitor = new FileReader();
+    leitor.onload = function(){
+      var lista;
+      try{ lista = JSON.parse(leitor.result); }catch(e){ alert('Arquivo inválido.'); return; }
+      if(!Array.isArray(lista)){ alert('Arquivo inválido.'); return; }
+      if(financeiroBloqueado){ avisarSalvamentoBloqueado(); return; }
+      aplicarImportacaoArts(lista, true);
+    };
+    leitor.readAsText(arq);
+  };
+  document.getElementById('finArtBusca').addEventListener('input', renderFinArt);
+  document.getElementById('finArtFiltro').addEventListener('change', renderFinArt);
+
   function renderFinanceiro(){
     renderUsuariosFin();
     renderFinanceiroResumo();
     renderFinanceiroLista();
+    renderFinArt();
     renderFinFechamentos();
     renderFinRecebido();
     renderFinComissao();
@@ -5638,7 +5797,7 @@
     var header = document.createElement('div');
     header.className = 'fin-cliente-header';
     var temCobrar = temCobrarBorda;
-    var temArt = !!rec.artEmitidaManual || (state.registrosArt||[]).some(function(a){ return a.clienteId === rec.id; });
+    var temArt = !!rec.artEmitidaManual || !!rec.artNumero || (state.registrosArt||[]).some(function(a){ return a.clienteId === rec.id; });
     header.innerHTML =
       '<div class="nome">'+(isColapsado?'▸ ':'▾ ')+escapeHtml(rec.cliente)+
         (temCobrar?' <span style="color:#fff;background:var(--red);font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;letter-spacing:0.2px;">💰 COBRAR</span>':'')+
@@ -5677,7 +5836,13 @@
         rec.artEmitidaManual = e.target.checked;
         saveFinanceiro();
         renderFinanceiroLista();
+        renderFinArt();
       });
+      var numArt = document.createElement('input');
+      numArt.type = 'text'; numArt.placeholder = 'Número da ART'; numArt.value = rec.artNumero || '';
+      numArt.style.cssText = 'font-size:13px; padding:6px 8px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); width:200px; margin:6px 0 0 24px;';
+      numArt.addEventListener('change', function(){ rec.artNumero = numArt.value.trim(); if(rec.artNumero) rec.artEmitidaManual = true; saveFinanceiro(); renderFinanceiroLista(); renderFinArt(); });
+      secArt.appendChild(numArt);
       body.appendChild(secArt);
 
       // Parcelas
@@ -7095,6 +7260,7 @@
     var original = btn.textContent;
     btn.textContent = 'Sincronizando...';
     if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
+    importarArtsUmaVez();
     var mudou = sincronizarProjetosComFinanceiro();
     render();
     btn.textContent = mudou ? '✓ Sincronizado!' : 'Já estava tudo em dia';
@@ -7139,7 +7305,7 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '28/10/2026 · fase 3d';
+  var VERSAO_APP = '29/10/2026 · fase 3h';
   // avisa quando há versão nova publicada (aparelho com o app aberto há dias continua na versão antiga)
   async function verificarNovaVersao(){
     try{
@@ -7237,6 +7403,7 @@
       document.getElementById('financeiroConteudo').style.display = 'block';
       if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
       renderFinanceiro();
+      importarArtsUmaVez();
     }
   };
   document.getElementById('btnBloquearFinanceiro').onclick = function(){ bloquearFinanceiro(); };
@@ -8176,7 +8343,7 @@
     var nomeAtual, papelAtual, funcaoBloquear;
     if(ehFinanceiro){ nomeAtual = nomeFinanceiroAtual || 'Financeiro'; papelAtual = 'Financeiro'; funcaoBloquear = bloquearFinanceiro; }
     else if(ehProjetista){ nomeAtual = nomeProjetistaAtual || 'Projetista'; papelAtual = 'Projetista'; funcaoBloquear = bloquearProjetos; }
-    else { nomeAtual = 'Gerente'; papelAtual = 'Projetos'; funcaoBloquear = bloquearProjetos; }
+    else { nomeAtual = NOME_GERENTE; papelAtual = 'Projetos'; funcaoBloquear = bloquearProjetos; }
     var inicial = (nomeAtual||'?').trim().charAt(0).toUpperCase();
 
     document.getElementById('sidebarDesktopRodape').innerHTML =
@@ -8305,6 +8472,7 @@
     document.getElementById('financeiroConteudo').style.display = 'block';
     if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
     renderFinanceiro();
+    importarArtsUmaVez();
   }
 
   function telaLoginUnificado(){
