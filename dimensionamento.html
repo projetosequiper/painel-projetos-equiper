@@ -6769,15 +6769,18 @@ function dmEnelAgrup(id, T, c, geral = false){
     const f263 = ru && ru.Dt > 0 ? T.cat263.filter(k=>k[0]===tipo).find(k=>ru.Dt <= k[2] + 1e-9) : null;
     const dj = ru && ru.disjManual && T.agrupTab[`${tipo}|${ru.disj}`] ? ru.disj : f263?.[3], tab = ru && T.agrupTab[`${tipo}|${dj}`];
     return {u, ru, n, em, tipo, dj, tab, f263}; });
-  const Nq = U.reduce((s,x)=>s+x.n,0), N = Nq, Nt = Math.min(Math.max(N,3),200);
+  const Nq = U.reduce((s,x)=>s+x.n,0), N = Nq;
+  // armários reservas: a linha da tabela 4 a 10 é a do nº de armários (múltiplo de 4 acima); a soma do DTC continua só com as unidades reais
+  const arm = !!q0.armRes || (geral && dmDesc(id).some(k=>{ const qq = D.quadros.find(x=>x.id===k); return qq && qq.id!==id && qq.agrup && qq.armRes; }));
+  const Narm = arm && N > 0 ? Math.ceil(N/4)*4 : N, Nt = Math.min(Math.max(Narm,3),200);
   U.forEach(x=>{
     if(!x.ru || !(x.ru.Dt>0)){ x.ddi = 0; x.d = 0; x.semDem = true; return; }
-    if(N < 3 || !x.tab){ x.ddi = x.ru.Dt; x.d = x.n*x.ru.Dt; x.semTab = true; return; }
+    if(Narm < 3 || !x.tab){ x.ddi = x.ru.Dt; x.d = x.n*x.ru.Dt; x.semTab = true; return; }
     x.ddi = T.agrup[x.tab][Nt-3]; x.impr = T.agrupImpr[x.tab]?.[Nt]; x.d = x.n*x.ddi; });
   if(!unid.length && !geral) avisos.push("Medição agrupada sem unidades de consumo: ligue neste quadro os quadros das unidades (apartamentos, lojas) e use “Quadros iguais a este” para unidades iguais.");
-  if(N > 0 && N < 3) avisos.push(`Medição agrupada com ${N} unidade${N>1?"s":""}: as tabelas 4 a 10 começam em 3 clientes — usada a demanda individual de cada unidade, sem diversificação.`);
-  if(N > 200) avisos.push(`${N} unidades no prédio: as tabelas 4 a 10 vão até 200 clientes — usado o valor de 200 clientes. Confirmar com a ${nomeC}.`);
-  if(N >= 3) U.filter(x=>x.semTab && !x.semDem).forEach(x=>avisos.push(`${esc(x.u.nome)}: atendimento ${x.tipo ? x.tipo.toLowerCase() : ""} com ${fmt(x.ru.Dt,2)} kVA não tem tabela de medição agrupada (as tabelas 4 a 10 cobrem monofásico até 8 kVA, bifásico de 5 a 12 kVA e trifásico até 38 kVA) — usada a demanda individual de ${fmt(x.ru.Dt,2)} kVA por unidade, sem diversificação.`));
+  if(Narm > 0 && Narm < 3) avisos.push(`Medição agrupada com ${N} unidade${N>1?"s":""}: as tabelas 4 a 10 começam em 3 clientes — usada a demanda individual de cada unidade, sem diversificação.`);
+  if(Narm > 200) avisos.push(`${Narm} ${arm?"armários":"unidades"} no prédio: as tabelas 4 a 10 vão até 200 clientes — usado o valor de 200 clientes. Confirmar com a ${nomeC}.`);
+  if(Narm >= 3) U.filter(x=>x.semTab && !x.semDem).forEach(x=>avisos.push(`${esc(x.u.nome)}: atendimento ${x.tipo ? x.tipo.toLowerCase() : ""} com ${fmt(x.ru.Dt,2)} kVA não tem tabela de medição agrupada (as tabelas 4 a 10 cobrem monofásico até 8 kVA, bifásico de 5 a 12 kVA e trifásico até 38 kVA) — usada a demanda individual de ${fmt(x.ru.Dt,2)} kVA por unidade, sem diversificação.`));
   U.filter(x=>x.impr!=null).forEach(x=>avisos.push(`Tabela ${x.tab} com ${Nt} clientes: a tabela impressa traz ${fmt(x.impr,2)} kVA (sem a 2ª casa decimal); usado o valor interpolado entre 85 e 101 clientes, ${fmt(x.ddi,2)} kVA.`));
   const DTC = U.reduce((s,x)=>s+x.d,0);
   // 2 · serviço do condomínio: cargas deste quadro + quadros marcados como serviço (e os ligados neles)
@@ -6793,10 +6796,10 @@ function dmEnelAgrup(id, T, c, geral = false){
   if(q0.fases && q0.fases!=="tri") avisos.push("A entrada coletiva com medição agrupada é trifásica: o cálculo usa alimentação trifásica.");
   if(As.nPrev) avisos.push(`${As.nPrev} carga${As.nPrev>1?"s":""} do serviço marcada${As.nPrev>1?"s":""} como <b>previsão</b>: confirmar a potência exata antes da emissão final.`);
   const nPrevU = U.reduce((s,x)=>s+(x.ru?.A?.nPrev||0),0); if(nPrevU) avisos.push(`Há cargas marcadas como <b>previsão</b> nas unidades: confirmar a potência exata antes da emissão final.`);
-  const linU = x => `${esc(x.u.nome)}${x.em?` <small>(em ${esc(x.em.nome)}${dmIguais(x.em)>1?` ×${dmIguais(x.em)}`:""})</small>`:""}${x.n>1?` ×${x.n}`:""}: demanda individual ${x.ru ? fmt(x.ru.Dt,2) : "—"} kVA${x.semDem ? " — sem demanda" : x.semTab ? ` → ${fmt(x.n)} × ${fmt(x.ddi,2)} kVA (sem diversificação) = ${fmt(x.d,2)} kVA` : ` → ${x.ru.cat?.[5] ? `tipo ${x.ru.cat[5]} (${x.ru.disj} A) · ` : ""}tabela ${x.tab} (${x.tipo.toLowerCase()}${x.f263 && x.dj===x.f263[3] ? `, faixa de ${fmt(x.f263[1])} a ${fmt(x.f263[2])} kVA` : `, disjuntor ${x.dj} A`}), ${fmt(Nt)} clientes: DDI = ${fmt(x.ddi,2)} kVA${x.impr!=null?` (interpolado; impresso ${fmt(x.impr,2)})`:""} → ${fmt(x.n)} × ${fmt(x.ddi,2)} = ${fmt(x.d,2)} kVA`}`;
+  const linU = x => `${esc(x.u.nome)}${x.em?` <small>(em ${esc(x.em.nome)}${dmIguais(x.em)>1?` ×${dmIguais(x.em)}`:""})</small>`:""}${x.n>1?` ×${x.n}`:""}: demanda individual ${x.ru ? fmt(x.ru.Dt,2) : "—"} kVA${x.semDem ? " — sem demanda" : x.semTab ? ` → ${fmt(x.n)} × ${fmt(x.ddi,2)} kVA (sem diversificação) = ${fmt(x.d,2)} kVA` : ` → ${x.ru.cat?.[5] ? `tipo ${x.ru.cat[5]} (${x.ru.disj} A) · ` : ""}tabela ${x.tab} (${x.tipo.toLowerCase()}${x.f263 && x.dj===x.f263[3] ? `, faixa de ${fmt(x.f263[1])} a ${fmt(x.f263[2])} kVA` : `, disjuntor ${x.dj} A`}), ${fmt(Nt)} ${arm?"armários":"clientes"}: DDI = ${fmt(x.ddi,2)} kVA${x.impr!=null?` (interpolado; impresso ${fmt(x.impr,2)})`:""} → ${fmt(x.n)} × ${fmt(x.ddi,2)} = ${fmt(x.d,2)} kVA`}`;
   const instU = U.reduce((s,x)=>s + x.n*(x.ru?.instT||0),0), instKWU = U.reduce((s,x)=>s + x.n*(x.ru?.instKW||0),0);
   const partes = [
-    {k:"a", t:"Unidades de consumo · DTC (tabelas 4 a 10)", inst:instU, d:DTC, mem:[...(U.length ? U.map(linU) : ["Nenhuma unidade ligada neste quadro."]), `${fmt(N)} cliente${N!==1?"s":""} no prédio${geral?" (todos os quadros agrupados ligados neste quadro, considerados como um agrupamento só)":""}${N>200?" (tabela até 200)":""} · DTC = Σ nº de unidades × DDI = <b>${fmt(DTC,2)} kVA</b>`]},
+    {k:"a", t:"Unidades de consumo · DTC (tabelas 4 a 10)", inst:instU, d:DTC, mem:[...(U.length ? U.map(linU) : ["Nenhuma unidade ligada neste quadro."]), `${fmt(N)} cliente${N!==1?"s":""} no prédio${geral?" (todos os quadros agrupados ligados neste quadro, considerados como um agrupamento só)":""}${arm ? (Narm>N ? ` + ${fmt(Narm-N)} armário${Narm-N>1?"s":""} reserva = <b>${fmt(Narm)} armários</b> (múltiplo de 4 acima${geral?", arredondado sobre o total do prédio":""}): a linha da tabela é a de ${fmt(Narm)}, e os reservas não entram na soma` : ` (${fmt(N)} armários, já múltiplo de 4: sem reserva)`) : ""}${Narm>200?" (tabela até 200)":""} · DTC = Σ nº de unidades reais × DDI = <b>${fmt(DTC,2)} kVA</b>`]},
     ...rs.partes.slice(1)
   ];
   const memExtra = [
@@ -6807,7 +6810,7 @@ function dmEnelAgrup(id, T, c, geral = false){
       rowR ? `Tabela 16 para ${fmt(DR,2)} kVA: ${[rowR[3] && `ramal aéreo até a chave geral ${rowR[3]} mm²`, rowR[4] && `ramal de ligação (pré-reunido) ${rowR[4]} mm²`, rowR[5] && `ramal de entrada ${rowR[5]} mm²`, rowR[6] && `eletroduto ${rowR[6]} mm`, rowR[7] && `ramal subterrâneo ${rowR[7]} mm²`].filter(Boolean).join(" · ")}` : (DR > 0 ? `<span class="mc-aviso">DR acima da tabela 16 — consultar.</span>` : "")]}
   ];
   const nQ = dmDescMult(id).reduce((a,[,m])=>a+m,0);
-  const r = {partes, Dt:DR, instKW: instKWU + rs.instKW, avisos, memExtra, agr:{N, Nt, DTC, Ds, DPG, DR, row, rowR, catS},
+  const r = {partes, Dt:DR, instKW: instKWU + rs.instKW, avisos, memExtra, agr:{N, Narm, arm, Nt, DTC, Ds, DPG, DR, row, rowR, catS},
     formula:`${geral ? "Quadro geral do prédio (agrupados como um só + serviço)" : "Medição agrupada"} · DR = ${Ds > 0 ? `(DTC + Dserv) × 0,90 = (${fmt(DTC,2)} + ${fmt(Ds,2)}) × 0,90` : "DTC"} = <b>${fmt(DR,2)} kVA</b>`};
   r.id = id; r.q = q0; r.nQ = nQ; r.A = As;
   r.instT = partes.reduce((a,p)=>a+p.inst,0); r.P = Object.fromEntries(partes.map(p=>[p.k, p]));
@@ -7187,6 +7190,7 @@ function renderDemQuadro(){
       : `<label class="campo c3">Área ${met==="neo"?"construída":"útil"}<span class="unid"><input data-qf="area" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.area)}" placeholder="0"><b>m²</b></span></label>
         <label class="campo c3">Iluminação e tomadas<span class="unid"><input data-qf="ilum" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.ilum)}" placeholder="0"><b>kW</b></span></label>`}
       ${met==="enel" ? `<label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-qf="agrup" ${q.agrup?"checked":""}> Medição agrupada (prédio) · tabelas 4 a 10</label>` : ""}
+      ${met==="enel" && (q.agrup || dmEhGeral(q)) ? `<label class="chave c3" style="align-self:end;padding-bottom:10px" title="A Enel considera o nº de armários: o nº de usuários sobe para o múltiplo de 4 acima só para escolher a linha da tabela 4 a 10; os reservas não entram na soma${dmEhGeral(q)?". No quadro geral o arredondamento é feito sobre o total do prédio":""}"><input type="checkbox" data-qf="armRes" ${q.armRes?"checked":""}> Considerar armários reservas</label>` : ""}
       ${met==="light" ? `<label class="chave c3" style="align-self:end;padding-bottom:10px" title="RECON BT item 18: as unidades ligadas neste quadro formam um agrupamento de medidores"><input type="checkbox" data-qf="agrup" ${q.agrup?"checked":""}> Medição agrupada (prédio) · RECON item 18</label>
         <label class="chave c3" style="align-self:end;padding-bottom:10px" title="Serviço de uso do condomínio (seção A): iluminação pela linha garagens/áreas de serviço da tabela 1"><input type="checkbox" data-qf="serv" ${q.serv?"checked":""}> Quadro de serviço (condomínio)</label>
         ${lUnid || q.nres ? `<label class="chave c3" style="align-self:end;padding-bottom:10px" title="Loja, sala ou outra unidade não residencial: entra no agrupamento não residencial (seção A)"><input type="checkbox" data-qf="nres" ${q.nres?"checked":""}> Unidade não residencial (loja, sala)</label>` : ""}` : ""}
@@ -7899,7 +7903,7 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "c8cb0809·129", "0dac4058·90", "db19e32c·574", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352"];
+const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
