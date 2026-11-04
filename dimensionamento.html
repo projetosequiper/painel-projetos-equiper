@@ -3471,12 +3471,17 @@ function calcPluvial(){
 let PL = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null};
 const PL_SNAP = 20, PL_CX = 22, PL_PW = 140;
 const MODOS_PL = {
-  sel:   "Clique numa caixa para lançar as áreas de contribuição. Arraste para mover. Delete apaga o selecionado.",
+  sel:   "Clique numa caixa para lançar as áreas e as prumadas. Arraste a caixa ou uma prumada para mover. Delete apaga o selecionado.",
   caixa: "Clique no desenho para colocar uma caixa de areia; a janela de áreas abre em seguida.",
   ligar: "Clique na caixa de origem e depois na caixa (ou saída) que recebe a água.",
   saida: "Clique no desenho para colocar a saída final (rede pública, sarjeta…).",
   apagar:"Clique numa caixa, saída ou tubulação para apagar."
 };
+function plPosPrum(c, k){                                   // posição da prumada em relação ao centro da caixa (automática, ou a que o usuário arrastou)
+  const ps = c.prumadas||[], n = ps.length, p = ps[k];
+  if(p && p.pos && isFinite(p.pos.x) && isFinite(p.pos.y)) return {x:+p.pos.x, y:+p.pos.y};
+  return {x:(k-(n-1)/2)*PL_PW-40, y:-(PL_CX+56)};
+}
 function plProxNome(){ let k=1; const nomes = new Set(S.plu.caixas.map(c=>c.nome)); while(nomes.has(`CA-${k}`)) k++; return `CA-${k}`; }
 function plPonto(ev){
   const svg = $("pl-canvas"), p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY;
@@ -3491,8 +3496,7 @@ function plAbaixo(id, alvo){                                // alvo está a jusa
 function plDesenho(R, interativo){
   const P = S.plu, els = [];
   const todos = [...P.caixas, ...P.saidas];
-  const prExt = P.caixas.map(c=>{ const n = R.prumadas.filter(x=>x.c===c).length;
-    return n ? {lo: c.x-((n-1)/2*PL_PW+40+20), hi: c.x+((n-1)/2*PL_PW-40+18+120), top: c.y-(PL_CX+56)-34} : null; }).filter(Boolean);
+  const prExt = R.prumadas.map(x=>{ const q = plPosPrum(x.c, x.k); return {lo: x.c.x+q.x-20, hi: x.c.x+q.x+18+120, top: x.c.y+q.y-34}; });
   const esq = Math.min(0, ...prExt.map(e=>e.lo-10)), topo = Math.min(0, ...prExt.map(e=>e.top));
   const W = Math.max(900, ...todos.map(e=>e.x+220), ...prExt.map(e=>e.hi+20)) - esq, H = Math.max(500, ...todos.map(e=>e.y+160)) - topo;
   const selId = PL.sel && PL.sel.id;
@@ -3512,10 +3516,16 @@ function plDesenho(R, interativo){
   P.caixas.forEach(c=>{
     const sel = selId===c.id, ori = PL.origem===c.id, sem = R.semSaida.includes(c);
     const prs = R.prumadas.filter(x=>x.c===c), nP = prs.length;
-    const prSvg = prs.map((x,k)=>{
-      const px = (k-(nP-1)/2)*PL_PW - 40, py = -(PL_CX+56), ax = Math.max(-PL_CX+8, Math.min(PL_CX-8, px)), er = !!x.erro, meio = (py+13-PL_CX)/2;
-      const tubo = x.p.desvio ? `M${px} ${py+13} L${px} ${meio-5} L${px+9} ${meio+5} L${ax} ${-PL_CX-2}` : `M${px} ${py+13} L${ax} ${-PL_CX-2}`;
-      return `<g class="pl-pr ${er?"err":""}"><path d="${tubo}" class="tb" fill="none" marker-end="url(#pl-seta${er?"-err":""})"/>
+    const prSvg = prs.map(x=>{
+      const q = plPosPrum(c, x.k), px = q.x, py = q.y, er = !!x.erro, F = PL_CX+2;
+      // ponto de chegada na borda da caixa, do lado em que a prumada está
+      let ex, ey;
+      if(py <= -PL_CX){ ex = Math.max(-PL_CX+8, Math.min(PL_CX-8, px)); ey = -F; }
+      else if(py >= PL_CX){ ex = Math.max(-PL_CX+8, Math.min(PL_CX-8, px)); ey = F; }
+      else { ex = px < 0 ? -F : F; ey = Math.max(-PL_CX+8, Math.min(PL_CX-8, py)); }
+      const vx = ex-px, vy = ey-py, L = Math.hypot(vx,vy)||1, ux = vx/L, uy = vy/L, sx = px+ux*13, sy = py+uy*13, mx = (sx+ex)/2, my = (sy+ey)/2;
+      const tubo = x.p.desvio ? `M${sx} ${sy} L${mx-ux*5} ${my-uy*5} L${mx+ux*5-uy*9} ${my+uy*5+ux*9} L${ex} ${ey}` : `M${sx} ${sy} L${ex} ${ey}`;
+      return `<g class="pl-pr ${er?"err":""}" data-tipo="prum" data-id="${c.id}" data-k="${x.k}"><path d="${tubo}" class="tb" fill="none" marker-end="url(#pl-seta${er?"-err":""})"/>
         <circle cx="${px}" cy="${py}" r="13" class="pc"/><text x="${px}" y="${py+4}" class="pn" text-anchor="middle">${esc(String(x.p.nome||"P").slice(0,4))}</text>
         <text x="${px+18}" y="${py-6}" class="tdm">${x.d?"ø"+x.d:"?"} · ${plPct(x.iP)}%</text>
         <text x="${px+18}" y="${py+8}" class="tar">térreo ${x.dT?"ø"+x.dT:"?"} · ${plPct(x.iT)}%</text>
@@ -3560,7 +3570,7 @@ function plDesenho(R, interativo){
     .sd{fill:#fff;stroke:#000;stroke-width:2}.sd2{fill:none;stroke:#000;stroke-width:2}.elast{stroke:#d10a1e;stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none}
     .pl-cx,.pl-sd{cursor:pointer}
     .pc{fill:#fff;stroke:#000;stroke-width:1.5}.pn{font:700 11px Barlow,Arial,sans-serif;fill:#000}.pl-pr .tdm{font-size:14px}.pl-pr .tar{font-size:12px}
-    .pl-pr.err .tb{stroke:#d10a1e;stroke-dasharray:6 4}.pl-pr.err .pc{stroke:#d10a1e}</style>${els.join("")}`};
+    .pl-pr{cursor:move}.pl-pr.err .tb{stroke:#d10a1e;stroke-dasharray:6 4}.pl-pr.err .pc{stroke:#d10a1e}</style>${els.join("")}`};
 }
 function renderPlCanvas(R){
   const d = plDesenho(R, true), svg = $("pl-canvas");
@@ -3711,7 +3721,18 @@ function ligarPluvial(){
   });
   const svg = $("pl-canvas");
   svg.addEventListener("pointerdown", e=>{
-    const alvo = e.target.closest("[data-tipo]"), tipo = alvo?.dataset.tipo, id = alvo?.dataset.id, pt = plPonto(e);
+    const alvo = e.target.closest("[data-tipo]"), id = alvo?.dataset.id, pt = plPonto(e);
+    let tipo = alvo?.dataset.tipo;
+    if(tipo==="prum"){
+      if(PL.modo==="sel"){                                  // arrastar a prumada para onde ficar melhor no desenho
+        const c = P().caixas.find(x=>x.id===id), k = +alvo.dataset.k; if(!c || !c.prumadas || !c.prumadas[k]) return;
+        const q = plPosPrum(c, k);
+        PL.sel = {tipo:"caixa", id}; plFecharPop();
+        PL.arrasto = {prum:c.prumadas[k], c, obj:c, dx:q.x-(pt.x-c.x), dy:q.y-(pt.y-c.y), moveu:false};
+        svg.setPointerCapture(e.pointerId); renderPluvial(); return;
+      }
+      tipo = "caixa";                                       // nas outras ferramentas a prumada age como a própria caixa
+    }
     if(PL.modo==="caixa"){
       if(tipo==="caixa"){ plAbrirPop(id, true); return; }
       if(tipo==="saida"){ PL.sel = {tipo, id}; plFecharPop(); renderPluvial(); return; }
@@ -3756,6 +3777,11 @@ function ligarPluvial(){
   svg.addEventListener("pointermove", e=>{
     const pt = plPonto(e);
     if(PL.modo==="ligar" && PL.origem){ PL.mouse = pt; renderPlCanvas(calcPluvial()); return; }
+    if(PL.arrasto && PL.arrasto.prum){
+      const a = PL.arrasto, nx = Math.round((pt.x-a.c.x+a.dx)/10)*10, ny = Math.round((pt.y-a.c.y+a.dy)/10)*10, q = a.prum.pos;
+      if(!q || q.x!==nx || q.y!==ny){ a.prum.pos = {x:nx, y:ny}; a.moveu = true; renderPlCanvas(calcPluvial()); }
+      return;
+    }
     if(PL.arrasto){
       const a = PL.arrasto, nx = Math.max(PL_SNAP*2, Math.round((pt.x+a.dx)/PL_SNAP)*PL_SNAP), ny = Math.max(PL_SNAP*2, Math.round((pt.y+a.dy)/PL_SNAP)*PL_SNAP);
       if(nx!==a.obj.x || ny!==a.obj.y){ a.obj.x = nx; a.obj.y = ny; a.moveu = true; renderPlCanvas(calcPluvial()); }
@@ -3811,6 +3837,7 @@ function ligarPluvial(){
     if(e.target.closest("[data-pp-add]")){
       c.prumadas = c.prumadas || []; let k = c.prumadas.length+1; const nomes = new Set(c.prumadas.map(p=>p.nome)); while(nomes.has(`P${k}`)) k++;
       c.prumadas.push({id:uid(), nome:`P${k}`, inc:PLU_I_PRUM_MAX, desvio:false, areas:[{tipo:"telhado", area:""}]}); plRenderPop(true); plAlterou(); return; }
+    if(e.target.closest("[data-pp-auto]")){ if(prum){ delete prum.pos; plRenderPop(); plAlterou(); } return; }
     if(e.target.closest("[data-pp-rm]")){ if(prum){ c.prumadas.splice(+prEl.dataset.k,1); plRenderPop(); plAlterou(); } return; }
     if(e.target.closest("[data-pa-add]")){ (prum ? prum.areas : c.areas).push({tipo:prum?"telhado":"piso", area:""}); plRenderPop(true); plAlterou(); return; }
     if(e.target.closest("[data-pa-rm]")){ (prum ? prum.areas : c.areas).splice(+e.target.closest(".pl-area").dataset.j,1); plRenderPop(); plAlterou(); return; }
@@ -3835,6 +3862,7 @@ function htmlEditorCaixa(c){
     <h5 class="pl-sec-t">Prumadas que descem nesta caixa</h5>
     ${(c.prumadas||[]).map((p,k)=>`<div class="pl-prum" data-k="${k}">
       <div class="pl-prum-cab"><label class="campo">Prumada<input data-pp="nome" value="${esc(p.nome)}"></label><button class="x" type="button" data-pp-rm aria-label="Remover prumada">×</button></div>
+      ${p.pos ? `<button class="lnk" type="button" data-pp-auto style="margin-top:6px">voltar à posição automática no desenho</button>` : ""}
       <div class="pl-prum-par">
         <label class="campo">Inclinação da prumada<select data-pp="inc" ${p.desvio?"disabled":""}>${[1,2,3,4].map(v=>`<option value="${v}" ${(p.desvio?PLU_I_DESVIO:plInc(p))===v?"selected":""}>${v}%${v===PLU_I_PRUM_MAX?" (descida direta)":""}</option>`).join("")}</select></label>
         <label class="chave"><input type="checkbox" data-pp="desvio" ${p.desvio?"checked":""}> Tem desvio no meio da prumada (calcula com ${PLU_I_DESVIO}%)</label>
