@@ -1864,7 +1864,7 @@
     });
   }
   async function saveRegistrosArt(){ if(!dadosOk.art){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-registros-art', JSON.stringify(state.registrosArt), true); }catch(e){ mostrarErroSalvamento('ART', saveRegistrosArt); } }
-  async function saveDimensionamentos(){ if(!dadosOk.dim){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-dimensionamentos', JSON.stringify(state.dimensionamentos), true); }catch(e){ mostrarErroSalvamento('dimensionamento', saveDimensionamentos); } }
+  async function saveDimensionamentos(){ if(!dadosOk.dim){ avisarSalvamentoBloqueado(); return false; } try{ await window.storage.set('clm-dimensionamentos', JSON.stringify(state.dimensionamentos), true); return true; }catch(e){ mostrarErroSalvamento('dimensionamento', saveDimensionamentos); return false; } }
 
   var CONSIDERACAO_ESQUEMA = [
     { chave:'esgoto', titulo:'Esgoto Sanitário', campos:[
@@ -2186,7 +2186,7 @@
   function renderProjetosList(){
     var el = document.getElementById('projetosList');
     el.innerHTML = '';
-    var lista = state.projetos.filter(function(pj){ return !pj.avulso; }).sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
+    var lista = state.projetos.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
     if(buscaProjetoTexto){
       var q = buscaProjetoTexto.toLowerCase();
       lista = lista.filter(function(pj){ return pj.nome.toLowerCase().indexOf(q) !== -1; });
@@ -2224,7 +2224,7 @@
       var row = document.createElement('div');
       row.className = 'projeto-row';
       var nTarefas = state.tarefas.filter(function(t){ return t.projetoId === pj.id; }).length;
-      row.innerHTML = '<div class="info"><b>'+escapeHtml(pj.nome)+'</b><span>'+nTarefas+' disciplina(s)</span></div>';
+      row.innerHTML = '<div class="info"><b>'+escapeHtml(pj.nome)+'</b>'+(pj.avulso ? ' <span style="font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--border);">avulso</span>' : '')+'<span>'+nTarefas+' disciplina(s)</span></div>';
       var acts = document.createElement('div');
       acts.className = 'acts';
       var addT = document.createElement('button'); addT.textContent = '+ Disciplina';
@@ -3048,11 +3048,11 @@
       var editing = form.projetoId ? state.projetos.find(function(p){ return p.id === form.projetoId; }) : null;
       var pj = editing || { nome:'', cliente:'' };
       wrap.innerHTML =
-        '<div class="panel"><h3>'+(editing?'Editar projeto':'Novo projeto')+'</h3>'+
+        '<div class="panel"><h3>'+(editing?'Editar projeto':'Tarefa avulsa (sem cliente cadastrado)')+'</h3>'+
         '<div class="form-grid">'+
-          '<div class="full"><label>Cliente</label><input type="text" id="inCliente" value="'+escapeHtml(pj.cliente)+'" placeholder="Nome do cliente"></div>'+
+          '<div class="full"><label>Cliente</label><input type="text" id="inCliente" value="'+escapeHtml(pj.cliente)+'" placeholder="Nome do cliente ou do assunto"></div>'+
           '<div class="full error" id="formError" style="display:none"></div>'+
-          '<div class="form-actions"><button class="btn" id="btnSalvar">'+(editing?'Salvar':'Criar projeto')+'</button><button class="btn secondary" id="btnCancelar">Cancelar</button></div>'+
+          '<div class="form-actions"><button class="btn" id="btnSalvar">'+(editing?'Salvar':'Continuar e adicionar a tarefa')+'</button><button class="btn secondary" id="btnCancelar">Cancelar</button></div>'+
         '</div></div>';
       document.getElementById('btnCancelar').onclick = closeForm;
       document.getElementById('btnSalvar').onclick = function(){
@@ -3060,7 +3060,15 @@
         var errEl = document.getElementById('formError');
         if(!cliente){ errEl.textContent = 'Preencha o nome do cliente.'; errEl.style.display='block'; return; }
         if(editing){ editing.nome = cliente; editing.cliente = cliente; }
-        else { state.projetos.unshift({ id: uid('pj'), nome:cliente, cliente:cliente, avulso:true }); }
+        else {
+          var existente = state.projetos.find(function(p){ return normalizarTexto(p.nome) === normalizarTexto(cliente); });
+          var alvo = existente || { id: uid('pj'), nome:cliente, cliente:cliente, avulso:true };
+          if(!existente){ state.projetos.unshift(alvo); saveProjetos(); }
+          closeForm(); render();
+          openTarefaForm(alvo.id, null);      // já abre "Nova disciplina" para esse cliente
+          try{ document.getElementById('formPanelTarefa').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){}
+          return;
+        }
         saveProjetos(); closeForm(); render();
       };
       return;
@@ -4089,7 +4097,10 @@
         } else if(msg.tipo === 'dimensionamento-salvo'){
           if(!msg.clienteId) return;
           state.dimensionamentos[msg.clienteId] = msg.dados;
-          saveDimensionamentos();
+          var seqSalvo = msg.seq, origemSalvo = e.source;
+          Promise.resolve(saveDimensionamentos()).then(function(ok){
+            try{ if(origemSalvo) origemSalvo.postMessage({ tipo: 'dimensionamento-salvo-ok', seq: seqSalvo, ok: !!ok }, '*'); }catch(err){}
+          });
         }
       });
     }
@@ -7340,7 +7351,7 @@
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '30/10/2026 · fase 3k';
+  var VERSAO_APP = '04/11/2026 · fase 3m';
   // avisa quando há versão nova publicada (aparelho com o app aberto há dias continua na versão antiga)
   async function verificarNovaVersao(){
     try{

@@ -285,6 +285,17 @@ svg.diag{display:block;max-width:none}
 .pl-pop .pl-area{background:var(--cinza-1)}
 .pl-pop .pl-tot{font-size:13px}
 .pl-pop-rod{display:flex;justify-content:flex-end;margin-top:10px}
+.pl-pop{width:340px;max-height:min(600px,75vh);overflow-y:auto}
+.pl-sec-t{font-family:var(--cond);font-size:16px;margin:12px 0 2px;border-top:1px solid var(--cinza-2);padding-top:10px}
+.pl-prum{background:var(--cinza-1);border-left:3px solid var(--vermelho);border-radius:4px;padding:8px;margin-top:8px}
+.pl-prum .pl-area{background:var(--branco)}
+.pl-prum-cab{display:flex;gap:8px;align-items:end}
+.pl-prum-cab .campo{flex:1;margin:0}
+.pl-prum-cab .x{width:34px;height:42px}
+.pl-prum-par{display:grid;gap:8px;margin-top:8px}
+.pl-prum-par .campo{margin:0}
+.pl-prum-par .chave{font-size:14px}
+.pl-sub{font-family:var(--cond);font-size:18px;margin:14px 0 6px}
 
 /* Hidráulica */
 #hd-canvas{display:block;max-width:none;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1533,7 +1544,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <h2>Dados de projeto</h2>
       <div class="grade">
         <label class="campo c2">Intensidade pluviométrica<span class="unid"><input id="pl-I" type="number" min="1" step="1" inputmode="decimal"><b>mm/h</b></span></label>
-        <label class="campo c2">Declividade<select id="pl-i"><option value="0.5">0,5%</option><option value="1">1%</option><option value="2">2%</option><option value="3">3%</option><option value="4">4%</option></select></label>
+        <label class="campo c2">Declividade entre caixas<select id="pl-i"><option value="0.5">0,5%</option><option value="1">1%</option><option value="2">2%</option><option value="3">3%</option><option value="4">4%</option></select></label>
         <label class="campo c2">Material<select id="pl-n"><option value="0.011">Liso (PVC) · n = 0,011</option><option value="0.012">Áspero · n = 0,012</option><option value="0.013">Muito áspero (manilha) · n = 0,013</option></select></label>
         <label class="campo c3">Altura da lâmina<select id="pl-lamina"><option value="23">2/3 do diâmetro</option><option value="plena">Seção plena</option></select></label>
         <label class="campo c3">Diâmetro mínimo<select id="pl-dmin"><option value="50">50 mm</option><option value="75">75 mm</option><option value="100">100 mm</option><option value="150">150 mm</option></select></label>
@@ -2816,8 +2827,8 @@ function resumo(){
     return;
   }
   if(S.modulo==="plu"){
-    const R = calcPluvial(), f = R.trechos.filter(t=>t.erro).length + R.semSaida.length;
-    $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${S.plu.caixas.length} caixa${S.plu.caixas.length!==1?"s":""} · ${R.trechos.length} tubo${R.trechos.length!==1?"s":""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.trechos.length ? "Todos dimensionados" : ""}</span>`;
+    const R = calcPluvial(), f = R.trechos.filter(t=>t.erro).length + R.semSaida.length + R.prumadas.filter(x=>x.erro).length;
+    $("resumo").innerHTML = `<span class="pilula ${f?"falha":""}">${S.plu.caixas.length} caixa${S.plu.caixas.length!==1?"s":""} · ${R.trechos.length} tubo${R.trechos.length!==1?"s":""}${R.prumadas.length?` · ${R.prumadas.length} prumada${R.prumadas.length!==1?"s":""}`:""}</span><span class="rotulo">${f ? `${f} pendência${f>1?"s":""}` : R.trechos.length ? "Todos dimensionados" : ""}</span>`;
     return;
   }
   if(S.modulo==="gas"){
@@ -3156,7 +3167,7 @@ function resumoObraBase(dados){
     }
     if(S.plu.caixas.length){
       const R = calcPluvial(), fim = [...R.trechos].sort((a,b)=>b.area-a.area)[0];
-      out.push({mod:"plu", det:`${S.plu.caixas.length} caixa(s), ${R.trechos.length} tubo(s)${fim&&fim.d?` · maior ø${fim.d} (${fmt(fim.area,0)} m²)`:""}`, ok: R.trechos.length>0 && !R.trechos.some(t=>t.erro) && !R.semSaida.length});
+      out.push({mod:"plu", det:`${S.plu.caixas.length} caixa(s), ${R.trechos.length} tubo(s)${fim&&fim.d?` · maior ø${fim.d} (${fmt(fim.area,0)} m²)`:""}`, ok: R.trechos.length>0 && !R.trechos.some(t=>t.erro) && !R.semSaida.length && !R.prumadas.some(x=>x.erro)});
     }
     return out;
   });
@@ -3401,23 +3412,38 @@ function geomTubo(t, lamina){
   if(lamina==="plena"){ const D = t.d/1000; return {A:3.1415*D*D/4, P:3.1415*D}; }
   return {A:t.A, P:t.P};
 }
-function capTubo(t, P){                                   // vazão (l/min) e área máxima atendida (m²)
-  const g = geomTubo(t, P.lamina), RH = g.A/g.P;
-  const Q = 60000*(g.A/num(P.n))*Math.pow(RH,2/3)*Math.sqrt(num(P.i)/100);
+function capTubo(t, P, iPct){                             // vazão (l/min) e área máxima atendida (m²); iPct opcional (senão usa a declividade entre caixas)
+  const g = geomTubo(t, P.lamina), RH = g.A/g.P, i = iPct==null ? num(P.i) : iPct;
+  const Q = 60000*(g.A/num(P.n))*Math.pow(RH,2/3)*Math.sqrt(i/100);
   return {...g, RH, Q, Amax: Q*60/num(P.I)};
 }
+
+/* ---------- Prumadas ----------
+   Cada caixa pode receber prumadas (condutores verticais). Cada prumada tem as suas áreas, uma inclinação informada
+   (descida direta, até 4%) ou, se há desvio no meio dela, 1%. Ao virar na horizontal no térreo o caimento passa a 1%. */
+const PLU_I_DESVIO = 1, PLU_I_TERREO = 1, PLU_I_PRUM_MAX = 4;
+function plDimensiona(area, iPct, P){
+  const tab = TUBOS_PLU.filter(t=>t.d >= num(P.dmin)).map(t=>({t, ...capTubo(t, P, iPct)}));
+  const esc = tab.find(x=>x.Amax >= area);
+  return {tab, d: esc?esc.t.d:null, cap: esc?esc.Amax:null};
+}
+const plInc = p => p.desvio ? PLU_I_DESVIO : Math.min(PLU_I_PRUM_MAX, num(p.inc)>0 ? num(p.inc) : PLU_I_PRUM_MAX);
+const plPct = v => String(v).replace(".",",");
+function plPartes(areas){ return (areas||[]).filter(a=>num(a.area)>0).map(a=>`${fmt(num(a.area),1)} × ${String(coefArea(a)).replace(".",",")} <em>(${esc((TIPOS_AREA.find(t=>t.id===a.tipo)||{}).t||"")})</em>`); }
 
 /* ---------- Cálculo da rede de caixas ---------- */
 function calcPluvial(){
   const P = S.plu, caixas = P.caixas, saidas = P.saidas, lig = P.ligacoes;
   const porId = new Map([...caixas, ...saidas].map(x=>[x.id,x]));
-  const propria = c => (c.areas||[]).reduce((s,a)=>s + Math.max(0,num(a.area))*coefArea(a), 0);
+  const somaAreas = ar => (ar||[]).reduce((s,a)=>s + Math.max(0,num(a.area))*coefArea(a), 0);
+  const direta = c => somaAreas(c.areas);
+  const propria = c => direta(c) + (c.prumadas||[]).reduce((s,p)=>s + somaAreas(p.areas), 0);
   const entram = id => lig.filter(l=>l.para===id).map(l=>l.de);
   const memo = new Map();
   const acum = (id, pilha=new Set()) => {
     if(memo.has(id)) return memo.get(id);
     if(pilha.has(id)) return 0; pilha.add(id);
-    const c = porId.get(id); let a = c && c.areas ? propria(c) : 0;
+    const c = porId.get(id); let a = c && (c.areas||c.prumadas) ? propria(c) : 0;
     entram(id).forEach(u=>{ a += acum(u, pilha); });
     memo.set(id, a); return a;
   };
@@ -3431,12 +3457,19 @@ function calcPluvial(){
   });
   const semSaida = caixas.filter(c=>!lig.some(l=>l.de===c.id));
   const totalSaidas = saidas.map(s=>({s, area: acum(s.id)}));
-  return {trechos, tabela, semSaida, totalSaidas, propria, acum, porId};
+  const prumadas = [];
+  caixas.forEach(c=>(c.prumadas||[]).forEach((p,k)=>{
+    const area = somaAreas(p.areas), Q = area*num(P.I)/60, iP = plInc(p);
+    const a = plDimensiona(area, iP, P), b = plDimensiona(area, PLU_I_TERREO, P);
+    prumadas.push({c, p, k, area, Q, iP, iT:PLU_I_TERREO, d:a.d, cap:a.cap, tab:a.tab, dT:b.d, capT:b.cap, tabT:b.tab,
+      erro: area<=0 ? "Sem área contribuinte" : (!a.d||!b.d) ? "Acima de 600 mm" : null, rot:`${p.nome||"P"} → ${c.nome}`});
+  }));
+  return {trechos, tabela, semSaida, totalSaidas, propria, direta, acum, porId, prumadas};
 }
 
 /* ---------- Editor (estilo Ftool) ---------- */
 let PL = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null};
-const PL_SNAP = 20, PL_CX = 22;
+const PL_SNAP = 20, PL_CX = 22, PL_PW = 140;
 const MODOS_PL = {
   sel:   "Clique numa caixa para lançar as áreas de contribuição. Arraste para mover. Delete apaga o selecionado.",
   caixa: "Clique no desenho para colocar uma caixa de areia; a janela de áreas abre em seguida.",
@@ -3458,7 +3491,10 @@ function plAbaixo(id, alvo){                                // alvo está a jusa
 function plDesenho(R, interativo){
   const P = S.plu, els = [];
   const todos = [...P.caixas, ...P.saidas];
-  const W = Math.max(900, ...todos.map(e=>e.x+220)), H = Math.max(500, ...todos.map(e=>e.y+160));
+  const prExt = P.caixas.map(c=>{ const n = R.prumadas.filter(x=>x.c===c).length;
+    return n ? {lo: c.x-((n-1)/2*PL_PW+40+20), hi: c.x+((n-1)/2*PL_PW-40+18+120), top: c.y-(PL_CX+56)-34} : null; }).filter(Boolean);
+  const esq = Math.min(0, ...prExt.map(e=>e.lo-10)), topo = Math.min(0, ...prExt.map(e=>e.top));
+  const W = Math.max(900, ...todos.map(e=>e.x+220), ...prExt.map(e=>e.hi+20)) - esq, H = Math.max(500, ...todos.map(e=>e.y+160)) - topo;
   const selId = PL.sel && PL.sel.id;
   // tubulações
   R.trechos.forEach(t=>{
@@ -3475,10 +3511,20 @@ function plDesenho(R, interativo){
   // caixas
   P.caixas.forEach(c=>{
     const sel = selId===c.id, ori = PL.origem===c.id, sem = R.semSaida.includes(c);
+    const prs = R.prumadas.filter(x=>x.c===c), nP = prs.length;
+    const prSvg = prs.map((x,k)=>{
+      const px = (k-(nP-1)/2)*PL_PW - 40, py = -(PL_CX+56), ax = Math.max(-PL_CX+8, Math.min(PL_CX-8, px)), er = !!x.erro, meio = (py+13-PL_CX)/2;
+      const tubo = x.p.desvio ? `M${px} ${py+13} L${px} ${meio-5} L${px+9} ${meio+5} L${ax} ${-PL_CX-2}` : `M${px} ${py+13} L${ax} ${-PL_CX-2}`;
+      return `<g class="pl-pr ${er?"err":""}"><path d="${tubo}" class="tb" fill="none" marker-end="url(#pl-seta${er?"-err":""})"/>
+        <circle cx="${px}" cy="${py}" r="13" class="pc"/><text x="${px}" y="${py+4}" class="pn" text-anchor="middle">${esc(String(x.p.nome||"P").slice(0,4))}</text>
+        <text x="${px+18}" y="${py-6}" class="tdm">${x.d?"ø"+x.d:"?"} · ${plPct(x.iP)}%</text>
+        <text x="${px+18}" y="${py+8}" class="tar">térreo ${x.dT?"ø"+x.dT:"?"} · ${plPct(x.iT)}%</text>
+        <text x="${px+18}" y="${py+21}" class="ca ${er?"err":""}">${fmt(x.area,1)} m²${x.p.desvio?" · desvio":""}</text></g>`; }).join("");
     els.push(`<g class="pl-cx ${sel?"sel":""} ${ori?"ori":""}" data-tipo="caixa" data-id="${c.id}" transform="translate(${c.x} ${c.y})">
+      ${prSvg}
       <rect x="${-PL_CX}" y="${-PL_CX}" width="${PL_CX*2}" height="${PL_CX*2}" class="cx"/>
       <rect x="${-PL_CX+7}" y="${-PL_CX+7}" width="${PL_CX*2-14}" height="${PL_CX*2-14}" class="cx2"/>
-      <text y="${-PL_CX-8}" class="cn" text-anchor="middle">${esc(c.nome)}</text>
+      ${nP ? `<text x="${-PL_CX-6}" y="${-PL_CX+6}" class="cn" text-anchor="end">${esc(c.nome)}</text>` : `<text y="${-PL_CX-8}" class="cn" text-anchor="middle">${esc(c.nome)}</text>`}
       <text y="${PL_CX+17}" class="ca" text-anchor="middle">Contrib. ${fmt(R.propria(c),1)} m²</text>
       <text y="${PL_CX+33}" class="ct" text-anchor="middle">Total ${fmt(R.acum(c.id),1)} m²</text>
       ${sem&&interativo?`<text y="${PL_CX+49}" class="ca err" text-anchor="middle">sem saída</text>`:""}</g>`);
@@ -3496,13 +3542,13 @@ function plDesenho(R, interativo){
     const o = P.caixas.find(c=>c.id===PL.origem);
     if(o) els.push(`<line x1="${o.x}" y1="${o.y}" x2="${PL.mouse.x}" y2="${PL.mouse.y}" class="elast"/>`);
   }
-  let vb = `0 0 ${W} ${H}`;
+  let vb = `${esq} ${topo} ${W} ${H}`;
   if(!interativo){                                          // impressão: recorta no conteúdo
     const xs = todos.map(e=>e.x), ys = todos.map(e=>e.y);
-    const x0 = Math.min(...xs)-90, y0 = Math.min(...ys)-60, x1 = Math.max(...xs)+90, y1 = Math.max(...ys)+80;
+    const x0 = Math.min(Math.min(...xs)-90, ...prExt.map(e=>e.lo-10)), y0 = Math.min(Math.min(...ys)-60, ...prExt.map(e=>e.top-6)), x1 = Math.max(Math.max(...xs)+90, ...prExt.map(e=>e.hi+10)), y1 = Math.max(...ys)+80;
     vb = `${x0} ${y0} ${x1-x0} ${y1-y0}`;
   }
-  const grade = interativo ? `<defs><pattern id="pl-grade" width="${PL_SNAP}" height="${PL_SNAP}" patternUnits="userSpaceOnUse"><circle cx="0" cy="0" r="1" fill="#cfcfcf"/></pattern></defs><rect x="0" y="0" width="${W}" height="${H}" fill="url(#pl-grade)" data-tipo="fundo"/>` : "";
+  const grade = interativo ? `<defs><pattern id="pl-grade" width="${PL_SNAP}" height="${PL_SNAP}" patternUnits="userSpaceOnUse"><circle cx="0" cy="0" r="1" fill="#cfcfcf"/></pattern></defs><rect x="${esq}" y="${topo}" width="${W}" height="${H}" fill="url(#pl-grade)" data-tipo="fundo"/>` : "";
   return {vb, W, H, svg:`${grade}
     <defs><marker id="pl-seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#000"/></marker>
     <marker id="pl-seta-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#d10a1e"/></marker></defs>
@@ -3512,7 +3558,9 @@ function plDesenho(R, interativo){
     .cn{font:700 17px 'Barlow Condensed',Arial,sans-serif;fill:#d10a1e}.ca{font:500 13px Barlow,Arial,sans-serif;fill:#555}.ca.err{fill:#d10a1e}.ct{font:700 13px Barlow,Arial,sans-serif;fill:#000}
     .cn,.ca,.ct,.tdm,.tar{paint-order:stroke;stroke:#fafafa;stroke-width:4px;stroke-linejoin:round}
     .sd{fill:#fff;stroke:#000;stroke-width:2}.sd2{fill:none;stroke:#000;stroke-width:2}.elast{stroke:#d10a1e;stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none}
-    .pl-cx,.pl-sd{cursor:pointer}</style>${els.join("")}`};
+    .pl-cx,.pl-sd{cursor:pointer}
+    .pc{fill:#fff;stroke:#000;stroke-width:1.5}.pn{font:700 11px Barlow,Arial,sans-serif;fill:#000}.pl-pr .tdm{font-size:14px}.pl-pr .tar{font-size:12px}
+    .pl-pr.err .tb{stroke:#d10a1e;stroke-dasharray:6 4}.pl-pr.err .pc{stroke:#d10a1e}</style>${els.join("")}`};
 }
 function renderPlCanvas(R){
   const d = plDesenho(R, true), svg = $("pl-canvas");
@@ -3533,7 +3581,7 @@ function renderPlPainel(R){
     const nC = P.caixas.length, nL = P.ligacoes.length;
     pn.innerHTML = `<h4>Nada selecionado</h4>
       <p class="dica" style="margin-top:0">${nC ? `${nC} caixa${nC!==1?"s":""}, ${nL} tubulaç${nL!==1?"ões":"ão"}, ${P.saidas.length} saída${P.saidas.length!==1?"s":""}.` : "Comece colocando as caixas de areia com a ferramenta <b>Caixa de areia</b>."}</p>
-      <p class="dica">Selecione uma caixa para lançar as áreas de contribuição (telhado, piso, grama…).</p>
+      <p class="dica">Selecione uma caixa para lançar as áreas de contribuição (telhado, piso, grama…) e as prumadas que descem nela.</p>
       ${R.semSaida.length && nL ? `<p class="dica mc-aviso">Sem saída: ${R.semSaida.map(c=>esc(c.nome)).join(", ")}.</p>` : ""}`;
     return;
   }
@@ -3541,8 +3589,10 @@ function renderPlPainel(R){
     const c = P.caixas.find(x=>x.id===sel.id); if(!c){ PL.sel=null; return renderPlPainel(R); }
     const ar = (c.areas||[]).filter(a=>num(a.area)>0);
     pn.innerHTML = `<h4>${esc(c.nome)}</h4>
+      ${R.prumadas.some(x=>x.c===c) ? `<p class="dica" style="margin:0 0 6px">Lançado direto na caixa:</p>` : ""}
       ${ar.length ? `<ul class="cli-mods" style="margin:0">${ar.map(a=>`<li style="grid-template-columns:1fr auto"><span>${esc((TIPOS_AREA.find(t=>t.id===a.tipo)||{}).t||"")}</span><b>${fmt(num(a.area),1)} m²</b></li>`).join("")}</ul>` : `<p class="dica" style="margin-top:0">Nenhuma área lançada.</p>`}
-      <button class="btn peq" type="button" data-abrir-pop style="margin-top:10px;width:100%">Editar áreas de contribuição</button>
+      ${R.prumadas.some(x=>x.c===c) ? `<h4 style="font-size:16px;margin:12px 0 6px">Prumadas</h4><ul class="cli-mods" style="margin:0">${R.prumadas.filter(x=>x.c===c).map(x=>`<li style="grid-template-columns:1fr auto"><span>${esc(x.p.nome)} · ${fmt(x.area,1)} m² · ${plPct(x.iP)}%${x.p.desvio?" (desvio)":""}</span><b>${x.d?"ø"+x.d:"?"} / térreo ${x.dT?"ø"+x.dT:"?"}</b></li>`).join("")}</ul>` : ""}
+      <button class="btn peq" type="button" data-abrir-pop style="margin-top:10px;width:100%">Editar áreas e prumadas</button>
       <dl class="pl-tot"></dl>`;
     renderPlPainelTot(R, c, pn.querySelector(".pl-tot"));
     return;
@@ -3581,11 +3631,15 @@ function renderPluvial(semPainel){
   document.querySelectorAll(".pl-ferr [data-modo]").forEach(b=>b.classList.toggle("on", b.dataset.modo===PL.modo));
   // ordem de montante para jusante
   const ord = [...R.trechos].sort((a,b)=>a.area-b.area);
-  $("pl-quadro").innerHTML = ord.length ? `<table class="quadro"><thead><tr><th>Tubulação</th><th class="n">Área acumulada</th><th class="n">Vazão</th><th class="n">Compr.</th><th>Diâmetro</th><th class="n">Capacidade</th></tr></thead><tbody>
+  const qPr = R.prumadas.length ? `<h4 class="pl-sub">Prumadas</h4><table class="quadro"><thead><tr><th>Prumada</th><th class="n">Área</th><th class="n">Vazão</th><th class="n">Declividade</th><th>Ø da prumada</th><th>Ø no térreo (${plPct(PLU_I_TERREO)}%)</th></tr></thead><tbody>
+    ${R.prumadas.map(x=>`<tr><td>${esc(x.rot)}${x.p.desvio?" <small>(com desvio)</small>":""}</td><td class="n">${fmt(x.area,1)} m²</td><td class="n">${fmt(x.Q,1)} l/min</td><td class="n">${plPct(x.iP)}%</td>
+      <td class="d ${x.erro?"falha":""}">${x.d?`ø${x.d} mm`:`<span style="font:600 14px var(--sans)">${x.erro}</span>`}</td><td class="d ${x.erro?"falha":""}">${x.dT?`ø${x.dT} mm`:"—"}</td></tr>`).join("")}</tbody></table>
+    <p class="fonte">Prumada: declividade informada (descida direta, até ${PLU_I_PRUM_MAX}%) ou ${PLU_I_DESVIO}% quando há desvio. Ao virar na horizontal no térreo, o caimento passa a ${PLU_I_TERREO}%.</p><h4 class="pl-sub">Entre caixas</h4>` : "";
+  $("pl-quadro").innerHTML = qPr + (ord.length ? `<table class="quadro"><thead><tr><th>Tubulação</th><th class="n">Área acumulada</th><th class="n">Vazão</th><th class="n">Compr.</th><th>Diâmetro</th><th class="n">Capacidade</th></tr></thead><tbody>
     ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.area,1)} m²</td><td class="n">${fmt(t.Q,1)} l/min</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1)+" m":"—"}</td>
       <td class="d ${t.erro?"falha":""}">${t.d?`ø${t.d} mm`:`<span style="font:600 14px var(--sans)">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap,1)+" m²":"—"}</td></tr>`).join("")}</tbody></table>
     <p class="fonte">Diâmetro = menor tubo (a partir de ${num(P.dmin)} mm) cuja área máxima atendida, com declividade de ${fmt(num(P.i),1)}% e ${P.lamina==="plena"?"seção plena":"lâmina de 2/3"}, é igual ou maior que a área acumulada.</p>`
-    : `<p class="vazio">Ligue as caixas para ver o dimensionamento.</p>`;
+    : (R.prumadas.length ? `<p class="vazio">Ligue as caixas para ver o dimensionamento entre elas.</p>` : `<p class="vazio">Ligue as caixas para ver o dimensionamento.</p>`));
   $("pl-memorial").innerHTML = memorialPluvial(R);
   return R;
 }
@@ -3603,9 +3657,20 @@ function memorialPluvial(R){
     <tr><th>Q (l/min)</th>${R.tabela.map(x=>`<td>${fmt(x.Q,1)}</td>`).join("")}</tr>
     <tr><th>A máx (m²)</th>${R.tabela.map(x=>`<td>${fmt(x.Amax,1)}</td>`).join("")}</tr></table></div></div>`;
   h += `<div class="mc-bloco"><h4>Áreas de contribuição por caixa</h4>` + P.caixas.map(c=>{
-    const partes = (c.areas||[]).filter(a=>num(a.area)>0).map(a=>`${fmt(num(a.area),1)} × ${String(coefArea(a)).replace(".",",")} <em>(${esc((TIPOS_AREA.find(t=>t.id===a.tipo)||{}).t||"")})</em>`);
-    return `<p class="mc-l"><b>${esc(c.nome)}:</b> A<sub>eq</sub> = ${partes.join(" + ") || "0"} = <b>${fmt(R.propria(c),2)} m²</b></p>`;
+    const partes = plPartes(c.areas), prs = R.prumadas.filter(x=>x.c===c);
+    const pr = prs.map(x=>`${esc(x.p.nome)} <em>(prumada, ${fmt(x.area,2)})</em>`);
+    return `<p class="mc-l"><b>${esc(c.nome)}:</b> A<sub>eq</sub> = ${[...(partes.length||!pr.length?[partes.join(" + ") || "0"]:[]), ...pr].join(" + ")} = <b>${fmt(R.propria(c),2)} m²</b></p>`;
   }).join("") + `</div>`;
+  const tabCand = (tab, area, dAd) => `<div class="mc-rolar"><table class="mc-tab"><tr><th>Ø (mm)</th>${tab.map(y=>`<th style="text-align:right">${y.t.d}</th>`).join("")}</tr>
+      <tr><th>A máx (m²)</th>${tab.map(y=>`<td class="${y.t.d===dAd?"sel":y.Amax<area?"no":""}">${fmt(y.Amax,1)} ${y.Amax>=area?"✓":"✗"}</td>`).join("")}</tr></table></div>`;
+  h += R.prumadas.map(x=>`<div class="mc-bloco"><h4>Prumada ${esc(x.rot)}<span>${x.p.desvio?"com desvio":"descida direta"}</span></h4>
+      <p class="mc-l"><b>1.</b> Área equivalente: A = ${plPartes(x.p.areas).join(" + ") || "0"} = <b>${fmt(x.area,2)} m²</b></p>
+      <p class="mc-l"><b>2.</b> Vazão de projeto: Q = A × I / 60 = ${fmt(x.area,2)} × ${fmt(num(P.I))} / 60 = <b>${fmt(x.Q,1)} l/min</b></p>
+      <p class="mc-l"><b>3.</b> Prumada com declividade i = <b>${plPct(x.iP)}%</b> ${x.p.desvio?`<em>(há desvio no meio da prumada: adotado ${PLU_I_DESVIO}%)</em>`:`<em>(descida direta, declividade informada)</em>`}. Menor diâmetro com A<sub>máx</sub> ≥ ${fmt(x.area,1)} m²:</p>
+      ${tabCand(x.tab, x.area, x.d)}
+      <p class="mc-l"><b>4.</b> Trecho horizontal no térreo, com caimento i = <b>${plPct(x.iT)}%</b> <em>(ao virar na horizontal o caimento passa a ${PLU_I_TERREO}%)</em>:</p>
+      ${tabCand(x.tabT, x.area, x.dT)}
+      <p class="mc-l fim">${x.erro?`<span class="mc-aviso">${x.erro}</span>`:`Diâmetros adotados: prumada <b>ø${x.d} mm</b> · horizontal no térreo <b>ø${x.dT} mm</b>`}</p></div>`).join("");
   h += [...R.trechos].sort((a,b)=>a.area-b.area).map(t=>{
     const ent = R.trechos.filter(x=>x.l.para===t.l.de);
     const soma = [`${fmt(R.propria(t.de),2)} <em>(${esc(t.de.nome)})</em>`, ...ent.map(x=>`${fmt(x.area,2)} <em>(${esc(x.de.nome)})</em>`)].join(" + ");
@@ -3725,8 +3790,16 @@ function ligarPluvial(){
   pop.addEventListener("input", e=>{
     const t = e.target, c = P().caixas.find(x=>x.id===PL.pop); if(!c) return;
     if(t.dataset.pc==="nome"){ c.nome = t.value; renderPluvial(); resumo(); salvar(); return; }
+    const prEl = t.closest(".pl-prum"), prum = prEl ? (c.prumadas||[])[+prEl.dataset.k] : null;
+    if(t.dataset.pp){
+      if(!prum) return;
+      if(t.dataset.pp==="nome") prum.nome = t.value;
+      else if(t.dataset.pp==="inc") prum.inc = num(t.value);
+      else if(t.dataset.pp==="desvio"){ prum.desvio = t.checked; plRenderPop(); plAlterou(); return; }
+      renderPluvial(); resumo(); salvar(); return;
+    }
     if(t.dataset.pa){
-      const a = c.areas[+t.closest(".pl-area").dataset.j]; a[t.dataset.pa] = t.value;
+      const a = (prum ? prum.areas : c.areas)[+t.closest(".pl-area").dataset.j]; a[t.dataset.pa] = t.value;
       if(t.dataset.pa==="tipo"){ plRenderPop(); plAlterou(); return; }
       renderPluvial(); resumo(); salvar();
     }
@@ -3734,8 +3807,13 @@ function ligarPluvial(){
   pop.addEventListener("click", e=>{
     const c = P().caixas.find(x=>x.id===PL.pop); if(!c) return;
     if(e.target.closest("[data-pop-fechar]")){ plFecharPop(); renderPluvial(); return; }
-    if(e.target.closest("[data-pa-add]")){ c.areas.push({tipo:"piso", area:""}); plRenderPop(true); plAlterou(); return; }
-    if(e.target.closest("[data-pa-rm]")){ c.areas.splice(+e.target.closest(".pl-area").dataset.j,1); plRenderPop(); plAlterou(); return; }
+    const prEl = e.target.closest(".pl-prum"), prum = prEl ? (c.prumadas||[])[+prEl.dataset.k] : null;
+    if(e.target.closest("[data-pp-add]")){
+      c.prumadas = c.prumadas || []; let k = c.prumadas.length+1; const nomes = new Set(c.prumadas.map(p=>p.nome)); while(nomes.has(`P${k}`)) k++;
+      c.prumadas.push({id:uid(), nome:`P${k}`, inc:PLU_I_PRUM_MAX, desvio:false, areas:[{tipo:"telhado", area:""}]}); plRenderPop(true); plAlterou(); return; }
+    if(e.target.closest("[data-pp-rm]")){ if(prum){ c.prumadas.splice(+prEl.dataset.k,1); plRenderPop(); plAlterou(); } return; }
+    if(e.target.closest("[data-pa-add]")){ (prum ? prum.areas : c.areas).push({tipo:prum?"telhado":"piso", area:""}); plRenderPop(true); plAlterou(); return; }
+    if(e.target.closest("[data-pa-rm]")){ (prum ? prum.areas : c.areas).splice(+e.target.closest(".pl-area").dataset.j,1); plRenderPop(); plAlterou(); return; }
   });
   pop.addEventListener("keydown", e=>{
     if(e.key==="Escape"){ plFecharPop(); renderPluvial(); }
@@ -3752,8 +3830,25 @@ function htmlEditorCaixa(c){
         <label class="campo">Área<span class="unid"><input data-pa="area" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(a.area)}" placeholder="0"><b>m²</b></span></label>
         ${a.tipo==="outro" ? `<label class="campo">Coef.<input data-pa="coef" type="number" min="0" max="1" step="0.01" inputmode="decimal" value="${esc(a.coef)}"></label>` : `<div class="pl-coef">C = ${String(coefArea(a)).replace(".",",")}</div>`}
         <button class="x" type="button" data-pa-rm aria-label="Remover área">×</button>
-      </div>`).join("") || `<p class="vazio" style="font-size:14px;margin:4px 0">Nenhuma área lançada nesta caixa.</p>`}</div>
+      </div>`).join("") || `<p class="vazio" style="font-size:14px;margin:4px 0">Nenhuma área lançada direto nesta caixa.</p>`}</div>
     <button class="add" type="button" data-pa-add style="margin-top:8px">Adicionar área</button>
+    <h5 class="pl-sec-t">Prumadas que descem nesta caixa</h5>
+    ${(c.prumadas||[]).map((p,k)=>`<div class="pl-prum" data-k="${k}">
+      <div class="pl-prum-cab"><label class="campo">Prumada<input data-pp="nome" value="${esc(p.nome)}"></label><button class="x" type="button" data-pp-rm aria-label="Remover prumada">×</button></div>
+      <div class="pl-prum-par">
+        <label class="campo">Inclinação da prumada<select data-pp="inc" ${p.desvio?"disabled":""}>${[1,2,3,4].map(v=>`<option value="${v}" ${(p.desvio?PLU_I_DESVIO:plInc(p))===v?"selected":""}>${v}%${v===PLU_I_PRUM_MAX?" (descida direta)":""}</option>`).join("")}</select></label>
+        <label class="chave"><input type="checkbox" data-pp="desvio" ${p.desvio?"checked":""}> Tem desvio no meio da prumada (calcula com ${PLU_I_DESVIO}%)</label>
+      </div>
+      <div class="pl-areas">${(p.areas||[]).map((a,j)=>`
+        <div class="pl-area" data-j="${j}">
+          <label class="campo">Tipo de área<select data-pa="tipo">${opcoesTipoArea(a.tipo)}</select></label>
+          <label class="campo">Área<span class="unid"><input data-pa="area" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(a.area)}" placeholder="0"><b>m²</b></span></label>
+          ${a.tipo==="outro" ? `<label class="campo">Coef.<input data-pa="coef" type="number" min="0" max="1" step="0.01" inputmode="decimal" value="${esc(a.coef)}"></label>` : `<div class="pl-coef">C = ${String(coefArea(a)).replace(".",",")}</div>`}
+          <button class="x" type="button" data-pa-rm aria-label="Remover área">×</button>
+        </div>`).join("")}</div>
+      <button class="add" type="button" data-pa-add style="margin-top:8px">Adicionar área</button>
+    </div>`).join("")}
+    <button class="add" type="button" data-pp-add style="margin-top:10px">Adicionar prumada</button>
     <dl class="pl-tot"></dl>
     <div class="pl-pop-rod"><button class="btn peq" type="button" data-pop-fechar>Concluir</button></div>`;
 }
@@ -3785,7 +3880,9 @@ function plPosPop(){
 }
 function renderPlPainelTot(R, c, dest){
   const sai = R.trechos.find(t=>t.l.de===c.id), entram = R.trechos.filter(t=>t.l.para===c.id);
+  const prs = R.prumadas.filter(x=>x.c===c);
   dest.innerHTML = `<dt>Área equivalente própria</dt><dd>${fmt(R.propria(c),2)} m²</dd>
+    ${prs.length?`<dt>Prumadas</dt><dd>${prs.map(x=>`${esc(x.p.nome)} ${x.d?`ø${x.d}`:`<span class="mc-aviso">${x.erro}</span>`} / térreo ${x.dT?`ø${x.dT}`:"?"}`).join(" · ")}</dd>`:""}
     ${entram.length?`<dt>Recebe de</dt><dd>${entram.map(t=>`${esc(t.de.nome)} (${fmt(t.area,1)} m²)`).join(", ")}</dd>`:""}
     <dt>Área acumulada</dt><dd><b>${fmt(R.acum(c.id),2)} m²</b></dd>
     <dt>Saída</dt><dd>${sai ? `→ ${esc(sai.para?.nome||"?")} ${sai.d?`<b>ø${sai.d}</b>`:`<span class="mc-aviso">${sai.erro}</span>`}` : `<span class="mc-aviso">sem saída — use Ligar</span>`}</dd>`;
@@ -3805,23 +3902,26 @@ function plApagar(tipo, id){
 function relPluvial(){
   const MREL = S.plu, P = S.plu, R = calcPluvial(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
   const S2 = secoes(), sec = S2.sec, ord = [...R.trechos].sort((a,b)=>a.area-b.area);
-  const ok = ord.length>0 && !ord.some(t=>t.erro) && !R.semSaida.length;
+  const ok = ord.length>0 && !ord.some(t=>t.erro) && !R.semSaida.length && !R.prumadas.some(x=>x.erro);
   const d = P.caixas.length ? plDesenho(R, false) : null;
   const obs = ["As áreas de contribuição foram multiplicadas pelos coeficientes de escoamento indicados para obter a área equivalente de cada caixa.",
-    `Os condutores horizontais foram dimensionados pela fórmula de Manning, com declividade de ${fmt(num(P.i),1)}% e ${P.lamina==="plena"?"seção plena":"lâmina de 2/3 do diâmetro"}.`,
+    `Os condutores horizontais foram dimensionados pela fórmula de Manning, com declividade de ${fmt(num(P.i),1)}% entre caixas e ${P.lamina==="plena"?"seção plena":"lâmina de 2/3 do diâmetro"}.`,
+    ...(R.prumadas.length ? [`As prumadas foram dimensionadas com a declividade informada para cada uma (descida direta, até ${PLU_I_PRUM_MAX}%) ou com ${PLU_I_DESVIO}% quando há desvio no meio da prumada. No pavimento térreo, ao virar na horizontal, o caimento adotado foi de ${PLU_I_TERREO}%.`] : []),
     ...linhasObs(P.obs)];
   return `<div class="r">${relCarimbo("Drenagem de águas pluviais", P.doc, P.rev, "Águas pluviais")}
     ${sec("Identificação", relIdent(MREL))}
     ${sec("Objetivo", `<p>Apresentar o dimensionamento dos condutores horizontais de águas pluviais entre as caixas de areia da edificação, a partir das áreas de contribuição e da intensidade pluviométrica de projeto.</p>`)}
     ${sec("Norma de referência", `<ul class="r-normas"><li><b>ABNT NBR 10844</b><span>Instalações prediais de águas pluviais</span></li></ul>`)}
-    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Intensidade pluviométrica (I)", `${fmt(num(P.I))} mm/h`)}${td("Declividade dos condutores (i)", `${fmt(num(P.i),1)}%`)}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${td("Intensidade pluviométrica (I)", `${fmt(num(P.I))} mm/h`)}${td(R.prumadas.length?"Declividade entre caixas (i)":"Declividade dos condutores (i)", `${fmt(num(P.i),1)}%`)}${R.prumadas.length?td("Declividade das prumadas", `até ${PLU_I_PRUM_MAX}% (descida direta) · ${PLU_I_DESVIO}% com desvio`)+td("Caimento no térreo (após a prumada)", `${PLU_I_TERREO}%`):""}
       ${td("Coeficiente de rugosidade (n)", `${String(P.n).replace(".",",")} — ${(RUGOS.find(r=>r.n===num(P.n))||{}).t||""}`)}${td("Altura de lâmina", P.lamina==="plena"?"Seção plena":"2/3 do diâmetro")}${td("Diâmetro mínimo adotado", `${num(P.dmin)} mm`)}</tbody></table>`)}
     ${sec("Memorial de cálculo", memorialPluvial(R))}
+    ${R.prumadas.length ? sec("Quadro de prumadas", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Prumada</th><th class="n">Área (m²)</th><th class="n">Vazão (l/min)</th><th class="n">Decliv.</th><th>Ø prumada</th><th>Ø térreo (${plPct(PLU_I_TERREO)}%)</th></tr></thead><tbody>
+      ${R.prumadas.map(x=>`<tr><td>${esc(x.rot)}${x.p.desvio?" (desvio)":""}</td><td class="n">${fmt(x.area,1)}</td><td class="n">${fmt(x.Q,1)}</td><td class="n">${plPct(x.iP)}%</td><td>${x.d?`<b>ø${x.d} mm</b>`:`<span class="r-no">${x.erro}</span>`}</td><td>${x.dT?`<b>ø${x.dT} mm</b>`:"—"}</td></tr>`).join("")}</tbody></table></div>`) : ""}
     ${sec("Quadro de tubulações", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Tubulação</th><th class="n">Área (m²)</th><th class="n">Vazão (l/min)</th><th class="n">Compr. (m)</th><th>Diâmetro</th><th class="n">Capac. (m²)</th></tr></thead><tbody>
       ${ord.map(t=>`<tr><td>${esc(t.rot)}</td><td class="n">${fmt(t.area,1)}</td><td class="n">${fmt(t.Q,1)}</td><td class="n">${num(t.l.L)>0?fmt(num(t.l.L),1):"—"}</td><td>${t.d?`<b>ø${t.d} mm</b>`:`<span class="r-no">${t.erro}</span>`}</td><td class="n">${t.cap?fmt(t.cap,1):"—"}</td></tr>`).join("")}</tbody></table>
       <div class="r-concl ${ok?"":"falha"}"><b>Conclusão:</b> ${ok?"todas as tubulações foram dimensionadas para as áreas de contribuição de projeto.":"há caixas sem saída ou tubulações sem diâmetro válido. Revisar antes da emissão."}</div></div>`)}
     ${sec("Observações", `<ol class="r-obs">${obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`)}
-    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: Contrib. = área equivalente que a própria caixa recebe; Total = contribuição da caixa somada às caixas ligadas nela (m²). Nos tubos: diâmetro (mm) e vazão (l/min).</p></div>`) : ""}
+    ${d ? sec("Diagrama da rede", `<div class="diag-r"><svg class="diag" xmlns="http://www.w3.org/2000/svg" viewBox="${d.vb}" width="100%">${d.svg}</svg><p>Esquema sem escala. Setas indicam o sentido do escoamento. Em cada caixa: Contrib. = área equivalente que a própria caixa recebe; Total = contribuição da caixa somada às caixas ligadas nela (m²). Nos tubos: diâmetro (mm) e vazão (l/min).${R.prumadas.length?" Sobre cada caixa: as prumadas que descem nela (diâmetro e declividade da prumada, diâmetro do trecho horizontal no térreo e área).":""}</p></div>`) : ""}
     ${relAssinatura(MREL)}</div>`;
 }
 
@@ -7850,7 +7950,9 @@ const CONF_CASOS = [
   {mod:"dem", nome:"Demanda Light · coletiva mista (caso 4 da RECON: apartamentos + lojas + 2 serviços)", ini:s=>confLightC4(s), f:()=>S.dem.quadros.map(q=>calcDemQ(q.id)),
     ver:r=>`DAGR ${fmt(r[0].P.ag.d,2)} · DAGNR ${fmt(r[0].P.agn.d,2)} · DPG ${fmt(r[0].agr.DPG,2)} · DR ${fmt(r[0].Dt,2)} kVA`, norma:"RECON caso 4: DAGR 38,54 (2,21 kVA; a tabela 7A dá 2,22) · DAGNR 54,48 · DSR 26,48 · DSNR 55,73"},
   {mod:"pis", nome:"Piscina 45 m³ + spa 3 m³ (separados)", ini:s=>confPis(s), f:()=>confPisR(), ver:r=>""},
-  {mod:"pis", nome:"Piscina · pool-spa, elevação 8 ºC, coberta", ini:s=>{ confPis(s); s.pis.poolspa = true; s.pis.dT = 8; s.pis.construcao = 2; }, f:()=>confPisR(), ver:r=>""}
+  {mod:"pis", nome:"Piscina · pool-spa, elevação 8 ºC, coberta", ini:s=>{ confPis(s); s.pis.poolspa = true; s.pis.dT = 8; s.pis.construcao = 2; }, f:()=>confPisR(), ver:r=>""},
+  {mod:"plu", nome:"Água pluvial · prumadas (4%, desvio 1%, térreo 1%)", ini:s=>{ const P = s.plu; P.caixas=[{id:"a",nome:"CA1",x:300,y:140,areas:[{tipo:"piso",area:50}],prumadas:[{id:"p1",nome:"P1",inc:4,desvio:false,areas:[{tipo:"telhado",area:120}]},{id:"p2",nome:"P2",inc:4,desvio:true,areas:[{tipo:"telhado",area:200}]},{id:"p3",nome:"P3",inc:3,desvio:false,areas:[{tipo:"telhado",area:40}]}]},{id:"b",nome:"CA2",x:700,y:140,areas:[{tipo:"telhado",area:60}]}];
+    P.saidas=[{id:"s",nome:"Rede",x:900,y:300}]; P.ligacoes=[{id:"1",de:"a",para:"b"},{id:"2",de:"b",para:"s"}]; }, f:()=>calcPluvial(), ver:r=>r.prumadas.map(x=>`${x.p.nome} Ø ${x.d}/${x.dT}`).join(" · ")+" · "+r.trechos.map(t=>`Ø ${t.d} mm`).join(" · "), norma:"conferido à mão pela fórmula de Manning: P1 100/150, P2 150/150, P3 100/100, entre caixas 200"}
 ];
 function confGas(s){ const G = s.gas; G.trechos=[{id:"t1",L:5,de:0,dir:"h"},{id:"t2",L:8,de:1,dir:"u"},{id:"t3",L:6,de:2,dir:"h"}];
   G.pontos=[{id:"p1",nome:"Fogão",equip:"",qtd:1,kgn:216,kglp:180,no:1,ramal:2},{id:"p2",nome:"Aquecedor",equip:"",qtd:1,kgn:400,kglp:330,no:2,ramal:1.5},{id:"p3",nome:"Churrasqueira",equip:"",qtd:2,kgn:150,kglp:125,no:3,ramal:3}]; }
@@ -7903,7 +8005,7 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352"];
+const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
@@ -8066,9 +8168,16 @@ if(EMBUTIDO){
   estiloEmbutido.textContent = "body.embutido-painel [data-view=\"clientes\"], body.embutido-painel #tela-clientes{display:none!important}";
   document.head.appendChild(estiloEmbutido);
   var campoClienteEl = $("cliente"); if(campoClienteEl) campoClienteEl.readOnly = true;
-  var _pontePronta = false, _ponteTimer;
-  function ponteAvisarSalvo(){ if(!_pontePronta) return; clearTimeout(_ponteTimer);
-    _ponteTimer = setTimeout(function(){ try{ window.parent.postMessage({tipo:"dimensionamento-salvo", clienteId:S.obra.clienteIdExterno||"", dados:clone(S)}, "*"); }catch(e){} }, 400); }
+  var _pontePronta = false, _ponteTimer = null, _ponteSeq = 0, _ponteAckVisto = false, _ponteAckSeq = 0;
+  function ponteEnviar(){ clearTimeout(_ponteTimer); _ponteTimer = null; _ponteSeq++;
+    try{ window.parent.postMessage({tipo:"dimensionamento-salvo", clienteId:S.obra.clienteIdExterno||"", dados:clone(S), seq:_ponteSeq}, "*"); }catch(e){}
+    return _ponteSeq; }
+  function ponteAvisarSalvo(imediato){ if(!_pontePronta) return; clearTimeout(_ponteTimer);
+    if(imediato){ return ponteEnviar(); }
+    _ponteTimer = setTimeout(ponteEnviar, 400); }
+  addEventListener("pagehide", function(){ if(_ponteTimer) ponteEnviar(); });      // fechou/voltou antes dos 400 ms: não perde
+  window.addEventListener("message", function(e){ var m = e.data; if(!m || m.tipo !== "dimensionamento-salvo-ok") return;
+    _ponteAckVisto = true; _ponteAckSeq = Math.max(_ponteAckSeq, m.seq||0); if(typeof salvoAck === "function") salvoAck(m); });
   var _salvarOriginal = salvar; salvar = function(){ _salvarOriginal(); ponteAvisarSalvo(); };
   window.addEventListener("message", function(e){ var msg=e.data; if(!msg||msg.tipo!=="carregar-dimensionamento") return;
     S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
@@ -8089,6 +8198,72 @@ if(EMBUTIDO){
   addEventListener("afterprint", restaurarTituloPai);
   try{ window.parent.postMessage({tipo:"dimensionamento-pronto"}, "*"); }catch(e){}
 }
+
+/* ===== SALVAR: botão na barra de baixo (todas as planilhas), aviso de "salvo" e correção do envio ao painel =====
+   Bug corrigido: criar/trocar/excluir edificação e desfazer/refazer só gravavam neste aparelho e não avisavam o painel;
+   se a pessoa não mexesse em mais nenhum campo, a edificação nova nunca chegava ao banco de dados. */
+(function(){
+  var estilo = document.createElement("style");
+  estilo.textContent = ".salvo-estado{font-size:12.5px;color:#666;white-space:nowrap;margin-right:2px}.salvo-estado.erro{color:var(--vermelho,#c00);font-weight:600}"
+    + ".salvo-toast{position:fixed;right:20px;bottom:calc(78px + env(safe-area-inset-bottom,0px));background:#000;color:#fff;padding:9px 14px;border-radius:3px;font-size:14px;font-weight:500;z-index:31;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;max-width:calc(100% - 24px)}"
+    + ".salvo-toast.on{opacity:1;visibility:visible}.salvo-toast.erro{background:var(--vermelho,#c00)}"
+    + "@media(max-width:560px){.salvo-toast{right:12px;left:12px;text-align:center}.salvo-estado{display:none}.bt-salvar .tx{display:none}}@media print{.salvo-toast,.salvo-estado,.bt-salvar{display:none!important}}";
+  document.head.appendChild(estilo);
+  var botoes = document.querySelector(".barra .botoes"), imp = $("imprimir");
+  var estadoEl = document.createElement("span"); estadoEl.className = "salvo-estado"; estadoEl.id = "salvo-estado"; estadoEl.setAttribute("role","status");
+  var btn = document.createElement("button"); btn.type = "button"; btn.className = "btn sec bt-salvar"; btn.id = "salvar-btn";
+  btn.title = "Salvar agora (Ctrl+S)"; btn.setAttribute("aria-label","Salvar"); btn.innerHTML = '💾<span class="tx"> Salvar</span>';
+  if(botoes){ botoes.insertBefore(estadoEl, botoes.firstChild); botoes.insertBefore(btn, imp || null); }
+  var toastEl = document.createElement("div"); toastEl.className = "salvo-toast"; toastEl.id = "salvo-toast"; toastEl.setAttribute("role","status"); toastEl.setAttribute("aria-live","polite");
+  document.body.appendChild(toastEl);
+  var toastT, msgT, ackT, manual = false;
+  const hh = ()=>{ const t = new Date(); return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0"); };
+  function toast(txt, erro){ toastEl.textContent = txt; toastEl.classList.toggle("erro", !!erro); toastEl.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(()=>toastEl.classList.remove("on"), erro ? 6000 : 2600); }
+  function estado(txt, erro){ estadoEl.textContent = txt; estadoEl.classList.toggle("erro", !!erro); }
+  const ativo = ()=> !LIVRE && $("tela-clientes") && $("tela-clientes").hidden && (!EMBUTIDO || (typeof _pontePronta !== "undefined" && _pontePronta));
+  // mostra "salvo" (e, dentro do painel, espera a confirmação do painel de que gravou no banco)
+  var aguardando = null, ultimoAck = null;
+  function finalizar(manualmente, ok, hora){
+    aguardando = null; clearTimeout(ackT);
+    if(ok){ estado("✓ Salvo "+hora); toast(manualmente ? "✓ Salvo no painel às "+hora : "✓ Salvo automaticamente no painel às "+hora); }
+    else { estado("⚠ Não salvou", true); toast("⚠ O painel não conseguiu salvar. Clique em Salvar para tentar de novo.", true); }
+  }
+  function concluir(manualmente){
+    const agora = hh();
+    if(!EMBUTIDO){ estado("✓ Salvo "+agora); toast(manualmente ? "✓ Salvo neste aparelho" : "✓ Salvo automaticamente neste aparelho"); return; }
+    const alvo = (typeof _ponteTimer !== "undefined" && _ponteTimer) ? _ponteSeq + 1 : _ponteSeq;   // número do envio que precisa ser confirmado
+    if(ultimoAck && ultimoAck.seq >= alvo){ finalizar(manualmente, ultimoAck.ok, agora); return; }  // a confirmação já chegou
+    aguardando = {seq: alvo, manual: manualmente, hora: agora};
+    estado("Salvando…"); toast(manualmente ? "Salvando…" : "✓ Salvo automaticamente…");
+    clearTimeout(ackT);
+    ackT = setTimeout(()=>{
+      if(!aguardando) return;
+      if(_ponteAckVisto){ aguardando = null; estado("⚠ Não confirmado", true); toast("⚠ Não deu para confirmar que foi salvo no painel. Clique em Salvar para tentar de novo.", true); }
+      else { aguardando = null; estado("✓ Salvo "+agora); }
+    }, 6000);
+    if(!_ponteAckVisto){ setTimeout(()=>{ if(aguardando && !_ponteAckVisto){ const m = aguardando.manual; aguardando = null; clearTimeout(ackT); estado("✓ Salvo "+agora); toast(m ? "✓ Salvo" : "✓ Salvo automaticamente"); } }, 900); }   // painel antigo: não manda confirmação
+  }
+  window.salvoAck = function(m){
+    ultimoAck = {seq: m.seq||0, ok: !!m.ok};
+    if(aguardando && (m.seq||0) >= aguardando.seq) finalizar(aguardando.manual, !!m.ok, aguardando.hora);
+  };
+  function agendar(){ if(!ativo()) return; clearTimeout(msgT); estado("Salvando…"); msgT = setTimeout(()=>concluir(false), 1500); }
+  // todo salvamento automático passa por salvar(): agenda o aviso (um só, depois que a pessoa para de mexer)
+  var _s2 = salvar; salvar = function(){ _s2(); if(!manual) agendar(); };
+  // desfazer/refazer/criar/trocar/excluir edificação usam histRestaurar, que só gravava neste aparelho: agora avisa o painel também
+  var _hr = histRestaurar; histRestaurar = function(k){ _hr(k); if(EMBUTIDO && typeof ponteAvisarSalvo === "function") ponteAvisarSalvo(); agendar(); };
+  function salvarAgora(){
+    if(LIVRE){ toast("Dimensionamento livre não é salvo. Imprima ou exporte o que precisar.", true); return; }
+    if($("tela-clientes") && !$("tela-clientes").hidden) return;
+    clearTimeout(msgT); manual = true;
+    try{ salvar(); } finally { manual = false; }
+    if(EMBUTIDO){ if(typeof _pontePronta !== "undefined" && !_pontePronta){ toast("Aguarde o dimensionamento terminar de abrir.", true); return; } ponteAvisarSalvo(true); }
+    concluir(true);
+  }
+  btn.addEventListener("click", salvarAgora);
+  addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase()==="s"){ e.preventDefault(); salvarAgora(); } });
+  setInterval(()=>{ btn.hidden = !!LIVRE; estadoEl.hidden = !!LIVRE; }, 700);
+})();
 </script>
 </body>
 </html>
