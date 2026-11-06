@@ -192,6 +192,7 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .al-ref{display:block;font-size:13px;color:var(--cinza-4);margin-top:4px;font-weight:400}.al-ref.falha{font-weight:600}
 .al-pisca{box-shadow:0 0 0 3px var(--vermelho)}.al-mem .al-mh td{font-weight:700;background:var(--cinza-1)}.al-mem td{vertical-align:top}
 #al-diag [data-alq]{cursor:pointer}#al-diag [data-alq]:hover rect{stroke-width:2.5}
+.elv-falha{color:var(--vermelho);font-weight:600}.elv-rec{color:#b35c00;font-weight:600}.elv-nd{color:var(--cinza-4)}#elv-exig ul{margin:0;padding-left:20px}
 .dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
 .dm-arv td.q{white-space:nowrap}.dm-arv td.q b{font-weight:700}.dm-arv tr.raiz td{font-weight:700}
 @media(max-width:720px){.dm-lin,.dm-lin.ar,.dm-lin.arE{grid-template-columns:1fr 1fr 40px}.dm-lin .campo:first-child{grid-column:1/-1}}
@@ -764,6 +765,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <div class="nav-sub">
         <button class="nav-it nsub" type="button" data-mod="esgoto">Tratamento</button>
         <button class="nav-it nsub" type="button" data-mod="est">Tubulação</button>
+        <button class="nav-it nsub" type="button" data-mod="elv">Elevatória</button>
       </div>
     </div>
     <div class="nav-g" data-g="gas">
@@ -965,6 +967,60 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   </section>
 
   <!-- ================= ELÉTRICA ================= -->
+
+  <section class="modulo" id="mod-elv" hidden>
+    <h1>Esgoto · elevatória</h1>
+    <p class="sub">Caixa coletora com bombeamento para o esgoto que não escoa por gravidade: capacidade da bomba, volume útil, tempo de detenção e exigências da NBR 8160 (item 5.1.6) e da NBR 12208 (itens 5.6 e 5.7).</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="elv"> Esta obra não terá elevatória de esgoto</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O dimensionamento não entra no relatório e aparece como “não se aplica” na área de clientes. Desmarque para voltar a dimensionar.</p></div>
+    <section class="bloco-dados">
+      <h2>Vazões e bombas</h2>
+      <div class="grade">
+        <label class="chave c6"><input type="checkbox" data-ev="bacia"> Recebe esgoto de bacias sanitárias (vasos)</label>
+        <label class="campo c2">Vazão máxima provável afluente<span class="unid"><input data-ev="qmax" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
+        <label class="campo c2">Vazão média afluente<span class="unid"><input data-ev="qmed" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
+        <label class="campo c2">Capacidade da bomba<span class="unid"><input id="elv-qb-ph" data-ev="qb" type="number" min="0" step="any" inputmode="decimal" placeholder="2 × vazão"><b>L/s</b></span></label>
+        <label class="campo c2">Intervalo entre partidas<span class="unid"><input data-ev="t" type="number" min="0" step="1" inputmode="decimal" placeholder="10"><b>min</b></span></label>
+        <label class="campo c2">Tipo de bomba<select data-ev="tipoB"><option value="sub">Submersível</option><option value="out">Outro tipo (poço seco)</option></select></label>
+        <label class="campo c2">Altura da bomba sobre o fundo<span class="unid"><input data-ev="hB" type="number" min="0" step="0.05" inputmode="decimal" placeholder="mín. 0,20"><b>m</b></span></label>
+        <label class="campo c2">Número de bombas<input data-ev="nb" type="number" min="1" step="1" inputmode="numeric" placeholder="2"></label>
+        <label class="campo c2">Passagem de sólidos da bomba<span class="unid"><input data-ev="esf" type="number" min="0" step="1" inputmode="decimal" placeholder="catálogo"><b>mm</b></span></label>
+        <label class="campo c2">DN do recalque<span class="unid"><input data-ev="dnRec" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex.: 75"><b></b></span></label>
+        <label class="campo c2">DN da sucção<span class="unid"><input data-ev="dnSuc" type="number" min="0" step="1" inputmode="decimal" placeholder="submersível: vazio"><b></b></span></label>
+      </div>
+      <p class="fonte" style="margin-top:8px">Vazão máxima provável: dos aparelhos que podem funcionar ao mesmo tempo. Vazão média: usada no tempo de detenção. Em branco, a capacidade da bomba fica em 2 × a vazão afluente (recomendação do item 5.1.6.9).</p>
+    </section>
+    <section class="bloco-dados">
+      <h2>Caixa coletora</h2>
+      <div class="grade">
+        <label class="campo c2">Formato<select data-ev="forma"><option value="ret">Retangular</option><option value="cir">Circular</option></select></label>
+        <label class="campo c2 elv-ret">Comprimento interno<span class="unid"><input data-ev="L" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2 elv-ret">Largura interna<span class="unid"><input data-ev="B" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2 elv-cir" style="display:none">Diâmetro interno<span class="unid"><input data-ev="D" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2">Volume ocupado (bombas, tubos)<span class="unid"><input data-ev="vocup" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m³</b></span></label>
+        <label class="campo c2">Folga entre a entrada e o nível máximo<span class="unid"><input data-ev="folga" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2">Lâmina abaixo do nível mínimo<span class="unid"><input data-ev="lamina" type="number" min="0" step="any" inputmode="decimal" placeholder="fabricante"><b>m</b></span></label>
+        <label class="campo c2">Profundidade adotada<span class="unid"><input data-ev="prof" type="number" min="0" step="any" inputmode="decimal" placeholder="calculada"><b>m</b></span></label>
+      </div>
+      <p class="fonte" style="margin-top:8px">Profundidade contada da geratriz inferior da tubulação que chega mais baixa até o fundo. Em branco, é a soma da folga, da altura útil e da lâmina abaixo do nível mínimo (submergência da bomba, conforme o fabricante).</p>
+    </section>
+    <div class="params p4" id="elv-params"></div>
+    <section class="etapas">
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Verificações da NBR 8160 e da NBR 12208</h3></div><div class="rolar" id="elv-res"></div></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Corte esquemático</h3><span class="nbr">sem escala</span></div><div id="elv-corte"></div></div></article>
+      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div class="rolar" id="elv-mem"></div></div></article>
+      <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Exigências construtivas</h3></div><div id="elv-exig"></div></div></article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Nº do documento<input data-ev="doc" autocomplete="off" placeholder="Ex.: MC-ESG-003"></label>
+        <label class="campo c2">Revisão<input data-ev="rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea data-ev="obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo da tubulação de esgoto.</p>
+    </section>
+  </section>
   <section class="modulo" id="mod-ele" hidden>
     <h1>Elétrica · eletrodutos</h1>
     <p class="sub">Diâmetro dos eletrodutos de alimentação pela quantidade e bitola dos cabos e pela taxa de ocupação.</p>
@@ -1282,7 +1338,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados">
       <h2>Especificações gerais</h2>
       <div class="grade" id="al-cfg"></div>
-      <p class="fonte" style="margin-top:8px">Valem para todos os alimentadores; em cada alimentador dá para trocar o método, o cabo, a disposição, a temperatura, o agrupamento e o curto-circuito. Corrente, disjuntor, sistema e tensão vêm do cálculo de demanda. O curto-circuito padrão (10 kA por 0,5 s) é o da planilha: ele costuma definir a seção dos alimentadores pequenos, então informe o valor real de cada ponto quando tiver.</p>
+      <p class="fonte" style="margin-top:8px">Valem para todos os alimentadores; em cada alimentador dá para trocar o método, o cabo, a disposição, a temperatura, o agrupamento e o curto-circuito. Corrente, disjuntor, sistema e tensão vêm do cálculo de demanda. O curto-circuito só é verificado quando você informa a corrente (kA) e o tempo (s), aqui ou em cada alimentador.</p>
       <div id="al-info"></div>
     </section>
     <div id="al-corpo">
@@ -1887,7 +1943,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, dem:false, ali:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, dem:false, ali:false, elv:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -1922,7 +1978,7 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","dem","ali","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","dem","ali","elv","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     inst: (o.inst && typeof o.inst==="object") ? o.inst : {},
     plu:{...b.plu, ...lim(o.plu)},
@@ -1967,10 +2023,10 @@ function nomePDF(){
 }
 function atualizarTitulo(){ try{ document.title = OBRA_INTEIRA ? `${(S.obra.cliente||"").trim() || "Sem cliente"}_Memórias de cálculo`.replace(/[\\/:*?"<>|]+/g, "-") : nomePDF(); }catch(e){} }
 let OBRA_INTEIRA = false;
-const relDe = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : relEsgoto();
+const relDe = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : m==="elv" ? relElv() : relEsgoto();
 // todas as memórias da obra num PDF só (cada dimensionamento e cada edificação começa numa página)
 function htmlObraInteira(){
-  const ordem = ["hid","res","esgoto","est","gas","cgl","plu","ele","cmx","dem","ali","paq","pfi","pcl","phi"];
+  const ordem = ["hid","res","esgoto","est","elv","gas","cgl","plu","ele","cmx","dem","ali","elv","paq","pfi","pcl","phi"];
   const itens = resumoObra(S).filter(r=>!S.naoAplica?.[r.mod]).sort((a,b)=>ordem.indexOf(a.mod)-ordem.indexOf(b.mod));
   // lista de equipamentos da piscina: uma por piscina que tenha alguma parte dimensionada
   const pis = itens.filter(r=>HIST_CHAVE[r.mod]==="pis"); const vistos = new Set();
@@ -2866,11 +2922,12 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-dem").hidden = m!=="dem"; $("mod-ali").hidden = m!=="ali"; $("mod-cgl").hidden = m!=="cgl";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-dem").hidden = m!=="dem"; $("mod-ali").hidden = m!=="ali"; $("mod-elv").hidden = m!=="elv"; $("mod-cgl").hidden = m!=="cgl";
   if(m==="cmx") atualizarCmx();
   if(m==="cgl") renderCgl();
   if(m==="dem") renderDem();
   if(m==="ali") preencherAli();
+  if(m==="elv") preencherElv();
   if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
   if(m==="est") renderEst();
@@ -2887,6 +2944,11 @@ function resumo(){
   if(S.modulo==="cmx"){
     const r = resumoCmxParte();
     $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Circuitos</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Circuitos</span><span class="rotulo">informe disjuntor e comprimento</span>`;
+    return;
+  }
+  if(S.modulo==="elv"){
+    const r = resumoElvParte();
+    $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Elevatória</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Elevatória</span><span class="rotulo">informe a vazão que chega na caixa</span>`;
     return;
   }
   if(S.modulo==="ali"){
@@ -2947,7 +3009,7 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","dem","ali","paq","pfi","pcl","phi","pls"].forEach(m=>{
+  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","dem","ali","elv","paq","pfi","pcl","phi","pls"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
@@ -3015,7 +3077,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); else if(m==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","elv","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); else if(m==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } });
 
   // Esgoto
   const E = () => S.esg;
@@ -3142,7 +3204,7 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : relEsgoto());
+    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : S.modulo==="elv" ? relElv() : relEsgoto());
     atualizarTitulo();
     setTimeout(()=>window.print(), 60);                     // dá tempo do navegador assumir o novo título (nome do arquivo)
   });
@@ -3171,7 +3233,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : S.modulo==="elv" ? relElv() : relEsgoto()); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; OBRA_INTEIRA = false; atualizarTitulo(); });
   $("imprimir-obra").addEventListener("click", ()=>{
     const h = htmlObraInteira(); if(!h){ aviso("Esta obra ainda não tem nenhum dimensionamento preenchido.", true); return; }
@@ -3184,9 +3246,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", dem:"ELE", ali:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", dem:"Elétrica · cálculo de demanda", ali:"Elétrica · alimentadores", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["dem","ali","ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", elv:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", dem:"ELE", ali:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", elv:"Esgoto · elevatória", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", dem:"Elétrica · cálculo de demanda", ali:"Elétrica · alimentadores", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est","elv"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["dem","ali","ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -3254,6 +3316,7 @@ function resumoObraBase(dados){
     { const r = resumoCglParte(); if(r) out.push({mod:"cgl", det:r.det, ok:r.ok}); }
     { const r = resumoDemParte(); if(r) out.push({mod:"dem", det:r.det, ok:r.ok}); }
     { const r = resumoAliParte(); if(r) out.push({mod:"ali", det:r.det, ok:r.ok}); }
+    { const r = resumoElvParte(); if(r) out.push({mod:"elv", det:r.det, ok:r.ok}); }
     { const r = resumoCmxParte(); if(r) out.push({mod:"cmx", det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); }
     ["paq","pfi","pcl","phi"].forEach(pt=>{ const r = resumoPisParte(pt); if(r) out.push({mod:pt, det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); });
     if(S.ele.alims.length){
@@ -5301,6 +5364,144 @@ function ligarEst(){
   pop.addEventListener("keydown", e=>{ if(e.key==="Escape"){ esFecharPop(); renderEst(); } if(e.key==="Enter" && e.target.tagName==="INPUT"){ e.preventDefault(); esFecharPop(); renderEst(); } });
   $("es-tela").addEventListener("scroll", esPosPop);
   addEventListener("resize", ()=>{ if(S.modulo==="est") renderEst(); });
+}
+// ===== Esgoto · Elevatória (caixa coletora com instalação de recalque) — NBR 8160:1999, item 5.1.6 =====
+// os dados ficam em S.est.elv (mesma edificação, histórico e responsável técnico da tubulação de esgoto)
+const ELV_PAD = {tipoB:"sub", hB:"", bacia:true, qmax:"", qmed:"", qb:"", t:10, nb:2, forma:"ret", L:"", B:"", D:"", vocup:"", folga:"", lamina:"", prof:"", esf:"", dnRec:"", dnSuc:"", doc:"", rev:"00", obs:""};
+function elvDados(){ const E = S.est; if(!E.elv || typeof E.elv!=="object") E.elv = {}; return E.elv; }
+const elvVazio = v => v===undefined || v===null || v==="";
+function calcElv(e){
+  e = e || elvDados(); const g = k => elvVazio(e[k]) ? ELV_PAD[k] : e[k];
+  const bacia = g("bacia")!==false, qa = num(g("qmax")), qm = num(g("qmed")), qbInf = num(g("qb")), t = num(g("t")), nb = Math.round(num(g("nb"))) || 0;
+  const r = {bacia, qa, qm, t, nb, ver:[], forma: g("forma")==="cir" ? "cir" : "ret"};
+  r.pmin = bacia ? 0.90 : 0.60; r.esfMin = bacia ? 60 : 18; r.dnMin = bacia ? 75 : 40;
+  if(!(qa > 0)){ r.erro = "Informe a vazão máxima provável que chega na caixa coletora."; return r; }
+  r.Qb = qbInf > 0 ? qbInf : 2*qa; r.QbAuto = !(qbInf > 0); r.QbM = r.Qb*60/1000;                     // L/s → m³/min
+  r.Vu = t > 0 ? r.QbM*t/4 : null;                                                                       // 5.1.6.7  Vu = Q·t/4
+  r.L = num(g("L")); r.B = num(g("B")); r.D = num(g("D"));
+  r.A = r.forma==="cir" ? (r.D > 0 ? Math.PI*r.D**2/4 : null) : (r.L > 0 && r.B > 0 ? r.L*r.B : null);
+  r.hu = r.A && r.Vu!=null ? r.Vu/r.A : null;
+  r.Voc = num(g("vocup")) || 0; r.Vt = r.Vu!=null ? r.Vu + r.Voc : null;                                // 5.1.6.10
+  r.qmM = qm > 0 ? qm*60/1000 : null; r.d = r.Vt!=null && r.qmM ? r.Vt/r.qmM : null;                    // 5.1.6.11  d = Vt/q
+  if(r.qmM){ r.VuMax = 30*r.qmM - r.Voc; r.tMax = r.VuMax > 0 ? 4*r.VuMax/r.QbM : 0; }                  // maior intervalo que mantém d ≤ 30 min
+  r.folga = num(g("folga")) || 0; r.lamina = num(g("lamina")) || 0;
+  r.profCalc = r.hu!=null ? r.folga + r.hu + r.lamina : null;
+  r.profInf = num(g("prof")) > 0; r.prof = r.profInf ? num(g("prof")) : r.profCalc;
+  r.esf = num(g("esf")); r.dnRec = num(g("dnRec")); r.dnSuc = num(g("dnSuc"));
+  const V = (item, txt, sit, val) => r.ver.push({item, txt, sit, val});                                  // sit: ok · falha · rec (recomendação) · nd
+  V("5.1.6.1 a", "Capacidade da bomba ≥ vazão máxima provável", r.Qb >= qa - 1e-9 ? "ok" : "falha", `${fmt(r.Qb,2)} L/s ≥ ${fmt(qa,2)} L/s`);
+  V("5.1.6.9", "Capacidade da bomba ≥ 2 × vazão afluente (recomendação)", r.Qb >= 2*qa - 1e-9 ? "ok" : "rec", `${fmt(r.Qb,2)} L/s · 2 × ${fmt(qa,2)} = ${fmt(2*qa,2)} L/s`);
+  V("5.1.6.8", "Intervalo entre partidas ≥ 10 min (recomendação)", !(t > 0) ? "nd" : t >= 10 - 1e-9 ? "ok" : "rec", t > 0 ? `${fmt(t,1)} min` : "informe o intervalo");
+  V("5.1.6.12", "Tempo de detenção ≤ 30 min", r.d==null ? "nd" : r.d <= 30 + 1e-9 ? "ok" : "falha", r.d==null ? (r.qmM ? "informe o intervalo" : "informe a vazão média") : `${fmt(r.d,1)} min`);
+  V(bacia ? "5.1.6.3 a" : "5.1.6.4 a", `Profundidade mínima ${fmt(r.pmin,2)} m (abaixo da geratriz inferior da tubulação afluente mais baixa)`, r.prof==null ? "nd" : r.prof >= r.pmin - 1e-9 ? "ok" : "falha", r.prof==null ? "informe as dimensões" : `${fmt(r.prof,2)} m`);
+  V("5.1.6.3 c", bacia ? "Pelo menos dois grupos motobomba, funcionamento alternado" : "Pelo menos uma motobomba", nb >= (bacia ? 2 : 1) ? "ok" : "falha", `${fmt(nb)} bomba${nb!==1?"s":""}`);
+  V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Bomba deixa passar esferas de ${fmt(r.esfMin)} mm`, r.esf > 0 ? (r.esf >= r.esfMin ? "ok" : "falha") : "nd", r.esf > 0 ? `${fmt(r.esf)} mm` : "confirmar no catálogo da bomba");
+  V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Tubulação de recalque DN ≥ ${r.dnMin}`, r.dnRec > 0 ? (r.dnRec >= r.dnMin ? "ok" : "falha") : "nd", r.dnRec > 0 ? `DN ${fmt(r.dnRec)}` : "informe o DN");
+  V("5.1.6.5", "Sucção: uma por bomba, DN ≥ DN do recalque", r.dnSuc > 0 && r.dnRec > 0 ? (r.dnSuc >= r.dnRec ? "ok" : "falha") : "nd", r.dnSuc > 0 ? `DN ${fmt(r.dnSuc)}` : "bomba submersível sem sucção, ou informe o DN");
+  r.ver.forEach(v=>{ v.item = "NBR 8160 · " + v.item; });
+  r.sub = g("tipoB")!=="out"; r.hB = num(g("hB")); r.partidas = t > 0 ? 60/t : null;
+  V("NBR 12208 · 5.7.1 nota", "Partidas por hora ≤ 5 (recomendação)", r.partidas==null ? "nd" : r.partidas <= 5 + 1e-9 ? "ok" : "rec", r.partidas==null ? "informe o intervalo" : `${fmt(r.partidas,1)} partidas/h (intervalo ${fmt(t,1)} min; 5/h = 12 min)`);
+  V("NBR 12208 · 5.7.2", "Tempo de detenção médio ≤ 30 min (maior valor recomendado)", r.d==null ? "nd" : r.d <= 30 + 1e-9 ? "ok" : "falha", r.d==null ? "—" : `${fmt(r.d,1)} min`);
+  if(r.sub) V("NBR 12208 · 5.7.3.3.1 b", "Bomba submersível elevada do fundo, no mínimo 20 cm", r.hB > 0 ? (r.hB >= 0.20 - 1e-9 ? "ok" : "falha") : "nd", r.hB > 0 ? `${fmt(r.hB,2)} m` : "informe a altura da bomba sobre o fundo");
+  r.ok = r.Vu!=null && r.d!=null && r.prof!=null && !r.ver.some(v=>v.sit==="falha");
+  r.falhas = r.ver.filter(v=>v.sit==="falha").length; r.recs = r.ver.filter(v=>v.sit==="rec").length;
+  return r;
+}
+const ELV_SIT = {ok:["atende",""], falha:["não atende","falha"], rec:["recomendação não atendida","rec"], nd:["a confirmar","nd"]};
+function elvCorte(r){                                       // corte esquemático da caixa (sem escala)
+  if(r.erro || r.hu==null) return `<p class="vazio">Informe vazão, intervalo entre partidas e as dimensões da caixa para ver o corte.</p>`;
+  const W = 520, x0 = 200, cw = 180, top = 46, esc = 220/Math.max(r.prof || 1, 0.5), hF = r.folga*esc, hU = r.hu*esc, hL = r.lamina*esc, yMax = top + hF, yMin = yMax + hU, yF = top + (r.prof || (r.folga + r.hu + r.lamina))*esc, H = yF + 40;
+  const nb = Math.max(1, Math.min(r.nb || 1, 3)), bombas = Array.from({length:nb}, (_,i)=>{ const bx = x0 + 30 + i*55; return `<rect x="${bx}" y="${yF-34}" width="30" height="30" rx="4" class="eb"/><path d="M${bx+15} ${yF-34} V${top-18}" class="er"/>`; }).join("");
+  const cota = (y1, y2, txt, x) => y2 - y1 > 4 ? `<path d="M${x} ${y1} V${y2}" class="ec"/><path d="M${x-4} ${y1} H${x+4} M${x-4} ${y2} H${x+4}" class="ec"/><text x="${x-6}" y="${(y1+y2)/2+4}" class="et" text-anchor="end">${txt}</text>` : "";
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:560px" role="img" aria-label="Corte esquemático da caixa coletora">
+    <style>.ep{fill:none;stroke:#000;stroke-width:3}.ew{fill:#dbe9f6}.ea{fill:none;stroke:#555;stroke-width:6}.eb{fill:#fff;stroke:#000;stroke-width:1.5}.er{stroke:#d10a1e;stroke-width:3;fill:none}.ec{stroke:#555;stroke-width:1}.et{font:500 11px Barlow,Arial,sans-serif;fill:#333}.en{font:600 11px Barlow,Arial,sans-serif;fill:#000}.nv{stroke:#000;stroke-dasharray:5 4;stroke-width:1}</style>
+    <rect x="${x0}" y="${yMin}" width="${cw}" height="${yF-yMin}" class="ew" opacity=".6"/><rect x="${x0}" y="${yMax}" width="${cw}" height="${yMin-yMax}" class="ew"/>
+    <path d="M${x0} ${top-20} V${yF} H${x0+cw} V${top-20}" class="ep"/>
+    <path d="M${x0-90} ${top} H${x0}" class="ea"/><text x="${x0-90}" y="${top-10}" class="en">entrada</text>
+    ${bombas}<path d="M${x0+45} ${top-18} H${x0+cw+40}" class="er"/><text x="${x0+cw+42}" y="${top-25}" class="en" text-anchor="end">recalque DN ${r.dnRec || "—"}</text>
+    <path d="M${x0} ${yMax} H${x0+cw}" class="nv"/><text x="${x0+cw+8}" y="${yMax+4}" class="et">nível máximo (liga)</text>
+    <path d="M${x0} ${yMin} H${x0+cw}" class="nv"/><text x="${x0+cw+8}" y="${yMin+4}" class="et">nível mínimo (desliga)</text>
+    ${cota(top, yMax, `folga ${fmt(r.folga,2)} m`, x0-14)}${cota(yMax, yMin, `altura útil ${fmt(r.hu,2)} m`, x0-14)}${cota(yMin, yF, `lâmina ${fmt(r.lamina,2)} m`, x0-14)}
+    <text x="${x0+cw+8}" y="${yF-4}" class="en">profundidade ${fmt(r.prof,2)} m</text>
+    <text x="${x0+cw/2}" y="${yF+30}" class="et" text-anchor="middle">${r.forma==="cir" ? `Ø ${fmt(r.D,2)} m` : `${fmt(r.L,2)} × ${fmt(r.B,2)} m`} · sem escala</text></svg>`;
+}
+function elvMemorial(r, cls){
+  if(r.erro) return `<p>${esc(r.erro)}</p>`;
+  const L = (t, v, u, o) => `<tr><td>${t}</td><td class="n">${v}</td><td>${u}</td><td>${o}</td></tr>`, f = (x, d=2) => x==null ? "—" : fmt(x, d);
+  return `<table class="${cls}"><thead><tr><th>Parâmetro</th><th class="n">Valor</th><th>Unid.</th><th>Origem / expressão</th></tr></thead><tbody>
+    ${L("Recebe efluente de bacias sanitárias", r.bacia ? "sim" : "não", "–", r.bacia ? "item 5.1.6.3" : "item 5.1.6.4")}
+    ${L("Vazão máxima provável afluente", f(r.qa), "L/s", "aparelhos que podem funcionar ao mesmo tempo (5.1.6.1 a)")}
+    ${L("Capacidade da bomba (Q)", f(r.Qb), "L/s", r.QbAuto ? "2 × vazão afluente (recomendação 5.1.6.9)" : "informada")}
+    ${L("Capacidade da bomba (Q)", f(r.QbM,4), "m³/min", "Q = L/s × 60 / 1000")}
+    ${L("Intervalo entre partidas (t)", f(r.t,1), "min", "recomendado ≥ 10 min (5.1.6.8)")}
+    ${L("Volume útil (Vu)", f(r.Vu,3), "m³", "Vu = Q × t / 4 (5.1.6.7)")}
+    ${L("Área da caixa", f(r.A,3), "m²", r.forma==="cir" ? `π × ${f(r.D)}² / 4` : `${f(r.L)} × ${f(r.B)}`)}
+    ${L("Altura útil (entre o nível máximo e o mínimo)", f(r.hu,3), "m", "Vu / área")}
+    ${L("Volume ocupado (bombas, tubos e acessórios)", f(r.Voc,3), "m³", "informado")}
+    ${L("Volume total (Vt)", f(r.Vt,3), "m³", "Vu + volume ocupado (5.1.6.10)")}
+    ${L("Vazão média afluente (q)", r.qm > 0 ? `${f(r.qm)} L/s = ${f(r.qmM,4)}` : "—", "m³/min", "informada")}
+    ${L("Tempo de detenção (d)", f(r.d,1), "min", "d = Vt / q, máximo 30 min (5.1.6.11 e 5.1.6.12)")}
+    ${r.tMax!=null ? L("Maior intervalo entre partidas com d ≤ 30 min", r.tMax > 0 ? f(r.tMax,1) : "—", "min", r.tMax > 0 ? `t ≤ 4 × (30·q − volume ocupado) / Q` : "o volume ocupado sozinho já passa de 30 min de detenção") : ""}
+    ${L("Partidas por hora", r.partidas!=null ? f(r.partidas,1) : "—", "1/h", "60 / t · recomendado ≤ 5 (NBR 12208, 5.7.1)")}
+    ${L("Profundidade", f(r.prof), "m", r.profInf ? "informada" : `folga ${f(r.folga)} + altura útil ${f(r.hu)} + lâmina abaixo do nível mínimo ${f(r.lamina)}`)}
+  </tbody></table>`;
+}
+function elvVerTab(r, cls){
+  return `<table class="${cls}"><thead><tr><th>Norma · item</th><th>Exigência</th><th>Valor</th><th>Situação</th></tr></thead><tbody>
+    ${r.ver.map(v=>`<tr class="${v.sit==="falha"?"falha":""}"><td>${v.item}</td><td>${esc(v.txt)}</td><td>${esc(v.val)}</td><td class="elv-${v.sit}">${ELV_SIT[v.sit][0]}</td></tr>`).join("")}</tbody></table>`;
+}
+const ELV_EXIG = r => [
+  r.bacia ? "Caixa ventilada por tubo ventilador, de preferência independente de qualquer outra ventilação do edifício (5.1.6.3 b)." : null,
+  r.bacia ? "Fundo suficientemente inclinado para não depositar sólidos quando a caixa for esvaziada (5.1.6.3 a)." : null,
+  "Tubulação de recalque sobe acima do nível do logradouro, com dispositivo que impeça o refluxo do esgoto (5.1.6.6).",
+  "Uma tubulação de sucção para cada bomba, com diâmetro uniforme e nunca menor que o do recalque (5.1.6.5).",
+  "Volume dimensionado para evitar partidas e paradas frequentes (volume pequeno) e o estado séptico (volume grande) (5.1.6.2).",
+  "NBR 12208 · 5.6.6.1: tubulação ou canal afluente com velocidade mínima de 0,40 m/s para a vazão afluente inicial.",
+  "NBR 12208 · 5.6.7: dispositivo para remoção de sólidos grosseiros na entrada (grade, cesto, peneira ou triturador).",
+  "NBR 12208 · 5.7.3.3 b e c: entrada com quebra de velocidade, sem descarga livre; velocidade de aproximação até a tomada de esgoto de no máximo 0,60 m/s.",
+  r.A != null && r.A <= 8 ? `NBR 12208 · 5.7.3.3 d: área de base de ${fmt(r.A,2)} m² (até 8 m²): o fundo pode ser executado sem declividade.` : "NBR 12208 · 5.7.3.3 d: fundo com declividade para o ponto de saída, para facilitar a limpeza.",
+  "NBR 12208 · 5.7.3.3 j: ventilação da câmara para eliminar gases e equalizar a pressão (NBR 16577 · espaço confinado; NBR IEC 60079 · atmosferas explosivas).",
+  "NBR 12208 · 5.7.3.3 g e h: aberturas de acesso e dimensões que permitam limpeza e manutenção; avaliar escada e guarda-corpo (e, f).",
+  r.sub ? "NBR 12208 · 5.7.3.3.1: nível mínimo que mantenha a bomba submersa (orientação do fabricante); tampa sobre cada bomba, inclusive a reserva, com abertura que permita retirar a bomba, o tubo-guia e o pedestal; componentes internos em material resistente à corrosão." : "NBR 12208 · 5.7.3.3.2: sucção afastada do fundo; com sucção positiva, nível mínimo de desligamento na geratriz superior da tubulação de sucção; com sucção negativa, nível mínimo que evite entrada de ar e mantenha a escorva (sino de sucção recomendado)."].filter(Boolean);
+function resumoElvParte(){ const e = elvDados(); if(elvVazio(e.qmax)) return null; const r = calcElv();
+  return {det: r.erro ? r.erro : `Vu ${r.Vu!=null?fmt(r.Vu,2):"—"} m³ · detenção ${r.d!=null?fmt(r.d,1):"—"} min${r.falhas?` · ${r.falhas} item(ns) não atende(m)`:""}`, ok: r.ok}; }
+function preencherElv(){
+  const e = elvDados();
+  document.querySelectorAll("#mod-elv [data-ev]").forEach(el=>{ const k = el.dataset.ev, v = elvVazio(e[k]) ? (k==="bacia" || k==="forma" || k==="t" || k==="nb" || k==="tipoB" ? ELV_PAD[k] : "") : e[k];
+    if(el.type==="checkbox") el.checked = v!==false; else el.value = v ?? ""; });
+  if(elvVazio(e.tipoB) && $("mod-elv").querySelector('[data-ev="tipoB"]')) $("mod-elv").querySelector('[data-ev="tipoB"]').value = "sub";
+  renderElv();
+}
+function renderElv(){
+  if(!$("elv-res")) return;
+  const e = elvDados(), r = calcElv(e), cir = (elvVazio(e.forma) ? ELV_PAD.forma : e.forma)==="cir";
+  document.querySelectorAll("#mod-elv .elv-ret").forEach(el=>el.style.display = cir ? "none" : ""); document.querySelectorAll("#mod-elv .elv-cir").forEach(el=>el.style.display = cir ? "" : "none");
+  $("elv-qb-ph") && ($("elv-qb-ph").placeholder = r.qa > 0 ? fmt(2*r.qa,2) : "2 × vazão");
+  $("elv-params").innerHTML = [["Capacidade da bomba", r.Qb ? fmt(r.Qb,2) : "—", "L/s"], ["Volume útil", r.Vu!=null ? fmt(r.Vu,2) : "—", "m³"], ["Altura útil", r.hu!=null ? fmt(r.hu,2) : "—", "m"], ["Detenção", r.d!=null ? fmt(r.d,1) : "—", "min"]]
+    .map(([k,v,u])=>`<div><small>${k}</small><strong>${v}</strong><em>${u}</em></div>`).join("");
+  $("elv-res").innerHTML = r.erro ? `<p class="vazio">${esc(r.erro)}</p>` : elvVerTab(r, "quadro") + (r.tMax!=null && r.t > r.tMax && r.tMax > 0 ? `<p class="fonte" style="margin-top:8px">Para a detenção ficar em até 30 min, o intervalo entre partidas pode ser no máximo <b>${fmt(r.tMax,1)} min</b>${r.tMax < 10 ? " (abaixo dos 10 min recomendados: confira a vazão da bomba e a vazão média)" : ""}.</p>` : "");
+  $("elv-corte").innerHTML = elvCorte(r);
+  $("elv-mem").innerHTML = elvMemorial(r, "quadro");
+  $("elv-exig").innerHTML = `<ul>${ELV_EXIG(r).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+}
+function relElv(){
+  const E = S.est, e = elvDados(), r = calcElv(e), S2 = secoes(), sec = S2.sec;
+  return `<div class="r">${relCarimbo("Caixa coletora com bombeamento (elevatória de esgoto)", e.doc, e.rev, "Instalações hidrossanitárias")}
+    ${sec("Identificação", relIdent(E))}
+    ${sec("Objetivo", `<p>Dimensionar a caixa coletora e a instalação de recalque do esgoto sanitário que não escoa por gravidade, conforme a ABNT NBR 8160:1999 (item 5.1.6) e a ABNT NBR 12208 (itens 5.6 e 5.7).</p>`)}
+    ${r.erro ? `<p>${esc(r.erro)}</p>` : `
+    ${sec("Memorial de cálculo", elvMemorial(r, "r-t"))}
+    ${sec("Verificações", `<div class="r-resumo">${elvVerTab(r, "r-t")}<div class="r-concl ${r.ok?"":"falha"}"><b>Conclusão:</b> ${r.ok ? `a caixa coletora atende aos itens verificados da NBR 8160 e da NBR 12208${r.recs?` (${r.recs} recomendação não seguida)`:""}.` : "há itens que não atendem ou ainda precisam ser informados."}</div></div>`)}
+    ${sec("Corte esquemático", elvCorte(r))}
+    ${sec("Exigências construtivas", `<ul class="r-obs">${ELV_EXIG(r).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`)}`}
+    ${linhasObs(e.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(e.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(E)}</div>`;
+}
+function ligarElv(){
+  const M = $("mod-elv"); if(!M) return;
+  const alt = el => { const e = elvDados(), k = el.dataset.ev; e[k] = el.type==="checkbox" ? el.checked : el.value; renderElv(); resumo(); salvar(); };
+  M.addEventListener("input", ev=>{ if(ev.target.dataset.ev && ev.target.tagName==="INPUT" && ev.target.type!=="checkbox") alt(ev.target); else if(ev.target.dataset.ev && ev.target.tagName==="TEXTAREA") alt(ev.target); });
+  M.addEventListener("change", ev=>{ if(ev.target.dataset.ev && (ev.target.tagName==="SELECT" || ev.target.type==="checkbox")) alt(ev.target); });
 }
 function relEst(){
   const MREL = S.est, E = S.est, R = calcEst(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
@@ -7457,7 +7658,7 @@ function alCalc(p){
 // ===== Alimentadores: aba "Elétrica · alimentadores" (um alimentador por quadro do cálculo de demanda) =====
 const AL_MOD = [{n:"Superastic Flex 450/750 V", c:"Superastic", cur:"Superastic", v750:true}, {n:"Afumex Green 450/750 V", c:"Afumex_Green", cur:"Afumex Green", v750:true},
   {n:"Afumex Green Iristech 0,6/1 kV", c:"Afumex_Flex", cur:"Afumex Iristech"}, {n:"Gsette Easy 0,6/1 kV", c:"Gsette", cur:"Gsette"}];
-const AL_PAD = {modelo:4, tipo:1, met:7, mat:1, con:1, fp:1, dv:4, ta:30, icc:10, t:0.5, ncirc:1, dist:1, rho:2.5, pe:1, peCond:2, smin:2.5, arrF:"jun", diag:true, hEcon:4000, nEcon:10, tarifa:1.1, doc:"", rev:"00", obs:""};
+const AL_PAD = {modelo:4, tipo:1, met:7, mat:1, con:1, fp:1, dv:4, ta:30, icc:"", t:"", ncirc:1, dist:1, rho:2.5, pe:1, peCond:2, smin:2.5, arrF:"jun", diag:true, hEcon:4000, nEcon:10, tarifa:1.1, doc:"", rev:"00", obs:""};
 const AL_TA = [10,15,20,25,30,35,40,45,50,55,60,65,70,75,80], AL_RHO = [0.5,0.7,1,1.5,2,2.5,3];
 const AL_PE = ["Isolado, fora de cabo multipolar e não enfeixado (tab. 38)", "Nu, encostado na cobertura de cabo, não enfeixado (tab. 39)", "Veia de cabo multipolar ou enfeixado com os cabos (tab. 40)", "Armação, capa metálica ou condutor concêntrico (tab. 41)", "Nu, sem risco de danificar materiais vizinhos (tab. 42)"];
 const AL_PECOND = ["Visível e em áreas restritas", "Condições normais", "Risco de incêndio"];
@@ -7474,14 +7675,17 @@ const alMetTxt = i => `${alMetNome(i)} (${alCod(ALT.t5[i-1][1])})`;
 const alMetRef = (met, modelo, tipo) => ALT.t5[met-1][(modelo<=2 ? 3 : tipo===2 ? 5 : 4)-1];
 const alTipoTxt = (modelo, tipo) => modelo<=2 ? "condutor isolado" : tipo===2 ? "multipolar" : "unipolar";
 const alS = s => fmt(s, s%1 ? 1 : 0);
+const alEmDuto = met => /eletroduto/i.test(ALT.t5[met-1]?.[0] || "");     // métodos em eletroduto: cabos sempre juntos (trifólio / encostados)
 function alParam(q, r, T){
   const a = q.al || {}, g = k => alVazio(a[k]) ? alPad(k) : a[k];
   const fases = r?.fases || "tri", TN = dmTens(q, T, fases), modelo = +g("modelo") || 4, tipo = modelo<=2 ? 1 : (+g("tipo") || 1);
-  const sis = fases==="tri" ? 1 : 2, bi = fases==="bi";
-  return {met:+g("met") || 7, tipo, modelo, mat:+g("mat") || 1, con:+g("con") || 1, sis, bi, fases, fp:+g("fp") || 1, V: sis===1 || bi ? TN.Vff : TN.Vfn, tensTxt: TN.txt, f:60,
+  const sis = fases==="tri" ? 1 : 2, bi = fases==="bi", met = +g("met") || 7, emDuto = alEmDuto(met), arrF = emDuto ? "jun" : g("arrF");
+  const P = {met, emDuto, tipo, modelo, mat:+g("mat") || 1, con:+g("con") || 1, sis, bi, fases, fp:+g("fp") || 1, V: sis===1 || bi ? TN.Vff : TN.Vfn, tensTxt: TN.txt, f:60,
     L: num(a.L), Ib: num(a.ib) > 0 ? num(a.ib) : (r?.I || 0), In: num(a.in) > 0 ? num(a.in) : (num(r?.disj) || 0), InDem: !(num(a.in) > 0) && num(r?.disj) > 0,
-    dv: num(g("dv"))/100, icc: num(g("icc")), t: num(g("t")), ta: +g("ta"), ncirc: Math.max(1, Math.round(num(g("ncirc"))) || 1), dist: +g("dist") || 1, rho: +g("rho") || 2.5,
-    pe: +g("pe") || 1, peCond: +g("peCond") || 2, npar: Math.max(1, Math.round(num(a.npar)) || 1), arrF: g("arrF"), arr: alArr(g("arrF"), sis, tipo), smin: num(g("smin")) || 2.5, secMan: num(a.sec) || 0};
+    dv: num(g("dv"))/100, icc: num(g("icc")) > 0 && num(g("t")) > 0 ? num(g("icc")) : 0, t: num(g("icc")) > 0 && num(g("t")) > 0 ? num(g("t")) : 0, ta: +g("ta"), ncirc: Math.max(1, Math.round(num(g("ncirc"))) || 1), dist: +g("dist") || 1, rho: +g("rho") || 2.5,
+    pe: +g("pe") || 1, peCond: +g("peCond") || 2, npar: Math.max(1, Math.round(num(a.npar)) || 1), arrF, arr: alArr(arrF, sis, tipo), smin: num(g("smin")) || 2.5, secMan: num(a.sec) || 0};
+  if(P.In > 0 && P.Ib > P.In){ P.IbDem = P.Ib; P.Ib = P.In; }      // disjuntor menor que a corrente: o circuito não passa da corrente do disjuntor
+  return P;
 }
 // dimensionamento econômico (aba "dimensionamento econômico" da planilha R4) — só indicativo
 const AL_PRECO = [[10,7910],[16,11990],[25,22490],[35,33030],[50,45890],[70,66590],[95,88170],[120,110960],[150,112490],[185,120990],[240,227690*0.7],[300,232190]];   // R$/km
@@ -7518,12 +7722,14 @@ function alItem(q, r, T){
   if(x.metOk && alNum(x.fc) && !alNum(x.Iz)) it.avisos.push(`Seção ${alS(x.p.S)} mm² sem capacidade de condução na tabela${p.mat===2 ? " (alumínio só a partir de 16 mm²)" : ""}.`);
   if(!(p.L > 0)) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
   if(it.auto && it.semSecao && x.metOk && !x.aviso && alNum(x.fc)) it.avisos.push(`Nenhuma seção do catálogo do ${AL_MOD[p.modelo-1].n} atende com ${p.npar} cabo${p.npar>1?"s":""} por fase: aumente os cabos em paralelo.`);
+  if(p.IbDem) it.avisos.push(`Ressalva: o disjuntor de ${fmt(p.In)} A é menor que a corrente ${num(it.q.al?.ib) > 0 ? "informada" : "de demanda"} (${fmt(p.IbDem,1)} A). O cabo foi calculado com a corrente máxima do disjuntor (${fmt(p.In)} A); com a demanda prevista o disjuntor pode desarmar.`);
   if(!p.In) it.avisos.push(`Sem disjuntor no cálculo de demanda: usado o disjuntor padronizado logo acima da corrente (${alNum(x.In) ? x.In + " A" : x.In}).`);
   it.ok = !!x.ok && p.L > 0 && !it.avisos.some(a=>/não permitido|Não dá|Nenhuma seção|Disposição/.test(a));
   const nF = p.sis===1 ? 3 : p.bi ? 2 : 1, S2 = x.p.S;
   it.cond = `${p.npar>1 ? `${p.npar}×(` : ""}${nF}#${alS(S2)} + N${alS(S2)}${p.npar>1 ? ")" : ""} + PE${alNum(x.PE) ? alS(x.PE) : "—"}`;
   it.nF = nF;
   it.econ = alEcon(p.Ib/p.npar, p.modelo);
+  it.semCurto = !(p.icc > 0);
   it.semCond = !x.metOk || !!x.aviso || !alNum(x.fc);              // método/disposição que não servem: sem seção
   if(it.semCond){ it.cond = "—"; it.criterio = ""; }
   return it;
@@ -7550,14 +7756,14 @@ function renderAliCfg(){
     <label class="campo c2">Tipo de cabo${v750 ? `<select disabled><option>Condutor isolado (450/750 V)</option></select>` : sel("tipo", [[1,"Unipolar"],[2,"Multipolar"]])}</label>
     <label class="campo c1">Material${sel("mat", [[1,"Cobre"],[2,"Alumínio"]])}</label>
     <label class="campo c6">Método de instalação padrão${sel("met", alOpsMet())}<span class="al-ref ${ref==="-"||["E","F","G"].includes(ref)?"falha":""}">${ref==="-" ? `✗ não permitido para ${AL_MOD[modelo-1].n} (${alTipoTxt(modelo, +g("tipo"))})` : ["E","F","G"].includes(ref) ? `✗ método de referência ${ref}: sem tabela de capacidade na planilha` : `método de referência <b>${ref}</b> (NBR 5410, tabela 33)`}</span></label>
-    <label class="campo c2">Disposição dos cabos${sel("arrF", AL_ARR.map(a=>[a[0], a[1]]))}</label>
+    <label class="campo c2">Disposição dos cabos${alEmDuto(+g("met")) ? `<select disabled><option>Juntos (em eletroduto)</option></select><span class="al-ref">em eletroduto os cabos ficam sempre juntos; a disposição só vale para os outros métodos</span>` : sel("arrF", AL_ARR.map(a=>[a[0], a[1]]))}</label>
     <label class="campo c2">Temperatura ambiente${sel("ta", AL_TA.map(t=>[t, `${t} ºC`]))}</label>
     <label class="campo c2">Circuitos agrupados<input data-alc="ncirc" type="number" min="1" step="1" inputmode="numeric" value="${esc(c.ncirc ?? "")}" placeholder="${AL_PAD.ncirc}"></label>
     <label class="campo c2">Fator de potência${sel("fp", [[1,"0,80"],[2,"0,95"]])}</label>
     <label class="campo c2">Queda de tensão máxima<span class="unid"><input data-alc="dv" type="number" min="0.5" step="0.5" inputmode="decimal" value="${esc(c.dv ?? "")}" placeholder="${AL_PAD.dv}"><b>%</b></span></label>
     <label class="campo c2">Seção mínima${sel("smin", [[1.5,"1,5 mm²"],[2.5,"2,5 mm²"],[4,"4 mm²"],[6,"6 mm²"],[10,"10 mm²"]])}</label>
-    <label class="campo c2">Curto-circuito no condutor<span class="unid"><input data-alc="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.icc ?? "")}" placeholder="${AL_PAD.icc}"><b>kA</b></span></label>
-    <label class="campo c2">Duração do curto-circuito<span class="unid"><input data-alc="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(c.t ?? "")}" placeholder="${fmt(AL_PAD.t,1)}"><b>s</b></span></label>
+    <label class="campo c2">Curto-circuito no condutor<span class="unid"><input data-alc="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.icc ?? "")}" placeholder="não verificar"><b>kA</b></span></label>
+    <label class="campo c2">Duração do curto-circuito<span class="unid"><input data-alc="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(c.t ?? "")}" placeholder="—"><b>s</b></span></label>
     <label class="campo c2">Conexões${sel("con", [[1,"Prensadas"],[2,"Soldadas"]])}</label>
     <label class="campo c3">Condutor de proteção (PE)${sel("pe", AL_PE.map((t,i)=>[i+1, t]))}</label>
     <label class="campo c3" ${+g("pe")===5?"":"hidden"}>Condição do PE nu${sel("peCond", AL_PECOND.map((t,i)=>[i+1, t]))}</label>
@@ -7579,14 +7785,14 @@ function renderAliLista(){
         <label class="campo al-w2">Método de instalação${alSel("met", a.met ?? "", alOpsMet(), `Padrão · ${padMet}`)}</label>
         <label class="campo al-w2">Cabo${alSel("modelo", a.modelo ?? "", AL_MOD.map((m,i)=>[i+1, m.n]), `Padrão · ${padMod}`)}</label>
         <label class="campo">Tipo${v750 ? `<select disabled><option>Condutor isolado</option></select>` : alSel("tipo", a.tipo ?? "", [[1,"Unipolar"],[2,"Multipolar"]], `Padrão · ${+alPad("tipo")===2?"multipolar":"unipolar"}`)}</label>
-        <label class="campo">Disposição${p.tipo===2 ? `<select disabled><option>${p.sis===1?"Cabo tripolar":"Cabo bipolar"}</option></select>` : alSel("arrF", a.arrF ?? "", AL_ARR.map(x=>[x[0], x[1]]), `Padrão · ${(AL_ARR.find(x=>x[0]===alPad("arrF"))||AL_ARR[0])[1]}`)}</label>
+        <label class="campo">Disposição${p.tipo===2 ? `<select disabled><option>${p.sis===1?"Cabo tripolar":"Cabo bipolar"}</option></select>` : p.emDuto ? `<select disabled title="Dentro do eletroduto os cabos ficam juntos"><option>Juntos (em eletroduto)</option></select>` : alSel("arrF", a.arrF ?? "", AL_ARR.map(x=>[x[0], x[1]]), `Padrão · ${(AL_ARR.find(x=>x[0]===alPad("arrF"))||AL_ARR[0])[1]}`)}</label>
         <label class="campo">Temperatura ambiente${alSel("ta", a.ta ?? "", AL_TA.map(t=>[t, `${t} ºC`]), `Padrão · ${alPad("ta")} ºC`)}</label>
         <label class="campo">Circuitos agrupados<input data-af="ncirc" type="number" min="1" step="1" inputmode="numeric" value="${esc(a.ncirc ?? "")}" placeholder="${esc(alPad("ncirc"))}"></label>
         <label class="campo">Cabos em paralelo por fase<input data-af="npar" type="number" min="1" step="1" inputmode="numeric" value="${esc(a.npar ?? "")}" placeholder="1"></label>
         <label class="campo">Corrente de projeto<span class="unid"><input data-af="ib" type="number" min="0" step="any" inputmode="decimal" value="${esc(a.ib ?? "")}" placeholder="${r?.I>0?fmt(r.I,1):"0"}"><b>A</b></span></label>
         <label class="campo">Disjuntor<span class="unid"><input data-af="in" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.in ?? "")}" placeholder="${r?.disj||""}"><b>A</b></span></label>
-        <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${esc(fmt(num(alPad("icc")),1))}"><b>kA</b></span></label>
-        <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${esc(fmt(num(alPad("t")),2))}"><b>s</b></span></label>
+        <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}"><b>kA</b></span></label>
+        <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}"><b>s</b></span></label>
         <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
       </div>
       <div class="tr-res" data-res></div><div class="al-av" data-av></div></div>`; }).join("")
@@ -7600,11 +7806,11 @@ function atualizarAli(its){
     el.classList.toggle("falha", !it.ok);
     el.querySelector("[data-res]").innerHTML = it.erro ? `<p class="vazio" style="margin:0;grid-column:1/-1">${esc(it.erro)}</p>` : `
       <div><small>Condutores${it.auto ? " (automático)" : " (escolhido)"}</small><strong class="al-cond">${esc(it.cond)}</strong><em>${it.semCond ? "sem dimensionamento · " : "mm² · "}${esc(AL_MOD[p.modelo-1].cur)}${it.criterio ? ` · seção definida por: <b>${esc(it.criterio)}</b>` : ""}</em></div>
-      <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${alNum(x.In) ? fmt(x.In) : "—"} A · Ib ${fmt(p.Ib,1)} A</em></div>
+      <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${alNum(x.In) ? fmt(x.In) : "—"} A · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
       <div><small>Queda de tensão</small><strong>${p.L > 0 && alNum(x.dVp) && !it.semCond ? fmt(x.dVp*100,2) : "—"}</strong><em>% · limite ${fmt(p.dv*100,1)}%</em></div>
-      <div><small>Curto-circuito</small><strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²</em></div>
+      <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²</em>`}</div>
       <div><small>Seção econômica (só curiosidade)</small><strong>${it.econ ? fmt(it.econ.Se,0) : "—"}</strong><em>mm²${it.econ ? ` por cabo · catálogo ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}` : ""}</em></div>
-      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? "Atende" : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz"}).filter(([k])=>x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
+      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz"}).filter(([k])=>x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
     el.querySelector("[data-av]").innerHTML = it.avisos.length ? `<ul>${it.avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` : "";
   });
   const ok = its.filter(it=>it.ok).length, comL = its.filter(it=>it.p.L > 0).length;
@@ -7624,8 +7830,8 @@ function alRotulosDe(its){ const out = {}; its.forEach(it=>{ if(!it.res || it.er
   out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond} mm²`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${it.p.L > 0 ? fmt(it.p.L) + " m · ΔV " + (alNum(it.res.dVp) ? fmt(it.res.dVp*100,2) + "%" : "—") : "sem comprimento"}`, ok: it.ok}; }); return out; }
 function alTabela(its, cls){
   return `<table class="${cls}"><thead><tr><th>Alimentador</th><th>Sistema</th><th class="n">Ib (A)</th><th class="n">In (A)</th><th class="n">L (m)</th><th>Método</th><th>Cabo</th><th>Condutores (mm²)</th><th class="n">Iz (A)</th><th class="n">ΔV (%)</th><th>Situação</th></tr></thead><tbody>
-    ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}</td><td class="n">${x&&alNum(x.In)?fmt(x.In):"—"}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
-      <td>${esc(it.metRef||"—")} <small>(${esc(alCod(ALT.t5[p.met-1][1]))})</small></td><td>${esc(AL_MOD[p.modelo-1].cur)}${p.mat===2?" Al":""}</td><td>${x&&!it.erro?esc(it.cond):"—"}</td><td class="n">${x&&alNum(x.Iz)?fmt(x.Iz,0):"—"}</td><td class="n">${x&&p.L>0&&alNum(x.dVp)&&!it.semCond?fmt(x.dVp*100,2):"—"}</td><td>${it.erro ? esc(it.erro) : it.ok ? "atende" : esc(it.avisos[0] || "rever")}</td></tr>`; }).join("")}</tbody></table>`;
+    ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}${p.IbDem?` <small>(disj.; demanda ${fmt(p.IbDem,1)})</small>`:""}</td><td class="n">${x&&alNum(x.In)?fmt(x.In):"—"}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
+      <td>${esc(it.metRef||"—")} <small>(${esc(alCod(ALT.t5[p.met-1][1]))})</small></td><td>${esc(AL_MOD[p.modelo-1].cur)}${p.mat===2?" Al":""}</td><td>${x&&!it.erro?esc(it.cond):"—"}</td><td class="n">${x&&alNum(x.Iz)?fmt(x.Iz,0):"—"}</td><td class="n">${x&&p.L>0&&alNum(x.dVp)&&!it.semCond?fmt(x.dVp*100,2):"—"}</td><td>${it.erro ? esc(it.erro) : it.ok ? (p.IbDem ? "atende, com ressalva (disjuntor menor que a demanda)" : "atende") : esc(it.avisos[0] || "rever")}</td></tr>`; }).join("")}</tbody></table>`;
 }
 function alMemorial(it, cls){
   if(it.erro) return `<p>${esc(it.nome)}: ${esc(it.erro)}</p>`;
@@ -7638,7 +7844,7 @@ function alMemorial(it, cls){
     ${L("Método de instalação", esc(it.metRef), "–", esc(alMetTxt(p.met)) + " · NBR 5410, tabela 33")}
     ${L("Disposição dos cabos", esc(x.arrDesc), "–", `s = ${v(x.Sd,1)} mm entre eixos`)}
     ${L("Sistema / tensão", `${({tri:"trifásico",bi:"bifásico",mono:"monofásico"})[p.fases]} · ${v(p.V,0)}`, "V", p.bi ? "bifásico (2F+N): queda como circuito de 2 condutores na tensão entre fases; capacidade com 3 condutores carregados" : `${x.carreg} condutores carregados`)}
-    ${L("Corrente de projeto (Ib)", v(p.Ib,1), "A", num(it.q.al?.ib) > 0 ? "informada" : "cálculo de demanda")}
+    ${L("Corrente de projeto (Ib)", v(p.Ib,1), "A", p.IbDem ? `corrente do disjuntor: menor que a ${num(it.q.al?.ib) > 0 ? "informada" : "de demanda"} (${fmt(p.IbDem,1)} A) · ver ressalva` : num(it.q.al?.ib) > 0 ? "informada" : "cálculo de demanda")}
     ${L("Comprimento", v(p.L,1), "m", "")}
     ${L("Cabos em paralelo por fase", v(p.npar,0), "un", `corrente por cabo ${v(p.Ib/p.npar,1)} A`)}
     ${L("Seção de cada cabo", alS(x.p.S), "mm²", it.auto ? `menor seção do catálogo que atende a todos os critérios${it.criterio ? ` · definida por: ${esc(it.criterio)}` : ""}` : "escolhida")}
@@ -7659,15 +7865,16 @@ function alMemorial(it, cls){
     ${L("Capacidade corrigida (Iz)", v(x.Iz,0), "A", `Iz = n × Itab × fatores · ${alSit(x.ver.iz)}`)}
     ${L("Disjuntor (In)", v(x.In,0), "A", `${p.InDem ? "cálculo de demanda" : num(it.q.al?.in) > 0 ? "informado" : "padronizado logo acima de Ib"} · Ib ≤ In ≤ Iz: ${alSit(x.ver.coord)}`)}
     ${H("Curto-circuito e condutor de proteção")}
-    ${L("Fator k (fase/neutro)", v(x.k,0), "–", "tabela 37")}
-    ${L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,1)} kA · ${fmt(p.t,2)} s · ${alSit(x.ver.cc)}`)}
+    ${it.semCurto ? L("Curto-circuito", "—", "–", "não verificado: informe a corrente de curto-circuito e o tempo") : ""}
+    ${it.semCurto ? "" : L("Fator k (fase/neutro)", v(x.k,0), "–", "tabela 37")}
+    ${it.semCurto ? "" : L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,1)} kA · ${fmt(p.t,2)} s · ${alSit(x.ver.cc)}`)}
     ${L("Condutor de proteção (PE)", alNum(x.PE) ? alS(x.PE) : "—", "mm²", "NBR 5410, tabela 58")}
-    ${L("Fator k do PE / seção mínima", `${v(x.kPE,0)} / ${v(x.SccPE,1)}`, "mm²", `${esc(AL_PE[p.pe-1])} · ${alSit(x.ver.pe)}`)}
+    ${it.semCurto ? "" : L("Fator k do PE / seção mínima", `${v(x.kPE,0)} / ${v(x.SccPE,1)}`, "mm²", `${esc(AL_PE[p.pe-1])} · ${alSit(x.ver.pe)}`)}
     ${it.econ ? `${H("Dimensionamento econômico (indicativo, não entra na escolha da seção)")}
     ${L("Seção econômica (Se)", fmt(it.econ.Se,1), "mm²", `Se = (Ib/n) / (Ch·Cn) · √(e / G') · catálogo: ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}`)}
     ${L("Ch · Cn · G'", `${fmt(it.econ.Ch,4)} · ${fmt(it.econ.Cn,4)} · ${fmt(it.econ.G,1)}`, "–", `Ch = 2,66/√${fmt(it.econ.h)} h · Cn = 0,69/√(1 − 0,937^${it.econ.n}) · G' = média do custo por mm²·km (tabela de preços da planilha) · e = R$ ${fmt(it.econ.e,2)}/kWh`)}` : ""}
     ${H("Seção mínima por critério (planilha)")}
-    ${L("Ampacidade / queda unitária / curto / mínima", [x.SminI, x.SminV, x.Sccmin, p.smin].map(z=>alNum(z) ? alS(z) : esc(String(z))).join(" / "), "mm²", `seção recomendada pela planilha: ${alNum(x.Srec) ? alS(x.Srec) : esc(String(x.Srec))} mm²`)}
+    ${L("Ampacidade / queda unitária / curto / mínima", [x.SminI, x.SminV, it.semCurto ? "—" : x.Sccmin, p.smin].map(z=>alNum(z) ? alS(z) : esc(String(z))).join(" / "), "mm²", `seção recomendada pela planilha: ${alNum(x.Srec) ? alS(x.Srec) : esc(String(x.Srec))} mm²`)}
   </tbody></table>`;
 }
 function alLevarEle(){
@@ -7793,7 +8000,7 @@ function renderDemQuadro(){
       ${(D.niveis||[]).length ? `<label class="campo c2">Nível (andar)<select data-qf="nivel"><option value="">automático</option>${[...D.niveis].reverse().map(v=>`<option value="${v.id}" ${q.nivel===v.id?"selected":""}>${esc(v.nome)||"—"}</option>`).join("")}</select></label>` : ""}
       ${T && T.ativ && (D.tipo==="nres" || (met==="light" && q.nres)) ? `<label class="campo c3">Atividade deste quadro<select data-qf="ativ"><option value="">Mesma da obra (${esc((T.ativ.find(a=>a[0]===D.ativ)||T.ativ[0])[1])})</option>${T.ativ.map(a=>`<option value="${a[0]}" ${q.ativ===a[0]?"selected":""}>${esc(a[1])}</option>`).join("")}</select></label>` : ""}
       <label class="campo c2">Alimentação<select data-qf="fases"><option value="tri" ${(q.fases||"tri")==="tri"?"selected":""}>Trifásica</option><option value="bi" ${q.fases==="bi"?"selected":""}>Bifásica</option><option value="mono" ${q.fases==="mono"?"selected":""}>Monofásica</option></select></label>
-      <label class="campo c2">Tensão<select data-qf="tensao">${TENSOES[q.fases||"tri"].map(o=>`<option value="${o[0]}" ${dmTens(q,T,q.fases||"tri").t===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></label>
+      <label class="campo c2">Tensão<select data-qf="tensao">${(f=>{ const pd = dmTens({}, T, f).t, at = dmTens(q, T, f).t; return [...TENSOES[f]].sort((a,b)=>(b[0]===pd)-(a[0]===pd)).map(o=>`<option value="${o[0]}" ${at===o[0]?"selected":""}>${o[1]}${o[0]===pd && TENSOES[f].length>1?" (padrão da concessionária)":""}</option>`).join(""); })(q.fases||"tri")}</select></label>
       <label class="campo c2">Disjuntor geral do quadro<span class="unid"><input data-qf="disj" type="number" min="0" step="1" inputmode="numeric" value="${esc(q.disj??"")}" placeholder="calculado"><b>A</b></span></label>
       ${met==="enel" ? `${servQ ? "" : `${campoCom("qua","Quartos")}${campoCom("sal","Salas")}${campoCom("ban","Banheiros c/ chuveiro ou boiler")}${campoCom("coz","Cozinhas")}${campoCom("ser","Áreas de serviço")}${campoCom("out","Outros cômodos")}`}
         <label class="campo c3">${servQ ? "Iluminação e tomadas do condomínio" : "Iluminação especial (jardim, fachada, quadra)"}<span class="unid"><input data-qf="ilE" data-mil type="text" inputmode="decimal" value="${fmtIn(q.ilE)}" placeholder="0"><b>kW</b></span></label>
@@ -8025,7 +8232,7 @@ function preencherDem(){
 function ligarDem(){
   const D = () => S.dem, alt = () => { const R = Object.fromEntries(D().quadros.map(q=>[q.id, calcDemQ(q.id)])); if(concDe(D().conc)?.t){ renderDemRes(R, dmOrdem()); document.querySelectorAll("#dm-abas [data-dmq] small").forEach(el=>{ const id = el.parentElement.dataset.dmq; el.textContent = `${fmt(R[id]?.Dt||0,1)} kVA`; }); } resumo(); salvar(); };
   const tudo = () => { renderDem(); resumo(); salvar(); };
-  $("dm-conc").addEventListener("change", e=>{ D().conc = e.target.value; tudo(); });
+  $("dm-conc").addEventListener("change", e=>{ D().conc = e.target.value; D().quadros.forEach(q=>{ delete q.tensao; }); tudo(); });
   $("dm-tipo").addEventListener("change", e=>{ D().tipo = e.target.value; tudo(); });
   $("dm-ativ").addEventListener("change", e=>{ D().ativ = e.target.value; tudo(); });
   $("dm-fp").addEventListener("input", e=>{ D().fp = e.target.value; alt(); });
@@ -8197,7 +8404,7 @@ function relAli(){
       <li>Proteção: Ib ≤ In ≤ Iz (I2 ≤ 1,45·Iz atendido por disjuntores NBR NM 60898 / IEC 60947-2). Cabos em paralelo: mesma seção, comprimento e disposição.</li>
       <li>Seção adotada: a menor do catálogo do cabo que atende a todos os critérios (ou a escolhida no alimentador). Neutro com a mesma seção da fase.</li>
       <li>Seção econômica: apenas indicativa (fórmula da planilha, inspirada na IEC 60287-3-2, com uso de ${fmt(num(alPad("hEcon")))} h/ano, ${fmt(num(alPad("nEcon")))} anos e tarifa de R$ ${fmt(num(alPad("tarifa")),2)}/kWh); não entra na escolha da seção.</li></ul>`)}
-    ${sec("Especificações gerais", `<table class="r-t"><tbody>${td("Cabo", `${esc(AL_MOD[g("modelo")-1].n)} · ${g("modelo")<=2 ? "condutor isolado" : +g("tipo")===2 ? "multipolar" : "unipolar"} · ${+g("mat")===2 ? "alumínio" : "cobre"}`)}${td("Método de instalação padrão", `${esc(alMetTxt(+g("met")))} · referência ${esc(alMetRef(+g("met"), +g("modelo"), +g("tipo")))}`)}${td("Disposição dos cabos", esc((AL_ARR.find(x=>x[0]===g("arrF"))||AL_ARR[0])[1]))}${td("Temperatura ambiente", `${g("ta")} ºC`)}${td("Fator de potência", +g("fp")===2 ? "0,95" : "0,80")}${td("Queda de tensão máxima", `${fmt(num(g("dv")),1)}%`)}${td("Curto-circuito", `${fmt(num(g("icc")),1)} kA durante ${fmt(num(g("t")),2)} s · conexões ${+g("con")===2 ? "soldadas" : "prensadas"}`)}${td("Condutor de proteção", esc(AL_PE[g("pe")-1]))}${td("Seção mínima", `${alS(num(g("smin")))} mm²`)}</tbody></table>`)}
+    ${sec("Especificações gerais", `<table class="r-t"><tbody>${td("Cabo", `${esc(AL_MOD[g("modelo")-1].n)} · ${g("modelo")<=2 ? "condutor isolado" : +g("tipo")===2 ? "multipolar" : "unipolar"} · ${+g("mat")===2 ? "alumínio" : "cobre"}`)}${td("Método de instalação padrão", `${esc(alMetTxt(+g("met")))} · referência ${esc(alMetRef(+g("met"), +g("modelo"), +g("tipo")))}`)}${td("Disposição dos cabos", esc((AL_ARR.find(x=>x[0]===g("arrF"))||AL_ARR[0])[1]))}${td("Temperatura ambiente", `${g("ta")} ºC`)}${td("Fator de potência", +g("fp")===2 ? "0,95" : "0,80")}${td("Queda de tensão máxima", `${fmt(num(g("dv")),1)}%`)}${td("Curto-circuito", num(g("icc")) > 0 && num(g("t")) > 0 ? `${fmt(num(g("icc")),1)} kA durante ${fmt(num(g("t")),2)} s · conexões ${+g("con")===2 ? "soldadas" : "prensadas"}` : "não verificado (exceto nos alimentadores em que foi informado)")}${td("Condutor de proteção", esc(AL_PE[g("pe")-1]))}${td("Seção mínima", `${alS(num(g("smin")))} mm²`)}</tbody></table>`)}
     ${sec("Quadro de alimentadores", `<div class="r-resumo">${alTabela(its, "r-t")}
       <div class="r-concl ${ok===its.length?"":"falha"}"><b>Conclusão:</b> ${ok===its.length ? `todos os ${its.length} alimentadores atendem aos critérios.` : `${its.length - ok} de ${its.length} alimentador(es) ainda não atendem; ver o memorial de cada um.`}</div></div>`)}
     ${sec("Diagrama de alimentação dos quadros", `<div class="dm-diag-r">${dmDiagrama(R, false, alRotulosDe(its))}</div>`)}
@@ -8282,7 +8489,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", dem:"dem", ali:"dem", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", elv:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", dem:"dem", ali:"dem", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -8311,7 +8518,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="gas"){ fecharMenuNo?.(); preencherGas(); }
     if(k==="plu") preencherPluvial();
     if(k==="hid") preencherHid();
-    if(k==="est") preencherEst();
+    if(k==="est"){ preencherEst(); if(S.modulo==="elv") preencherElv(); }
     if(k==="ele") preencherEle();
     if(k==="pis") preencherPis();
     if(k==="res") preencherRes();
@@ -8496,7 +8703,8 @@ const CONF_CASOS = [
   {mod:"ali", nome:"Alimentadores · planilha R4, exemplo padrão (Gsette 150 mm², 300 A, 80 m)", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 7, "tipo": 1, "modelo": 4, "mat": 1, "con": 1, "sis": 1, "fp": 1, "V": 220, "f": 60, "L": 80, "Ib": 300, "dv": 0.04, "icc": 10, "t": 0.5, "ta": 30, "ncirc": 1, "dist": 1, "rho": 2.5, "pe": 1, "peCond": 2, "npar": 1, "S": 150, "arr": 10, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
   {mod:"ali", nome:"Alimentadores · diretamente enterrado, Afumex Iristech multipolar, solo 0,5 K·m/W", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 28, "tipo": 2, "modelo": 3, "mat": 1, "con": 1, "sis": 2, "fp": 1, "V": 380, "f": 60, "L": 15, "Ib": 380, "dv": 0.02, "icc": 10, "t": 0.2, "ta": 15, "ncirc": 1, "dist": 1, "rho": 0.5, "pe": 2, "peCond": 1, "npar": 2, "S": 185, "arr": 2, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
   {mod:"ali", nome:"Alimentadores · Superastic 750 V monofásico 127 V, eletroduto em canaleta", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 22, "tipo": 1, "modelo": 2, "mat": 1, "con": 2, "sis": 2, "fp": 1, "V": 127, "f": 60, "L": 25, "Ib": 32, "dv": 0.05, "icc": 5, "t": 1, "ta": 35, "ncirc": 1, "dist": 1, "rho": 3, "pe": 2, "peCond": 1, "npar": 1, "S": 70, "arr": 1, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
-  {mod:"ali", nome:"Alimentadores · alumínio, Gsette 70 mm², plano espaçado 20 cm", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 7, "tipo": 1, "modelo": 4, "mat": 2, "con": 2, "sis": 1, "fp": 1, "V": 127, "f": 60, "L": 15, "Ib": 90, "dv": 0.04, "icc": 10, "t": 0.1, "ta": 40, "ncirc": 2, "dist": 3, "rho": 3, "pe": 1, "peCond": 2, "npar": 1, "S": 70, "arr": 12, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`}
+  {mod:"ali", nome:"Alimentadores · alumínio, Gsette 70 mm², plano espaçado 20 cm", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 7, "tipo": 1, "modelo": 4, "mat": 2, "con": 2, "sis": 1, "fp": 1, "V": 127, "f": 60, "L": 15, "Ib": 90, "dv": 0.04, "icc": 10, "t": 0.1, "ta": 40, "ncirc": 2, "dist": 3, "rho": 3, "pe": 1, "peCond": 2, "npar": 1, "S": 70, "arr": 12, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
+  {mod:"elv", nome:"Elevatória · NBR 8160 5.1.6 e NBR 12208 5.7 (2 L/s, bomba 2×, t = 10 min, caixa 1,2 × 1,0 m)", norma:"Vu = Q·t/4 = 0,24 × 10 / 4 = 0,60 m³ · d = 0,70 / 0,03 = 23,3 min · 60/10 = 6 partidas/h (acima das 5 recomendadas)", ini:s=>{ s.est.elv = {bacia:true, qmax:"2", qmed:"0.5", t:"10", nb:"2", forma:"ret", L:"1.2", B:"1", vocup:"0.1", folga:"0.1", lamina:"0.3", esf:"65", dnRec:"75", tipoB:"sub", hB:"0.2"}; }, f:()=>calcElv(), ver:r=>`Q ${fmt(r.Qb,2)} L/s · Vu ${fmt(r.Vu,2)} m³ · altura útil ${fmt(r.hu,2)} m · d ${fmt(r.d,1)} min · profundidade ${fmt(r.prof,2)} m · ${fmt(r.partidas,1)} partidas/h`}
 ];
 function confGas(s){ const G = s.gas; G.trechos=[{id:"t1",L:5,de:0,dir:"h"},{id:"t2",L:8,de:1,dir:"u"},{id:"t3",L:6,de:2,dir:"h"}];
   G.pontos=[{id:"p1",nome:"Fogão",equip:"",qtd:1,kgn:216,kglp:180,no:1,ramal:2},{id:"p2",nome:"Aquecedor",equip:"",qtd:1,kgn:400,kglp:330,no:2,ramal:1.5},{id:"p3",nome:"Churrasqueira",equip:"",qtd:2,kgn:150,kglp:125,no:3,ramal:3}]; }
@@ -8549,11 +8757,11 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75"];
+const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75", "ce518aab·85"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
-  const R = rodarConferencia(), ok = R.filter(x=>x.ok).length, nomes = {esgoto:"Esgoto", est:"Esgoto", hid:"Hidráulica", res:"Hidráulica", plu:"Pluvial", gas:"Gás", cgl:"Gás", ele:"Elétrica", cmx:"Elétrica", dem:"Elétrica", ali:"Elétrica", pis:"Piscina"};
+  const R = rodarConferencia(), ok = R.filter(x=>x.ok).length, nomes = {esgoto:"Esgoto", est:"Esgoto", elv:"Esgoto", hid:"Hidráulica", res:"Hidráulica", plu:"Pluvial", gas:"Gás", cgl:"Gás", ele:"Elétrica", cmx:"Elétrica", dem:"Elétrica", ali:"Elétrica", pis:"Piscina"};
   el.innerHTML = `<div class="conf-tot ${ok===R.length?"ok":"falha"}">${ok===R.length ? `✓ Todos os ${R.length} casos deram exatamente o resultado de referência.` : `✗ ${R.length-ok} de ${R.length} casos deram diferente da referência. Não use esta versão para emitir antes de conferir.`}</div>
     <div class="rolar"><table class="quadro conf-t"><thead><tr><th>Disciplina</th><th>Caso</th><th>Resultado</th><th>Referência da norma</th><th class="c">Igual</th></tr></thead><tbody>
     ${R.map(x=>`<tr class="${x.ok?"":"falha"}"><td>${nomes[x.c.mod]||""}</td><td>${esc(x.c.nome)}</td><td>${x.erro?`<span class="falha">erro: ${esc(x.erro)}</span>`:esc(x.ver)||"<span class=\"fonte\">todos os números do cálculo</span>"}</td><td>${esc(x.c.norma||"")}</td><td class="c">${x.ok?"✓":"✗"}</td></tr>`).join("")}</tbody></table></div>`;
@@ -8679,6 +8887,7 @@ ligarLivre();
 ligarZoom(); ligarPanToque();
 renderInst();
 ligarEst();
+ligarElv();
 ligarEle();
 ligarEleCanvas();
 ligarPis();
@@ -8703,7 +8912,7 @@ document.addEventListener("click", e=>{                   // mesmo responsável 
 });
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); if(h==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","elv","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); if(h==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } renderLateralObra(); }
 
 var EMBUTIDO = false;
 try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
