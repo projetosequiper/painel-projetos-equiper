@@ -645,6 +645,18 @@ details, details *{box-sizing:border-box}
 .btn.sec{background:var(--branco);color:var(--preto)}
 .btn:hover{background:#222}
 .btn.sec:hover{background:var(--cinza-1)}
+/* caixas de diálogo próprias (no lugar de alert/confirm/prompt do navegador) */
+.cx-fundo{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100000}
+.cx{background:var(--branco);border-top:5px solid var(--vermelho);border-radius:3px;max-width:460px;width:100%;padding:20px 22px 18px;box-shadow:0 14px 44px rgba(0,0,0,.4);max-height:90vh;overflow:auto}
+.cx h3{font-family:var(--cond);font-size:26px;line-height:1.1;margin:0 0 8px}
+.cx p{margin:0 0 16px;color:var(--cinza-4);white-space:pre-line;overflow-wrap:anywhere}
+.cx .cx-campo{width:100%;box-sizing:border-box;border:1px solid var(--cinza-3);border-radius:3px;padding:10px 12px;font:inherit;margin:0 0 16px;background:var(--branco)}
+.cx-rod{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.cx-rod .btn{min-width:96px}
+.btn.perigo{background:var(--vermelho);border-color:var(--vermelho)}
+.btn.perigo:hover{background:#a8081a}
+@media print{.cx-fundo{display:none!important}}
+
 .btn.peq{padding:8px 12px;font-size:14px}
 @media(max-width:560px){.barra{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}.barra-in{gap:8px}.resumo{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1;font-size:13px}.botoes .btn{padding:10px 14px}}
 @media(max-width:480px){.acoes-topo .btn.peq{padding:7px 9px;font-size:13px}.marca span{display:none}}
@@ -1761,6 +1773,46 @@ const uid = () => Math.random().toString(36).slice(2,9);
 const clone = o => JSON.parse(JSON.stringify(o));
 const $ = id => document.getElementById(id);
 const num = v => { const x = parseFloat(String(v??"").replace(",", ".")); return isFinite(x) ? x : 0; };
+/* ---------- Caixas de diálogo próprias ----------
+   Substituem alert/confirm/prompt do navegador. Todas devolvem uma Promise (use com await):
+   caixaConfirmar(msg, {titulo, ok, cancelar, perigo}) → true/false · caixaAviso(msg) → true · caixaPerguntar(msg, {multilinha, ok}) → texto ou null */
+function caixaDialogo(o){
+  return new Promise(resolve=>{
+    const antes = document.activeElement, id = "cx" + Math.random().toString(36).slice(2, 8);
+    const f = document.createElement("div"); f.className = "cx-fundo";
+    f.innerHTML = `<div class="cx" role="${o.cancelar ? "dialog" : "alertdialog"}" aria-modal="true" aria-labelledby="${id}t" aria-describedby="${id}m">
+      <h3 id="${id}t"></h3><p id="${id}m"></p>
+      ${o.campo ? (o.multilinha ? `<textarea class="cx-campo" rows="8"></textarea>` : `<input class="cx-campo" type="text" autocomplete="off">`) : ""}
+      <div class="cx-rod">${o.cancelar ? `<button type="button" class="btn sec" data-cx="nao"></button>` : ""}<button type="button" class="btn${o.perigo ? " perigo" : ""}" data-cx="sim"></button></div></div>`;
+    f.querySelector("h3").textContent = o.titulo || "Aviso"; f.querySelector("p").textContent = o.msg == null ? "" : String(o.msg);
+    f.querySelector('[data-cx="sim"]').textContent = o.ok || "OK"; if(o.cancelar) f.querySelector('[data-cx="nao"]').textContent = o.cancelar;
+    const campo = f.querySelector(".cx-campo"); if(campo && o.valor) campo.value = o.valor;
+    if(!f.querySelector("p").textContent) f.querySelector("p").hidden = true;
+    let fechado = false;
+    const fechar = sim => {
+      if(fechado) return; fechado = true; document.removeEventListener("keydown", tecla, true); f.remove();
+      try{ antes && antes.focus && antes.focus(); }catch(e){}
+      resolve(o.campo ? (sim ? campo.value : null) : (o.cancelar ? !!sim : true));
+    };
+    const tecla = e => {
+      if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); fechar(false); return; }
+      if(e.key === "Enter" && !(o.multilinha && e.target === campo) && !(e.target.dataset && e.target.dataset.cx === "nao")){ e.preventDefault(); e.stopPropagation(); fechar(true); return; }
+      if(e.key === "Tab"){ const foc = [...f.querySelectorAll("button,input,textarea")]; if(!foc.length) return; const i = foc.indexOf(document.activeElement);
+        e.preventDefault(); foc[(i + (e.shiftKey ? foc.length - 1 : 1)) % foc.length].focus(); return; }
+      if(!f.contains(e.target)){ e.stopPropagation(); }
+    };
+    f.addEventListener("click", e => { if(e.target === f) fechar(false); const b = e.target.closest("[data-cx]"); if(b) fechar(b.dataset.cx === "sim"); });
+    document.addEventListener("keydown", tecla, true);
+    document.body.appendChild(f);
+    (campo || f.querySelector(o.perigo ? '[data-cx="nao"]' : '[data-cx="sim"]')).focus();
+    if(campo) campo.select();
+  });
+}
+const caixaConfirmar = (msg, o) => caixaDialogo(Object.assign({titulo: o && o.perigo && o.ok ? o.ok + "?" : "Confirmar", ok: "Confirmar", cancelar: "Cancelar"}, o, {msg}));
+const caixaAviso = (msg, o) => caixaDialogo(Object.assign({titulo: "Aviso", ok: "OK"}, o, {msg}));
+const caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", ok: "OK", cancelar: "Cancelar", campo: true}, o, {msg}));
+
+
 const fmt = (x, d=0) => (x==null || !isFinite(x)) ? "—" : x.toLocaleString("pt-BR",{minimumFractionDigits:d, maximumFractionDigits:d});
 const m2 = x => x==null ? "—" : fmt(x,2);
 const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1910,7 +1962,7 @@ function calcEsgoto(){
   const residencial = E.predio <= 2;
   const cg = tanque(CGO, "CGO", E.cg, residencial ? 4*N+20 : 2*N+20);
   cg.on = E.cg.on; cg.formula = residencial ? "V = 4N + 20" : "V = 2N + 20";
-  const fs = tanque(TANQUES, "FOA", E.fs, 1000 + N*(C*T + K*Lf)); fs.formula = "V = 1000 + N (C·T + K·Lf)";
+  const fs = tanque(TANQUES, "FOA", E.fs, 1000 + N*(C*T + K*Lf)); fs.formula = "V = 1.000 + N (C·T + K·Lf)";
   const fa = tanque(TANQUES, "FIA", E.fa, 1.6*N*C*T); fa.formula = "V = 1,6 · N · C · T";
   const su = {tipo:+E.su.tipo, h:num(E.su.h), d:num(E.su.d), l:num(E.su.l), n:Math.max(1,Math.round(num(E.su.n)))};
   su.Anec = L / Ci;
@@ -2411,11 +2463,11 @@ function gasPosPonto(p){
   const G = S.gas; G.pos = G.pos || {}; const nos = rede(), o = G.pos["n"+noPonto(p)] || {x:0,y:0};
   return {x:o.x, y:o.y + (p._lado==="d" ? 1 : -1)*155};
 }
-function removerTrechoGas(k){                              // remove o trecho k (termina no nó k+1), renumerando as letras seguintes
+async function removerTrechoGas(k){                              // remove o trecho k (termina no nó k+1), renumerando as letras seguintes
   const G = S.gas, fim = k+1, nos = rede();
   if(G.trechos.some(t=>num(t.de)===fim)){ aviso(`Remova antes os trechos que saem de ${nomeNo(fim)}.`, true); return false; }
   const pts = G.pontos.filter(p=>noPonto(p)===fim);
-  if(!confirm(`Remover o trecho ${rotTr(G.trechos[k],k)}${pts.length?` e ${pts.length===1?"o ponto":"os pontos"} ${pts.map(p=>p.nome||"—").join(", ")}`:""}?`)) return false;
+  if(!(await caixaConfirmar(`Remover o trecho ${rotTr(G.trechos[k],k)}${pts.length?` e ${pts.length===1?"o ponto":"os pontos"} ${pts.map(p=>p.nome||"—").join(", ")}`:""}?`, {perigo:true, ok:"Remover"}))) return false;
   G.pontos = G.pontos.filter(p=>noPonto(p)!==fim);
   pts.forEach(p=>{ delete G.pos?.["p"+p.id]; });
   G.trechos.splice(k,1);
@@ -2424,9 +2476,9 @@ function removerTrechoGas(k){                              // remove o trecho k 
   if(G.pos){ const np = {}; Object.entries(G.pos).forEach(([key,v])=>{ const m = /^n(\d+)$/.exec(key); if(!m){ np[key]=v; return; } const i=+m[1]; if(i===fim) return; np["n"+(i>fim?i-1:i)] = v; }); G.pos = np; }
   return true;
 }
-function removerPontoGas(id){
+async function removerPontoGas(id){
   const G = S.gas, p = G.pontos.find(x=>x.id===id); if(!p) return false;
-  if(!confirm(`Remover o ponto de consumo ${p.nome||"—"}?`)) return false;
+  if(!(await caixaConfirmar(`Remover o ponto de consumo ${p.nome||"—"}?`, {perigo:true, ok:"Remover"}))) return false;
   G.pontos = G.pontos.filter(x=>x.id!==id); delete G.pos?.["p"+id]; return true;
 }
 function diagramaGasLivre(res, interativo){
@@ -2522,16 +2574,16 @@ function menuPontoGas(id, ev){
 function gasPtSvg(svg, ev){ const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
 function ligarGasLivre(){
   const cont = $("g-diagrama");
-  cont.addEventListener("pointerdown", e=>{
+  cont.addEventListener("pointerdown", async e=>{
     const svg = e.target.closest("svg.gas-edit"); if(!svg) return;
     const gno = e.target.closest("[data-gno]"), gpt = e.target.closest("[data-gpt]"), gtr = e.target.closest("[data-gtr]");
     if(!gno && !gpt && !gtr) return;
     e.preventDefault(); e.stopPropagation(); fecharMenuNo();
     if(GD.modo==="apagar"){
       let ok = false;
-      if(gpt) ok = removerPontoGas(gpt.dataset.gpt);
-      else if(gno && +gno.dataset.gno>0) ok = removerTrechoGas(+gno.dataset.gno-1);
-      else if(gtr) ok = removerTrechoGas(+gtr.dataset.gtr);
+      if(gpt) ok = await removerPontoGas(gpt.dataset.gpt);
+      else if(gno && +gno.dataset.gno>0) ok = await removerTrechoGas(+gno.dataset.gno-1);
+      else if(gtr) ok = await removerTrechoGas(+gtr.dataset.gtr);
       if(ok){ renderGasListas(); resumo(); salvar(); }
       GD.t = Date.now(); return;
     }
@@ -2575,19 +2627,19 @@ function ligarGasLivre(){
     atualizarGas(); resumo(); salvar();
   };
   nm.addEventListener("input", editPt); nm.addEventListener("change", e=>{ if(e.target.tagName==="SELECT") editPt(e); }); cont.addEventListener("pointercancel", ()=>{ GD.arr = null; });
-  $("no-menu").addEventListener("click", e=>{
+  $("no-menu").addEventListener("click", async e=>{
     const b = e.target.closest("[data-gacao]"); if(!b) return; e.stopPropagation();
     const m = $("no-menu"), id = m.dataset.pt;
-    if(b.dataset.gacao==="rmp"){ fecharMenuNo(); if(removerPontoGas(id)){ renderGasListas(); resumo(); salvar(); } }
+    if(b.dataset.gacao==="rmp"){ fecharMenuNo(); if(await removerPontoGas(id)){ renderGasListas(); resumo(); salvar(); } }
     if(b.dataset.gacao==="editar"){ fecharMenuNo(); const el = document.querySelector(`#g-pontos .ponto[data-id="${id}"] [data-f="nome"]`); el?.scrollIntoView({block:"center"}); el?.focus(); }
     if(b.dataset.gacao==="ok"){ fecharMenuNo(); renderGasListas(); return; }
     if(b.dataset.gacao==="catalogo"){ fecharMenuNo(); const d = $("g-cat"); d.open = true; d.scrollIntoView({block:"start"}); return; }
     if(b.dataset.gacao==="salvarnovo"){ const p = S.gas.pontos.find(x=>x.id===id); const c = novoEquipCatalogo(m.querySelector('[data-gp="nnome"]').value, m.querySelector('[data-gp="nk"]').value);
       if(c && p){ p.equip = c.n; Object.assign(p, kcalCat(c)); if(!p.nome || /^Ponto \d+$/.test(p.nome)) p.nome = c.n; renderGasListas(); resumo(); salvar(); menuPontoGas(id, {clientX: m.getBoundingClientRect().left-10, clientY: m.getBoundingClientRect().top-10}); } return; }
-    if(b.dataset.gacao==="rmt"){ fecharMenuNo(); if(removerTrechoGas(+m.dataset.no-1)){ renderGasListas(); resumo(); salvar(); } }
+    if(b.dataset.gacao==="rmt"){ fecharMenuNo(); if(await removerTrechoGas(+m.dataset.no-1)){ renderGasListas(); resumo(); salvar(); } }
   });
-  document.querySelectorAll(".g-ferr [data-gmodo]").forEach(b=>b.addEventListener("click", ()=>{
-    if(b.dataset.gmodo==="auto"){ if(confirm("Reorganizar o diagrama automaticamente? As posições que você ajustou serão perdidas.")){ S.gas.pos = {}; atualizarGas(); salvar(); } return; }
+  document.querySelectorAll(".g-ferr [data-gmodo]").forEach(b=>b.addEventListener("click", async ()=>{
+    if(b.dataset.gmodo==="auto"){ if((await caixaConfirmar("Reorganizar o diagrama automaticamente? As posições que você ajustou serão perdidas.", {ok:"Reorganizar"}))){ S.gas.pos = {}; atualizarGas(); salvar(); } return; }
     GD.modo = b.dataset.gmodo; document.querySelectorAll(".g-ferr [data-gmodo]").forEach(x=>x.classList.toggle("on", x.dataset.gmodo===GD.modo)); atualizarGas();
   }));
 }
@@ -2669,7 +2721,7 @@ function relEsgoto(){
       <div><em>Volume necessário:</em> <b>${R.cg.formula}</b></div><div>V = ${R.residencial?"4":"2"} × ${N} + 20 = <b>${fmt(R.cg.Vnec)} L</b></div>
       <div>Verificação: V<sub>equip.</sub> = ${fmt(R.cg.Veq)} L ${R.cg.ok?"≥":"<"} V<sub>nec.</sub> = ${fmt(R.cg.Vnec)} L</div></div>${tabEquip(R.cg)}`});
   itens.push({t:"Tanque séptico (fossa séptica)", nbr:"NBR 7229/93", html:`<div class="r-calc">
-      <div><em>Volume útil:</em> <b>V = 1000 + N × (C × T + K × Lf)</b></div><div>V = 1000 + ${N} × (${C} × ${T} + ${K} × ${Lf}) = <b>${fmt(R.fs.Vnec)} L</b></div>
+      <div><em>Volume útil:</em> <b>V = 1.000 + N × (C × T + K × Lf)</b></div><div>V = 1.000 + ${N} × (${C} × ${T} + ${K} × ${Lf}) = <b>${fmt(R.fs.Vnec)} L</b></div>
       <div>Verificação: V<sub>equip.</sub> = ${fmt(R.fs.Veq)} L ${R.fs.ok?"≥":"<"} V<sub>nec.</sub> = ${fmt(R.fs.Vnec)} L</div></div>${tabEquip(R.fs)}`});
   itens.push({t:"Filtro anaeróbio", nbr:"NBR 13969/97", html:`<div class="r-calc">
       <div><em>Volume útil do leito filtrante:</em> <b>V = 1,6 × N × C × T</b></div><div>V = 1,6 × ${N} × ${C} × ${T} = <b>${fmt(R.fa.Vnec)} L</b></div>
@@ -3026,8 +3078,8 @@ function ligar(){
     CAT.push({n:"Novo equipamento", gn:0, glp:0}); salvarCatalogo(); renderCatalogo(); renderGasListas();
     const ins = $("g-cat-corpo").querySelectorAll('[data-f="n"]'); const u = ins[ins.length-1]; u.focus(); u.select();
   });
-  $("g-cat-reset").addEventListener("click", ()=>{
-    if(!confirm("Restaurar o catálogo original? Equipamentos adicionados ou alterados serão perdidos.")) return;
+  $("g-cat-reset").addEventListener("click", async ()=>{
+    if(!(await caixaConfirmar("Restaurar o catálogo original? Equipamentos adicionados ou alterados serão perdidos.", {perigo:true, ok:"Restaurar"}))) return;
     CAT = clone(CAT_ORIGINAL); salvarCatalogo(); renderCatalogo(); renderGasListas(); aviso("Catálogo original restaurado");
   });
 
@@ -3052,10 +3104,10 @@ function ligar(){
     addEventListener("keydown", e=>{ if(e.key==="Escape" && lat.classList.contains("aberta")) fecha(); });
     matchMedia("(min-width:901px)").addEventListener?.("change", fecha);
   }
-  $("novo").addEventListener("click", ()=>{
-    if(LIVRE){ if(!confirm("Limpar o dimensionamento livre e começar outro?")) return; entrarLivre(true); return; }
+  $("novo").addEventListener("click", async ()=>{
+    if(LIVRE){ if(!(await caixaConfirmar("Limpar o dimensionamento livre e começar outro?", {perigo:true, ok:"Limpar"}))) return; entrarLivre(true); return; }
     const temCliente = S.obra.cliente && S.obra.cliente.trim();
-    if(!confirm(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.")) return;
+    if(!(await caixaConfirmar(temCliente ? `Começar uma nova obra? A obra atual continua salva em Clientes (${S.obra.cliente.trim()}).` : "Começar uma nova obra? A obra atual não tem cliente preenchido e será descartada.", {ok:"Começar nova obra", titulo:"Nova obra"}))) return;
     const O = S.obra, mod = S.modulo;
     S = estadoNovo(); S.obra.local = O.local; S.modulo = mod; respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem);
     preencherTudo(); renderTudo(); window.scrollTo({top:0});
@@ -3336,7 +3388,7 @@ function ligarClientes(){
     bibGravar(b); renderClientes();
   });
   $("cli-lista").addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.dataset.ce) e.target.closest("[data-cli]").querySelector("[data-edit-salvar]")?.click(); });
-  $("cli-lista").addEventListener("click", e=>{
+  $("cli-lista").addEventListener("click", async e=>{
     const sec = e.target.closest("[data-cli]"); if(!sec) return;
     const cid = sec.dataset.cli, b = bibLer(), c = b.clientes[cid];
     if(e.target.closest("[data-toggle]")){ CLI.aberto = CLI.aberto===cid ? null : cid; CLI.editando = null; renderClientes(); return; }
@@ -3358,7 +3410,7 @@ function ligarClientes(){
     }
     if(e.target.closest("[data-excluir-cli]")){
       const obras = Object.values(b.obras).filter(o=>o.clienteId===cid);
-      if(!confirm(`Excluir o cliente ${c.nome}${obras.length?` e as ${obras.length} obra(s) dele`:""}? Isso apaga os dimensionamentos deste computador.`)) return;
+      if(!(await caixaConfirmar(`Excluir o cliente ${c.nome}${obras.length?` e as ${obras.length} obra(s) dele`:""}? Isso apaga os dimensionamentos deste computador.`, {perigo:true, ok:"Excluir"}))) return;
       clearTimeout(_bibT);
       obras.forEach(o=>delete b.obras[o.id]); delete b.clientes[cid]; bibGravar(b);
       if(obras.some(o=>o.id===S.id) || chaveCliente(S.obra.cliente)===chaveCliente(c.nome)) novaObraVazia();
@@ -3367,7 +3419,7 @@ function ligarClientes(){
     const ex = e.target.closest("[data-excluir]");
     if(ex){
       const o = b.obras[ex.dataset.excluir]; if(!o) return;
-      if(!confirm(`Excluir a obra "${o.local||"sem local"}" de ${o.cliente}? Os dimensionamentos dela serão apagados deste computador.`)) return;
+      if(!(await caixaConfirmar(`Excluir a obra "${o.local||"sem local"}" de ${o.cliente}? Os dimensionamentos dela serão apagados deste computador.`, {perigo:true, ok:"Excluir"}))) return;
       clearTimeout(_bibT);
       delete b.obras[ex.dataset.excluir]; bibGravar(b);
       if(o.id===S.id) novaObraVazia();
@@ -4702,7 +4754,7 @@ function ligarImpHid(){
   $("hd-imp-arq").addEventListener("change", async e=>{ const f = e.target.files[0]; if(!f) return;
     if(/^image\//.test(f.type)) lerImagemPontos(f);
     else { const pavs = parseListaTexto((await f.text()).split(/\r?\n/)); if(pavs.some(p=>p.ambs.length)) abrirImpHid(pavs, null); else aviso("Não encontrei ambientes no arquivo.", true); } });
-  $("hd-imp-txt").addEventListener("click", ()=>{ const t = prompt("Cole a lista (títulos de pavimento, ambientes e linhas \"- APARELHO: quantidade\"):"); if(!t) return;
+  $("hd-imp-txt").addEventListener("click", async ()=>{ const t = (await caixaPerguntar("Cole a lista (títulos de pavimento, ambientes e linhas \"- APARELHO: quantidade\"):", {multilinha:true, ok:"Importar"})); if(!t) return;
     const pavs = parseListaTexto(t.split(/\r?\n/)); if(pavs.some(p=>p.ambs.length)) abrirImpHid(pavs, null); else aviso("Não encontrei ambientes no texto.", true); });
   addEventListener("paste", e=>{
     if(S.modulo!=="hid" || !$("tela-clientes").hidden || /INPUT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
@@ -4722,11 +4774,11 @@ function ligarImpHid(){
     if(t.dataset.hiModo!==undefined) HI.modo = t.value;
   });
   el.addEventListener("input", e=>{ const t = e.target; if(HI && t.dataset.hio){ HI.equip.outros[+t.closest(".hi-out").dataset.j][t.dataset.hio] = t.value; } });
-  el.addEventListener("click", e=>{ const b = e.target.closest("[data-hi-x]"); if(!b || !HI) return; const k = b.dataset.hiX;
+  el.addEventListener("click", async e=>{ const b = e.target.closest("[data-hi-x]"); if(!b || !HI) return; const k = b.dataset.hiX;
     if(k==="fechar"){ HI = null; renderImpHid(); }
     if(k==="addout"){ HI.equip.outros.push({nome:"", sigla:"", pav: HI.equip.caixa || HI.pavs[0]?.id, perda:""}); renderImpHid(); }
     if(k==="rmout"){ HI.equip.outros.splice(+b.closest(".hi-out").dataset.j, 1); renderImpHid(); }
-    if(k==="montar"){ if(HI.modo==="sub" && S.hid.els.length && !confirm("Substituir o desenho atual pelo diagrama montado?")) return; montarDiagramaHid(); }
+    if(k==="montar"){ if(HI.modo==="sub" && S.hid.els.length && !(await caixaConfirmar("Substituir o desenho atual pelo diagrama montado?", {ok:"Substituir"}))) return; montarDiagramaHid(); }
   });
 }
 
@@ -5468,10 +5520,10 @@ function ecPosPop(){
   pop.style.left = Math.max(8, Math.min(left, re.width - pop.offsetWidth - 8))+"px"; pop.style.top = Math.max(8, rg.top - re.top - 20)+"px";
 }
 function ecAlterou(){ renderEleLista(); resumo(); salvar(); }
-function ecApagar(tipo, id){
+async function ecApagar(tipo, id){
   const E = S.ele;
   if(tipo==="el"){ const n = E.alims.filter(a=>a.de===id||a.para===id).length;
-    if(n && !confirm(`Apagar ${nomeEc(id)} e ${n} eletroduto${n>1?"s":""} ligado${n>1?"s":""} a ele?`)) return;
+    if(n && !(await caixaConfirmar(`Apagar ${nomeEc(id)} e ${n} eletroduto${n>1?"s":""} ligado${n>1?"s":""} a ele?`, {perigo:true, ok:"Apagar"}))) return;
     E.els = E.els.filter(e=>e.id!==id); E.alims = E.alims.filter(a=>a.de!==id && a.para!==id); }
   if(tipo==="alim") E.alims = E.alims.filter(a=>a.id!==id);
   if(EC.sel?.id===id) EC.sel = null; if(EC.origem===id) EC.origem = null; if(EC.pop?.id===id) ecFecharPop();
@@ -5828,11 +5880,11 @@ function ligarCatsPis(){
       const k = e.target.dataset.pf, tipo = c.campos.find(f=>f[0]===k)[1]; x[k] = tipo==="number" ? num(e.target.value) : e.target.value;
       c.cat().salvar(); renderPis(); resumo();
     });
-    $(id+"-corpo").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; const rid = e.target.closest("tr").dataset.id, x = c.cat().get().find(y=>y.id===rid);
-      if(!confirm(`Remover ${x.n||x.m} da tabela?`)) return; c.cat().set(c.cat().get().filter(y=>y.id!==rid)); renderCatPis(id); renderPis(); resumo(); });
+    $(id+"-corpo").addEventListener("click", async e=>{ if(!e.target.closest("[data-rm]")) return; const rid = e.target.closest("tr").dataset.id, x = c.cat().get().find(y=>y.id===rid);
+      if(!(await caixaConfirmar(`Remover ${x.n||x.m} da tabela?`, {perigo:true, ok:"Remover"}))) return; c.cat().set(c.cat().get().filter(y=>y.id!==rid)); renderCatPis(id); renderPis(); resumo(); });
     $(id+"-add").addEventListener("click", ()=>{ const n = {...c.novo, id:uid()}; c.cat().set([...c.cat().get(), n]); renderCatPis(id);
       const i = $(id+"-corpo").querySelector(`tr[data-id="${n.id}"] input`); i?.focus(); i?.select(); });
-    $(id+"-reset").addEventListener("click", ()=>{ if(!confirm("Restaurar a tabela original? As alterações serão perdidas.")) return; c.cat().reset(); renderCatPis(id); renderPis(); resumo(); });
+    $(id+"-reset").addEventListener("click", async ()=>{ if(!(await caixaConfirmar("Restaurar a tabela original? As alterações serão perdidas.", {perigo:true, ok:"Restaurar"}))) return; c.cat().reset(); renderCatPis(id); renderPis(); resumo(); });
   });
 }
 function preencherPis(){
@@ -5892,11 +5944,11 @@ function ligarPis(){
     sel.innerHTML = `<option value="" id="pfi-auto">Automático</option>` + [...new Set(BCAT.filter(b=>b.m).map(b=>b.m))].map(m=>`<option>${esc(m)}</option>`).join(""); sel.value = v;
   });
   $("bc-cat").addEventListener("toggle", ()=>{ if($("bc-cat").open) renderBCcat(); });
-  $("bc-corpo").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; const id = e.target.closest("tr").dataset.id, b = BCAT.find(x=>x.id===id);
-    if(!confirm(`Remover ${nomeBC(b)} da tabela?`)) return; BCAT = BCAT.filter(x=>x.id!==id); salvarBC(); renderBCcat(); renderPis(); resumo(); });
+  $("bc-corpo").addEventListener("click", async e=>{ if(!e.target.closest("[data-rm]")) return; const id = e.target.closest("tr").dataset.id, b = BCAT.find(x=>x.id===id);
+    if(!(await caixaConfirmar(`Remover ${nomeBC(b)} da tabela?`, {perigo:true, ok:"Remover"}))) return; BCAT = BCAT.filter(x=>x.id!==id); salvarBC(); renderBCcat(); renderPis(); resumo(); });
   $("bc-add").addEventListener("click", ()=>{ BCAT.push({id:uid(), m:"Nova", q:1, btu:0, w:0, vmin:0}); salvarBC(); renderBCcat();
     const ins = $("bc-corpo").querySelectorAll('[data-bf="m"]'); const u = [...ins].find(i=>i.value==="Nova"); u?.focus(); u?.select(); });
-  $("bc-reset").addEventListener("click", ()=>{ if(!confirm("Restaurar a tabela original de bombas de calor? As alterações serão perdidas.")) return; BCAT = BC_ORIGINAL.map(x=>({...x, id:uid()})); salvarBC(); renderBCcat(); renderPis(); resumo(); });
+  $("bc-reset").addEventListener("click", async ()=>{ if(!(await caixaConfirmar("Restaurar a tabela original de bombas de calor? As alterações serão perdidas.", {perigo:true, ok:"Restaurar"}))) return; BCAT = BC_ORIGINAL.map(x=>({...x, id:uid()})); salvarBC(); renderBCcat(); renderPis(); resumo(); });
   $("phi-add").addEventListener("click", ()=>{ const n = P().hidro.conjuntos.length+1; P().hidro.conjuntos.push({nome:`Conjunto ${n}`, bicos:""}); renderPhiLista(); resumo(); salvar();
     const ins = document.querySelectorAll('#phi-lista [data-hc="bicos"]'); ins[ins.length-1]?.focus(); });
   $("phi-lista").addEventListener("click", e=>{ const op = e.target.closest("[data-op]");
@@ -6587,10 +6639,10 @@ function ligarCgl(){
   for(const k of ["doc","rev","obs"]) $("b-"+k).addEventListener("input", e=>{ G()[k] = e.target.value; salvar(); });
   $("gl-add").addEventListener("click", ()=>{ G().itens.push({nome:"", equip:"", qtd:1, k:""}); renderCglLista(); resumo(); salvar();
     const s = document.querySelectorAll('#gl-lista [data-cg="equip"]'); s[s.length-1]?.focus(); });
-  $("gl-rip").addEventListener("click", ()=>{
+  $("gl-rip").addEventListener("click", async ()=>{
     const pts = S.gas.pontos.filter(p=>num(p.qtd)>0 || p.equip);
     if(!pts.length){ aviso("A Tubulação de gás - RIP desta obra ainda não tem pontos de consumo.", true); return; }
-    if(G().itens.length && !confirm(`Substituir os ${G().itens.length} equipamento(s) da lista pelos ${pts.length} ponto(s) da Tubulação de gás - RIP?`)) return;
+    if(G().itens.length && !(await caixaConfirmar(`Substituir os ${G().itens.length} equipamento(s) da lista pelos ${pts.length} ponto(s) da Tubulação de gás - RIP?`, {ok:"Substituir"}))) return;
     G().itens = pts.map(p=>{ const c = p.equip && CAT.find(x=>x.n===p.equip); return {nome:p.nome||"", equip:c?p.equip:"", qtd:p.qtd??1, k: +(c ? kcalCat(c).kglp : num(p.kglp)).toFixed(1)}; });
     renderCglLista(); resumo(); salvar(); aviso(`${pts.length} ponto(s) trazido(s) da Tubulação de gás - RIP (consumo em GLP)`);
   });
@@ -7563,12 +7615,12 @@ function ligarDem(){
       setTimeout(()=>{ const n = document.querySelector('#dm-quadro [data-qf="nome"]'); n?.focus(); n?.select(); }, 30); return; }
   };
   // andares do prédio
-  $("dm-niveis").addEventListener("click", e=>{
+  $("dm-niveis").addEventListener("click", async e=>{
     const rm = e.target.closest("[data-nivrm]");
     if(rm){ const id = rm.dataset.nivrm; D().niveis = (D().niveis||[]).filter(v=>v.id!==id); D().quadros.forEach(q=>{ if(q.nivel===id) q.nivel = ""; }); tudo(); return; }
     if(e.target.closest("[data-nivhid]")){                  // mesmos andares da hidráulica (nomes, na ordem das cotas)
       const pavs = [...(S.hid.pav||[])].sort((a,b)=>num(a.cota)-num(b.cota)), L = D().niveis = D().niveis || [];
-      if(L.length && !confirm("Substituir os andares cadastrados aqui pelos pavimentos da hidráulica? Os quadros com andar escolhido mantêm o andar de mesmo nome.")) return;
+      if(L.length && !(await caixaConfirmar("Substituir os andares cadastrados aqui pelos pavimentos da hidráulica? Os quadros com andar escolhido mantêm o andar de mesmo nome.", {ok:"Substituir"}))) return;
       const porNome = new Map(L.map(v=>[(v.nome||"").trim().toLowerCase(), v.id]));
       D().niveis = pavs.map(p=>({id: porNome.get((p.nome||"").trim().toLowerCase()) || uid(), nome:p.nome}));
       const ids = new Set(D().niveis.map(v=>v.id)); D().quadros.forEach(q=>{ if(q.nivel && !ids.has(q.nivel)) q.nivel = ""; });
@@ -7615,7 +7667,7 @@ function ligarDem(){
   }
   $("dm-abas").addEventListener("click", clique); $("dm-res").addEventListener("click", clique); $("dm-diag").addEventListener("click", clique);
   $("dm-quadro").addEventListener("toggle", e=>{ if(e.target.classList?.contains("dm-det")) DM.det = e.target.open; }, true);
-  $("dm-quadro").addEventListener("click", e=>{
+  $("dm-quadro").addEventListener("click", async e=>{
     const q = D().quadros.find(x=>x.id===DM.sel); if(!q) return;
     const add = e.target.closest("[data-dmadd]");
     if(add){ const t = add.dataset.dmadd; q[t] = q[t] || []; q[t].push(t==="aq" || t==="il" ? {n:"", qtd:1, w:""} : t==="ar" ? {n:"", tipo:"split", qtd:1, kw:""} : {n:"", qtd:1, cv:""}); tudo();
@@ -7635,7 +7687,7 @@ function ligarDem(){
         D().quadros.push(...copias); DM.sel = copias[0].id; }
       DM.copia = null; tudo(); return; }
     if(e.target.closest("[data-dmdel]")){
-      if(!confirm(`Excluir o quadro ${q.nome}? Os quadros ligados nele passam a ser alimentados pelo quadro de cima.`)) return;
+      if(!(await caixaConfirmar(`Excluir o quadro ${q.nome}? Os quadros ligados nele passam a ser alimentados pelo quadro de cima.`, {perigo:true, ok:"Excluir"}))) return;
       D().quadros.forEach(x=>{ if(x.pai===q.id) x.pai = q.pai; }); D().quadros = D().quadros.filter(x=>x.id!==q.id); DM.sel = D().quadros[0]?.id; tudo(); }
   });
   const editar = e=>{
@@ -7759,10 +7811,10 @@ function ligarResp(){
     [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"],["d","dem"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
-  $("resp-lista").addEventListener("click", e=>{
+  $("resp-lista").addEventListener("click", async e=>{
     if(!e.target.closest("[data-rm]")) return;
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
-    if(!confirm(`Remover ${r.nome||"este responsável"} do cadastro? Obras já feitas mantêm o nome e o CREA no relatório.`)) return;
+    if(!(await caixaConfirmar(`Remover ${r.nome||"este responsável"} do cadastro? Obras já feitas mantêm o nome e o CREA no relatório.`, {perigo:true, ok:"Remover"}))) return;
     RESP = RESP.filter(x=>x.id!==id); salvarResp(); renderResp();
   });
 }
@@ -7875,10 +7927,10 @@ function instNovo(k, copiar){
   aviso(copiar ? `Cópia criada: ${nome}` : `Novo dimensionamento: ${nome}`);
   setTimeout(()=>{ const n = $("inst-nome"); if(n){ n.focus(); n.select(); } }, 30);
 }
-function instExcluir(k){
+async function instExcluir(k){
   const I = instDe(k); if(I.lista.length<2) return;
   const atual = I.lista.find(x=>x.id===I.ativo);
-  if(!confirm(`Excluir o dimensionamento "${atual.nome}"? Os dados dele serão perdidos.`)) return;
+  if(!(await caixaConfirmar(`Excluir o dimensionamento "${atual.nome}"? Os dados dele serão perdidos.`, {perigo:true, ok:"Excluir"}))) return;
   const ix = I.lista.findIndex(x=>x.id===I.ativo), outro = I.lista[ix>0 ? ix-1 : 1];
   instSwap(k, outro.id); I.lista = I.lista.filter(x=>x.id!==atual.id);
   instDepois(k); aviso(`Excluído: ${atual.nome}`);
@@ -8033,7 +8085,7 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["92cbaf8e·67", "d44492d7·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378"];
+const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
@@ -8140,8 +8192,8 @@ function sairLivre(){
   preencherTudo(); trocarModulo(mod); renderTudo(); window.scrollTo({top:0});
   aviso("Modo livre encerrado · voltou para a obra que estava aberta");
 }
-function livreSalvarComoObra(){
-  const nome = (prompt("Nome do cliente para salvar este dimensionamento:") || "").trim(); if(!nome) return;
+async function livreSalvarComoObra(){
+  const nome = ((await caixaPerguntar("Nome do cliente para salvar este dimensionamento:")) || "").trim(); if(!nome) return;
   LIVRE = false; S.id = uid(); S.obra.cliente = nome; $("cliente").value = nome; livreUI();
   salvar(); aviso(`Salvo como obra de ${nome}`);
 }
