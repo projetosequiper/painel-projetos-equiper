@@ -6832,6 +6832,22 @@ const CONCESSIONARIAS = [
   {id:"neodf", nome:"Neoenergia Brasília (DF)", t:TAB_NEODF}
 ];
 const concDe = id => CONCESSIONARIAS.find(c=>c.id===id) || null;
+// campos de potência: aparecem com ponto no milhar e vírgula no decimal (1.250 · 1,5); guarda o número puro (1250 · 1.5)
+function numBR(txt){
+  let t = String(txt??"").trim().replace(/\s/g,""); if(!t) return "";
+  if(t.includes(",")) t = t.replace(/\./g,"").replace(",",".");
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g,"");
+  const n = parseFloat(t); return isFinite(n) ? String(n) : "";
+}
+const fmtIn = v => (v==null || v==="") ? "" : String(v).trim()==="" ? "" : (isFinite(parseFloat(String(v).replace(",","."))) ? num(v).toLocaleString("pt-BR",{maximumFractionDigits:4}) : String(v));
+// tensões possíveis por tipo de alimentação (monofásica 127 ou 220 V; bifásica 220 V; trifásica 220/127 ou 380/220 V)
+const TENSOES = {mono:[["127","127 V"],["220","220 V"]], bi:[["220","220 V"]], tri:[["220/127","220/127 V"],["380/220","380/220 V"]]};
+function dmTens(q, T, fases){                               // tensão escolhida (ou a padrão da concessionária) + tensões de fase e de linha
+  const op = TENSOES[fases] || TENSOES.tri, pad = fases==="mono" ? String(T.vFase || 127) : fases==="bi" ? "220" : (T.vLinha===380 ? "380/220" : "220/127");
+  const t = op.some(o=>o[0]===q?.tensao) ? q.tensao : (op.some(o=>o[0]===pad) ? pad : op[0][0]);
+  const [a, b] = t.split("/").map(Number);
+  return fases==="tri" ? {t, txt:t+" V", Vff:a, Vfn:b} : {t, txt:a+" V", Vff:a, Vfn:a};
+}
 const degrau = (tab, n) => { let v = 0; tab.forEach(([de, f])=>{ if(n >= de - 1e-9) v = f; }); return v; };
 const DM = {sel:"qdg"};
 function dmFilhos(id){ return S.dem.quadros.filter(q=>q.pai===id); }
@@ -6994,8 +7010,9 @@ function dmEnelAgrup(id, T, c, geral = false){
     formula:`${geral ? "Quadro geral do prédio (agrupados como um só + serviço)" : "Medição agrupada"} · DR = ${Ds > 0 ? `(DTC + Dserv) × 0,90 = (${fmt(DTC,2)} + ${fmt(Ds,2)}) × 0,90` : "DTC"} = <b>${fmt(DR,2)} kVA</b>`};
   r.id = id; r.q = q0; r.nQ = nQ; r.A = As;
   r.instT = partes.reduce((a,p)=>a+p.inst,0); r.P = Object.fromEntries(partes.map(p=>[p.k, p]));
-  r.fases = "tri"; r.nomeF = "Trifásico"; r.polos = "3P";
-  r.I = DR*1000/(Math.sqrt(3)*T.vLinha); r.formulaI = `I = DR ÷ (√3 × ${T.vLinha} V)`;
+  const TNa = dmTens(q0, T, "tri");
+  r.fases = "tri"; r.nomeF = "Trifásico"; r.polos = "3P"; r.tensTxt = TNa.txt;
+  r.I = DR*1000/(Math.sqrt(3)*TNa.Vff); r.formulaI = `I = DR ÷ (√3 × ${TNa.Vff} V)`;
   r.porCorrente = false; r.porCarga = false;
   r.agr.geral = geral;
   r.cat = row ? ["Trifásico", 0, row[0], row[2], `entrada coletiva · chave geral ${row[1]} A · fusível NH ou disjuntor ${row[2]} A (tabela 16, ${geral ? `DR = ${fmt(DR,2)}` : `DPG = DTC = ${fmt(DPG,2)}`} kVA)`] : null;
@@ -7087,8 +7104,9 @@ function dmLightAgrup(id, T, c, geral = false){
     formula:`${geral ? "Quadro geral do prédio" : "Medição agrupada"} (RECON BT, item 18) · DR = ${DS > 0 ? `(DPG + DS) × 0,90 = (${fmt(DPG,2)} + ${fmt(DS,2)}) × 0,90` : "DPG"} = <b>${fmt(DR,2)} kVA</b>`};
   r.id = id; r.q = q0; r.nQ = nQ; r.A = circ[0]?.A || dmAgrega(id);
   r.instT = partes.reduce((a,p)=>a+p.inst,0); r.P = Object.fromEntries(partes.map(p=>[p.k, p]));
-  r.fases = "tri"; r.nomeF = "Trifásico"; r.polos = "3P";
-  r.I = DR*1000/(Math.sqrt(3)*T.vLinha); r.formulaI = `I = DR ÷ (√3 × ${T.vLinha} V)`;
+  const TNa = dmTens(q0, T, "tri");
+  r.fases = "tri"; r.nomeF = "Trifásico"; r.polos = "3P"; r.tensTxt = TNa.txt;
+  r.I = DR*1000/(Math.sqrt(3)*TNa.Vff); r.formulaI = `I = DR ÷ (√3 × ${TNa.Vff} V)`;
   r.porCorrente = false; r.porCarga = false;
   r.cat = row ? ["Trifásico", 0, row[0], row[1], `entrada coletiva · proteção geral ${row[1]} A (tabela 18, ${geral ? `DR = ${fmt(DR,2)}` : `DPG = ${fmt(DPG,2)}`} kVA)`] : null;
   r.acima = vDisj > 0 && !row;
@@ -7112,8 +7130,8 @@ function calcDemQ(id){
   r.avisos = r.avisos || [];
   // alimentação do quadro (padrão trifásica): define a tabela da concessionária ou o cálculo pela corrente
   const fases = ["mono","bi","tri"].includes(A.q0?.fases) ? A.q0.fases : "tri", nomeF = {tri:"Trifásico", bi:"Bifásico", mono:"Monofásico"}[fases];
-  const Vfn = T.vFase || 127, Vff = T.vLinha;
-  r.fases = fases; r.nomeF = nomeF;
+  const TN = dmTens(A.q0, T, fases), Vfn = TN.Vfn, Vff = TN.Vff;
+  r.fases = fases; r.nomeF = nomeF; r.tensTxt = TN.txt;
   r.I = fases==="mono" ? r.Dt*1000/Vfn : fases==="bi" ? r.Dt*1000/Vff : r.Dt*1000/(Math.sqrt(3)*Vff);
   r.formulaI = fases==="mono" ? `I = D ÷ ${Vfn} V` : fases==="bi" ? `I = D ÷ ${Vff} V (tensão entre fases)` : `I = D ÷ (√3 × ${Vff} V)`;
   let linhas = null, valor = r.Dt; r.porCarga = false;
@@ -7351,7 +7369,7 @@ function renderDemQuadro(){
       <label class="campo">Descrição<input data-df="n" value="${esc(x.n||"")}" list="dm-l-${tipo}" placeholder="Ex.: ${tipo==="il"?"Iluminação externa":tipo==="aq"?(met==="neo"?"Chuveiro":"Sauna"):tipo==="ar"?"Ar-condicionado":"Pressurização"}"></label>
       ${extra(tipo, x)}
       <label class="campo">Qtd.<input data-df="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.qtd)}"></label>
-      ${tipo==="ar" && met==="enel" ? "" : `<label class="campo">${ehW(tipo)?"Potência (W)":tipo==="ar"?"Potência (kW)":"Potência (CV)"}<input data-df="${ehW(tipo)?"w":tipo==="ar"?"kw":"cv"}" type="number" min="0" step="any" inputmode="decimal" value="${esc(ehW(tipo)?x.w:tipo==="ar"?x.kw:x.cv)}"></label>`}
+      ${tipo==="ar" && met==="enel" ? "" : `<label class="campo">${ehW(tipo)?"Potência (W)":tipo==="ar"?"Potência (kW)":"Potência (CV)"}<input data-df="${ehW(tipo)?"w":tipo==="ar"?"kw":"cv"}" data-mil type="text" inputmode="decimal" value="${fmtIn(ehW(tipo)?x.w:tipo==="ar"?x.kw:x.cv)}"></label>`}
       <label class="dm-prev" title="Carga prevista: ainda falta confirmar a potência exata"><input type="checkbox" data-df="prev" ${x.prev?"checked":""}> previsão</label>
       <button class="x" type="button" data-dmrm aria-label="Remover">×</button></div>`).join("");
   const com = q.com || {};
@@ -7363,12 +7381,13 @@ function renderDemQuadro(){
       ${(D.niveis||[]).length ? `<label class="campo c2">Nível (andar)<select data-qf="nivel"><option value="">automático</option>${[...D.niveis].reverse().map(v=>`<option value="${v.id}" ${q.nivel===v.id?"selected":""}>${esc(v.nome)||"—"}</option>`).join("")}</select></label>` : ""}
       ${T && T.ativ && (D.tipo==="nres" || (met==="light" && q.nres)) ? `<label class="campo c3">Atividade deste quadro<select data-qf="ativ"><option value="">Mesma da obra (${esc((T.ativ.find(a=>a[0]===D.ativ)||T.ativ[0])[1])})</option>${T.ativ.map(a=>`<option value="${a[0]}" ${q.ativ===a[0]?"selected":""}>${esc(a[1])}</option>`).join("")}</select></label>` : ""}
       <label class="campo c2">Alimentação<select data-qf="fases"><option value="tri" ${(q.fases||"tri")==="tri"?"selected":""}>Trifásica</option><option value="bi" ${q.fases==="bi"?"selected":""}>Bifásica</option><option value="mono" ${q.fases==="mono"?"selected":""}>Monofásica</option></select></label>
+      <label class="campo c2">Tensão<select data-qf="tensao">${TENSOES[q.fases||"tri"].map(o=>`<option value="${o[0]}" ${dmTens(q,T,q.fases||"tri").t===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></label>
       <label class="campo c2">Disjuntor geral do quadro<span class="unid"><input data-qf="disj" type="number" min="0" step="1" inputmode="numeric" value="${esc(q.disj??"")}" placeholder="calculado"><b>A</b></span></label>
       ${met==="enel" ? `${servQ ? "" : `${campoCom("qua","Quartos")}${campoCom("sal","Salas")}${campoCom("ban","Banheiros c/ chuveiro ou boiler")}${campoCom("coz","Cozinhas")}${campoCom("ser","Áreas de serviço")}${campoCom("out","Outros cômodos")}`}
-        <label class="campo c3">${servQ ? "Iluminação e tomadas do condomínio" : "Iluminação especial (jardim, fachada, quadra)"}<span class="unid"><input data-qf="ilE" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.ilE??"")}" placeholder="0"><b>kW</b></span></label>
+        <label class="campo c3">${servQ ? "Iluminação e tomadas do condomínio" : "Iluminação especial (jardim, fachada, quadra)"}<span class="unid"><input data-qf="ilE" data-mil type="text" inputmode="decimal" value="${fmtIn(q.ilE)}" placeholder="0"><b>kW</b></span></label>
         <label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-qf="ilEd" ${q.ilEd?"checked":""}> Lâmpadas de descarga (vapor de mercúrio, sódio, metálico)</label>`
       : `<label class="campo c3">Área ${met==="neo"?"construída":"útil"}<span class="unid"><input data-qf="area" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.area)}" placeholder="0"><b>m²</b></span></label>
-        <label class="campo c3">Iluminação e tomadas<span class="unid"><input data-qf="ilum" type="number" min="0" step="any" inputmode="decimal" value="${esc(q.ilum)}" placeholder="0"><b>kW</b></span></label>`}
+        <label class="campo c3">Iluminação e tomadas<span class="unid"><input data-qf="ilum" data-mil type="text" inputmode="decimal" value="${fmtIn(q.ilum)}" placeholder="0"><b>kW</b></span></label>`}
       ${met==="enel" ? `<label class="chave c3" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-qf="agrup" ${q.agrup?"checked":""}> Medição agrupada (prédio) · tabelas 4 a 10</label>` : ""}
       ${met==="enel" && (q.agrup || dmEhGeral(q)) ? `<label class="chave c3" style="align-self:end;padding-bottom:10px" title="A Enel considera o nº de armários: o nº de usuários sobe para o múltiplo de 4 acima só para escolher a linha da tabela 4 a 10; os reservas não entram na soma${dmEhGeral(q)?". No quadro geral o arredondamento é feito sobre o total do prédio":""}"><input type="checkbox" data-qf="armRes" ${q.armRes?"checked":""}> Considerar armários reservas</label>` : ""}
       ${met==="light" ? `<label class="chave c3" style="align-self:end;padding-bottom:10px" title="RECON BT item 18: as unidades ligadas neste quadro formam um agrupamento de medidores"><input type="checkbox" data-qf="agrup" ${q.agrup?"checked":""}> Medição agrupada (prédio) · RECON item 18</label>
@@ -7573,7 +7592,7 @@ function memorialDem(r){
   return r.partes.filter(p=>p.mem.length).map(p=>`<div class="mc-bloco"><h4>${p.t}</h4>${p.mem.map((m,i,l)=>`<p class="mc-l ${i===l.length-1?"fim":""}">${m}</p>`).join("")}</div>`).join("")
     + r.partes.filter(p=>p.memAq).map(p=>`<div class="mc-bloco"><h4>Aparelhos · somatório geral</h4><p class="mc-l fim">${p.memAq}</p></div>`).join("")
     + (r.memExtra||[]).map(p=>`<div class="mc-bloco"><h4>${p.t}</h4>${p.mem.filter(Boolean).map((m,i,l)=>`<p class="mc-l ${i===l.length-1?"fim":""}">${m}</p>`).join("")}</div>`).join("")
-    + `<div class="mc-bloco"><h4>Demanda total</h4><p class="mc-l">${r.formula} · alimentação ${({tri:"trifásica",bi:"bifásica",mono:"monofásica"})[r.fases]} · ${r.formulaI} = ${fmt(r.I,0)} A</p>
+    + `<div class="mc-bloco"><h4>Demanda total</h4><p class="mc-l">${r.formula} · alimentação ${({tri:"trifásica",bi:"bifásica",mono:"monofásica"})[r.fases]} ${r.tensTxt||""} · ${r.formulaI} = ${fmt(r.I,0)} A</p>
       ${r.avisos.map(a=>`<p class="mc-l mc-aviso">${a}</p>`).join("")}
       <p class="mc-l fim">${r.memFinal ? r.memFinal : r.cat && r.porCorrente ? `Corrente de demanda ${fmt(r.I,0)} A → <b>disjuntor geral ${r.polos} ${r.disj} A</b>${r.disjManual?` (adotado; calculado ${r.disjCalc} A)`:""} (disjuntor padronizado igual ou acima da corrente)` : r.cat?`${r.porCarga?`Carga instalada de ${fmt(r.instKW,2)} kW → categoria`:`Demanda de ${fmt(r.Dt,2)} kVA → categoria`} <b>${r.cat[5] ? `${r.cat[5]} · ` : ""}${r.cat[0]}</b> (${fmt(r.cat[1])} &lt; ${r.porCarga?"C (kW)":"D (kVA)"} ≤ ${fmt(r.cat[2])}) → <b>disjuntor geral ${r.polos} ${r.disj} A</b>${r.disjManual?` (adotado; calculado ${r.disjCalc} A)`:""} · ${r.cat[4]||""} (${T.catFonte})`:r.acima?`<span class="mc-aviso">Demanda acima da tabela da concessionária — consultar.</span>`:"Sem demanda."}</p></div>`;
 }
@@ -7699,18 +7718,19 @@ function ligarDem(){
       if(t.checked && t.dataset.qf==="serv"){ q.agrup = false; }
       if(t.checked && t.dataset.qf==="agrup") q.nres = false;
       if(t.dataset.qf==="agrup" || t.dataset.qf==="serv" || t.dataset.qf==="nres") tudo(); else alt(); return; }
-    if(t.dataset.qf){ q[t.dataset.qf] = t.value; if(t.dataset.qf==="pai" || t.dataset.qf==="ativ"){ tudo(); return; } if(t.dataset.qf==="nome"){ const ab = document.querySelector(`#dm-abas [data-dmq="${q.id}"]`); if(ab && ab.firstChild) ab.firstChild.textContent = (ab.firstChild.textContent.match(/^(› )*/)[0]) + (t.value || "—"); } alt(); return; }
+    if(t.dataset.qf){ q[t.dataset.qf] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value; if(t.dataset.qf==="fases") q.tensao = ""; if(t.dataset.qf==="pai" || t.dataset.qf==="ativ" || t.dataset.qf==="fases"){ tudo(); return; } if(t.dataset.qf==="nome"){ const ab = document.querySelector(`#dm-abas [data-dmq="${q.id}"]`); if(ab && ab.firstChild) ab.firstChild.textContent = (ab.firstChild.textContent.match(/^(› )*/)[0]) + (t.value || "—"); } alt(); return; }
     const l = t.closest("[data-dml]"); if(!l || !t.dataset.df) return;
     const x = q[l.dataset.dml][+l.dataset.i];
     if(t.type==="checkbox"){ if(e.type!=="change") return; x[t.dataset.df] = t.checked; l.classList.toggle("prev", t.checked); alt(); return; }
-    x[t.dataset.df] = t.value;
+    x[t.dataset.df] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value;
     if(t.tagName==="SELECT" && t.dataset.df==="tipo" && l.dataset.dml==="ar" && concDe(D().conc)?.t?.metodo==="enel"){ x.cap = ""; tudo(); return; }
     if(t.tagName==="SELECT" && (t.dataset.df==="cat" || t.dataset.df==="cls" || t.dataset.df==="cap")){ alt(); return; }
     if(t.dataset.df==="n" && e.type==="change"){ const p = DM_PADRAO[l.dataset.dml]?.[t.value.trim().toLowerCase()]; const f = l.dataset.dml==="aq"?"w":l.dataset.dml==="ar"?"kw":"cv";
-      if(p && !num(x[f])){ x[f] = p; const inp = l.querySelector(`[data-df="${f}"]`); if(inp) inp.value = p; } }
+      if(p && !num(x[f])){ x[f] = p; const inp = l.querySelector(`[data-df="${f}"]`); if(inp) inp.value = fmtIn(p); } }
     alt();
   };
   $("dm-quadro").addEventListener("input", editar); $("dm-quadro").addEventListener("change", editar);
+  $("dm-quadro").addEventListener("focusout", e=>{ const t = e.target; if(t.hasAttribute?.("data-mil")){ const v = numBR(t.value); t.value = fmtIn(v); } });
 }
 const DM_PADRAO = {aq:{"sauna":21000, "bomba de calor":5500, "evaporador adega":1320, "forno":4000, "boiler":4000, "carregador de carro elétrico":7400},
   mo:{"exaustores":0.25, "piscina":3, "reúso":1.5, "reuso":1.5, "recalque":1, "irrigação":3, "pressurização":2}};
@@ -8066,7 +8086,7 @@ function confDigital(x){
     if(typeof v==="boolean"){ out.push(v?"1":"0"); return; }
     if(typeof v!=="object" || vis.has(v)) return; vis.add(v);
     if(Array.isArray(v)){ v.forEach(y=>anda(y, prof+1)); return; }
-    Object.keys(v).sort().forEach(k=>{ if(k==="id"||k==="de"||k==="para"||k==="q"||k==="it") return; if(typeof v[k]==="function") return; anda(v[k], prof+1); });
+    Object.keys(v).sort().forEach(k=>{ if(k==="id"||k==="de"||k==="para"||k==="q"||k==="it"||k==="tensTxt") return; if(typeof v[k]==="function") return; anda(v[k], prof+1); });
   };
   anda(x, 0);
   let h = 2166136261; const s = out.join("|"); for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
