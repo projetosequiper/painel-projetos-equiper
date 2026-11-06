@@ -1021,11 +1021,11 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     </section>
     <div class="params p4" id="elv-params"></div>
     <section class="etapas">
-      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Verificações da NBR 8160 e da NBR 12208</h3></div><div class="rolar" id="elv-res"></div></div></article>
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Corte esquemático</h3><span class="nbr">sem escala</span></div><div id="elv-corte"></div></div></article>
       <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Curva da bomba e do sistema</h3><span class="nbr">curva lida do catálogo (aproximada)</span></div><div id="elv-graf"></div></div></article>
-      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Corte esquemático</h3><span class="nbr">sem escala</span></div><div id="elv-corte"></div></div></article>
-      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div class="rolar" id="elv-mem"></div></div></article>
-      <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Exigências construtivas</h3></div><div id="elv-exig"></div></div></article>
+      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Verificações da NBR 8160 e da NBR 12208</h3></div><div class="rolar" id="elv-res"></div></div></article>
+      <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div class="rolar" id="elv-mem"></div></div></article>
+      <article class="etapa"><div class="num">5</div><div><div class="etapa-cab"><h3>Exigências construtivas</h3></div><div id="elv-exig"></div></div></article>
     </section>
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
@@ -5582,7 +5582,7 @@ const ELV_EXIG = r => [
   "NBR 12208 · 5.7.3.3 j: ventilação da câmara para eliminar gases e equalizar a pressão (NBR 16577 · espaço confinado; NBR IEC 60079 · atmosferas explosivas).",
   "NBR 12208 · 5.7.3.3 g e h: aberturas de acesso e dimensões que permitam limpeza e manutenção; avaliar escada e guarda-corpo (e, f).",
   r.sub ? "NBR 12208 · 5.7.3.3.1: nível mínimo que mantenha a bomba submersa (orientação do fabricante); tampa sobre cada bomba, inclusive a reserva, com abertura que permita retirar a bomba, o tubo-guia e o pedestal; componentes internos em material resistente à corrosão." : "NBR 12208 · 5.7.3.3.2: sucção afastada do fundo; com sucção positiva, nível mínimo de desligamento na geratriz superior da tubulação de sucção; com sucção negativa, nível mínimo que evite entrada de ar e mantenha a escorva (sino de sucção recomendado)."].filter(Boolean);
-function resumoElvParte(){ const e = elvDados(); if(elvVazio(e.qmax)) return null; const r = calcElv();
+function resumoElvParte(){ const e = elvDados(); if(elvVazio(e.qmax) && !(Array.isArray(e.aps) && e.aps.length) && !e.bomba) return null; const r = calcElv();
   return {det: r.erro ? r.erro : `Vu ${r.Vu!=null?fmt(r.Vu,2):"—"} m³ · detenção ${r.d!=null?fmt(r.d,1):"—"} min${r.falhas?` · ${r.falhas} item(ns) não atende(m)`:""}`, ok: r.ok}; }
 function preencherElv(){
   const e = elvDados();
@@ -5626,10 +5626,11 @@ function relElv(){
     ${sec("Identificação", relIdent(E))}
     ${sec("Objetivo", `<p>Dimensionar a caixa coletora e a instalação de recalque do esgoto sanitário que não escoa por gravidade, conforme a ABNT NBR 8160:1999 (item 5.1.6) e a ABNT NBR 12208 (itens 5.6 e 5.7).</p>`)}
     ${r.erro ? `<p>${esc(r.erro)}</p>` : `
+    ${sec("Corte esquemático", elvCorte(r))}
+    ${sec("Curva da bomba e do sistema", r.curva ? elvGrafico(r) : `<p>Bomba não definida: a capacidade adotada é ${r.QbOrigem} (${fmt(r.Qb,2)} L/s).</p>`)}
     ${sec("Memorial de cálculo", elvMemorial(r, "r-t"))}
     ${sec("Verificações", `<div class="r-resumo">${elvVerTab(r, "r-t")}<div class="r-concl ${r.ok?"":"falha"}"><b>Conclusão:</b> ${r.ok ? `a caixa coletora atende aos itens verificados da NBR 8160 e da NBR 12208${r.recs?` (${r.recs} recomendação não seguida)`:""}.` : "há itens que não atendem ou ainda precisam ser informados."}</div></div>`)}
-    ${r.curva ? sec("Curva da bomba e do sistema", elvGrafico(r)) : ""}
-    ${sec("Corte esquemático", elvCorte(r))}
+
     ${sec("Exigências construtivas", `<ul class="r-obs">${ELV_EXIG(r).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`)}`}
     ${linhasObs(e.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(e.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
     ${relAssinatura(E)}</div>`;
