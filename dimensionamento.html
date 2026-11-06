@@ -194,6 +194,7 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 #al-diag [data-alq]{cursor:pointer}#al-diag [data-alq]:hover rect{stroke-width:2.5}
 .elv-ap{display:grid;grid-template-columns:2.2fr 1fr 1.3fr 40px;gap:8px;align-items:end;margin-top:8px}@media(max-width:620px){.elv-ap{grid-template-columns:1fr 1fr 40px}.elv-ap .campo:first-child{grid-column:1/-1}}
 .elv-curva{display:grid;grid-template-columns:repeat(10,minmax(70px,1fr));gap:6px}@media(max-width:900px){.elv-curva{grid-template-columns:repeat(4,1fr)}}
+.elv-info{display:block;font-size:12.5px;color:var(--cinza-4);margin-top:4px;font-weight:400}
 .elv-falha{color:var(--vermelho);font-weight:600}.elv-rec{color:#b35c00;font-weight:600}.elv-nd{color:var(--cinza-4)}#elv-exig ul{margin:0;padding-left:20px}
 .dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
 .dm-arv td.q{white-space:nowrap}.dm-arv td.q b{font-weight:700}.dm-arv tr.raiz td{font-weight:700}
@@ -979,26 +980,26 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <h2>Vazões e bombas</h2>
       <div class="grade">
         <label class="chave c6"><input type="checkbox" data-ev="bacia"> Recebe esgoto de bacias sanitárias (vasos)</label>
-        <label class="campo c2">Vazão máxima provável afluente<span class="unid"><input data-ev="qmax" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
-        <label class="campo c2">Vazão média afluente<span class="unid"><input data-ev="qmed" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
-        <label class="campo c2">Capacidade da bomba<span class="unid"><input id="elv-qb-ph" data-ev="qb" type="number" min="0" step="any" inputmode="decimal" placeholder="2 × vazão"><b>L/s</b></span></label>
-        <label class="campo c2">Intervalo entre partidas<span class="unid"><input data-ev="t" type="number" min="0" step="1" inputmode="decimal" placeholder="10"><b>min</b></span></label>
+        <label class="campo c2">Vazão máxima provável afluente<span class="unid"><input data-ev="qmax" data-mil type="text" inputmode="decimal" placeholder="0"><b>L/s</b></span><small class="elv-info" id="elv-qmax-info"></small></label>
+        <label class="campo c2">Vazão média afluente<span class="unid"><input data-ev="qmed" data-mil type="text" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
+        <label class="campo c2">Capacidade da bomba<span class="unid"><input id="elv-qb-ph" data-ev="qb" data-mil type="text" inputmode="decimal" placeholder="2 × vazão"><b>L/s</b></span></label>
+        <label class="campo c2">Intervalo entre partidas<span class="unid"><input data-ev="t" data-mil type="text" inputmode="decimal" placeholder="10"><b>min</b></span></label>
         <label class="campo c3">Bomba<select data-ev="bomba"><option value="">Sem bomba definida (vazão da bomba digitada ou 2 × afluente)</option><option value="apg4010">Grundfos UNILIFT APG.40.10.A1 · com triturador</option><option value="outra">Outra bomba (digitar a curva)</option></select></label>
-        <label class="campo c1 elv-bsel">Desnível geométrico<span class="unid"><input data-ev="Hg" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c1 elv-bsel">Recalque<span class="unid"><input data-ev="Lrec" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c1 elv-bsel">Comp. equivalente (peças)<span class="unid"><input data-ev="Leq" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c1 elv-bsel">C (Hazen-Williams)<input data-ev="C" type="number" min="60" step="5" inputmode="numeric" placeholder="130"></label>
+        <label class="campo c1 elv-bsel">Desnível geométrico<span class="unid"><input data-ev="Hg" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">Recalque<span class="unid"><input data-ev="Lrec" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">Comp. equivalente (peças)<span class="unid"><input data-ev="Leq" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">C (Hazen-Williams)<input data-ev="C" data-mil type="text" inputmode="decimal" placeholder="130"></label>
         <div class="c6" id="elv-curva-c" style="display:none"><label class="chave"><input type="checkbox" data-ev="trit"> Bomba com triturador</label>
           <p class="fonte" style="margin:6px 0">Curva da bomba (pontos lidos no catálogo): vazão em L/s e altura em m, do menor para o maior.</p><div id="elv-curva" class="elv-curva"></div></div>
         <label class="chave c6"><input type="checkbox" data-ev="menor"> Elevatória de menor porte (NBR 12208, Anexo A · vazões até 20 L/s, pré-fabricada ou moldada no local)</label>
         <label class="campo c2">Tipo de bomba<select data-ev="tipoB"><option value="sub">Submersível</option><option value="out">Outro tipo (poço seco)</option></select></label>
-        <label class="campo c2">Altura da bomba sobre o fundo<span class="unid"><input data-ev="hB" type="number" min="0" step="0.05" inputmode="decimal" placeholder="mín. 0,20"><b>m</b></span></label>
-        <label class="campo c2">Número de bombas<input data-ev="nb" type="number" min="1" step="1" inputmode="numeric" placeholder="2"></label>
-        <label class="campo c2">Passagem de sólidos da bomba<span class="unid"><input data-ev="esf" type="number" min="0" step="1" inputmode="decimal" placeholder="catálogo"><b>mm</b></span></label>
-        <label class="campo c2">DN do recalque<span class="unid"><input data-ev="dnRec" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex.: 75"><b></b></span></label>
-        <label class="campo c2">DN da sucção<span class="unid"><input data-ev="dnSuc" type="number" min="0" step="1" inputmode="decimal" placeholder="submersível: vazio"><b></b></span></label>
-        <label class="campo c2">Diâmetro interno do recalque<span class="unid"><input data-ev="diRec" type="number" min="0" step="0.1" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
-        <label class="campo c2">Diâmetro interno da sucção<span class="unid"><input data-ev="diSuc" type="number" min="0" step="0.1" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
+        <label class="campo c2">Altura da bomba sobre o fundo<span class="unid"><input data-ev="hB" data-mil type="text" inputmode="decimal" placeholder="mín. 0,20"><b>m</b></span></label>
+        <label class="campo c2">Número de bombas<input data-ev="nb" data-mil type="text" inputmode="decimal" placeholder="2"></label>
+        <label class="campo c2">Passagem de sólidos da bomba<span class="unid"><input data-ev="esf" data-mil type="text" inputmode="decimal" placeholder="catálogo"><b>mm</b></span></label>
+        <label class="campo c2">DN do recalque<span class="unid"><input data-ev="dnRec" data-mil type="text" inputmode="decimal" placeholder="Ex.: 75"><b></b></span></label>
+        <label class="campo c2">DN da sucção<span class="unid"><input data-ev="dnSuc" data-mil type="text" inputmode="decimal" placeholder="submersível: vazio"><b></b></span></label>
+        <label class="campo c2">Diâmetro interno do recalque<span class="unid"><input data-ev="diRec" data-mil type="text" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
+        <label class="campo c2">Diâmetro interno da sucção<span class="unid"><input data-ev="diSuc" data-mil type="text" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
       </div>
       <div class="elv-aps"><div class="etapa-cab" style="margin-top:14px"><h3 style="font-size:16px;margin:0">Aparelhos ligados na caixa <span class="nbr">(opcional · NBR 8160, anexo B, tabela B.4)</span></h3></div>
         <div id="elv-aps"></div><button class="add" type="button" id="elv-ap-add">Adicionar aparelho</button></div>
@@ -1008,13 +1009,13 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <h2>Caixa coletora</h2>
       <div class="grade">
         <label class="campo c2">Formato<select data-ev="forma"><option value="ret">Retangular</option><option value="cir">Circular</option></select></label>
-        <label class="campo c2 elv-ret">Comprimento interno<span class="unid"><input data-ev="L" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c2 elv-ret">Largura interna<span class="unid"><input data-ev="B" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c2 elv-cir" style="display:none">Diâmetro interno<span class="unid"><input data-ev="D" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c2">Volume ocupado (bombas, tubos)<span class="unid"><input data-ev="vocup" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m³</b></span></label>
-        <label class="campo c2">Folga entre a entrada e o nível máximo<span class="unid"><input data-ev="folga" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>m</b></span></label>
-        <label class="campo c2">Lâmina abaixo do nível mínimo<span class="unid"><input data-ev="lamina" type="number" min="0" step="any" inputmode="decimal" placeholder="fabricante"><b>m</b></span></label>
-        <label class="campo c2">Profundidade adotada<span class="unid"><input data-ev="prof" type="number" min="0" step="any" inputmode="decimal" placeholder="calculada"><b>m</b></span></label>
+        <label class="campo c2 elv-ret">Comprimento interno<span class="unid"><input data-ev="L" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2 elv-ret">Largura interna<span class="unid"><input data-ev="B" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2 elv-cir" style="display:none">Diâmetro interno<span class="unid"><input data-ev="D" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2">Volume ocupado (bombas, tubos)<span class="unid"><input data-ev="vocup" data-mil type="text" inputmode="decimal" placeholder="0"><b>m³</b></span></label>
+        <label class="campo c2">Folga entre a entrada e o nível máximo<span class="unid"><input data-ev="folga" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c2">Lâmina abaixo do nível mínimo<span class="unid"><input data-ev="lamina" data-mil type="text" inputmode="decimal" placeholder="fabricante"><b>m</b></span></label>
+        <label class="campo c2">Profundidade adotada<span class="unid"><input data-ev="prof" data-mil type="text" inputmode="decimal" placeholder="calculada"><b>m</b></span></label>
       </div>
       <p class="fonte" style="margin-top:8px">Profundidade contada da geratriz inferior da tubulação que chega mais baixa até o fundo. Em branco, é a soma da folga, da altura útil e da lâmina abaixo do nível mínimo (submergência da bomba, conforme o fabricante).</p>
     </section>
@@ -5399,7 +5400,7 @@ const elvVazio = v => v===undefined || v===null || v==="";
 function calcElv(e){
   e = e || elvDados(); const g = k => elvVazio(e[k]) ? ELV_PAD[k] : e[k];
   const aps = (Array.isArray(e.aps) ? e.aps : []).map(a=>{ const t = ELV_APS.find(x=>x[0]===a.ap) || ELV_APS[0], qtd = Math.max(0, Math.round(num(a.qtd)) || 0), m = Math.min(qtd, Math.max(0, Math.round(num(a.sim)) || 0)); return {t, qtd, m, q: m*t[2]}; }).filter(a=>a.qtd > 0);
-  const qAp = aps.reduce((s,a)=>s+a.q, 0), qInf = num(g("qmax"));
+  const qAp = aps.reduce((s,a)=>s+a.q, 0), qInf = num(g("qmax"));          // 0 digitado conta como vazio
   const bacia = g("bacia")!==false, qa = qInf > 0 ? qInf : qAp, qm = num(g("qmed")), qbInf = num(g("qb")), t = num(g("t")), nb = Math.round(num(g("nb"))) || 0;
   const r = {bacia, qa, qm, t, nb, ver:[], forma: g("forma")==="cir" ? "cir" : "ret", aps, qAp, qaOrigem: qInf > 0 ? "informada" : qAp > 0 ? "aparelhos" : ""};
   r.pmin = bacia ? 0.90 : 0.60; r.esfMin = bacia ? 60 : 18; r.dnMin = bacia ? 75 : 40;
@@ -5555,13 +5556,13 @@ function resumoElvParte(){ const e = elvDados(); if(elvVazio(e.qmax)) return nul
 function preencherElv(){
   const e = elvDados();
   document.querySelectorAll("#mod-elv [data-ev]").forEach(el=>{ const k = el.dataset.ev, v = elvVazio(e[k]) ? (k==="bacia" || k==="menor" || k==="forma" || k==="t" || k==="nb" || k==="tipoB" || k==="trit" ? ELV_PAD[k] : "") : e[k];
-    if(el.type==="checkbox") el.checked = v!==false; else el.value = v ?? ""; });
+    if(el.type==="checkbox") el.checked = v!==false; else el.value = el.hasAttribute("data-mil") ? fmtIn(v) : (v ?? ""); });
   if(elvVazio(e.tipoB) && $("mod-elv").querySelector('[data-ev="tipoB"]')) $("mod-elv").querySelector('[data-ev="tipoB"]').value = "sub";
   renderElvAps(); renderElvCurva(); renderElv();
 }
 function renderElvCurva(){
   const e = elvDados(); if(!Array.isArray(e.curva) || !e.curva.length) e.curva = Array.from({length:5}, ()=>({q:"", h:""}));
-  $("elv-curva").innerHTML = e.curva.map((p,i)=>`<label class="campo">Q${i+1}<span class="unid"><input data-cq="${i}" data-cf="q" type="number" min="0" step="any" inputmode="decimal" value="${esc(p.q ?? "")}"><b>L/s</b></span></label><label class="campo">H${i+1}<span class="unid"><input data-cq="${i}" data-cf="h" type="number" min="0" step="any" inputmode="decimal" value="${esc(p.h ?? "")}"><b>m</b></span></label>`).join("");
+  $("elv-curva").innerHTML = e.curva.map((p,i)=>`<label class="campo">Q${i+1}<span class="unid"><input data-cq="${i}" data-cf="q" data-mil type="text" inputmode="decimal" value="${esc(fmtIn(p.q ?? ""))}"><b>L/s</b></span></label><label class="campo">H${i+1}<span class="unid"><input data-cq="${i}" data-cf="h" data-mil type="text" inputmode="decimal" value="${esc(fmtIn(p.h ?? ""))}"><b>m</b></span></label>`).join("");
 }
 function renderElvAps(){
   const e = elvDados(), L = Array.isArray(e.aps) ? e.aps : [];
@@ -5577,6 +5578,7 @@ function renderElv(){
   document.querySelectorAll("#mod-elv .elv-ret").forEach(el=>el.style.display = cir ? "none" : ""); document.querySelectorAll("#mod-elv .elv-cir").forEach(el=>el.style.display = cir ? "" : "none");
   $("elv-qb-ph") && ($("elv-qb-ph").placeholder = r.qa > 0 ? fmt(2*r.qa,2) : "2 × vazão");
   const qmaxEl = $("mod-elv").querySelector('[data-ev="qmax"]'); if(qmaxEl) qmaxEl.placeholder = r.qAp > 0 ? `${fmt(r.qAp,2)} (aparelhos)` : "0";
+  $("elv-qmax-info").innerHTML = r.qAp > 0 ? (r.qaOrigem==="aparelhos" ? `usada: <b>${fmt(r.qAp,2)} L/s</b>, pelos aparelhos` : `pelos aparelhos daria ${fmt(r.qAp,2)} L/s; vale a digitada (apague para usar a dos aparelhos)`) : "";
   $("elv-params").innerHTML = [["Capacidade da bomba", r.Qb ? fmt(r.Qb,2) : "—", "L/s"], ["Volume útil", r.Vu!=null ? fmt(r.Vu,2) : "—", "m³"], ["Altura útil", r.hu!=null ? fmt(r.hu,2) : "—", "m"], ["Detenção", r.d!=null ? fmt(r.d,1) : "—", "min"]]
     .map(([k,v,u])=>`<div><small>${k}</small><strong>${v}</strong><em>${u}</em></div>`).join("");
   $("elv-res").innerHTML = r.erro ? `<p class="vazio">${esc(r.erro)}</p>` : elvVerTab(r, "quadro") + (r.tMax!=null && r.t > r.tMax && r.tMax > 0 ? `<p class="fonte" style="margin-top:8px">Para a detenção ficar em até 30 min, o intervalo entre partidas pode ser no máximo <b>${fmt(r.tMax,1)} min</b>${r.tMax < 10 ? " (abaixo dos 10 min recomendados: confira a vazão da bomba e a vazão média)" : ""}.</p>` : "");
@@ -5603,13 +5605,14 @@ function relElv(){
 }
 function ligarElv(){
   const M = $("mod-elv"); if(!M) return;
-  const alt = el => { const e = elvDados(), k = el.dataset.ev; e[k] = el.type==="checkbox" ? el.checked : el.value; renderElv(); resumo(); salvar(); };
+  const alt = el => { const e = elvDados(), k = el.dataset.ev; e[k] = el.type==="checkbox" ? el.checked : el.hasAttribute("data-mil") ? numBR(el.value) : el.value; renderElv(); resumo(); salvar(); };
+  M.addEventListener("focusout", ev=>{ const t = ev.target; if(t.hasAttribute?.("data-mil")) t.value = fmtIn(numBR(t.value)); });
   M.addEventListener("input", ev=>{ if(ev.target.dataset.ev && ev.target.tagName==="INPUT" && ev.target.type!=="checkbox") alt(ev.target); else if(ev.target.dataset.ev && ev.target.tagName==="TEXTAREA") alt(ev.target); });
   M.addEventListener("change", ev=>{ if(ev.target.dataset.ev && (ev.target.tagName==="SELECT" || ev.target.type==="checkbox")) alt(ev.target); });
   const apAlt = ev => { const t = ev.target, row = t.closest("[data-api]"); if(!row || !t.dataset.apf) return; const e = elvDados(); e.aps = e.aps || [];
     const a = e.aps[+row.dataset.api]; if(!a) return; a[t.dataset.apf] = t.value; renderElv(); resumo(); salvar(); };
   M.addEventListener("input", ev=>{ if(ev.target.dataset.apf && ev.target.tagName==="INPUT") apAlt(ev); });
-  M.addEventListener("input", ev=>{ const t = ev.target; if(t.dataset.cq===undefined) return; const e = elvDados(); e.curva = e.curva || []; const p = e.curva[+t.dataset.cq]; if(!p) return; p[t.dataset.cf] = t.value; renderElv(); resumo(); salvar(); });
+  M.addEventListener("input", ev=>{ const t = ev.target; if(t.dataset.cq===undefined) return; const e = elvDados(); e.curva = e.curva || []; const p = e.curva[+t.dataset.cq]; if(!p) return; p[t.dataset.cf] = numBR(t.value); renderElv(); resumo(); salvar(); });
   M.addEventListener("change", ev=>{ if(ev.target.dataset.apf && ev.target.tagName==="SELECT") apAlt(ev); });
   M.addEventListener("click", ev=>{
     if(ev.target.closest("#elv-ap-add")){ const e = elvDados(); (e.aps = e.aps || []).push({ap:"bacia_cx", qtd:"1", sim:"1"}); renderElvAps(); renderElv(); resumo(); salvar(); return; }
