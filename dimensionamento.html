@@ -1297,6 +1297,8 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2 dm-hib-c" id="dm-hibkwp-c">Placas<span class="unid"><input id="dm-hibkwp" type="number" min="0" step="any" inputmode="decimal" placeholder="opcional"><b>kWp</b></span></label>
       </div>
       <div id="dm-conc-info"></div>
+      <p class="fonte" style="margin-top:10px"><button type="button" class="lnk" id="dm-imp-bt">Importar cálculo de demanda de um arquivo (.equiper)</button> · troca só o cálculo de demanda e os alimentadores desta edificação; as outras disciplinas ficam como estão.</p>
+      <input type="file" id="dm-imp-arq" accept=".equiper,.json,application/json" hidden>
     </section>
     <div id="dm-corpo">
       <div class="params p4" id="dm-params"></div>
@@ -8237,6 +8239,15 @@ function ligarDem(){
   $("dm-ativ").addEventListener("change", e=>{ D().ativ = e.target.value; tudo(); });
   $("dm-fp").addEventListener("input", e=>{ D().fp = e.target.value; alt(); });
   $("dm-arc").addEventListener("change", e=>{ D().arCentral = e.target.value; alt(); });
+  $("dm-imp-bt").addEventListener("click", ()=>{ $("dm-imp-arq").value = ""; $("dm-imp-arq").click(); });
+  $("dm-imp-arq").addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const r = new FileReader();
+    r.onload = async ()=>{ let o; try{ o = JSON.parse(r.result); }catch(err){ caixaAviso("Este arquivo não é uma obra da Equiper."); return; }
+      const dem = o && o.app==="equiper-dimensionamentos" && o.obra && o.obra.dem;
+      if(!dem || !Array.isArray(dem.quadros)){ caixaAviso("Este arquivo não tem cálculo de demanda."); return; }
+      const n = dem.quadros.length, nome = o.obra.obra?.cliente || f.name;
+      if(!(await caixaConfirmar(`Trocar o cálculo de demanda desta edificação pelo do arquivo "${nome}" (${n} quadro${n>1?"s":""})? O cálculo de demanda e os alimentadores que estão aqui agora serão substituídos.`, {perigo:true, ok:"Substituir"}))) return;
+      S.dem = instNormalizar("dem", dem); preencherDem(); tudo(); aviso(`Cálculo de demanda importado: ${n} quadro${n>1?"s":""}`); };
+    r.readAsText(f); });
   $("dm-loc").addEventListener("change", e=>{ D().loc = +e.target.value; alt(); });
   $("dm-rede").addEventListener("change", e=>{ D().rede = e.target.value; tudo(); });
   $("dm-ger").addEventListener("change", e=>{ D().gerador = e.target.checked; tudo(); });

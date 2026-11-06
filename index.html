@@ -4146,6 +4146,53 @@
     });
   }
 
+  // Dimensionamentos: grava SÓ o cliente aberto, em cima da versão atual do servidor (transaction).
+  // Antes o painel gravava os dimensionamentos de todos os clientes de uma vez, com a cópia que tinha na memória:
+  // um computador com a cópia velha apagava o que outra pessoa tinha acabado de salvar.
+  // Se outra pessoa salvou este mesmo cliente depois que ele foi aberto aqui, não grava por cima: pergunta.
+  var dimBase = {}, dimMeus = {}, dimConflito = {}, dimForcar = {}, dimPendente = {};
+  async function salvarDimensionamentoCliente(cid, dados){
+    if(!dadosOk.dim){ avisarSalvamentoBloqueado(); return false; }
+    dimPendente[cid] = dados;
+    if(dimConflito[cid]) return false;                        // esperando a pessoa decidir o conflito
+    var novo = JSON.stringify(dados), base = dimBase[cid], forcar = !!dimForcar[cid], conflito = false, res, erro = null;
+    var meus = dimMeus[cid] = (dimMeus[cid] || []); meus.push(novo); if(meus.length > 8) meus.shift();
+    try{
+      res = await _fbDb.ref('storage/clm-dimensionamentos').transaction(function(valorAtual){
+        conflito = false;
+        var mapa = {};
+        if(valorAtual === null || valorAtual === undefined || valorAtual === ''){ mapa[cid] = dados; return JSON.stringify(mapa); }   // cache vazio: o SDK confere com o servidor e repete
+        try{ mapa = JSON.parse(valorAtual) || {}; }catch(err){ return; }
+        var atual = (mapa[cid] === undefined || mapa[cid] === null) ? null : JSON.stringify(mapa[cid]);
+        if(!forcar && base !== undefined && atual !== base && atual !== novo && meus.indexOf(atual) === -1){ conflito = true; return; }
+        mapa[cid] = dados;
+        return JSON.stringify(mapa);
+      });
+    }catch(err){ erro = err; }
+    if(erro){ mostrarErroSalvamento('dimensionamento', function(){ salvarDimensionamentoCliente(cid, dimPendente[cid]); }); return false; }
+    if(conflito){ avisarConflitoDimensionamento(cid); return false; }
+    if(res && res.committed && res.snapshot && res.snapshot.exists()){
+      try{ var m = JSON.parse(res.snapshot.val()); if(m && typeof m === 'object') state.dimensionamentos = m; }catch(err){}
+      dimBase[cid] = novo; dimForcar[cid] = false; return true;
+    }
+    mostrarErroSalvamento('dimensionamento', function(){ salvarDimensionamentoCliente(cid, dimPendente[cid]); });
+    return false;
+  }
+  async function avisarConflitoDimensionamento(cid){
+    if(dimConflito[cid]) return; dimConflito[cid] = true;
+    var f = state.financeiro.find(function(x){ return x.id === cid; }), nome = f ? f.cliente : 'este cliente';
+    var abrirNovo = await caixaConfirmar('Outra pessoa salvou o dimensionamento de ' + nome + ' depois que você o abriu. Para não apagar o trabalho dela, as suas últimas alterações NÃO foram gravadas. Abrir a versão mais nova (as suas alterações desde que abriu se perdem) ou gravar a sua por cima da dela?', { titulo: 'Dimensionamento alterado por outra pessoa', ok: 'Abrir a versão mais nova', cancelar: 'Gravar a minha por cima' });
+    if(abrirNovo){
+      dimConflito[cid] = false;
+      if(dimensionamentoClienteAberto === cid) abrirDimensionamentoCliente(cid, nome);
+      return;
+    }
+    var certeza = await caixaConfirmar('Gravar a sua versão vai apagar o que a outra pessoa salvou no dimensionamento de ' + nome + '. Confirma?', { perigo: true, ok: 'Gravar por cima' });
+    dimConflito[cid] = false;
+    if(!certeza){ if(dimensionamentoClienteAberto === cid) abrirDimensionamentoCliente(cid, nome); return; }
+    dimForcar[cid] = true;
+    if(dimPendente[cid]) salvarDimensionamentoCliente(cid, dimPendente[cid]);
+  }
   function abrirDimensionamentoCliente(clienteId, clienteNome){
     dimensionamentoClienteAberto = clienteId;
     document.getElementById('dimensionamentosListaWrap').style.display = 'none';
@@ -4162,19 +4209,26 @@
         ultimaAtividade = Date.now();
         if(msg.tipo === 'dimensionamento-pronto'){
           if(!dimensionamentoClienteAberto) return;
-          var fAtual = state.financeiro.find(function(x){ return x.id === dimensionamentoClienteAberto; });
-          iframe.contentWindow.postMessage({
-            tipo: 'carregar-dimensionamento',
-            clienteId: dimensionamentoClienteAberto,
-            clienteNome: fAtual ? fAtual.cliente : '',
-            enderecoCliente: fAtual ? (fAtual.enderecoCompleto || '') : '',
-            dados: state.dimensionamentos[dimensionamentoClienteAberto] || null
-          }, '*');
+          var cidAbrir = dimensionamentoClienteAberto;
+          // lê a versão atual do servidor (outra pessoa pode ter salvo depois que este painel carregou)
+          lerChaveSegura('clm-dimensionamentos', 15000).then(function(r){
+            if(r && r.ok && r.valor){ try{ var mapa = JSON.parse(r.valor); if(mapa && typeof mapa === 'object') state.dimensionamentos = mapa; }catch(err){} }
+            if(dimensionamentoClienteAberto !== cidAbrir) return;
+            var dadosC = state.dimensionamentos[cidAbrir] || null;
+            dimBase[cidAbrir] = dadosC ? JSON.stringify(dadosC) : null; dimMeus[cidAbrir] = []; dimConflito[cidAbrir] = false;
+            var fAtual = state.financeiro.find(function(x){ return x.id === cidAbrir; });
+            iframe.contentWindow.postMessage({
+              tipo: 'carregar-dimensionamento',
+              clienteId: cidAbrir,
+              clienteNome: fAtual ? fAtual.cliente : '',
+              enderecoCliente: fAtual ? (fAtual.enderecoCompleto || '') : '',
+              dados: dadosC
+            }, '*');
+          });
         } else if(msg.tipo === 'dimensionamento-salvo'){
           if(!msg.clienteId) return;
-          state.dimensionamentos[msg.clienteId] = msg.dados;
           var seqSalvo = msg.seq, origemSalvo = e.source;
-          Promise.resolve(saveDimensionamentos()).then(function(ok){
+          salvarDimensionamentoCliente(msg.clienteId, msg.dados).then(function(ok){
             try{ if(origemSalvo) origemSalvo.postMessage({ tipo: 'dimensionamento-salvo-ok', seq: seqSalvo, ok: !!ok }, '*'); }catch(err){}
           });
         }
@@ -7467,7 +7521,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   document.getElementById('btnFiltrosToggle').onclick = function(){ document.getElementById('toolbarQuadro').classList.toggle('filtros-abertos'); };
   try{ window.matchMedia('(max-width:720px)').addEventListener('change', function(){ renderBoard(); }); }catch(e){}
   document.getElementById('btnAtualizar').onclick = function(){ loadAll(); };
-  var VERSAO_APP = '05/11/2026 · fase 3o';
+  var VERSAO_APP = '06/11/2026 · fase 3p';
   // avisa quando há versão nova publicada (aparelho com o app aberto há dias continua na versão antiga)
   async function verificarNovaVersao(){
     try{
