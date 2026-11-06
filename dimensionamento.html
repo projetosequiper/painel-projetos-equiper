@@ -1030,11 +1030,12 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="v-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input data-ev="doc" autocomplete="off" placeholder="Ex.: MC-ESG-003"></label>
         <label class="campo c2">Revisão<input data-ev="rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea data-ev="obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
-      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo da tubulação de esgoto.</p>
+      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo da tubulação de esgoto (mudando aqui, muda lá).</p>
     </section>
   </section>
   <section class="modulo" id="mod-ele" hidden>
@@ -1374,11 +1375,12 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="bloco-dados" style="margin-top:28px">
       <h2>Documento</h2>
       <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="u-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
         <label class="campo c2">Nº do documento<input id="al-doc" autocomplete="off" placeholder="Ex.: MC-ELE-004"></label>
         <label class="campo c2">Revisão<input id="al-rev" autocomplete="off" placeholder="00"></label>
         <label class="campo c6">Observações<textarea id="al-obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
       </div>
-      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo do cálculo de demanda.</p>
+      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo do cálculo de demanda (mudando aqui, muda lá).</p>
     </section>
   </section>
 
@@ -5467,22 +5469,51 @@ function calcElv(e){
   return r;
 }
 const ELV_SIT = {ok:["atende",""], falha:["não atende","falha"], rec:["recomendação não atendida","rec"], nd:["a confirmar","nd"]};
-function elvCorte(r){                                       // corte esquemático da caixa (sem escala)
+function elvCorte(r){                                       // corte esquemático da caixa (sem escala): 2 bombas, um recalque para cada uma, com válvula de retenção
   if(r.erro || r.hu==null) return `<p class="vazio">Informe vazão, intervalo entre partidas e as dimensões da caixa para ver o corte.</p>`;
-  const W = 520, x0 = 200, cw = 180, top = 46, esc = 220/Math.max(r.prof || 1, 0.5), hF = r.folga*esc, hU = r.hu*esc, hL = r.lamina*esc, yMax = top + hF, yMin = yMax + hU, yF = top + (r.prof || (r.folga + r.hu + r.lamina))*esc, H = yF + 40;
-  const nb = Math.max(1, Math.min(r.nb || 1, 3)), bombas = Array.from({length:nb}, (_,i)=>{ const bx = x0 + 30 + i*55; return `<rect x="${bx}" y="${yF-34}" width="30" height="30" rx="4" class="eb"/><path d="M${bx+15} ${yF-34} V${top-18}" class="er"/>`; }).join("");
-  const cota = (y1, y2, txt, x) => y2 - y1 > 4 ? `<path d="M${x} ${y1} V${y2}" class="ec"/><path d="M${x-4} ${y1} H${x+4} M${x-4} ${y2} H${x+4}" class="ec"/><text x="${x-6}" y="${(y1+y2)/2+4}" class="et" text-anchor="end">${txt}</text>` : "";
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:560px" role="img" aria-label="Corte esquemático da caixa coletora">
-    <style>.ep{fill:none;stroke:#000;stroke-width:3}.ew{fill:#dbe9f6}.ea{fill:none;stroke:#555;stroke-width:6}.eb{fill:#fff;stroke:#000;stroke-width:1.5}.er{stroke:#d10a1e;stroke-width:3;fill:none}.ec{stroke:#555;stroke-width:1}.et{font:500 11px Barlow,Arial,sans-serif;fill:#333}.en{font:600 11px Barlow,Arial,sans-serif;fill:#000}.nv{stroke:#000;stroke-dasharray:5 4;stroke-width:1}</style>
-    <rect x="${x0}" y="${yMin}" width="${cw}" height="${yF-yMin}" class="ew" opacity=".6"/><rect x="${x0}" y="${yMax}" width="${cw}" height="${yMin-yMax}" class="ew"/>
-    <path d="M${x0} ${top-20} V${yF} H${x0+cw} V${top-20}" class="ep"/>
-    <path d="M${x0-90} ${top} H${x0}" class="ea"/><text x="${x0-90}" y="${top-10}" class="en">entrada</text>
-    ${bombas}<path d="M${x0+45} ${top-18} H${x0+cw+40}" class="er"/><text x="${x0+cw+42}" y="${top-25}" class="en" text-anchor="end">recalque DN ${r.dnRec || "—"}</text>
-    <path d="M${x0} ${yMax} H${x0+cw}" class="nv"/><text x="${x0+cw+8}" y="${yMax+4}" class="et">nível máximo (liga)</text>
-    <path d="M${x0} ${yMin} H${x0+cw}" class="nv"/><text x="${x0+cw+8}" y="${yMin+4}" class="et">nível mínimo (desliga)</text>
-    ${cota(top, yMax, `folga ${fmt(r.folga,2)} m`, x0-14)}${cota(yMax, yMin, `altura útil ${fmt(r.hu,2)} m`, x0-14)}${cota(yMin, yF, `lâmina ${fmt(r.lamina,2)} m`, x0-14)}
-    <text x="${x0+cw+8}" y="${yF-4}" class="en">profundidade ${fmt(r.prof,2)} m</text>
-    <text x="${x0+cw/2}" y="${yF+30}" class="et" text-anchor="middle">${r.forma==="cir" ? `Ø ${fmt(r.D,2)} m` : `${fmt(r.L,2)} × ${fmt(r.B,2)} m`} · sem escala</text></svg>`;
+  const W = 780, x0 = 270, cw = 230, top = 78, tw = 12;                                        // top = geratriz inferior da entrada
+  const prof = r.prof || (r.folga + r.hu + r.lamina), esc = 230/Math.max(prof, 0.5);
+  const yMax = top + r.folga*esc, yMin = yMax + r.hu*esc, yF = top + prof*esc, yTampa = top - 58, H = yF + 78;
+  const uid = "e" + Math.random().toString(36).slice(2, 7), nb = Math.max(1, Math.min(r.nb || 1, 2));
+  const dn = r.dnRec ? `DN ${fmt(r.dnRec)}` : "DN —";
+  // bombas (motor + voluta + pé de acoplamento), boia e recalque subindo e saindo na horizontal pela parede direita
+  const bombas = Array.from({length:nb}, (_,i)=>{
+    const bx = x0 + 40 + i*82, base = yF - (r.hB > 0 ? Math.min(r.hB*esc, 30) : 0), yv = base - 18, ym = yv - 40, xs = bx + 40;   // xs = saída do recalque
+    const ySai = yTampa + 22 + i*18, xFim = x0 + cw + tw + 120;
+    const yBoia = Math.max(yMax + 6, Math.min(yMin - 10, (yMax + yMin)/2 + (i ? 10 : -6)));
+    return `<g>
+      <rect x="${bx-4}" y="${base-6}" width="44" height="6" class="ebs"/>
+      <path d="M${bx} ${base-6} h36 l-4 -12 h-28 z" class="ebv"/>
+      <rect x="${bx+5}" y="${ym}" width="26" height="${yv-ym}" rx="5" class="ebm"/>
+      <rect x="${bx+9}" y="${ym-7}" width="18" height="8" rx="2" class="ebm"/>
+      <path d="M${bx+31} ${yv+3} H${xs}" class="erp"/>
+      <path d="M${xs} ${yv+3} V${ySai} H${xFim}" class="erp"/>
+      <path d="M${bx+18} ${ym-7} C ${bx+18} ${yBoia-30}, ${bx-14} ${yBoia-20}, ${bx-10} ${yBoia}" class="ecb"/>
+      <rect x="${bx-18}" y="${yBoia}" width="16" height="9" rx="4" class="ebo"/>
+      <g transform="translate(${x0+cw+tw+46},${ySai})"><path d="M-9 -7 L9 7 V-7 L-9 7 Z" class="evr"/><path d="M0 -7 V-12" class="evr2"/></g>
+      <text x="${xFim+4}" y="${ySai+4}" class="et">recalque ${dn} · bomba ${i+1}</text></g>`; }).join("");
+  const seta = `url(#${uid}s)`;
+  const cota = (y1, y2, txt, x) => y2 - y1 > 3 ? `<path d="M${x} ${y1} V${y2}" class="ecd" marker-start="${seta}" marker-end="${seta}"/><path d="M${x-6} ${y1} H${x0} M${x-6} ${y2} H${x0}" class="ecx"/><text x="${x-8}" y="${(y1+y2)/2+4}" class="ecv" text-anchor="end">${txt}</text>` : "";
+  const xP = x0 - 172;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:720px" role="img" aria-label="Corte esquemático da caixa coletora">
+    <defs><marker id="${uid}s" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#d10a1e"/></marker>
+      <pattern id="${uid}h" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 V7" stroke="#999" stroke-width="1.2"/></pattern></defs>
+    <style>.ew{fill:#dbe9f6}.eh{fill:url(#${uid}h);stroke:#555;stroke-width:1}.ea{fill:none;stroke:#555;stroke-width:7}.erp{fill:none;stroke:#d10a1e;stroke-width:3}.ebs{fill:#777}.ebv{fill:#333}.ebm{fill:#c9ced4;stroke:#333;stroke-width:1.3}.ebo{fill:#d10a1e;stroke:#600;stroke-width:1}.ecb{fill:none;stroke:#222;stroke-width:1.2}
+      .evr{fill:#fff;stroke:#000;stroke-width:1.6}.evr2{stroke:#000;stroke-width:1.6}.ecd{stroke:#d10a1e;stroke-width:1.3}.ecx{stroke:#d10a1e;stroke-width:.8;stroke-dasharray:2 2}.ecv{font:700 12.5px Barlow,Arial,sans-serif;fill:#d10a1e}.et{font:500 11px Barlow,Arial,sans-serif;fill:#333}.en{font:700 11.5px Barlow,Arial,sans-serif;fill:#000}.nv{stroke:#000;stroke-dasharray:5 4;stroke-width:1}</style>
+    <rect x="${x0}" y="${yMin}" width="${cw}" height="${yF-yMin}" class="ew" opacity=".65"/><rect x="${x0}" y="${yMax}" width="${cw}" height="${yMin-yMax}" class="ew"/>
+    <rect x="${x0-tw}" y="${yTampa}" width="${tw}" height="${yF-yTampa+tw}" class="eh"/><rect x="${x0+cw}" y="${yTampa}" width="${tw}" height="${yF-yTampa+tw}" class="eh"/>
+    <rect x="${x0-tw}" y="${yF}" width="${cw+2*tw}" height="${tw}" class="eh"/><rect x="${x0-tw}" y="${yTampa-tw}" width="${cw+2*tw}" height="${tw}" class="eh"/>
+    <path d="M${x0-tw-70} ${top-4} H${x0+14}" class="ea"/><text x="${x0-tw-70}" y="${top-14}" class="en">entrada (geratriz inferior)</text>
+    <path d="M${x0} ${yMax} H${x0+cw+tw+8}" class="nv"/><text x="${x0+cw+tw+12}" y="${yMax+4}" class="et">nível máximo (liga)</text>
+    <path d="M${x0} ${yMin} H${x0+cw+tw+8}" class="nv"/><text x="${x0+cw+tw+12}" y="${yMin+4}" class="et">nível mínimo (desliga)</text>
+    ${bombas}
+    <text x="${x0+cw+tw+46}" y="${yTampa+8}" class="et" text-anchor="middle">válvula de retenção</text>
+    ${cota(top, yMax, `folga ${fmt(r.folga,2)} m`, x0-22)}${cota(yMax, yMin, `altura útil ${fmt(r.hu,2)} m`, x0-22)}${cota(yMin, yF, `lâmina ${fmt(r.lamina,2)} m`, x0-22)}
+    <path d="M${xP} ${top} V${yF}" class="ecd" marker-start="${seta}" marker-end="${seta}"/><path d="M${xP-6} ${top} H${x0-tw-70} M${xP-6} ${yF} H${x0-tw}" class="ecx"/>
+    <text x="${xP-8}" y="${(top+yF)/2+4}" class="ecv" text-anchor="end">prof. ${fmt(prof,2)} m</text>
+    <path d="M${x0} ${yF+tw+22} H${x0+cw}" class="ecd" marker-start="${seta}" marker-end="${seta}"/>
+    <text x="${x0+cw/2}" y="${yF+tw+18}" class="ecv" text-anchor="middle">${r.forma==="cir" ? `Ø interno ${fmt(r.D,2)} m` : `${fmt(r.L,2)} m`}</text>
+    <text x="${x0+cw/2}" y="${yF+tw+42}" class="en" text-anchor="middle">${r.forma==="cir" ? `caixa circular Ø ${fmt(r.D,2)} m` : `caixa ${fmt(r.L,2)} × ${fmt(r.B,2)} m (interno)`} · volume útil ${fmt(r.Vu,2)} m³ · sem escala</text></svg>`;
 }
 function elvGrafico(r){
   if(!r.curva) return `<p class="vazio">Escolha a bomba para ver a curva dela e o ponto de operação.</p>`;
@@ -5558,7 +5589,7 @@ function preencherElv(){
   document.querySelectorAll("#mod-elv [data-ev]").forEach(el=>{ const k = el.dataset.ev, v = elvVazio(e[k]) ? (k==="bacia" || k==="menor" || k==="forma" || k==="t" || k==="nb" || k==="tipoB" || k==="trit" ? ELV_PAD[k] : "") : e[k];
     if(el.type==="checkbox") el.checked = v!==false; else el.value = el.hasAttribute("data-mil") ? fmtIn(v) : (v ?? ""); });
   if(elvVazio(e.tipoB) && $("mod-elv").querySelector('[data-ev="tipoB"]')) $("mod-elv").querySelector('[data-ev="tipoB"]').value = "sub";
-  renderElvAps(); renderElvCurva(); renderElv();
+  renderElvAps(); renderElvCurva(); renderElv(); $("v-resp").innerHTML = opcoesResp(S.est.respId);
 }
 function renderElvCurva(){
   const e = elvDados(); if(!Array.isArray(e.curva) || !e.curva.length) e.curva = Array.from({length:5}, ()=>({q:"", h:""}));
@@ -8007,7 +8038,7 @@ function resumoAliParte(){
   const ok = comL.filter(it=>it.ok).length;
   return {det:`${comL.length} alimentador(es) · ${ok} atende${ok===1?"":"m"}${comL.length<its.length ? ` · ${its.length - comL.length} sem comprimento` : ""}`, ok: ok===its.length};
 }
-function preencherAli(){ const c = alCfg(); $("al-doc").value = c.doc ?? ""; $("al-rev").value = c.rev ?? "00"; $("al-obs").value = c.obs ?? ""; renderAli(); }
+function preencherAli(){ const c = alCfg(); $("u-resp").innerHTML = opcoesResp(S.dem.respId); $("al-doc").value = c.doc ?? ""; $("al-rev").value = c.rev ?? "00"; $("al-obs").value = c.obs ?? ""; renderAli(); }
 function renderAli(){
   if(!$("al-cfg")) return;
   const T = concDe(S.dem.conc)?.t;
@@ -8572,7 +8603,7 @@ function renderResp(){
   $("g-resp").innerHTML = opcoesResp(S.gas.respId);
   $("p-resp").innerHTML = opcoesResp(S.plu.respId);
   $("h-resp").innerHTML = opcoesResp(S.hid.respId);
-  $("t-resp").innerHTML = opcoesResp(S.est.respId);
+  $("t-resp").innerHTML = opcoesResp(S.est.respId); $("v-resp").innerHTML = opcoesResp(S.est.respId); $("u-resp").innerHTML = opcoesResp(S.dem.respId);
   $("l-resp").innerHTML = opcoesResp(S.ele.respId);
   $("q-resp").innerHTML = opcoesResp(S.pis.respId);
   $("r-resp").innerHTML = opcoesResp(S.res.respId);
@@ -8587,9 +8618,9 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl", d:"dem"};
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl", d:"dem", v:"est", u:"dem"};
   Object.entries(PRE).forEach(([pre,k])=>{
-    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); salvar(); });
+    $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); renderResp(); salvar(); });
   });
   $("conf-rodar").addEventListener("click", ()=>{ $("conf-res").innerHTML = `<p class="fonte">Conferindo…</p>`; setTimeout(()=>renderConferencia(true), 30); });
   $("resp-add").addEventListener("click", ()=>{
@@ -8600,7 +8631,7 @@ function ligarResp(){
     const id = e.target.closest(".resp-lin").dataset.id, r = RESP.find(x=>x.id===id);
     r[e.target.dataset.f] = e.target.value; salvarResp();
     [S.esg, S.est, S.gas, S.plu, S.hid, S.ele, S.pis, S.res, S.cmx, S.cgl, S.dem].forEach(M=>{ if(M.respId===id){ M.resp = r.nome; M.crea = r.crea; } });   // obra aberta acompanha a edição
-    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"],["d","dem"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
+    [["e","esg"],["g","gas"],["p","plu"],["h","hid"],["t","est"],["l","ele"],["q","pis"],["r","res"],["k","cmx"],["b","cgl"],["d","dem"],["v","est"],["u","dem"]].forEach(([pre,k])=>{ $(pre+"-resp").innerHTML = opcoesResp(S[k].respId); });
     salvar();
   });
   $("resp-lista").addEventListener("click", async e=>{
