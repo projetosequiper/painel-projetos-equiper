@@ -192,6 +192,8 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .al-ref{display:block;font-size:13px;color:var(--cinza-4);margin-top:4px;font-weight:400}.al-ref.falha{font-weight:600}
 .al-pisca{box-shadow:0 0 0 3px var(--vermelho)}.al-mem .al-mh td{font-weight:700;background:var(--cinza-1)}.al-mem td{vertical-align:top}
 #al-diag [data-alq]{cursor:pointer}#al-diag [data-alq]:hover rect{stroke-width:2.5}
+.elv-ap{display:grid;grid-template-columns:2.2fr 1fr 1.3fr 40px;gap:8px;align-items:end;margin-top:8px}@media(max-width:620px){.elv-ap{grid-template-columns:1fr 1fr 40px}.elv-ap .campo:first-child{grid-column:1/-1}}
+.elv-curva{display:grid;grid-template-columns:repeat(10,minmax(70px,1fr));gap:6px}@media(max-width:900px){.elv-curva{grid-template-columns:repeat(4,1fr)}}
 .elv-falha{color:var(--vermelho);font-weight:600}.elv-rec{color:#b35c00;font-weight:600}.elv-nd{color:var(--cinza-4)}#elv-exig ul{margin:0;padding-left:20px}
 .dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
 .dm-arv td.q{white-space:nowrap}.dm-arv td.q b{font-weight:700}.dm-arv tr.raiz td{font-weight:700}
@@ -981,14 +983,26 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="campo c2">Vazão média afluente<span class="unid"><input data-ev="qmed" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><b>L/s</b></span></label>
         <label class="campo c2">Capacidade da bomba<span class="unid"><input id="elv-qb-ph" data-ev="qb" type="number" min="0" step="any" inputmode="decimal" placeholder="2 × vazão"><b>L/s</b></span></label>
         <label class="campo c2">Intervalo entre partidas<span class="unid"><input data-ev="t" type="number" min="0" step="1" inputmode="decimal" placeholder="10"><b>min</b></span></label>
+        <label class="campo c3">Bomba<select data-ev="bomba"><option value="">Sem bomba definida (vazão da bomba digitada ou 2 × afluente)</option><option value="apg4010">Grundfos UNILIFT APG.40.10.A1 · com triturador</option><option value="outra">Outra bomba (digitar a curva)</option></select></label>
+        <label class="campo c1 elv-bsel">Desnível geométrico<span class="unid"><input data-ev="Hg" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">Recalque<span class="unid"><input data-ev="Lrec" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">Comp. equivalente (peças)<span class="unid"><input data-ev="Leq" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 elv-bsel">C (Hazen-Williams)<input data-ev="C" type="number" min="60" step="5" inputmode="numeric" placeholder="130"></label>
+        <div class="c6" id="elv-curva-c" style="display:none"><label class="chave"><input type="checkbox" data-ev="trit"> Bomba com triturador</label>
+          <p class="fonte" style="margin:6px 0">Curva da bomba (pontos lidos no catálogo): vazão em L/s e altura em m, do menor para o maior.</p><div id="elv-curva" class="elv-curva"></div></div>
+        <label class="chave c6"><input type="checkbox" data-ev="menor"> Elevatória de menor porte (NBR 12208, Anexo A · vazões até 20 L/s, pré-fabricada ou moldada no local)</label>
         <label class="campo c2">Tipo de bomba<select data-ev="tipoB"><option value="sub">Submersível</option><option value="out">Outro tipo (poço seco)</option></select></label>
         <label class="campo c2">Altura da bomba sobre o fundo<span class="unid"><input data-ev="hB" type="number" min="0" step="0.05" inputmode="decimal" placeholder="mín. 0,20"><b>m</b></span></label>
         <label class="campo c2">Número de bombas<input data-ev="nb" type="number" min="1" step="1" inputmode="numeric" placeholder="2"></label>
         <label class="campo c2">Passagem de sólidos da bomba<span class="unid"><input data-ev="esf" type="number" min="0" step="1" inputmode="decimal" placeholder="catálogo"><b>mm</b></span></label>
         <label class="campo c2">DN do recalque<span class="unid"><input data-ev="dnRec" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex.: 75"><b></b></span></label>
         <label class="campo c2">DN da sucção<span class="unid"><input data-ev="dnSuc" type="number" min="0" step="1" inputmode="decimal" placeholder="submersível: vazio"><b></b></span></label>
+        <label class="campo c2">Diâmetro interno do recalque<span class="unid"><input data-ev="diRec" type="number" min="0" step="0.1" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
+        <label class="campo c2">Diâmetro interno da sucção<span class="unid"><input data-ev="diSuc" type="number" min="0" step="0.1" inputmode="decimal" placeholder="= DN"><b>mm</b></span></label>
       </div>
-      <p class="fonte" style="margin-top:8px">Vazão máxima provável: dos aparelhos que podem funcionar ao mesmo tempo. Vazão média: usada no tempo de detenção. Em branco, a capacidade da bomba fica em 2 × a vazão afluente (recomendação do item 5.1.6.9).</p>
+      <div class="elv-aps"><div class="etapa-cab" style="margin-top:14px"><h3 style="font-size:16px;margin:0">Aparelhos ligados na caixa <span class="nbr">(opcional · NBR 8160, anexo B, tabela B.4)</span></h3></div>
+        <div id="elv-aps"></div><button class="add" type="button" id="elv-ap-add">Adicionar aparelho</button></div>
+      <p class="fonte" style="margin-top:8px">Com aparelhos, a vazão máxima provável é a soma dos que funcionam ao mesmo tempo (Σ mi · qi); digitando a vazão máxima, vale a digitada. Vazão média: usada no tempo de detenção. Em branco, a capacidade da bomba fica em 2 × a vazão afluente (recomendação do item 5.1.6.9).</p>
     </section>
     <section class="bloco-dados">
       <h2>Caixa coletora</h2>
@@ -1007,6 +1021,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <div class="params p4" id="elv-params"></div>
     <section class="etapas">
       <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Verificações da NBR 8160 e da NBR 12208</h3></div><div class="rolar" id="elv-res"></div></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Curva da bomba e do sistema</h3><span class="nbr">curva lida do catálogo (aproximada)</span></div><div id="elv-graf"></div></div></article>
       <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Corte esquemático</h3><span class="nbr">sem escala</span></div><div id="elv-corte"></div></div></article>
       <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3></div><div class="rolar" id="elv-mem"></div></div></article>
       <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Exigências construtivas</h3></div><div id="elv-exig"></div></div></article>
@@ -5369,16 +5384,45 @@ function ligarEst(){
 }
 // ===== Esgoto · Elevatória (caixa coletora com instalação de recalque) — NBR 8160:1999, item 5.1.6 =====
 // os dados ficam em S.est.elv (mesma edificação, histórico e responsável técnico da tubulação de esgoto)
-const ELV_PAD = {tipoB:"sub", hB:"", bacia:true, qmax:"", qmed:"", qb:"", t:10, nb:2, forma:"ret", L:"", B:"", D:"", vocup:"", folga:"", lamina:"", prof:"", esf:"", dnRec:"", dnSuc:"", doc:"", rev:"00", obs:""};
+// NBR 8160, anexo B, tabela B.4: vazões unitárias dos aparelhos sanitários (L/s)
+const ELV_APS = [["bacia_cx","Bacia sanitária · caixa de descarga",0.96],["bacia_vd","Bacia sanitária · válvula de descarga",1.70],["banheira","Banheira",0.90],["bide","Bidê",0.40],
+  ["chuveiro","Chuveiro ou ducha",0.20],["lavatorio","Lavatório",0.15],["maquina","Máquina de lavar roupas ou pratos",0.30],["mict_s","Mictório com sifão integrado",0.50],
+  ["mict","Mictório sem sifão integrado",0.15],["pia","Pia",0.25],["tanque","Tanque",0.25]];
+// bombas cadastradas: curva H × Q lida do gráfico de desempenho do fabricante (aproximada) e potência P2
+const ELV_BOMBAS = {
+  apg4010: {n:"Grundfos UNILIFT APG.40.10.A1 (com triturador, 60 Hz)", trit:true, dn:40,
+    c:[[0,26.1],[0.5,23.3],[1,20.6],[1.5,17.8],[1.95,15],[2.5,11.2],[3,6.9],[3.3,4.1],[3.57,0.7]], p2:[[0,880],[1,935],[2,955],[3,980],[3.57,1005]]}
+};
+const ELV_PAD = {bomba:"", trit:false, curva:[], Hg:"", Lrec:"", Leq:"", C:130, menor:true, diRec:"", diSuc:"", tipoB:"sub", hB:"", bacia:true, qmax:"", qmed:"", qb:"", t:10, nb:2, forma:"ret", L:"", B:"", D:"", vocup:"", folga:"", lamina:"", prof:"", esf:"", dnRec:"", dnSuc:"", doc:"", rev:"00", obs:""};
 function elvDados(){ const E = S.est; if(!E.elv || typeof E.elv!=="object") E.elv = {}; return E.elv; }
 const elvVazio = v => v===undefined || v===null || v==="";
 function calcElv(e){
   e = e || elvDados(); const g = k => elvVazio(e[k]) ? ELV_PAD[k] : e[k];
-  const bacia = g("bacia")!==false, qa = num(g("qmax")), qm = num(g("qmed")), qbInf = num(g("qb")), t = num(g("t")), nb = Math.round(num(g("nb"))) || 0;
-  const r = {bacia, qa, qm, t, nb, ver:[], forma: g("forma")==="cir" ? "cir" : "ret"};
+  const aps = (Array.isArray(e.aps) ? e.aps : []).map(a=>{ const t = ELV_APS.find(x=>x[0]===a.ap) || ELV_APS[0], qtd = Math.max(0, Math.round(num(a.qtd)) || 0), m = Math.min(qtd, Math.max(0, Math.round(num(a.sim)) || 0)); return {t, qtd, m, q: m*t[2]}; }).filter(a=>a.qtd > 0);
+  const qAp = aps.reduce((s,a)=>s+a.q, 0), qInf = num(g("qmax"));
+  const bacia = g("bacia")!==false, qa = qInf > 0 ? qInf : qAp, qm = num(g("qmed")), qbInf = num(g("qb")), t = num(g("t")), nb = Math.round(num(g("nb"))) || 0;
+  const r = {bacia, qa, qm, t, nb, ver:[], forma: g("forma")==="cir" ? "cir" : "ret", aps, qAp, qaOrigem: qInf > 0 ? "informada" : qAp > 0 ? "aparelhos" : ""};
   r.pmin = bacia ? 0.90 : 0.60; r.esfMin = bacia ? 60 : 18; r.dnMin = bacia ? 75 : 40;
-  if(!(qa > 0)){ r.erro = "Informe a vazão máxima provável que chega na caixa coletora."; return r; }
-  r.Qb = qbInf > 0 ? qbInf : 2*qa; r.QbAuto = !(qbInf > 0); r.QbM = r.Qb*60/1000;                     // L/s → m³/min
+  if(!(qa > 0)){ r.erro = "Informe a vazão máxima provável que chega na caixa coletora, ou os aparelhos ligados nela."; return r; }
+  // bomba escolhida: ponto de operação = encontro da curva da bomba com a curva do sistema (NBR 12208, 3.57)
+  const Bc = ELV_BOMBAS[g("bomba")], outra = g("bomba")==="outra";
+  r.bomba = Bc ? Bc.n : outra ? "Bomba informada (curva digitada)" : ""; r.trit = Bc ? !!Bc.trit : outra && g("trit")===true;
+  r.curva = Bc ? Bc.c : outra ? (Array.isArray(e.curva) ? e.curva : []).map(x=>[num(x.q), num(x.h)]).filter(x=>x[1] > 0 || x[0] > 0).sort((a,b)=>a[0]-b[0]) : null;
+  if(r.curva && r.curva.length < 2) r.curva = null;
+  r.Hg = num(g("Hg")); r.Lrec = num(g("Lrec")); r.Leq = num(g("Leq")); r.C = num(g("C")) || 130;
+  r.Dop = num(g("diRec")) || num(g("dnRec"));
+  if(r.curva && r.Dop > 0 && (r.Lrec + r.Leq) > 0){
+    r.kSis = 10.643*(r.Lrec + r.Leq)/(r.C**1.852*(r.Dop/1000)**4.87);                                 // Hazen-Williams (Q em m³/s)
+    const Hs = q => r.Hg + r.kSis*(q/1000)**1.852, Hb = q => { const c = r.curva; if(q <= c[0][0]) return c[0][1]; for(let i=1;i<c.length;i++) if(q <= c[i][0]) return c[i-1][1] + (c[i][1]-c[i-1][1])*(q-c[i-1][0])/(c[i][0]-c[i-1][0]); return null; };
+    r.Hs = Hs; r.Hb = Hb;
+    const q0 = r.curva[0][0], q1 = r.curva[r.curva.length-1][0];
+    if(Hb(q0) - Hs(q0) <= 0) r.opErro = "a bomba não vence o desnível e as perdas (curva da bomba abaixo da do sistema)";
+    else if(Hb(q1) - Hs(q1) > 0) r.opErro = "o ponto de operação passa do fim da curva da bomba (vazão maior que a curva mostra)";
+    else { let a = q0, b = q1; for(let k=0;k<60;k++){ const m = (a+b)/2; if(Hb(m) - Hs(m) > 0) a = m; else b = m; } r.Qop = (a+b)/2; r.Hop = Hs(r.Qop);
+      if(Bc && Bc.p2){ const c = Bc.p2; for(let i=1;i<c.length;i++) if(r.Qop <= c[i][0]){ r.P2 = c[i-1][1] + (c[i][1]-c[i-1][1])*(r.Qop-c[i-1][0])/(c[i][0]-c[i-1][0]); break; } } }
+  }
+  r.Qb = r.Qop ? r.Qop : qbInf > 0 ? qbInf : 2*qa; r.QbAuto = !r.Qop && !(qbInf > 0); r.QbOrigem = r.Qop ? "ponto de operação da bomba" : qbInf > 0 ? "informada" : "2 × vazão afluente (recomendação 5.1.6.9)";
+  r.QbM = r.Qb*60/1000;                                                                                   // L/s → m³/min
   r.Vu = t > 0 ? r.QbM*t/4 : null;                                                                       // 5.1.6.7  Vu = Q·t/4
   r.L = num(g("L")); r.B = num(g("B")); r.D = num(g("D"));
   r.A = r.forma==="cir" ? (r.D > 0 ? Math.PI*r.D**2/4 : null) : (r.L > 0 && r.B > 0 ? r.L*r.B : null);
@@ -5397,14 +5441,26 @@ function calcElv(e){
   V("5.1.6.12", "Tempo de detenção ≤ 30 min", r.d==null ? "nd" : r.d <= 30 + 1e-9 ? "ok" : "falha", r.d==null ? (r.qmM ? "informe o intervalo" : "informe a vazão média") : `${fmt(r.d,1)} min`);
   V(bacia ? "5.1.6.3 a" : "5.1.6.4 a", `Profundidade mínima ${fmt(r.pmin,2)} m (abaixo da geratriz inferior da tubulação afluente mais baixa)`, r.prof==null ? "nd" : r.prof >= r.pmin - 1e-9 ? "ok" : "falha", r.prof==null ? "informe as dimensões" : `${fmt(r.prof,2)} m`);
   V("5.1.6.3 c", bacia ? "Pelo menos dois grupos motobomba, funcionamento alternado" : "Pelo menos uma motobomba", nb >= (bacia ? 2 : 1) ? "ok" : "falha", `${fmt(nb)} bomba${nb!==1?"s":""}`);
-  V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Bomba deixa passar esferas de ${fmt(r.esfMin)} mm`, r.esf > 0 ? (r.esf >= r.esfMin ? "ok" : "falha") : "nd", r.esf > 0 ? `${fmt(r.esf)} mm` : "confirmar no catálogo da bomba");
+  if(r.trit) V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Bomba deixa passar esferas de ${fmt(r.esfMin)} mm`, "rec", "bomba com triturador: tritura os sólidos em vez de deixá-los passar. A NBR 8160 não trata desse caso; confirmar com o fabricante e a prestadora (NBR 12208, A.4)");
+  else V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Bomba deixa passar esferas de ${fmt(r.esfMin)} mm`, r.esf > 0 ? (r.esf >= r.esfMin ? "ok" : "falha") : "nd", r.esf > 0 ? `${fmt(r.esf)} mm` : "confirmar no catálogo da bomba");
+  if(r.curva) V("NBR 12208 · 3.57", "Ponto de operação da bomba (curva da bomba × curva do sistema)", r.Qop ? "ok" : (r.Dop > 0 && (r.Lrec + r.Leq) > 0) ? "falha" : "nd", r.Qop ? `${fmt(r.Qop,2)} L/s a ${fmt(r.Hop,1)} m${r.P2 ? ` · P2 ≈ ${fmt(r.P2/1000,2)} kW` : ""}` : r.opErro || "informe o desnível, o comprimento e o diâmetro do recalque");
   V(bacia ? "5.1.6.3 nota" : "5.1.6.4 b", `Tubulação de recalque DN ≥ ${r.dnMin}`, r.dnRec > 0 ? (r.dnRec >= r.dnMin ? "ok" : "falha") : "nd", r.dnRec > 0 ? `DN ${fmt(r.dnRec)}` : "informe o DN");
   V("5.1.6.5", "Sucção: uma por bomba, DN ≥ DN do recalque", r.dnSuc > 0 && r.dnRec > 0 ? (r.dnSuc >= r.dnRec ? "ok" : "falha") : "nd", r.dnSuc > 0 ? `DN ${fmt(r.dnSuc)}` : "bomba submersível sem sucção, ou informe o DN");
-  r.ver.forEach(v=>{ v.item = "NBR 8160 · " + v.item; });
-  r.sub = g("tipoB")!=="out"; r.hB = num(g("hB")); r.partidas = t > 0 ? 60/t : null;
-  V("NBR 12208 · 5.7.1 nota", "Partidas por hora ≤ 5 (recomendação)", r.partidas==null ? "nd" : r.partidas <= 5 + 1e-9 ? "ok" : "rec", r.partidas==null ? "informe o intervalo" : `${fmt(r.partidas,1)} partidas/h (intervalo ${fmt(t,1)} min; 5/h = 12 min)`);
+  r.ver.forEach(v=>{ if(!/^NBR/.test(v.item)) v.item = "NBR 8160 · " + v.item; });
+  r.sub = g("tipoB")!=="out"; r.hB = num(g("hB")); r.partidas = t > 0 ? 60/t : null; r.menor = g("menor")!==false;
+  r.pMax = r.menor && r.Qb <= 7 + 1e-9 ? 15 : 5;                                                        // Anexo A.6: até 7 L/s, até 15 partidas/h
+  V(r.pMax===15 ? "NBR 12208 · A.6" : "NBR 12208 · 5.7.1 nota", `Partidas por hora ≤ ${r.pMax}${r.pMax===15 ? " (elevatória de menor porte até 7 L/s)" : " (recomendação)"}`, r.partidas==null ? "nd" : r.partidas <= r.pMax + 1e-9 ? "ok" : "rec", r.partidas==null ? "informe o intervalo" : `${fmt(r.partidas,1)} partidas/h (intervalo ${fmt(t,1)} min)`);
   V("NBR 12208 · 5.7.2", "Tempo de detenção médio ≤ 30 min (maior valor recomendado)", r.d==null ? "nd" : r.d <= 30 + 1e-9 ? "ok" : "falha", r.d==null ? "—" : `${fmt(r.d,1)} min`);
-  if(r.sub) V("NBR 12208 · 5.7.3.3.1 b", "Bomba submersível elevada do fundo, no mínimo 20 cm", r.hB > 0 ? (r.hB >= 0.20 - 1e-9 ? "ok" : "falha") : "nd", r.hB > 0 ? `${fmt(r.hB,2)} m` : "informe a altura da bomba sobre o fundo");
+  if(r.menor){ r.nbMin = qa <= 0.02 ? 1 : 2;                                                             // Anexo A.2, tabela A.1
+    V("NBR 12208 · A.2 (tabela A.1)", qa <= 0.02 ? "Vazão até 0,02 L/s: pelo menos 1 conjunto motor-bomba" : qa <= 20 ? "Vazão acima de 0,02 L/s: pelo menos 1 conjunto + 1 reserva" : "Vazão acima de 20 L/s: fora do Anexo A (elevatória de menor porte)", qa > 20 ? "falha" : nb >= r.nbMin ? "ok" : "falha", `${fmt(nb)} bomba${nb!==1?"s":""} · vazão ${fmt(qa,2)} L/s`); }
+  if(r.sub) V(r.menor ? "NBR 12208 · A.8" : "NBR 12208 · 5.7.3.3.1 b", r.menor ? "Bomba submersível: pode ficar no fundo, respeitando os requisitos hidráulicos do fabricante" : "Bomba submersível elevada do fundo, no mínimo 20 cm", r.menor ? "ok" : r.hB > 0 ? (r.hB >= 0.20 - 1e-9 ? "ok" : "falha") : "nd", r.hB > 0 ? `${fmt(r.hB,2)} m sobre o fundo` : r.menor ? "conforme o fabricante" : "informe a altura da bomba sobre o fundo");
+  const vel = (Ls, mm) => Ls/1000/(Math.PI*(mm/1000)**2/4);
+  r.diR = num(g("diRec")) || r.dnRec; r.diS = num(g("diSuc")) || r.dnSuc;
+  if(r.diR > 0){ r.vR = vel(r.Qb, r.diR); const baixaOk = r.menor && r.Qb < 3;
+    V(baixaOk && r.vR < 0.6 ? "NBR 12208 · 5.9.5.2 e A.10" : "NBR 12208 · 5.9.5.2", "Velocidade no recalque entre 0,6 e 3,0 m/s", r.vR > 3 + 1e-9 ? "falha" : r.vR >= 0.6 - 1e-9 ? "ok" : baixaOk ? "rec" : "falha",
+      `${fmt(r.vR,2)} m/s (Ø ${fmt(r.diR)} mm${num(g("diRec")) ? "" : ", DN como diâmetro interno"})${baixaOk && r.vR < 0.6 ? " · abaixo de 0,6 aceito para menos de 3 L/s, com justificativa técnica e aprovação da prestadora" : ""}`); }
+  if(r.diS > 0){ r.vS = vel(r.Qb, r.diS);
+    V("NBR 12208 · 5.9.5.1", "Velocidade na sucção entre 0,6 e 1,5 m/s", r.vS >= 0.6 - 1e-9 && r.vS <= 1.5 + 1e-9 ? "ok" : "rec", `${fmt(r.vS,2)} m/s (Ø ${fmt(r.diS)} mm${num(g("diSuc")) ? "" : ", DN como diâmetro interno"})`); }
   r.ok = r.Vu!=null && r.d!=null && r.prof!=null && !r.ver.some(v=>v.sit==="falha");
   r.falhas = r.ver.filter(v=>v.sit==="falha").length; r.recs = r.ver.filter(v=>v.sit==="rec").length;
   return r;
@@ -5427,13 +5483,34 @@ function elvCorte(r){                                       // corte esquemátic
     <text x="${x0+cw+8}" y="${yF-4}" class="en">profundidade ${fmt(r.prof,2)} m</text>
     <text x="${x0+cw/2}" y="${yF+30}" class="et" text-anchor="middle">${r.forma==="cir" ? `Ø ${fmt(r.D,2)} m` : `${fmt(r.L,2)} × ${fmt(r.B,2)} m`} · sem escala</text></svg>`;
 }
+function elvGrafico(r){
+  if(!r.curva) return `<p class="vazio">Escolha a bomba para ver a curva dela e o ponto de operação.</p>`;
+  const W = 560, H = 300, m = {l:46, r:16, t:14, b:38}, qMax = r.curva[r.curva.length-1][0]*1.05, hMax = Math.max(...r.curva.map(x=>x[1]), r.Hs ? r.Hs(qMax) : 0)*1.08 || 1;
+  const X = q => m.l + q/qMax*(W-m.l-m.r), Y = h => H - m.b - Math.min(h, hMax)/hMax*(H-m.t-m.b);
+  const pb = r.curva.map((p,i)=>`${i?"L":"M"}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  const ps = r.Hs ? Array.from({length:41}, (_,i)=>{ const q = qMax*i/40; return `${i?"L":"M"}${X(q).toFixed(1)} ${Y(r.Hs(q)).toFixed(1)}`; }).join(" ") : "";
+  const passo = v => v > 20 ? 5 : v > 8 ? 2 : v > 4 ? 1 : 0.5, gq = passo(qMax), gh = passo(hMax);
+  const gx = Array.from({length:Math.floor(qMax/gq)+1}, (_,i)=>i*gq).map(q=>`<path d="M${X(q)} ${m.t} V${H-m.b}" class="gg"/><text x="${X(q)}" y="${H-m.b+14}" class="gt" text-anchor="middle">${fmt(q,gq<1?1:0)}</text>`).join("");
+  const gy = Array.from({length:Math.floor(hMax/gh)+1}, (_,i)=>i*gh).map(h=>`<path d="M${m.l} ${Y(h)} H${W-m.r}" class="gg"/><text x="${m.l-6}" y="${Y(h)+4}" class="gt" text-anchor="end">${fmt(h,gh<1?1:0)}</text>`).join("");
+  const af = r.qa > 0 ? `<path d="M${X(r.qa)} ${m.t} V${H-m.b}" class="ga"/><text x="${X(r.qa)+4}" y="${m.t+12}" class="gt">vazão afluente ${fmt(r.qa,2)} L/s</text>` : "";
+  const op = r.Qop ? `<circle cx="${X(r.Qop)}" cy="${Y(r.Hop)}" r="5" class="gp"/><text x="${X(r.Qop)+8}" y="${Y(r.Hop)-8}" class="gl">${fmt(r.Qop,2)} L/s · ${fmt(r.Hop,1)} m</text>` : "";
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:640px" role="img" aria-label="Curva da bomba e curva do sistema">
+    <style>.gg{stroke:#e3e3e3;stroke-width:1}.gt{font:500 10.5px Barlow,Arial,sans-serif;fill:#666}.gb{fill:none;stroke:#000;stroke-width:2.2}.gs{fill:none;stroke:#d10a1e;stroke-width:2;stroke-dasharray:6 4}.ga{stroke:#888;stroke-dasharray:3 3}.gp{fill:#d10a1e}.gl{font:700 11.5px Barlow,Arial,sans-serif;fill:#000;paint-order:stroke;stroke:#fff;stroke-width:4px}</style>
+    ${gx}${gy}${af}<path d="${pb}" class="gb"/>${ps ? `<path d="${ps}" class="gs"/>` : ""}${op}
+    <text x="${W-m.r}" y="${H-6}" class="gt" text-anchor="end">Q (L/s)</text><text x="6" y="${m.t+4}" class="gt">H (m)</text>
+    <g transform="translate(${m.l+12},${H-m.b-40})"><path d="M0 6 H22" class="gb"/><text x="28" y="10" class="gt">curva da bomba</text>${ps ? `<path d="M0 22 H22" class="gs"/><text x="28" y="26" class="gt">curva do sistema</text>` : ""}</g></svg>`;
+}
 function elvMemorial(r, cls){
   if(r.erro) return `<p>${esc(r.erro)}</p>`;
   const L = (t, v, u, o) => `<tr><td>${t}</td><td class="n">${v}</td><td>${u}</td><td>${o}</td></tr>`, f = (x, d=2) => x==null ? "—" : fmt(x, d);
   return `<table class="${cls}"><thead><tr><th>Parâmetro</th><th class="n">Valor</th><th>Unid.</th><th>Origem / expressão</th></tr></thead><tbody>
     ${L("Recebe efluente de bacias sanitárias", r.bacia ? "sim" : "não", "–", r.bacia ? "item 5.1.6.3" : "item 5.1.6.4")}
-    ${L("Vazão máxima provável afluente", f(r.qa), "L/s", "aparelhos que podem funcionar ao mesmo tempo (5.1.6.1 a)")}
-    ${L("Capacidade da bomba (Q)", f(r.Qb), "L/s", r.QbAuto ? "2 × vazão afluente (recomendação 5.1.6.9)" : "informada")}
+    ${r.aps.length ? r.aps.map(a=>L(`${esc(a.t[1])}: ${fmt(a.m)} de ${fmt(a.qtd)} ao mesmo tempo`, f(a.q), "L/s", `${fmt(a.m)} × ${fmt(a.t[2],2)} L/s (tabela B.4)`)).join("") + L("Vazão pelos aparelhos", f(r.qAp), "L/s", "Q = Σ mi · qi (anexo B, B.2.2.3); mi definido pelo projetista (uso normal)") : ""}
+    ${L("Vazão máxima provável afluente", f(r.qa), "L/s", r.qaOrigem==="aparelhos" ? "soma dos aparelhos em uso simultâneo (5.1.6.1 a)" : `informada${r.qAp > 0 ? ` (pelos aparelhos daria ${f(r.qAp)} L/s)` : ""} · aparelhos que podem funcionar ao mesmo tempo (5.1.6.1 a)`)}
+    ${r.bomba ? L("Bomba", esc(r.bomba), "–", r.trit ? "com triturador" : "") : ""}
+    ${r.kSis!=null ? L("Curva do sistema", `Hg ${f(r.Hg)} m`, "m", `H = Hg + 10,643 · (L + Leq) · Q^1,852 / (C^1,852 · D^4,87) · L ${f(r.Lrec,1)} m + Leq ${f(r.Leq,1)} m · C ${fmt(r.C)} · D ${fmt(r.Dop)} mm (Hazen-Williams, NBR 12208, 5.9.6)`) : ""}
+    ${r.Qop ? L("Ponto de operação", `${f(r.Qop)} L/s · ${f(r.Hop,1)} m`, "–", "encontro da curva da bomba com a do sistema (NBR 12208, 3.57)") : ""}
+    ${L("Capacidade da bomba (Q)", f(r.Qb), "L/s", r.QbOrigem)}
     ${L("Capacidade da bomba (Q)", f(r.QbM,4), "m³/min", "Q = L/s × 60 / 1000")}
     ${L("Intervalo entre partidas (t)", f(r.t,1), "min", "recomendado ≥ 10 min (5.1.6.8)")}
     ${L("Volume útil (Vu)", f(r.Vu,3), "m³", "Vu = Q × t / 4 (5.1.6.7)")}
@@ -5444,7 +5521,9 @@ function elvMemorial(r, cls){
     ${L("Vazão média afluente (q)", r.qm > 0 ? `${f(r.qm)} L/s = ${f(r.qmM,4)}` : "—", "m³/min", "informada")}
     ${L("Tempo de detenção (d)", f(r.d,1), "min", "d = Vt / q, máximo 30 min (5.1.6.11 e 5.1.6.12)")}
     ${r.tMax!=null ? L("Maior intervalo entre partidas com d ≤ 30 min", r.tMax > 0 ? f(r.tMax,1) : "—", "min", r.tMax > 0 ? `t ≤ 4 × (30·q − volume ocupado) / Q` : "o volume ocupado sozinho já passa de 30 min de detenção") : ""}
-    ${L("Partidas por hora", r.partidas!=null ? f(r.partidas,1) : "—", "1/h", "60 / t · recomendado ≤ 5 (NBR 12208, 5.7.1)")}
+    ${L("Partidas por hora", r.partidas!=null ? f(r.partidas,1) : "—", "1/h", r.pMax===15 ? "60 / t · até 15 em elevatória de menor porte até 7 L/s (NBR 12208, A.6)" : "60 / t · recomendado ≤ 5 (NBR 12208, 5.7.1)")}
+    ${r.vR!=null ? L("Velocidade no recalque", f(r.vR,2), "m/s", `Q / (π·D²/4), D = ${fmt(r.diR)} mm · 0,6 a 3,0 m/s (NBR 12208, 5.9.5.2)`) : ""}
+    ${r.vS!=null ? L("Velocidade na sucção", f(r.vS,2), "m/s", `Q / (π·D²/4), D = ${fmt(r.diS)} mm · 0,6 a 1,5 m/s (NBR 12208, 5.9.5.1)`) : ""}
     ${L("Profundidade", f(r.prof), "m", r.profInf ? "informada" : `folga ${f(r.folga)} + altura útil ${f(r.hu)} + lâmina abaixo do nível mínimo ${f(r.lamina)}`)}
   </tbody></table>`;
 }
@@ -5453,6 +5532,10 @@ function elvVerTab(r, cls){
     ${r.ver.map(v=>`<tr class="${v.sit==="falha"?"falha":""}"><td>${v.item}</td><td>${esc(v.txt)}</td><td>${esc(v.val)}</td><td class="elv-${v.sit}">${ELV_SIT[v.sit][0]}</td></tr>`).join("")}</tbody></table>`;
 }
 const ELV_EXIG = r => [
+  "Bombas de construção especial, à prova de obstrução por águas servidas, massas e líquidos viscosos (4.2.7.5).",
+  "Funcionamento automático e alternado das bombas, por chaves magnéticas com chaves de boia, com alarme de falha (4.2.7.6).",
+  "Caixa coletora impermeabilizada, com dispositivos de inspeção, limpeza e ventilação, tampa hermética e materiais não atacáveis pelo esgoto (4.2.7.3).",
+  "Caixas de gordura ligadas à caixa coletora conforme a tabela 1 ou com tubulação de ventilação (4.2.7.4). Esgoto só de lavagem de pisos ou de carros: caixa sifonada de no mínimo 0,40 m, que pode ir direto à caixa coletora (4.2.7.2).",
   r.bacia ? "Caixa ventilada por tubo ventilador, de preferência independente de qualquer outra ventilação do edifício (5.1.6.3 b)." : null,
   r.bacia ? "Fundo suficientemente inclinado para não depositar sólidos quando a caixa for esvaziada (5.1.6.3 a)." : null,
   "Tubulação de recalque sobe acima do nível do logradouro, com dispositivo que impeça o refluxo do esgoto (5.1.6.6).",
@@ -5461,7 +5544,9 @@ const ELV_EXIG = r => [
   "NBR 12208 · 5.6.6.1: tubulação ou canal afluente com velocidade mínima de 0,40 m/s para a vazão afluente inicial.",
   "NBR 12208 · 5.6.7: dispositivo para remoção de sólidos grosseiros na entrada (grade, cesto, peneira ou triturador).",
   "NBR 12208 · 5.7.3.3 b e c: entrada com quebra de velocidade, sem descarga livre; velocidade de aproximação até a tomada de esgoto de no máximo 0,60 m/s.",
-  r.A != null && r.A <= 8 ? `NBR 12208 · 5.7.3.3 d: área de base de ${fmt(r.A,2)} m² (até 8 m²): o fundo pode ser executado sem declividade.` : "NBR 12208 · 5.7.3.3 d: fundo com declividade para o ponto de saída, para facilitar a limpeza.",
+  r.menor ? "NBR 12208 · A.7: em elevatória de menor porte, a declividade no fundo do poço é dispensável (a NBR 8160, 5.1.6.3 a, ainda pede fundo inclinado quando recebe bacias sanitárias)." : r.A != null && r.A <= 8 ? `NBR 12208 · 5.7.3.3 d: área de base de ${fmt(r.A,2)} m² (até 8 m²): o fundo pode ser executado sem declividade.` : "NBR 12208 · 5.7.3.3 d: fundo com declividade para o ponto de saída, para facilitar a limpeza.",
+  r.menor ? "NBR 12208 · A.12: automação das partidas conforme o equipamento; níveis por chave boia, eletrodo ou sensor eletrônico." : null,
+  r.menor ? "NBR 12208 · A.17: elevatória pré-fabricada com projeto hidráulico e elétrico, memoriais de cálculo, normas de fabricação e profissional responsável indicados." : null,
   "NBR 12208 · 5.7.3.3 j: ventilação da câmara para eliminar gases e equalizar a pressão (NBR 16577 · espaço confinado; NBR IEC 60079 · atmosferas explosivas).",
   "NBR 12208 · 5.7.3.3 g e h: aberturas de acesso e dimensões que permitam limpeza e manutenção; avaliar escada e guarda-corpo (e, f).",
   r.sub ? "NBR 12208 · 5.7.3.3.1: nível mínimo que mantenha a bomba submersa (orientação do fabricante); tampa sobre cada bomba, inclusive a reserva, com abertura que permita retirar a bomba, o tubo-guia e o pedestal; componentes internos em material resistente à corrosão." : "NBR 12208 · 5.7.3.3.2: sucção afastada do fundo; com sucção positiva, nível mínimo de desligamento na geratriz superior da tubulação de sucção; com sucção negativa, nível mínimo que evite entrada de ar e mantenha a escorva (sino de sucção recomendado)."].filter(Boolean);
@@ -5469,20 +5554,36 @@ function resumoElvParte(){ const e = elvDados(); if(elvVazio(e.qmax)) return nul
   return {det: r.erro ? r.erro : `Vu ${r.Vu!=null?fmt(r.Vu,2):"—"} m³ · detenção ${r.d!=null?fmt(r.d,1):"—"} min${r.falhas?` · ${r.falhas} item(ns) não atende(m)`:""}`, ok: r.ok}; }
 function preencherElv(){
   const e = elvDados();
-  document.querySelectorAll("#mod-elv [data-ev]").forEach(el=>{ const k = el.dataset.ev, v = elvVazio(e[k]) ? (k==="bacia" || k==="forma" || k==="t" || k==="nb" || k==="tipoB" ? ELV_PAD[k] : "") : e[k];
+  document.querySelectorAll("#mod-elv [data-ev]").forEach(el=>{ const k = el.dataset.ev, v = elvVazio(e[k]) ? (k==="bacia" || k==="menor" || k==="forma" || k==="t" || k==="nb" || k==="tipoB" || k==="trit" ? ELV_PAD[k] : "") : e[k];
     if(el.type==="checkbox") el.checked = v!==false; else el.value = v ?? ""; });
   if(elvVazio(e.tipoB) && $("mod-elv").querySelector('[data-ev="tipoB"]')) $("mod-elv").querySelector('[data-ev="tipoB"]').value = "sub";
-  renderElv();
+  renderElvAps(); renderElvCurva(); renderElv();
+}
+function renderElvCurva(){
+  const e = elvDados(); if(!Array.isArray(e.curva) || !e.curva.length) e.curva = Array.from({length:5}, ()=>({q:"", h:""}));
+  $("elv-curva").innerHTML = e.curva.map((p,i)=>`<label class="campo">Q${i+1}<span class="unid"><input data-cq="${i}" data-cf="q" type="number" min="0" step="any" inputmode="decimal" value="${esc(p.q ?? "")}"><b>L/s</b></span></label><label class="campo">H${i+1}<span class="unid"><input data-cq="${i}" data-cf="h" type="number" min="0" step="any" inputmode="decimal" value="${esc(p.h ?? "")}"><b>m</b></span></label>`).join("");
+}
+function renderElvAps(){
+  const e = elvDados(), L = Array.isArray(e.aps) ? e.aps : [];
+  $("elv-aps").innerHTML = L.length ? L.map((a,i)=>`<div class="elv-ap" data-api="${i}">
+    <label class="campo">Aparelho<select data-apf="ap">${ELV_APS.map(x=>`<option value="${x[0]}" ${x[0]===a.ap?"selected":""}>${esc(x[1])} · ${fmt(x[2],2)} L/s</option>`).join("")}</select></label>
+    <label class="campo">Quantidade<input data-apf="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.qtd ?? "")}"></label>
+    <label class="campo">Em uso ao mesmo tempo<input data-apf="sim" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.sim ?? "")}"></label>
+    <button class="x" type="button" data-ap-rm aria-label="Remover aparelho">×</button></div>`).join("") : `<p class="vazio" style="font-size:14px;margin-top:6px">Nenhum aparelho lançado.</p>`;
 }
 function renderElv(){
   if(!$("elv-res")) return;
   const e = elvDados(), r = calcElv(e), cir = (elvVazio(e.forma) ? ELV_PAD.forma : e.forma)==="cir";
   document.querySelectorAll("#mod-elv .elv-ret").forEach(el=>el.style.display = cir ? "none" : ""); document.querySelectorAll("#mod-elv .elv-cir").forEach(el=>el.style.display = cir ? "" : "none");
   $("elv-qb-ph") && ($("elv-qb-ph").placeholder = r.qa > 0 ? fmt(2*r.qa,2) : "2 × vazão");
+  const qmaxEl = $("mod-elv").querySelector('[data-ev="qmax"]'); if(qmaxEl) qmaxEl.placeholder = r.qAp > 0 ? `${fmt(r.qAp,2)} (aparelhos)` : "0";
   $("elv-params").innerHTML = [["Capacidade da bomba", r.Qb ? fmt(r.Qb,2) : "—", "L/s"], ["Volume útil", r.Vu!=null ? fmt(r.Vu,2) : "—", "m³"], ["Altura útil", r.hu!=null ? fmt(r.hu,2) : "—", "m"], ["Detenção", r.d!=null ? fmt(r.d,1) : "—", "min"]]
     .map(([k,v,u])=>`<div><small>${k}</small><strong>${v}</strong><em>${u}</em></div>`).join("");
   $("elv-res").innerHTML = r.erro ? `<p class="vazio">${esc(r.erro)}</p>` : elvVerTab(r, "quadro") + (r.tMax!=null && r.t > r.tMax && r.tMax > 0 ? `<p class="fonte" style="margin-top:8px">Para a detenção ficar em até 30 min, o intervalo entre partidas pode ser no máximo <b>${fmt(r.tMax,1)} min</b>${r.tMax < 10 ? " (abaixo dos 10 min recomendados: confira a vazão da bomba e a vazão média)" : ""}.</p>` : "");
   $("elv-corte").innerHTML = elvCorte(r);
+  $("elv-graf").innerHTML = elvGrafico(r);
+  const outra = (elvVazio(e.bomba) ? "" : e.bomba)==="outra"; $("elv-curva-c").style.display = outra ? "" : "none";
+  document.querySelectorAll("#mod-elv .elv-bsel").forEach(el=>el.style.display = (elvVazio(e.bomba) ? "" : e.bomba) ? "" : "none");
   $("elv-mem").innerHTML = elvMemorial(r, "quadro");
   $("elv-exig").innerHTML = `<ul>${ELV_EXIG(r).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
 }
@@ -5494,6 +5595,7 @@ function relElv(){
     ${r.erro ? `<p>${esc(r.erro)}</p>` : `
     ${sec("Memorial de cálculo", elvMemorial(r, "r-t"))}
     ${sec("Verificações", `<div class="r-resumo">${elvVerTab(r, "r-t")}<div class="r-concl ${r.ok?"":"falha"}"><b>Conclusão:</b> ${r.ok ? `a caixa coletora atende aos itens verificados da NBR 8160 e da NBR 12208${r.recs?` (${r.recs} recomendação não seguida)`:""}.` : "há itens que não atendem ou ainda precisam ser informados."}</div></div>`)}
+    ${r.curva ? sec("Curva da bomba e do sistema", elvGrafico(r)) : ""}
     ${sec("Corte esquemático", elvCorte(r))}
     ${sec("Exigências construtivas", `<ul class="r-obs">${ELV_EXIG(r).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`)}`}
     ${linhasObs(e.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(e.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
@@ -5504,6 +5606,15 @@ function ligarElv(){
   const alt = el => { const e = elvDados(), k = el.dataset.ev; e[k] = el.type==="checkbox" ? el.checked : el.value; renderElv(); resumo(); salvar(); };
   M.addEventListener("input", ev=>{ if(ev.target.dataset.ev && ev.target.tagName==="INPUT" && ev.target.type!=="checkbox") alt(ev.target); else if(ev.target.dataset.ev && ev.target.tagName==="TEXTAREA") alt(ev.target); });
   M.addEventListener("change", ev=>{ if(ev.target.dataset.ev && (ev.target.tagName==="SELECT" || ev.target.type==="checkbox")) alt(ev.target); });
+  const apAlt = ev => { const t = ev.target, row = t.closest("[data-api]"); if(!row || !t.dataset.apf) return; const e = elvDados(); e.aps = e.aps || [];
+    const a = e.aps[+row.dataset.api]; if(!a) return; a[t.dataset.apf] = t.value; renderElv(); resumo(); salvar(); };
+  M.addEventListener("input", ev=>{ if(ev.target.dataset.apf && ev.target.tagName==="INPUT") apAlt(ev); });
+  M.addEventListener("input", ev=>{ const t = ev.target; if(t.dataset.cq===undefined) return; const e = elvDados(); e.curva = e.curva || []; const p = e.curva[+t.dataset.cq]; if(!p) return; p[t.dataset.cf] = t.value; renderElv(); resumo(); salvar(); });
+  M.addEventListener("change", ev=>{ if(ev.target.dataset.apf && ev.target.tagName==="SELECT") apAlt(ev); });
+  M.addEventListener("click", ev=>{
+    if(ev.target.closest("#elv-ap-add")){ const e = elvDados(); (e.aps = e.aps || []).push({ap:"bacia_cx", qtd:"1", sim:"1"}); renderElvAps(); renderElv(); resumo(); salvar(); return; }
+    const rm = ev.target.closest("[data-ap-rm]"); if(rm){ const e = elvDados(), i = +rm.closest("[data-api]").dataset.api; e.aps.splice(i, 1); renderElvAps(); renderElv(); resumo(); salvar(); }
+  });
 }
 function relEst(){
   const MREL = S.est, E = S.est, R = calcEst(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`;
@@ -8715,7 +8826,10 @@ const CONF_CASOS = [
   {mod:"ali", nome:"Alimentadores · diretamente enterrado, Afumex Iristech multipolar, solo 0,5 K·m/W", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 28, "tipo": 2, "modelo": 3, "mat": 1, "con": 1, "sis": 2, "fp": 1, "V": 380, "f": 60, "L": 15, "Ib": 380, "dv": 0.02, "icc": 10, "t": 0.2, "ta": 15, "ncirc": 1, "dist": 1, "rho": 0.5, "pe": 2, "peCond": 1, "npar": 2, "S": 185, "arr": 2, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
   {mod:"ali", nome:"Alimentadores · Superastic 750 V monofásico 127 V, eletroduto em canaleta", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 22, "tipo": 1, "modelo": 2, "mat": 1, "con": 2, "sis": 2, "fp": 1, "V": 127, "f": 60, "L": 25, "Ib": 32, "dv": 0.05, "icc": 5, "t": 1, "ta": 35, "ncirc": 1, "dist": 1, "rho": 3, "pe": 2, "peCond": 1, "npar": 1, "S": 70, "arr": 1, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
   {mod:"ali", nome:"Alimentadores · alumínio, Gsette 70 mm², plano espaçado 20 cm", norma:"Planilha Equiper R4 (recalculada no LibreOffice)", ini:s=>{}, f:()=>alCalc({"met": 7, "tipo": 1, "modelo": 4, "mat": 2, "con": 2, "sis": 1, "fp": 1, "V": 127, "f": 60, "L": 15, "Ib": 90, "dv": 0.04, "icc": 10, "t": 0.1, "ta": 40, "ncirc": 2, "dist": 3, "rho": 3, "pe": 1, "peCond": 2, "npar": 1, "S": 70, "arr": 12, "smin": 2.5}), ver:r=>`Iz ${fmt(r.Iz,1)} A · ΔV ${fmt(r.dVp*100,3)}% · seção recomendada ${r.Srec} mm²`},
-  {mod:"elv", nome:"Elevatória · NBR 8160 5.1.6 e NBR 12208 5.7 (2 L/s, bomba 2×, t = 10 min, caixa 1,2 × 1,0 m)", norma:"Vu = Q·t/4 = 0,24 × 10 / 4 = 0,60 m³ · d = 0,70 / 0,03 = 23,3 min · 60/10 = 6 partidas/h (acima das 5 recomendadas)", ini:s=>{ s.est.elv = {bacia:true, qmax:"2", qmed:"0.5", t:"10", nb:"2", forma:"ret", L:"1.2", B:"1", vocup:"0.1", folga:"0.1", lamina:"0.3", esf:"65", dnRec:"75", tipoB:"sub", hB:"0.2"}; }, f:()=>calcElv(), ver:r=>`Q ${fmt(r.Qb,2)} L/s · Vu ${fmt(r.Vu,2)} m³ · altura útil ${fmt(r.hu,2)} m · d ${fmt(r.d,1)} min · profundidade ${fmt(r.prof,2)} m · ${fmt(r.partidas,1)} partidas/h`}
+  {mod:"elv", nome:"Elevatória · NBR 8160 5.1.6 e NBR 12208 5.7 (2 L/s, bomba 2×, t = 10 min, caixa 1,2 × 1,0 m)", norma:"Vu = Q·t/4 = 0,24 × 10 / 4 = 0,60 m³ · d = 0,70 / 0,03 = 23,3 min · 6 partidas/h ≤ 15 (Anexo A.6) · v = 0,004 / (π·0,075²/4) = 0,91 m/s", ini:s=>{ s.est.elv = {bacia:true, qmax:"2", qmed:"0.5", t:"10", nb:"2", forma:"ret", L:"1.2", B:"1", vocup:"0.1", folga:"0.1", lamina:"0.3", esf:"65", dnRec:"75", tipoB:"sub", hB:"0.2"}; }, f:()=>calcElv(), ver:r=>`Q ${fmt(r.Qb,2)} L/s · Vu ${fmt(r.Vu,2)} m³ · altura útil ${fmt(r.hu,2)} m · d ${fmt(r.d,1)} min · profundidade ${fmt(r.prof,2)} m · ${fmt(r.partidas,1)} partidas/h (máx. ${r.pMax}) · recalque ${fmt(r.vR,2)} m/s`},
+  {mod:"elv", nome:"Elevatória · vazão pelos aparelhos (NBR 8160, anexo B)", norma:"Q = 0,96 + 2×0,15 + 0,20 + 0,25 = 1,71 L/s · bomba 3,42 L/s · Vu = 0,2052 × 12 / 4 = 0,616 m³ · d = 0,666 / 0,024 = 27,7 min", ini:s=>{ s.est.elv = {bacia:true, qmed:"0.4", t:"12", nb:"2", forma:"ret", L:"1", B:"1", vocup:"0.05", folga:"0.1", lamina:"0.3", esf:"60", dnRec:"75", hB:"0.25",
+    aps:[{ap:"bacia_cx",qtd:"3",sim:"1"},{ap:"lavatorio",qtd:"3",sim:"2"},{ap:"chuveiro",qtd:"2",sim:"1"},{ap:"pia",qtd:"1",sim:"1"}]}; }, f:()=>calcElv(), ver:r=>`Q aparelhos ${fmt(r.qAp,2)} L/s · bomba ${fmt(r.Qb,2)} L/s · Vu ${fmt(r.Vu,3)} m³ · d ${fmt(r.d,1)} min · ${fmt(r.partidas,1)} partidas/h`},
+  {mod:"elv", nome:"Elevatória · UNILIFT APG.40.10.A1, ponto de operação (Hg 4 m, recalque 30 + 10 m, DN 40)", norma:"Hazen-Williams C 130: encontro das curvas em 2,67 L/s e 9,7 m · v = 2,13 m/s", ini:s=>{ s.est.elv = {bacia:true, qmax:"1.71", qmed:"0.4", t:"10", nb:"2", forma:"ret", L:"1", B:"1", vocup:"0.05", folga:"0.1", lamina:"0.3", dnRec:"40", bomba:"apg4010", Hg:"4", Lrec:"30", Leq:"10", C:"130"}; }, f:()=>calcElv(), ver:r=>`ponto ${fmt(r.Qop,2)} L/s a ${fmt(r.Hop,1)} m · Vu ${fmt(r.Vu,3)} m³ · d ${fmt(r.d,1)} min · recalque ${fmt(r.vR,2)} m/s`}
 ];
 function confGas(s){ const G = s.gas; G.trechos=[{id:"t1",L:5,de:0,dir:"h"},{id:"t2",L:8,de:1,dir:"u"},{id:"t3",L:6,de:2,dir:"h"}];
   G.pontos=[{id:"p1",nome:"Fogão",equip:"",qtd:1,kgn:216,kglp:180,no:1,ramal:2},{id:"p2",nome:"Aquecedor",equip:"",qtd:1,kgn:400,kglp:330,no:2,ramal:1.5},{id:"p3",nome:"Churrasqueira",equip:"",qtd:2,kgn:150,kglp:125,no:3,ramal:3}]; }
@@ -8768,7 +8882,7 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75", "ce518aab·85"];
+const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75", "06d4837a·108", "c1ef22ce·128", "9f68c7a7·132"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
