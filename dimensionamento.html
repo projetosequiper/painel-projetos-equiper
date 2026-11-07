@@ -196,6 +196,7 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .elv-curva{display:grid;grid-template-columns:repeat(10,minmax(70px,1fr));gap:6px}@media(max-width:900px){.elv-curva{grid-template-columns:repeat(4,1fr)}}
 .rsk-r4f[hidden]{display:none}.rsk-pf strong{color:var(--vermelho)}.rsk-chk{display:flex;flex-direction:column;gap:4px}.rsk-chk small{font-size:13px;color:var(--cinza-4)}.rsk-chk .chave{font-size:14px}.rsk-lista{display:grid;gap:12px;margin-bottom:10px}
 .rsk-mat td.rsk-ok{color:#1d6b2f}.rsk-mat td.rsk-best{outline:2px solid #1d6b2f;outline-offset:-2px;font-weight:700}.rsk-concl{margin:10px 0 0;padding-left:20px}.rsk-av{margin:8px 0 0;padding:8px 12px 8px 30px;background:#fff4f4;color:var(--vermelho);font-size:14px}
+.apv-box:empty{display:none}.apv{margin-top:18px;border-top:1px solid var(--cinza-2);padding-top:14px}.apv-cab{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;margin-bottom:10px}.apv-cab b{font-size:17px}.apv-st{font-weight:700;padding:2px 10px;border-radius:999px;font-size:14px}.apv-st.ok{background:#e3f1e6;color:#1d6b2f}.apv-st.pend{background:#fff4d6;color:#7a5600}.apv-st.alt{background:#fde7e7;color:var(--vermelho)}.apv-sub{font-size:13px;color:var(--cinza-4)}.apv-bloco{margin:10px 0}.apv-bloco>small{display:block;font-size:13px;color:var(--cinza-4);margin-bottom:4px}.apv-mud{margin:0;padding-left:18px;font-size:14px}.apv-mud small{color:var(--cinza-4)}.apv-bts{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.apv-bt{background:var(--preto);color:#fff;border:0;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}.apv-bt.sec{background:#fff;color:var(--preto);border:2px solid var(--preto)}.apv-hist td{vertical-align:top}.apv-aviso{color:var(--vermelho)}
 .elv-info{display:block;font-size:12.5px;color:var(--cinza-4);margin-top:4px;font-weight:400}
 .elv-falha{color:var(--vermelho);font-weight:600}.elv-rec{color:#b35c00;font-weight:600}.elv-nd{color:var(--cinza-4)}#elv-exig ul{margin:0;padding-left:20px}
 .dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
@@ -2123,7 +2124,8 @@ function nomePDF(){
 }
 function atualizarTitulo(){ try{ document.title = OBRA_INTEIRA ? `${(S.obra.cliente||"").trim() || "Sem cliente"}_Memórias de cálculo`.replace(/[\\/:*?"<>|]+/g, "-") : nomePDF(); }catch(e){} }
 let OBRA_INTEIRA = false;
-const relDe = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : m==="rsk" ? relRsk() : m==="elv" ? relElv() : relEsgoto();
+const relDeBase = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : m==="rsk" ? relRsk() : m==="elv" ? relElv() : relEsgoto();
+const relDe = m => relComAprov(m, relDeBase(m));
 // todas as memórias da obra num PDF só (cada dimensionamento e cada edificação começa numa página)
 function htmlObraInteira(){
   const ordem = ["hid","res","esgoto","est","elv","gas","cgl","plu","ele","cmx","dem","ali","rsk","paq","pfi","pcl","phi"];
@@ -3310,7 +3312,7 @@ function ligar(){
   // Barra e arquivos
   $("imprimir").addEventListener("click", ()=>{
     if(S.naoAplica?.[S.modulo]){ aviso("Este dimensionamento está marcado como não se aplica nesta obra.", true); return; }
-    $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : S.modulo==="rsk" ? relRsk() : S.modulo==="elv" ? relElv() : relEsgoto());
+    $("memoria").innerHTML = relDe(S.modulo);
     atualizarTitulo();
     setTimeout(()=>window.print(), 60);                     // dá tempo do navegador assumir o novo título (nome do arquivo)
   });
@@ -3339,7 +3341,7 @@ function ligar(){
   addEventListener("dragleave",()=>{ if(--n<=0){ n=0; document.body.classList.remove("arrastando"); } });
   addEventListener("dragover",e=>e.preventDefault());
   addEventListener("drop",e=>{ e.preventDefault(); n=0; document.body.classList.remove("arrastando"); lerArquivo(e.dataTransfer.files[0]); });
-  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = (S.modulo==="gas" ? relGas() : S.modulo==="plu" ? relPluvial() : S.modulo==="hid" ? relHid() : S.modulo==="est" ? relEst() : S.modulo==="ele" ? relEle() : PIS_PARTES[S.modulo] ? relPis() : S.modulo==="res" ? relRes() : S.modulo==="cmx" ? relCmx() : S.modulo==="cgl" ? relCgl() : S.modulo==="dem" ? relDem() : S.modulo==="ali" ? relAli() : S.modulo==="rsk" ? relRsk() : S.modulo==="elv" ? relElv() : relEsgoto()); });
+  addEventListener("beforeprint", ()=>{ if(!$("memoria").innerHTML) $("memoria").innerHTML = relDe(S.modulo); });
   addEventListener("afterprint", ()=>{ $("memoria").innerHTML = ""; OBRA_INTEIRA = false; atualizarTitulo(); });
   $("imprimir-obra").addEventListener("click", ()=>{
     const h = htmlObraInteira(); if(!h){ aviso("Esta obra ainda não tem nenhum dimensionamento preenchido.", true); return; }
@@ -8639,6 +8641,147 @@ function ligarRsk(){
 }
 function renderRskZonasNomes(){ const e = rskDados(); document.querySelectorAll("#rsk-zonas [data-zl]").forEach(cb=>{ const l = e.linhas.find(x=>x.id===cb.dataset.zl); if(l && cb.nextSibling) cb.nextSibling.textContent = " " + (l.nome || "Linha"); }); }
 
+/* =====================================================================
+   APROVAÇÃO E CONTROLE DE REVISÕES (individual por dimensionamento e por edificação)
+   Estado: S[HIST_CHAVE[m]].aprov[m] = {revs:[{n, data, por, crea, obs, mud}], snap:[linhas], aberta:{n}|null, form:{porId, por, data, obs}}
+   A comparação usa o texto do relatório (sem carimbo, sem assinatura e sem Observações).
+   ===================================================================== */
+const APV_MAX_MUD = 80;
+const apvPad = n => String(n).padStart(2, "0");
+const apvHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const apvDataBR = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso||"—"); };
+function apvEstado(m){ const k = HIST_CHAVE[m] || m; if(!S[k]) return null; S[k].aprov = S[k].aprov || {}; const A = S[k].aprov[m] = S[k].aprov[m] || {};
+  if(!Array.isArray(A.revs)) A.revs = []; if(!A.form) A.form = {}; return A; }
+function apvSecao(m){ return PIS_PARTES[m] ? $("mod-pis") : $("mod-" + m); }
+function apvBase(m){ const sec = apvSecao(m), el = sec && [...sec.querySelectorAll('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"]')][0];
+  const n = parseInt(String(el?.dataset.apvBase ?? el?.value ?? "").replace(/\D/g,""), 10); return isFinite(n) ? n : 0; }
+function apvUltima(A){ return A.revs.length ? A.revs[A.revs.length-1] : null; }
+function apvNumAtual(m, A){ A = A || apvEstado(m); if(A.aberta) return A.aberta.n; const u = apvUltima(A); return u ? u.n : apvBase(m); }
+// texto do relatório em linhas comparáveis
+function apvLinhas(html){
+  const d = document.createElement("div"); d.innerHTML = html;
+  d.querySelectorAll(".r-carimbo, .r-ass, .apv-rel, svg, style, script").forEach(x=>x.remove());
+  d.querySelectorAll("section.r-sec").forEach(s=>{ const h = s.querySelector("h2"); if(h && /^\s*\d*\s*Observações\s*$/i.test(h.textContent)) s.remove(); });
+  const out = []; let sec = "";
+  const lim = t => t.replace(/\s+/g, " ").trim();
+  d.querySelectorAll("h2, h3, h4, tr, p, li, .r-concl").forEach(el=>{
+    if(el.tagName!=="TR" && el.parentElement?.closest("tr, li, p, .r-concl")) return;
+    if(el.tagName==="TR" && el.parentElement?.closest("tr")) return;
+    if(el.tagName==="H2"){ sec = lim([...el.childNodes].filter(n=>!(n.tagName==="I")).map(n=>n.textContent).join(" ")); return; }
+    let t;
+    if(el.tagName==="TR"){ const cel = [...el.children].map(c=>lim(c.textContent)), tb = el.closest("table"), th = el.parentElement?.tagName==="TBODY" ? [...(tb?.querySelector("thead tr")?.children || [])].map(c=>lim(c.textContent)) : [];
+      t = cel.map((c,i)=>i && th.length===cel.length && th[i] && c ? `${th[i]}: ${c}` : c).filter(Boolean).join(" · "); }
+    else t = lim(el.textContent);
+    if(t) out.push((sec ? sec + " ▸ " : "") + t);
+  });
+  return out;
+}
+function apvDiff(a, b){                                   // a = aprovado, b = atual · retorna [{t:"alt"|"inc"|"rem", de, para}]
+  if(!a) return [];
+  let i0 = 0; while(i0 < a.length && i0 < b.length && a[i0]===b[i0]) i0++;
+  let ea = a.length, eb = b.length; while(ea > i0 && eb > i0 && a[ea-1]===b[eb-1]){ ea--; eb--; }
+  const A = a.slice(i0, ea), B = b.slice(i0, eb), out = [];
+  if(!A.length && !B.length) return out;
+  let ops = [];
+  if(A.length * B.length <= 4e6){                        // LCS
+    const n = A.length, m = B.length, L = Array.from({length:n+1}, ()=>new Uint16Array(m+1));
+    for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j] = A[i]===B[j] ? L[i+1][j+1]+1 : Math.max(L[i+1][j], L[i][j+1]);
+    let i=0, j=0; while(i<n && j<m){ if(A[i]===B[j]){ ops.push(["="]); i++; j++; } else if(L[i+1][j] >= L[i][j+1]) ops.push(["-", A[i++]]); else ops.push(["+", B[j++]]); }
+    while(i<n) ops.push(["-", A[i++]]); while(j<m) ops.push(["+", B[j++]]);
+  } else { const sa = new Set(A), sb = new Set(B); A.filter(x=>!sb.has(x)).forEach(x=>ops.push(["-", x])); B.filter(x=>!sa.has(x)).forEach(x=>ops.push(["+", x])); }
+  let rem = [], inc = [];
+  const flush = () => { const k = Math.min(rem.length, inc.length); for(let x=0;x<k;x++) out.push({t:"alt", de:rem[x], para:inc[x]}); rem.slice(k).forEach(x=>out.push({t:"rem", de:x})); inc.slice(k).forEach(x=>out.push({t:"inc", para:x})); rem = []; inc = []; };
+  ops.forEach(o=>{ if(o[0]==="=") flush(); else if(o[0]==="-") rem.push(o[1]); else inc.push(o[1]); }); flush();
+  return out;
+}
+function apvMudTxt(d){                                    // texto curto de uma mudança
+  const sec = s => { const i = s.indexOf(" ▸ "); return i>0 ? [s.slice(0,i), s.slice(i+3)] : ["", s]; };
+  if(d.t==="alt"){ const [s1, x] = sec(d.de), [, y] = sec(d.para), a = x.split(" · "), b = y.split(" · ");
+    if(a.length===b.length && a.length > 1 && a[0]===b[0]){
+      const ch = a.map((v,i)=>i && v!==b[i] ? (()=>{ const k = v.indexOf(": "), k2 = b[i].indexOf(": "); return k>0 && k2>0 && v.slice(0,k)===b[i].slice(0,k2) ? `${v.slice(0,k)}: ${v.slice(k+2)} → ${b[i].slice(k2+2)}` : `${v} → ${b[i]}`; })() : null).filter(Boolean);
+      if(ch.length) return {sec:s1, txt:`${a[0]}: ${ch.join("; ")}`}; }
+    return {sec:s1, txt:`${x} → ${y}`}; }
+  const [s, x] = sec(d.t==="inc" ? d.para : d.de); return {sec:s, txt:(d.t==="inc" ? "incluído: " : "removido: ") + x};
+}
+function apvMudHtml(lista, max){
+  if(!lista.length) return "";
+  const L = lista.slice(0, max||APV_MAX_MUD).map(d=>{ const x = apvMudTxt(d); return `<li>${x.sec ? `<small>${esc(x.sec)}</small> ` : ""}${esc(x.txt)}</li>`; }).join("");
+  return `<ul class="apv-mud">${L}${lista.length > (max||APV_MAX_MUD) ? `<li><i>… e mais ${lista.length - (max||APV_MAX_MUD)} alteração(ões)</i></li>` : ""}</ul>`;
+}
+function apvSituacao(m, html){                            // {A, n, aprovada, alterada, mud}
+  const A = apvEstado(m); if(!A) return null;
+  const u = apvUltima(A), atual = apvLinhas(html ?? relDeBase(m));
+  const mud = u && A.snap ? apvDiff(A.snap, atual) : [];
+  return {A, u, atual, mud, n: apvNumAtual(m, A), aprovada: !!u && !A.aberta, alterada: mud.length > 0};
+}
+// ---- quadro na seção Documento ----
+let APV_T = null;
+function apvAgendar(){ clearTimeout(APV_T); APV_T = setTimeout(apvRender, 500); }
+function apvRender(){
+  const m = S.modulo, sec = apvSecao(m), box = sec?.querySelector(".apv-box"); if(!box) return;
+  if(box.contains(document.activeElement) && document.activeElement.matches("input, textarea")) return;   // não atrapalha quem está digitando
+  let st; try{ st = apvSituacao(m); }catch(e){ box.innerHTML = ""; return; }
+  if(!st) { box.innerHTML = ""; return; }
+  const {A, u, mud, n} = st, f = A.form, revIn = sec.querySelector('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"]');
+  if(revIn){ if(A.revs.length || A.aberta){ if(revIn.dataset.apvBase===undefined) revIn.dataset.apvBase = revIn.value; revIn.readOnly = true; revIn.value = apvPad(n); revIn.title = "Controlada pela aprovação: use “Criar nova revisão”."; }
+    else { revIn.readOnly = false; revIn.title = "Revisão inicial. Depois da primeira aprovação, passa a ser controlada pela aprovação."; } }
+  const emAprov = !u || A.aberta;
+  const sel = `<select data-apv="porId"><option value="">— selecione —</option>${RESP.map(r=>`<option value="${r.id}" ${r.id===f.porId?"selected":""}>${esc(r.nome||"Sem nome")}${r.crea?` · CREA ${esc(r.crea)}`:""}</option>`).join("")}<option value="_outro" ${f.porId==="_outro"?"selected":""}>Outro (digitar nome)</option></select>`;
+  let status;
+  if(!u && !A.aberta) status = `<span class="apv-st pend">Revisão ${apvPad(n)} em elaboração · não aprovada</span>`;
+  else if(A.aberta) status = `<span class="apv-st pend">Revisão ${apvPad(n)} em elaboração · não aprovada</span><span class="apv-sub">última aprovada: ${apvPad(u.n)} por ${esc(u.por)} em ${apvDataBR(u.data)}</span>`;
+  else if(st.alterada) status = `<span class="apv-st alt">Alterado depois da aprovação da revisão ${apvPad(u.n)}</span><span class="apv-sub">aprovada por ${esc(u.por)} em ${apvDataBR(u.data)} · o cálculo não corresponde mais ao aprovado</span>`;
+  else status = `<span class="apv-st ok">Revisão ${apvPad(u.n)} aprovada</span><span class="apv-sub">por ${esc(u.por)}${u.crea?` (CREA ${esc(u.crea)})`:""} em ${apvDataBR(u.data)}</span>`;
+  box.innerHTML = `<div class="apv">
+    <div class="apv-cab"><b>Aprovação e revisões</b>${status}</div>
+    ${u && mud.length ? `<div class="apv-bloco"><small>O que mudou em relação à revisão ${apvPad(u.n)} aprovada (${mud.length})</small>${apvMudHtml(mud, 40)}</div>` : ""}
+    ${emAprov ? `<div class="grade apv-form">
+        <label class="campo c2">Aprovado por${sel}${f.porId==="_outro" ? `<input data-apv="por" value="${esc(f.por||"")}" placeholder="Nome de quem aprova" autocomplete="off" style="margin-top:6px">` : ""}</label>
+        <label class="campo c2">Data da aprovação<input type="date" data-apv="data" value="${esc(f.data || apvHoje())}"></label>
+        <div class="campo c2 apv-bts"><button type="button" class="apv-bt" data-apv-acao="aprovar">Aprovar revisão ${apvPad(n)}</button>${A.aberta ? `<button type="button" class="lnk" data-apv-acao="cancelar">cancelar a nova revisão</button>` : ""}</div>
+        <label class="campo c6">Observações da revisão<textarea data-apv="obs" placeholder="${u ? "Opcional. Motivo ou descrição desta revisão; aparece no histórico do relatório." : "Opcional. Ex.: emissão inicial."}">${esc(f.obs||"")}</textarea></label>
+      </div>` : `<div class="apv-bts"><button type="button" class="apv-bt sec" data-apv-acao="nova">Criar nova revisão (${apvPad(u.n + 1)})</button></div>`}
+    ${A.revs.length ? `<div class="apv-bloco"><small>Histórico</small><table class="quadro apv-hist"><thead><tr><th>Rev.</th><th>Data</th><th>Aprovado por</th><th>Alterações</th><th>Observações</th></tr></thead><tbody>${A.revs.slice().reverse().map(r=>`<tr><td>${apvPad(r.n)}</td><td>${apvDataBR(r.data)}</td><td>${esc(r.por)}</td><td>${r.mud?.length ? `${r.mud.length} alteração(ões)` : r===A.revs[0] ? "emissão" : "—"}</td><td>${esc(r.obs||"")}</td></tr>`).join("")}</tbody></table></div>` : ""}
+  </div>`;
+}
+function apvAcao(acao){
+  const m = S.modulo, A = apvEstado(m); if(!A) return;
+  if(acao==="nova"){ const u = apvUltima(A); if(!u) return; A.aberta = {n: u.n + 1}; A.form = {data: apvHoje()}; }
+  else if(acao==="cancelar"){ A.aberta = null; A.form = {}; }
+  else if(acao==="aprovar"){
+    const f = A.form, r = RESP.find(x=>x.id===f.porId), por = f.porId==="_outro" ? String(f.por||"").trim() : r?.nome;
+    if(!por){ aviso("Escolha (ou digite) quem está aprovando.", true); return; }
+    const st = apvSituacao(m), n = st.n;
+    A.revs.push({n, data: f.data || apvHoje(), por, crea: f.porId==="_outro" ? "" : (r?.crea||""), obs: String(f.obs||"").trim(), mud: st.mud.slice(0, APV_MAX_MUD).map(d=>{ const x = apvMudTxt(d); return (x.sec ? x.sec + " ▸ " : "") + x.txt; }), nMud: st.mud.length});
+    A.snap = st.atual; A.aberta = null; A.form = {};
+    aviso(`Revisão ${apvPad(n)} aprovada.`);
+  }
+  salvar(); apvRender();
+}
+document.addEventListener("click", ev=>{ const b = ev.target.closest("[data-apv-acao]"); if(b){ apvAcao(b.dataset.apvAcao); } });
+document.addEventListener("input", ev=>{ const t = ev.target; if(!t.dataset?.apv) return; const A = apvEstado(S.modulo); if(!A) return; A.form[t.dataset.apv] = t.value; salvar(); });
+document.addEventListener("change", ev=>{ const t = ev.target; if(t.dataset?.apv==="porId"){ apvRender(); } });
+// ---- relatório: revisão e data no carimbo + histórico antes da assinatura ----
+function relComAprov(m, html){
+  let st; try{ st = apvSituacao(m, html); }catch(e){ return html; }
+  if(!st || (!st.A.revs.length && !st.A.aberta)) return html;
+  const {A, u} = st, n = st.n, d = document.createElement("div"); d.innerHTML = html;
+  d.querySelectorAll(".r-carimbo .r-meta > div").forEach(x=>{ const s = x.querySelector("span")?.textContent || "", b = x.querySelector("b"); if(!b) return;
+    if(/Revisão/.test(s)) b.textContent = apvPad(n);
+    if(/Data/.test(s) && st.aprovada && !st.alterada) b.textContent = apvDataBR(u.data); });
+  const nSec = d.querySelectorAll("section.r-sec").length + 1;
+  const sit = A.aberta || !u ? `<p class="apv-aviso"><b>Revisão ${apvPad(n)} em elaboração · não aprovada.</b></p>` : st.alterada ? `<p class="apv-aviso"><b>Atenção:</b> o cálculo foi alterado depois da aprovação da revisão ${apvPad(u.n)} e ainda não teve nova revisão aprovada.</p>` : "";
+  const hist = A.revs.map(r=>`<tr><td>${apvPad(r.n)}</td><td>${apvDataBR(r.data)}</td><td>${esc(r.por)}${r.crea?`<br><small>CREA ${esc(r.crea)}</small>`:""}</td><td>${r.mud?.length ? `<ul class="apv-mud">${r.mud.map(x=>{ const i = x.indexOf(" ▸ "); return `<li>${i>0 ? `<small>${esc(x.slice(0,i))}</small> ${esc(x.slice(i+3))}` : esc(x)}</li>`; }).join("")}${r.nMud > r.mud.length ? `<li><i>… e mais ${r.nMud - r.mud.length}</i></li>` : ""}</ul>` : r===A.revs[0] ? "Emissão" : "—"}</td><td>${esc(r.obs||"")}</td></tr>`).join("");
+  const secH = `<section class="r-sec apv-rel"><h2><i>${nSec}</i>Controle de revisões</h2>${sit}${A.revs.length ? `<table class="r-t apv-hist"><thead><tr><th>Rev.</th><th>Data</th><th>Aprovado por</th><th>Alterações</th><th>Observações</th></tr></thead><tbody>${hist}</tbody></table>` : ""}</section>`;
+  const ass = d.querySelector(".r-ass"); if(ass) ass.insertAdjacentHTML("beforebegin", secH); else (d.querySelector(".r") || d).insertAdjacentHTML("beforeend", secH);
+  return d.innerHTML;
+}
+function apvIniciar(){
+  document.querySelectorAll("section.modulo").forEach(sec=>{ const b = [...sec.querySelectorAll(".bloco-dados")].find(x=>x.querySelector("h2")?.textContent.trim()==="Documento"); if(b && !b.querySelector(".apv-box")) b.insertAdjacentHTML("beforeend", `<div class="apv-box"></div>`); });
+  const r = $("resumo"); if(r) new MutationObserver(apvAgendar).observe(r, {childList:true, subtree:true, characterData:true});
+  apvAgendar();
+}
+
 function dmNomeCopia(nome){                                 // QDC2 → QDC3 (próximo livre); outros nomes → "nome (cópia)"
   const nomes = new Set(S.dem.quadros.map(q=>q.nome)), m = (nome||"").match(/^(.*?)(\d+)$/);
   if(m){ let n = +m[2] + 1; while(nomes.has(m[1]+n)) n++; return m[1]+n; }
@@ -9642,6 +9785,7 @@ ligarCgl();
 ligarDem();
 ligarAli();
 ligarRsk();
+apvIniciar();
 ligarImp();
 ligarGruposNav();
 ligarHist();
