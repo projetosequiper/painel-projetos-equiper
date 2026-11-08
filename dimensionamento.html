@@ -178,6 +178,8 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-lin.ar{grid-template-columns:2fr 170px 90px 140px 92px 40px}
 .dm-lin.arE{grid-template-columns:2fr 210px 200px 90px 92px 40px}
 .dm-prev{font-size:13px;display:flex;align-items:center;gap:6px;padding-bottom:12px;white-space:nowrap;cursor:pointer}
+.dm-chk{font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px;padding-bottom:12px;white-space:nowrap;cursor:pointer}
+.dm-lin.il{grid-template-columns:2fr 90px 140px 70px 70px 40px}
 .dm-lin.prev{background:#fff8e6;outline:1px dashed #e0a000;outline-offset:3px;border-radius:2px}
 .dm-prev-tag{font-style:italic;color:#9a6a00}
 .dm-lin .campo input,.dm-lin .campo select{padding:8px 9px;font-size:15px}
@@ -201,7 +203,7 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .elv-falha{color:var(--vermelho);font-weight:600}.elv-rec{color:#b35c00;font-weight:600}.elv-nd{color:var(--cinza-4)}#elv-exig ul{margin:0;padding-left:20px}
 .dm-conc-msg{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--vermelho);background:#fff4f4}
 .dm-arv td.q{white-space:nowrap}.dm-arv td.q b{font-weight:700}.dm-arv tr.raiz td{font-weight:700}
-@media(max-width:720px){.dm-lin,.dm-lin.ar,.dm-lin.arE{grid-template-columns:1fr 1fr 40px}.dm-lin .campo:first-child{grid-column:1/-1}}
+@media(max-width:720px){.dm-lin,.dm-lin.ar,.dm-lin.arE,.dm-lin.il{grid-template-columns:1fr 1fr 40px}.dm-lin .campo:first-child{grid-column:1/-1}}
 .ponto{background:var(--cinza-1);border-radius:4px;padding:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr;align-items:end}
 .ponto .p-nome,.ponto .p-equip{grid-column:1/-1}
 @media(min-width:820px){.ponto{grid-template-columns:1fr 1.3fr 58px 150px 72px 96px 62px 40px}.ponto .p-nome,.ponto .p-equip{grid-column:auto}}
@@ -7053,6 +7055,8 @@ function rvCvAuto(c){                                     // CV pela tabela CV �
   return m ? Math.round(m[0]*1000)/1000 : "";
 }
 const rvChave = (q, c) => `${impNorm(q)}|${String(c.n||"").trim()}`;
+const rvPrev = t => { const s = String(t||""), re = /\s*[(\[]?\s*previs[aã]o\s*(de\s+)?[)\]]?\s*/i;
+  return re.test(s) ? {t: s.replace(re, " ").replace(/\s{2,}/g, " ").replace(/^[\s·\-–]+|[\s·\-–]+$/g, "").trim(), prev: true} : {t: s.trim(), prev: false}; };
 async function rvAbrir(f, alvo){
   try{
     const d = JSON.parse(await lerTextoArq(f));
@@ -7134,10 +7138,11 @@ function rvAcao(a){
     let fp = num(D.fp) > 0 ? num(D.fp) : 1;
     R.filter(r=>r.papel==="quadro" && r.circ.length).forEach(r=>{ const q = achar(r.q.nome), il = [], aq = [], ar = [], mo = [];
       r.circ.forEach(c=>{ const k = rvChave(r.q.nome, c), cat = RV.cat[k] ?? "il", va = rvNum(c.va); if(!(va > 0)) return;
-        if(cat==="il") il.push({n:`${String(c.n||"").trim()} · ${String(c.desc||"").trim()}`, qtd:1, w:String(Math.round(va))});
-        else if(cat==="aq") aq.push({n:rvNomeAq(c), qtd:1, w:String(Math.round(va))});
-        else if(cat==="ar") ar.push({n:"Ar-condicionado", qtd:1, kw:String(Math.round(va*fp)/1000), tipo:"split"});
-        else if(cat==="mo") mo.push({n:rvNomeMo(c), qtd:1, cv:String(num(RV.cv[k]) || rvCvAuto(c) || ""), cls: (Math.round(rvNum(c.polos))||1) >= 3 ? "tri" : "mono"}); });
+        const pv = rvPrev(c.desc), extra = pv.prev ? {prev:true} : {}, cc = {...c, desc: pv.t};
+        if(cat==="il") il.push({n:`${String(c.n||"").trim()} · ${pv.t}`, qtd:1, w:String(Math.round(va)), det:false, ...extra});
+        else if(cat==="aq") aq.push({n:rvNomeAq(cc), qtd:1, w:String(Math.round(va)), ...extra});
+        else if(cat==="ar") ar.push({n:"Ar-condicionado", qtd:1, kw:String(Math.round(va*fp)/1000), tipo:"split", ...extra});
+        else if(cat==="mo") mo.push({n:rvNomeMo(cc), qtd:1, cv:String(num(RV.cv[k]) || rvCvAuto(c) || ""), cls: (Math.round(rvNum(c.polos))||1) >= 3 ? "tri" : "mono", ...extra}); });
       q.il = il; q.aq = aq; q.ar = ar; q.mo = mo; q.ilum = "";
       const tri = r.circ.some(c=>(Math.round(rvNum(c.polos))||1) >= 3) || (()=>{ const P = RV.d.quadros.flatMap(x=>x.circuitos||[]).find(c=>impNorm(c.quadro)===impNorm(r.q.nome)); return P && Math.round(rvNum(P.polos)) >= 3; })();
       if(tri && !q.fases) q.fases = "tri"; });
@@ -7697,8 +7702,9 @@ function dmAgregaQM(qm, q0){
   const lista = k => qs.flatMap(q=>(q[k]||[]).map(x=>({...x, qtd:Math.max(0, num(x.qtd))*mult.get(q.id)}))).filter(x=>x.qtd>0);
   const ilAdd = q => (q.il||[]).reduce((a,x)=>a + Math.max(0,num(x.qtd))*num(x.w)/1000, 0);
   const ilE = qs.reduce((a,q)=>a + (num(q.ilE)+ilAdd(q))*mult.get(q.id)/(q.ilEd ? 0.9 : 1), 0), ilEkw = soma(q=>num(q.ilE)+ilAdd(q));
-  const il = lista("il"), aq = lista("aq"), ar = lista("ar"), mo = lista("mo"), nPrev = [...il, ...aq, ...ar, ...mo].filter(x=>x.prev).length;
-  return {qs, q0, area:soma(q=>q.area), ilumBase:soma(q=>q.ilum), ilum:soma(q=>num(q.ilum)+ilAdd(q)), com, ilE, ilEkw, il, aq, ar, mo, nPrev, nTot: qm.reduce((a,[,m])=>a+m,0),
+  const ilTodos = lista("il"), aq = lista("aq"), ar = lista("ar"), mo = lista("mo"), nPrev = [...ilTodos, ...aq, ...ar, ...mo].filter(x=>x.prev).length;
+  const il = ilTodos.filter(dmIlDet);                      // itens que aparecem sozinhos no memorial
+  return {qs, q0, area:soma(q=>q.area), ilumBase:soma(q=>num(q.ilum)+dmIlSemDet(q)), ilum:soma(q=>num(q.ilum)+ilAdd(q)), com, ilE, ilEkw, il, ilTodos, aq, ar, mo, nPrev, nTot: qm.reduce((a,[,m])=>a+m,0),
     porAtiv: (()=>{ const g = new Map(); qm.forEach(([q,m])=>{ const k = q.ativ || D.ativ || ""; const x = g.get(k) || {ilum:0, area:0}; x.ilum += (num(q.ilum)+ilAdd(q))*m; x.area += num(q.area)*m; g.set(k, x); }); return g; })()};
 }
 // aparelhos com o mesmo nome formam um grupo (a quantidade do grupo define o fator)
@@ -7708,7 +7714,10 @@ function dmGrupos(aq){
   return [...m.values()].map(g=>({...g, w: g.pots.size===1 ? [...g.pots][0] : null}));
 }
 const tagPrev = x => x && x.prev ? ` <span class="dm-prev-tag">(previsão)</span>` : "";
-const dmItensIl = (A, base, unid) => A.il.length ? [`${base ? `Carga informada ${fmt(base,2)} kW + ` : ""}itens: ${A.il.map(x=>`${esc(x.n)||"carga"}${tagPrev(x)} ${fmt(x.qtd)} × ${fmt(num(x.w))} W`).join(" · ")} = ${fmt(A.il.reduce((a,x)=>a+x.qtd*num(x.w),0)/1000,2)} kW`] : [];
+// item de iluminação e tomadas com "detalhe" (padrão para os criados à mão; os importados do Revit vêm sem) ou em previsão: sai sozinho no memorial
+const dmIlDet = x => x.det!==false || !!x.prev;
+const dmIlSemDet = q => (q.il||[]).filter(x=>!dmIlDet(x)).reduce((a,x)=>a + Math.max(0,num(x.qtd))*num(x.w)/1000, 0);
+const dmItensIl = (A, base, unid) => A.il.length ? [`${base ? `Carga ${fmt(base,2)} kW + ` : ""}itens: ${A.il.map(x=>`${esc(x.n)||"carga"}${tagPrev(x)} ${fmt(x.qtd)} × ${fmt(num(x.w))} W`).join(" · ")} = ${fmt(A.il.reduce((a,x)=>a+x.qtd*num(x.w),0)/1000,2)} kW`] : [];
 function dmSoma(wInst, dKva, fp = 1, nome = ""){            // somatório instalado e demandado em kW e kVA
   const kW = wInst/1000, kVA = kW/fp, dKW = dKva*fp;
   return `<b>Somatório${nome?" "+nome:""}</b> · instalado: ${fmt(kW,2)} kW = ${fmt(kVA,2)} kVA${fp!==1?` (FP ${fmt(fp,2)})`:""} · demandado: ${fmt(dKW,2)} kW = <b>${fmt(dKva,2)} kVA</b>`;
@@ -9543,12 +9552,13 @@ function renderDemQuadro(){
   };
   const largo = tipo => (tipo==="ar" && met!=="enel") || (tipo==="aq" && met==="neo") || (tipo==="mo" && met!=="light");
   const ehW = tipo => tipo==="aq" || tipo==="il";
-  const lin = (lista, tipo) => (q[lista]||[]).map((x,i)=>`<div class="dm-lin ${tipo==="ar" && met==="enel" ? "arE" : largo(tipo)?"ar":""}${x.prev?" prev":""}" data-dml="${lista}" data-i="${i}">
+  const lin = (lista, tipo) => (q[lista]||[]).map((x,i)=>`<div class="dm-lin ${tipo==="il" ? "il" : tipo==="ar" && met==="enel" ? "arE" : largo(tipo)?"ar":""}${x.prev?" prev":""}" data-dml="${lista}" data-i="${i}">
       <label class="campo">Descrição<input data-df="n" value="${esc(x.n||"")}" list="dm-l-${tipo}" placeholder="Ex.: ${tipo==="il"?"Iluminação externa":tipo==="aq"?(met==="neo"?"Chuveiro":"Sauna"):tipo==="ar"?"Ar-condicionado":"Pressurização"}"></label>
       ${extra(tipo, x)}
       <label class="campo">Qtd.<input data-df="qtd" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.qtd)}"></label>
       ${tipo==="ar" && met==="enel" ? "" : `<label class="campo">${ehW(tipo)?"Potência (W)":tipo==="ar"?"Potência (kW)":"Potência (CV)"}<input data-df="${ehW(tipo)?"w":tipo==="ar"?"kw":"cv"}" data-mil type="text" inputmode="decimal" value="${fmtIn(ehW(tipo)?x.w:tipo==="ar"?x.kw:x.cv)}"></label>`}
-      <label class="dm-prev" title="Carga prevista: ainda falta confirmar a potência exata"><input type="checkbox" data-df="prev" ${x.prev?"checked":""}> previsão</label>
+      <label class="dm-chk" title="Carga prevista: ainda falta confirmar a potência exata (sai sempre detalhada no memorial)"><span>previsão</span><input type="checkbox" data-df="prev" ${x.prev?"checked":""}></label>
+      ${tipo==="il" ? `<label class="dm-chk" title="Marcado: o item aparece sozinho no memorial. Desmarcado: no memorial entra somado em Iluminação e tomadas (kW); na conta não muda nada"><span>detalhe</span><input type="checkbox" data-df="det" ${x.det!==false?"checked":""}></label>` : ""}
       <button class="x" type="button" data-dmrm aria-label="Remover">×</button></div>`).join("");
   const com = q.com || {};
   const campoCom = (k, t) => `<label class="campo c1">${t}<input data-qc="${k}" type="number" min="0" step="1" inputmode="numeric" value="${esc(com[k]??"")}" placeholder="0"></label>`;
@@ -9581,7 +9591,7 @@ function renderDemQuadro(){
     : [["D2 · Aparelhos de aquecimento","aparelhos com a mesma função (mesmo nome) somam a quantidade para o fator (tabela 2)"],["D3 · Ar-condicionado",`central: tabela 4 · split/janela: tabela 3${S.dem.tipo==="nres"?"B":"A"}`],["D4 · Motores","CV → kVA (tabela 5A) · fator pelo nº de motores (tabela 5B)"]];
   $("dm-quadro").innerHTML = `<div class="dm-q" data-q="${q.id}"><div class="dm-resumo" id="dm-qres"></div>${topo}
     ${(servQ ? ["aq","mo","il","ar"] : ["il","aq","ar","mo"]).map(k=>({
-      il:()=>`<div class="dm-sub">${servQ?"Serviço · c · Iluminação e tomadas · itens":met==="enel"?"d · Iluminação especial · itens":met==="neo"?"a · Iluminação e tomadas · itens":"D1 · Iluminação e tomadas · itens"}<span>somados à carga ${met==="enel" && !servQ?"de iluminação especial":"de iluminação e tomadas"} acima · marque “previsão” quando a carga ainda não está confirmada</span></div>${lin("il","il")}<button type="button" class="dm-addl" data-dmadd="il">+ Carga de ${met==="enel" && !servQ?"iluminação especial":"iluminação/tomadas"}</button>`,
+      il:()=>`<div class="dm-sub">${servQ?"Serviço · c · Iluminação e tomadas · itens":met==="enel"?"d · Iluminação especial · itens":met==="neo"?"a · Iluminação e tomadas · itens":"D1 · Iluminação e tomadas · itens"}<span>somados à carga ${met==="enel" && !servQ?"de iluminação especial":"de iluminação e tomadas"} acima · “previsão”: carga ainda não confirmada · sem “detalhe”, o item entra no memorial somado em ${met==="enel" && !servQ?"iluminação especial":"iluminação e tomadas"} (kW)</span></div>${lin("il","il")}<button type="button" class="dm-addl" data-dmadd="il">+ Carga de ${met==="enel" && !servQ?"iluminação especial":"iluminação/tomadas"}</button>`,
       aq:()=>`<div class="dm-sub">${subs[0][0]}<span>${subs[0][1]}</span></div>${lin("aq","aq")}<button type="button" class="dm-addl" data-dmadd="aq">+ Aparelho</button>`,
       ar:()=>`${subs[1] ? `<div class="dm-sub">${subs[1][0]}<span>${subs[1][1]}</span></div>${lin("ar","ar")}<button type="button" class="dm-addl" data-dmadd="ar">+ Ar-condicionado</button>`
       : (q.ar||[]).length ? `<p class="fonte" style="margin-top:14px">Este quadro tem ${q.ar.length} ar-condicionado lançado(s), que não entram no cálculo da Enel RJ (já estão nos módulos).</p>` : ""}`,
@@ -9920,7 +9930,7 @@ function ligarDem(){
     if(t.dataset.qf){ q[t.dataset.qf] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value; if(t.dataset.qf==="fases") q.tensao = ""; if(t.dataset.qf==="pai" || t.dataset.qf==="ativ" || t.dataset.qf==="fases"){ tudo(); return; } if(t.dataset.qf==="nome"){ const ab = document.querySelector(`#dm-abas [data-dmq="${q.id}"]`); if(ab && ab.firstChild) ab.firstChild.textContent = (ab.firstChild.textContent.match(/^(› )*/)[0]) + (t.value || "—"); } alt(); return; }
     const l = t.closest("[data-dml]"); if(!l || !t.dataset.df) return;
     const x = q[l.dataset.dml][+l.dataset.i];
-    if(t.type==="checkbox"){ if(e.type!=="change") return; x[t.dataset.df] = t.checked; l.classList.toggle("prev", t.checked); alt(); return; }
+    if(t.type==="checkbox"){ if(e.type!=="change") return; x[t.dataset.df] = t.checked; if(t.dataset.df==="prev") l.classList.toggle("prev", t.checked); alt(); return; }
     x[t.dataset.df] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value;
     if(t.tagName==="SELECT" && t.dataset.df==="tipo" && l.dataset.dml==="ar" && concDe(D().conc)?.t?.metodo==="enel"){ x.cap = ""; tudo(); return; }
     if(t.tagName==="SELECT" && (t.dataset.df==="cat" || t.dataset.df==="cls" || t.dataset.df==="cap")){ alt(); return; }
@@ -9944,9 +9954,9 @@ function relDem(){
   const ordem = dmOrdem(), R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)])), r0 = R[dmRaizes()[0]?.id], cols = dmColunas(R);
   const NCOM = {qua:"quarto(s)", sal:"sala(s)", ban:"banheiro(s)", coz:"cozinha(s)", ser:"área(s) de serviço", out:"outro(s) cômodo(s)"};
   const cargas = q => [T.metodo==="enel" ? Object.entries(NCOM).filter(([k])=>num(q.com?.[k])).map(([k,t])=>`${fmt(num(q.com[k]))} ${t}`).join(", ") || null : null,
-    T.metodo==="enel" && num(q.ilE) ? `${dmEhServ(q)?"iluminação e tomadas":"iluminação especial"} ${fmt(num(q.ilE),2)} kW${q.ilEd?" (descarga)":""}` : null,
-    T.metodo!=="enel" && num(q.area)?`área ${fmt(num(q.area),2)} m²`:null, T.metodo!=="enel" && num(q.ilum)?`iluminação e tomadas ${fmt(num(q.ilum),2)} kW`:null,
-    ...(q.il||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"iluminação/tomada"} ${fmt(num(x.w))} W${x.prev?" <i>(previsão)</i>":""}`),
+    T.metodo==="enel" && num(q.ilE)+dmIlSemDet(q) ? `${dmEhServ(q)?"iluminação e tomadas":"iluminação especial"} ${fmt(num(q.ilE)+dmIlSemDet(q),2)} kW${q.ilEd?" (descarga)":""}` : null,
+    T.metodo!=="enel" && num(q.area)?`área ${fmt(num(q.area),2)} m²`:null, T.metodo!=="enel" && num(q.ilum)+dmIlSemDet(q)?`iluminação e tomadas ${fmt(num(q.ilum)+dmIlSemDet(q),2)} kW`:null,
+    ...(q.il||[]).filter(x=>num(x.qtd) && dmIlDet(x)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"iluminação/tomada"} ${fmt(num(x.w))} W${x.prev?" <i>(previsão)</i>":""}`),
     ...(q.aq||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"aquecimento"} ${fmt(num(x.w))} W${x.prev?" <i>(previsão)</i>":""}`),
     ...(q.ar||[]).filter(x=>num(x.qtd)).map(x=>T.metodo==="enel" ? `${fmt(num(x.qtd))}× ${esc(x.n)||"ar-cond."} ${(T.ar[x.tipo]?.nome||"").toLowerCase()} ${T.ar[x.tipo]?.c.find(c=>String(c[0])===String(x.cap))?.[1]||"(capacidade a definir)"}${x.prev?" <i>(previsão)</i>":""}` : `${fmt(num(x.qtd))}× ${esc(x.n)||"ar-cond."} ${fmt(num(x.kw),2)} kW (${x.tipo==="split"?"split":x.tipo==="cond"?"cond.":"evap."})${x.prev?" <i>(previsão)</i>":""}`),
     ...(q.mo||[]).filter(x=>num(x.qtd)).map(x=>`${fmt(num(x.qtd))}× ${esc(x.n)||"motor"} ${cvTxt(num(x.cv))} CV${T.metodo!=="light"?(x.cls==="mono"?" mono":x.cls==="bomba"?" (bomba)":" tri"):""}${x.prev?" <i>(previsão)</i>":""}`)].filter(Boolean).join(" · ") || "sem cargas próprias";
