@@ -7993,6 +7993,63 @@ function alEcon(Icabo, modelo){
   const sec = ALT.cat[modelo].map(x=>x[0]).find(x=>x >= Se - 1e-9);
   return {h, n, e, Ch, Cn, G:AL_G, Se, sec};
 }
+// ---- partida de motor nos alimentadores (NBR 5410:2004, 6.5.1; guia WEG de especificação de motores, 3.4) ----
+const AL_PART = [["dir","Partida direta"],["yd","Estrela-triângulo"],["comp","Chave compensadora"],["soft","Soft-starter"],["inv","Inversor de frequência"]];
+const AL_COS_PART = 0.3;                                                  // NBR 5410, 6.5.1.3.3, nota 2
+function alMotKva(T, fases, cv){
+  try{ if(T.cvKva) return degrau(T.cvKva, cv);
+    if(T.motTri) return neoMot(T, fases==="tri" ? "tri" : "mono", cv)[2]/1000;
+    if(typeof enelMot==="function"){ const r = enelMot(T, fases==="tri" ? "tri" : "mono", cv, 1); return alNum(r?.kva) ? r.kva : null; } }catch(e){}
+  return null;
+}
+function alMotSug(q, T, p){
+  const mo = (q.mo||[]).filter(x=>num(x.cv) > 0 && num(x.qtd) > 0).sort((a,b)=>num(b.cv) - num(a.cv))[0];
+  const TN = dmTens(q, T, p.fases), fases = mo?.cls==="mono" || p.fases==="mono" ? "mono" : "tri";
+  const V = fases==="tri" ? TN.Vff : (TN.Vfn >= 200 ? TN.Vfn : TN.Vff);
+  return {cv: mo ? num(mo.cv) : 0, nome: mo?.n || "", fases, V};
+}
+function alMotParam(q, r, T, p){
+  const a = q.al || {}; if(!a.motOn) return null;
+  const s = alMotSug(q, T, p), cv = num(a.motCv) > 0 ? num(a.motCv) : s.cv, fases = a.motFases==="mono" || a.motFases==="tri" ? a.motFases : s.fases;
+  const V = num(a.motV) > 0 ? num(a.motV) : s.V, f = num(a.motF) > 0 ? num(a.motF) : 60;
+  const kva = cv > 0 ? alMotKva(T, fases, cv) : null, InEst = kva ? kva*1000/((fases==="tri" ? Math.sqrt(3) : 1)*V) : null;
+  const In = num(a.motIn) > 0 ? num(a.motIn) : InEst;
+  const m = {sug:s, cv, fases, V, f, kva, InEst, In, InPlaca: num(a.motIn) > 0, ipin: num(a.motIpIn) > 0 ? num(a.motIpIn) : 7, fs: num(a.motFs) > 0 ? num(a.motFs) : 1,
+    part: AL_PART.some(x=>x[0]===a.motPart) ? a.motPart : "dir", tap: [50,65,80].includes(+a.motTap) ? +a.motTap : 65};
+  m.lim = num(a.motLim) > 0 ? num(a.motLim) : (m.part==="soft" ? 3 : 1);
+  if(!(In > 0)){ m.erro = "Informe a potência ou a corrente nominal do motor."; return m; }
+  m.Ip = m.ipin*In;
+  m.fator = m.part==="yd" ? 1/3 : m.part==="comp" ? (m.tap/100)**2 : 1;
+  m.Ipart = m.part==="soft" || m.part==="inv" ? m.lim*In : m.fator*m.Ip;
+  m.fTxt = m.part==="dir" ? "Ip = Ip/In × In" : m.part==="yd" ? "Ip ÷ 3 (WEG 3.4.4: corrente de partida reduzida para cerca de 1/3)" : m.part==="comp" ? `Ip × (${m.tap}%)² (WEG 3.4.3: autotransformador no tap de ${m.tap} %)` : `${fmt(m.lim,1)} × In (limite de corrente ajustado no ${m.part==="soft" ? "soft-starter" : "inversor"})`;
+  m.IBm = In*m.fs;                                                          // 6.5.1.3.1 (com a nota 1: × fator de serviço)
+  return m;
+}
+const alZs = (x, p) => alNum(x?.R) && alNum(x?.Xl) && p.L > 0 ? (x.R*AL_COS_PART + x.Xl*Math.sqrt(1 - AL_COS_PART**2))*p.L/1000/(p.npar||1) : null;   // Ω equivalente com cos φ 0,3
+function alMotVer(x, p, mont){
+  const m = p.mot; if(!m || m.erro || !x) return x;
+  const zsT = alZs(x, p); if(zsT==null || x.dVp==null){ x.motPart = null; return x; }
+  const k = m.fases==="tri" ? Math.sqrt(3) : 2, base = (mont?.dv || 0) + x.dVp, zsUp = mont?.zs || 0;
+  const extra = k*(zsUp + zsT)*m.Ipart/m.V;
+  x.motPart = {zsT, zsUp, base, extra, dv: base + extra, k};
+  x.ver.part = x.motPart.dv <= 0.10 + 1e-12 ? "ATENDE" : "NÃO ATENDE";
+  x.ok = Object.values(x.ver).every(v=>v==="ATENDE");
+  return x;
+}
+// outros quadros durante a partida (6.5.1.2.1 b): queda permanente + parcela da partida nos alimentadores comuns
+function alMotOutros(its){
+  const por = Object.fromEntries(its.map(it=>[it.q.id, it]));
+  const cam = it => { const c = []; let q = it.q; while(q){ c.push(q.id); q = dmPai(q); } return c; };
+  its.filter(it=>it.p.mot && !it.p.mot.erro && it.res?.motPart).forEach(M=>{
+    const m = M.p.mot, cm = cam(M), k = m.fases==="tri" ? Math.sqrt(3) : 2, extraDe = {};
+    cm.forEach(id=>{ const t = por[id]; const z = t ? alZs(t.res, t.p) : null; extraDe[id] = z!=null ? k*z*m.Ipart/m.V : 0; });
+    let pior = null;
+    its.forEach(X=>{ if(X===M || X.dvAcum==null) return; const ex = cam(X).filter(id=>cm.includes(id)).reduce((s,id)=>s + extraDe[id], 0);
+      const dv = X.dvAcum + ex; if(!pior || dv > pior.dv) pior = {nome:X.q.nome || "—", dv, ex}; });
+    M.motOutros = pior;
+    if(pior && pior.dv > M.p.dvTot + 1e-12) M.avisos.push(`Durante a partida do motor, a queda no ${pior.nome} chega a ${fmt(pior.dv*100,2)}%, acima do limite de ${fmt(M.p.dvTot*100,1)}% (NBR 5410, 6.5.1.2.1 b e 6.2.7.1). Avalie partida com corrente reduzida ou cabos maiores a montante.`);
+  });
+}
 function alItem(q, r, T, mont){
   const p = alParam(q, r, T), pai = dmPai(q);
   mont = mont || {dv:0, ok:true}; p.dvMont = mont.dv; p.dvTot = num(alPad("dv"))/100;            // limite geral: queda acumulada desde a origem
@@ -8001,18 +8058,20 @@ function alItem(q, r, T, mont){
   if(mont.ik!=null && isFinite(mont.ik) && alVazio(q.al?.icc)){                        // Icc presumida calculada (aba Icc presumida), no início do alimentador
     const tt = num(alVazio(q.al?.t) ? alPad("t") : q.al.t); p.iccCalc = mont.ik;
     if(tt > 0){ p.icc = mont.ik; p.t = tt; p.iccAuto = true; } }
+  p.mot = alMotParam(q, r, T, p);                                                    // partida do motor (NBR 5410, 6.5.1)
+  if(p.mot && !p.mot.erro && p.mot.IBm > p.Ib){ p.IbMot = p.Ib; p.Ib = p.mot.IBm; }
   const it = {q, r, p, nome:`${pai ? (pai.nome || "—") : "Entrada"} → ${q.nome || "—"}`, avisos:[], ok:false};
   it.metRef = alMetRef(p.met, p.modelo, p.tipo);
   if(!(p.Ib > 0)){ it.erro = "Quadro sem demanda calculada: confira as cargas no cálculo de demanda."; return it; }
   if(!(p.V > 0)){ it.erro = "Tensão do quadro não definida no cálculo de demanda."; return it; }
   const base = {...p, L: p.L > 0 ? p.L : 0};
-  if(p.secMan){ it.res = alCalc({...base, S:p.secMan}); it.auto = false; }
+  if(p.secMan){ it.res = alMotVer(alCalc({...base, S:p.secMan}), p, mont); it.auto = false; }
   else {
     const secs = ALT.cat[p.modelo].map(x=>x[0]).filter(s=>s >= p.smin - 1e-9);
     let ant = null;
-    for(const s of secs){ const x = alCalc({...base, S:s}); if(x.ok){ it.res = x; break; } ant = x; it.res = x; }
+    for(const s of secs){ const x = alMotVer(alCalc({...base, S:s}), p, mont); if(x.ok){ it.res = x; break; } ant = x; it.res = x; }
     it.auto = true; it.semSecao = !it.res?.ok;
-    if(it.res?.ok){ const NOMES = {iz:"capacidade de condução", dv:"queda de tensão", cc:"curto-circuito da fase", pe:"curto-circuito do PE", smin:"seção mínima", coord:"disjuntor (In ≤ Iz)"};
+    if(it.res?.ok){ const NOMES = {iz:"capacidade de condução", dv:"queda de tensão", cc:"curto-circuito da fase", pe:"curto-circuito do PE", smin:"seção mínima", coord:"disjuntor (In ≤ Iz)", part:"queda na partida do motor"};
       it.criterio = ant ? Object.entries(ant.ver).filter(([,v])=>v!=="ATENDE").map(([k])=>NOMES[k]).join(" e ") || "—" : "menor seção do catálogo"; }
   }
   const x = it.res;
@@ -8024,6 +8083,10 @@ function alItem(q, r, T, mont){
   if(!alNum(x.fsolo)) it.avisos.push("Resistividade do solo fora da tabela 12.");
   if(x.metOk && alNum(x.fc) && !alNum(x.Iz)) it.avisos.push(`Seção ${alS(x.p.S)} mm² sem capacidade de condução na tabela${p.mat===2 ? " (alumínio só a partir de 16 mm²)" : ""}.`);
   if(!(p.L > 0)) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
+  if(p.mot?.erro) it.avisos.push(`Partida do motor: ${p.mot.erro}`);
+  if(p.IbMot!=null) it.avisos.push(`Corrente de projeto elevada para In × FS do motor = ${fmt(p.mot.In,1)} × ${fmt(p.mot.fs,2)} = ${fmt(p.mot.IBm,1)} A (NBR 5410, 6.5.1.3.1).`);
+  if(p.mot && !p.mot.erro && p.mot.part==="dir" && p.mot.cv*0.736 > 3.7 && !dmPai(q)) it.avisos.push("Partida direta de motor acima de 3,7 kW (5 CV) em instalação ligada direto na rede pública de baixa tensão: consultar a distribuidora (NBR 5410, 6.5.1.2.1, nota).");
+  if(p.mot && !p.mot.erro && x?.motPart && p.In > 0 && p.mot.Ipart > p.In) it.avisos.push(`Corrente na partida ${fmt(p.mot.Ipart,0)} A = ${fmt(p.mot.Ipart/p.In,1)} × In do disjuntor (${fmt(p.In)} A): confira se a curva do disjuntor não dispara no magnético durante a partida.`);
   if(p.iccCalc!=null && !p.iccAuto) it.avisos.push(`Icc presumida calculada no início do alimentador: ${fmt(p.iccCalc,2)} kA. Informe a duração do curto-circuito para verificar o cabo.`);
   if(pai && !mont.ok) it.avisos.push("Falta o comprimento (ou a seção) de algum alimentador a montante: a queda acumulada deste quadro está incompleta.");
   if(pai && !p.dvCustom && p.dvMont >= p.dvTot - 1e-12) it.avisos.push(`A queda acumulada até ${pai.nome || "o quadro de origem"} (${fmt(p.dvMont*100,2)}%) já chega ao limite de ${fmt(p.dvTot*100,1)}%: diminua a queda dos alimentadores a montante.`);
@@ -8048,8 +8111,8 @@ function alItens(){
   const R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)]));
   const acc = {};                                           // queda acumulada e impedância desde a origem, quadro a quadro (pais antes dos filhos)
   let o = null; if(icAtivo()){ const x = icOrigem(); if(x && !x.erro) o = x; }
-  return dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m0 = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
-    const zp = o ? (pai ? acc[pai.id]?.z || null : {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}) : null, m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null};
+  const its = dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m0 = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
+    const zp = o ? (pai ? acc[pai.id]?.z || null : {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}) : null, m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null, zs: pai ? (acc[pai.id]?.zs || 0) : 0};
     const it = alItem(q, R[q.id], T, m); it.nivel = nivel;
     let z = null;
     if(zp){ const x = it.res, L = it.p.L, n = it.p.npar || 1;
@@ -8060,8 +8123,10 @@ function alItens(){
       else it.icFalta = !(L > 0) ? "sem comprimento" : "cabo sem resistência na tabela"; }
     else if(o) it.icFalta = "falta o quadro a montante";
     it.icZPai = zp; it.icZ = z;
-    acc[q.id] = {...(it.dvTrecho!=null ? {dv: m0.dv + it.dvTrecho, ok: m0.ok} : {dv: m0.dv, ok:false}), z};
+    acc[q.id] = {...(it.dvTrecho!=null ? {dv: m0.dv + it.dvTrecho, ok: m0.ok} : {dv: m0.dv, ok:false}), z, zs: m.zs + (alZs(it.res, it.p) || 0)};
     return it; });
+  alMotOutros(its);
+  return its;
 }
 function alRotulos(){                                      // texto dos cabos no diagrama do cálculo de demanda
   if(alPad("diag")===false || !concDe(S.dem.conc)?.t) return null;
@@ -8119,24 +8184,43 @@ function renderAliLista(){
         <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${p.iccCalc!=null ? `auto ${esc(fmt(p.iccCalc,2))}` : num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}" title="Em branco: usa a Icc presumida calculada (aba Icc presumida) ou a geral."><b>kA</b></span></label>
         <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}"><b>s</b></span></label>
         <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
+        <label class="chave al-w2" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-af="motOn" ${a.motOn?"checked":""}> Considerar a partida do motor</label>
+        ${a.motOn ? alMotCampos(q, a, p) : ""}
       </div>
       <div class="tr-res" data-res></div><div class="al-av" data-av></div></div>`; }).join("")
     : `<p class="vazio">Nenhum quadro no cálculo de demanda.</p>`;
   atualizarAli(its);
 }
 const alSit = v => v==="ATENDE" ? `<span class="ok">atende</span>` : v==="NÃO ATENDE" ? `<span class="falha">não atende</span>` : `<span class="fonte">não calculado</span>`;
+function alMotCampos(q, a, p){
+  const m = p.mot || {}, s = m.sug || {}, n = (k, ph, u, st) => `<label class="campo">${ph[0]}<span class="unid"><input data-af="${k}" type="number" min="0" step="${st||"any"}" inputmode="decimal" value="${esc(a[k] ?? "")}" placeholder="${esc(ph[1])}">${u ? `<b>${u}</b>` : ""}</span></label>`;
+  return `<div class="al-mot al-w2" style="grid-column:1/-1"><small>Motor ${s.nome ? `· sugerido do cálculo de demanda: ${esc(s.nome)} ${cvTxt(s.cv)} CV` : s.cv ? `· sugerido do cálculo de demanda: ${cvTxt(s.cv)} CV` : "· nenhum motor no cálculo de demanda deste quadro: informe os dados"}</small><div class="al-cab">
+    ${n("motCv", ["Potência", s.cv ? cvTxt(s.cv) : "0"], "CV")}
+    ${n("motIn", ["Corrente nominal In", m.InEst ? `${fmt(m.InEst,1)} (estimada)` : "da placa"], "A")}
+    ${n("motIpIn", ["Ip/In", "7,0"], "")}
+    ${n("motFs", ["Fator de serviço", "1,00"], "")}
+    ${n("motV", ["Tensão", s.V ? fmt(s.V) : "V"], "V")}
+    ${n("motF", ["Frequência", "60"], "Hz")}
+    <label class="campo">Fases${alSel("motFases", a.motFases ?? "", [["tri","Trifásico"],["mono","Monofásico"]], `Sugerido · ${s.fases==="mono" ? "monofásico" : "trifásico"}`)}</label>
+    <label class="campo al-w2">Tipo de partida${alSel("motPart", a.motPart ?? "", AL_PART.slice(1), AL_PART[0][1])}</label>
+    ${a.motPart==="comp" ? `<label class="campo">Tap do autotransformador${alSel("motTap", a.motTap ?? "", [[50,"50 %"],[80,"80 %"]], "65 %")}</label>` : ""}
+    ${a.motPart==="soft" || a.motPart==="inv" ? n("motLim", ["Limite de corrente", a.motPart==="soft" ? "3,0" : "1,0"], "× In") : ""}
+  </div></div>`;
+}
 function atualizarAli(its){
   its = its || alItens();
   document.querySelectorAll("#al-lista .al-c").forEach(el=>{ const it = its.find(x=>x.q.id===el.dataset.alq); if(!it) return; const x = it.res, p = it.p;
     el.classList.toggle("falha", !it.ok);
     { const dvIn = el.querySelector('[data-af="dv"]'); if(dvIn) dvIn.placeholder = dmPai(it.q) ? `auto ${fmt(p.dvAuto*100,2)}` : fmt(p.dvTot*100,1); }
+    { const inEl = el.querySelector('[data-af="motIn"]'); if(inEl && p.mot) inEl.placeholder = p.mot.InEst ? `${fmt(p.mot.InEst,1)} (estimada)` : "da placa"; }
     el.querySelector("[data-res]").innerHTML = it.erro ? `<p class="vazio" style="margin:0;grid-column:1/-1">${esc(it.erro)}</p>` : `
       <div><small>Condutores${it.auto ? " (automático)" : " (escolhido)"}</small><strong class="al-cond">${esc(it.cond)}</strong><em>${it.semCond ? "sem dimensionamento · " : "mm² · "}${esc(AL_MOD[p.modelo-1].cur)}${it.criterio ? ` · seção definida por: <b>${esc(it.criterio)}</b>` : ""}</em></div>
       <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${alNum(x.In) ? fmt(x.In) : "—"} A · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
       <div><small>Queda de tensão</small><strong>${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) : "—"}</strong><em>% no trecho${it.p.dvMont > 0 || dmPai(it.q) ? ` · acumulada <b>${it.dvAcum!=null ? fmt(it.dvAcum*100,2) + "%" : "—"}</b>${it.montOk ? "" : " (incompleta)"} (a montante ${fmt(p.dvMont*100,2)}%)` : ""} · ${p.dvCustom ? `limite do trecho <b>${fmt(p.dv*100,2)}%</b> (personalizado) · geral ${fmt(p.dvTot*100,1)}%` : `limite ${fmt(p.dvTot*100,1)}%`}</em></div>
       <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²</em>`}</div>
       <div><small>Seção econômica</small><strong>${it.econ ? fmt(it.econ.Se,0) : "—"}</strong><em>mm²${it.econ ? ` por cabo · catálogo ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}` : ""}</em></div>
-      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz"}).filter(([k])=>x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
+      ${p.mot && !p.mot.erro ? `<div><small>Partida do motor</small><strong class="${x.ver?.part==="NÃO ATENDE" ? "falha" : ""}">${x.motPart ? fmt(x.motPart.dv*100,2) : "—"}</strong><em>% na partida (limite 10 %) · ${fmt(p.mot.Ipart,0)} A na partida${it.motOutros ? ` · outros quadros: até ${fmt(it.motOutros.dv*100,2)} % (${esc(it.motOutros.nome)})` : ""}</em></div>` : ""}
+      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor"}).filter(([k])=>x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
     el.querySelector("[data-av]").innerHTML = it.avisos.length ? `<ul>${it.avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` : "";
   });
   const ok = its.filter(it=>it.ok).length, comL = its.filter(it=>it.p.L > 0).length;
@@ -8192,6 +8276,13 @@ function alMemorial(it, cls){
     ${L("Fatores de correção", alNum(x.fc) ? fmt(x.fc,3) : esc(String(x.fc)), "–", `temperatura ${v(x.fct,2)} (tab. 11) × agrupamento ${v(x.fca,2)} (${x.nAgr} circuito${x.nAgr>1?"s":""}) × solo ${v(x.fsolo,2)}`)}
     ${L("Capacidade corrigida (Iz)", v(x.Iz,0), "A", `Iz = n × Itab × fatores · ${alSit(x.ver.iz)}`)}
     ${L("Disjuntor (In)", v(x.In,0), "A", `${p.InDem ? "cálculo de demanda" : num(it.q.al?.in) > 0 ? "informado" : "padronizado logo acima de Ib"} · Ib ≤ In ≤ Iz: ${alSit(x.ver.coord)}`)}
+    ${p.mot && !p.mot.erro ? `${H("Partida do motor (NBR 5410, 6.5.1)")}
+    ${L("Motor", `${cvTxt(p.mot.cv)} CV`, "", `${p.mot.fases==="tri" ? "trifásico" : "monofásico"} ${fmt(p.mot.V)} V · ${fmt(p.mot.f)} Hz · ${esc(AL_PART.find(z=>z[0]===p.mot.part)[1].toLowerCase())}`)}
+    ${L("Corrente nominal (In)", fmt(p.mot.In,1), "A", p.mot.InPlaca ? "informada (placa)" : `estimada: ${fmt(p.mot.kva,2)} kVA (tabela de motores da concessionária) ÷ (${p.mot.fases==="tri" ? "√3 × " : ""}${fmt(p.mot.V)} V)`)}
+    ${L("Corrente de projeto do motor", fmt(p.mot.IBm,1), "A", `IB ≥ In × FS = ${fmt(p.mot.In,1)} × ${fmt(p.mot.fs,2)} (6.5.1.3.1)${p.IbMot!=null ? " · maior que a do cálculo de demanda: usada no dimensionamento" : ""}`)}
+    ${L("Corrente na partida", fmt(p.mot.Ipart,0), "A", `${esc(p.mot.fTxt)} · Ip/In = ${fmt(p.mot.ipin,1)} · Ip direta = ${fmt(p.mot.Ip,0)} A`)}
+    ${x.motPart ? L("Queda na partida no quadro", fmt(x.motPart.dv*100,2), "%", `queda permanente acumulada ${fmt(x.motPart.base*100,2)} % + ${p.mot.fases==="tri" ? "√3" : "2"} × Σ(R·0,3 + X·0,954)·L/n × Ipartida / V = ${fmt(x.motPart.extra*100,2)} % (cos φ na partida 0,3, nota 2 de 6.5.1.3.3; alimentadores desde a origem) · limite 10 % (6.5.1.3.3) · ${alSit(x.ver.part)}`) : ""}
+    ${it.motOutros ? L("Maior queda em outro quadro durante a partida", fmt(it.motOutros.dv*100,2), "%", `${esc(it.motOutros.nome)}: queda permanente + parcela da partida nos alimentadores comuns · limite ${fmt(p.dvTot*100,1)} % (6.5.1.2.1 b e 6.2.7.1)`) : ""}` : ""}
     ${H("Curto-circuito e condutor de proteção")}
     ${it.semCurto ? L("Curto-circuito", "—", "–", "não verificado: informe a corrente de curto-circuito e o tempo") : ""}
     ${it.semCurto ? "" : L("Fator k (fase/neutro)", v(x.k,0), "–", "tabela 37")}
@@ -8234,13 +8325,14 @@ function ligarAli(){
   const valor = el => el.type==="checkbox" ? el.checked : el.value;
   M.addEventListener("input", e=>{ const t = e.target;
     if(t.dataset.alc && t.tagName==="INPUT" && t.type!=="checkbox"){ alCfg()[t.dataset.alc] = t.value; alt(); return; }
-    if(t.dataset.af && t.tagName==="INPUT"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; alt(); return; }
+    if(t.dataset.af && t.tagName==="INPUT" && t.type!=="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; alt(); return; }
     if(t.id==="al-doc" || t.id==="al-rev" || t.id==="al-obs"){ alCfg()[t.id.slice(3)] = t.value; salvar(); }
   });
   M.addEventListener("change", e=>{ const t = e.target;
     if(t.dataset.alc && (t.tagName==="SELECT" || t.type==="checkbox")){ alCfg()[t.dataset.alc] = valor(t); tudo(); return; }
     if(t.dataset.af && t.tagName==="SELECT"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return;
       (q.al = q.al || {})[t.dataset.af] = t.value; if(t.dataset.af==="modelo") delete q.al.sec; tudo(); return; }
+    if(t.dataset.af && t.type==="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.checked; tudo(); return; }
     if(t.id==="al-mem-sel") atualizarAli();
   });
   M.addEventListener("click", e=>{
