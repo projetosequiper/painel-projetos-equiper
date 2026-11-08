@@ -7133,10 +7133,23 @@ function rvCampo(t){
   if(d.rvCv!==undefined){ RV.cv[d.rvCv] = numTxt(t.value); return true; }
   return false;
 }
-function rvAcao(a){
+// quadro sem nenhuma carga e sem quadros ligados (ex.: o QDG que o app cria ao escolher a concessionária)
+const dmVazio = q => !num(q.area) && !num(q.ilum) && !num(q.ilE) && !["il","aq","ar","mo"].some(k=>(q[k]||[]).length) && !Object.values(q.com||{}).some(v=>num(v))
+  && !S.dem.quadros.some(x=>x.pai===q.id);
+async function rvAcao(a){
   if(a==="fechar"){ RV = null; rvRender(); return; }
   if(a==="vercargas"){ RV.verCargas = !RV.verCargas; rvRender(); return; }
   const R = rvResumo(), D = S.dem, achar = nome => D.quadros.find(x=>impNorm(x.nome)===impNorm(nome));
+  // quadros em branco que não vêm do Revit: confirmar se apaga
+  const vem = new Set(R.filter(r=>r.papel==="quadro").flatMap(r=>[r.q.nome, ...r.alim.map(c=>c.quadro).filter(n=>(RV.papel?.[impNorm(n)] || "quadro")==="quadro")]).map(impNorm));
+  const brancos = D.quadros.filter(q=>!vem.has(impNorm(q.nome)) && dmVazio(q));
+  let apagar = false;
+  if(brancos.length){
+    const nm = brancos.map(q=>q.nome || "sem nome"), um = nm.length===1;
+    apagar = await caixaConfirmar(`${um ? `O quadro ${nm[0]} está` : `Os quadros ${nm.join(", ")} estão`} em branco no Cálculo de demanda (sem cargas e sem quadros ligados) e não ${um ? "veio" : "vieram"} do Revit${um && impNorm(nm[0])==="qdg" ? " (é o QDG que o app cria ao escolher a concessionária)" : ""}. Apagar ${um ? "ele" : "eles"} na importação?`,
+      {titulo: "Quadro em branco", ok: um ? `Apagar ${nm[0]}` : "Apagar", cancelar: "Manter"});
+    if(!RV) return;
+  }
   const criar = nome => { let q = achar(nome); if(!q){ q = {id:uid(), nome:String(nome).trim(), pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}; D.quadros.push(q); } return q; };
   let criados = 0; const antes = new Set(D.quadros.map(q=>q.id));
   const papel = n => RV.papel?.[impNorm(n)] || "quadro";
@@ -7167,7 +7180,9 @@ function rvAcao(a){
   Rq.forEach(r=>{ const qid = achar(r.q.nome).id; r.circ.forEach(c=>novos.push({...rvCirc(c), qid})); });
   const manter = S.cmx.circs.filter(c=>num(c.disj)>0 && (RV.modo!=="sub" || (c.qid && !ids.has(c.qid))));
   S.cmx.circs = [...manter, ...novos];
-  const RV_cargasMsg = RV.cargas ? " · cargas levadas ao Cálculo de demanda (falta a área útil de cada quadro)" : "";
+  let RV_cargasMsg = RV.cargas ? " · cargas levadas ao Cálculo de demanda (falta a área útil de cada quadro)" : "";
+  if(apagar){ const fora = new Set(brancos.filter(q=>dmVazio(q)).map(q=>q.id)); D.quadros = D.quadros.filter(q=>!fora.has(q.id)); if(fora.has(DM.sel)) DM.sel = D.quadros[0]?.id;
+    if(fora.size) RV_cargasMsg += ` · ${brancos.filter(q=>fora.has(q.id)).map(q=>q.nome).join(", ")} apagado${fora.size>1?"s":""}`; }
   const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); if(S.modulo==="dem") renderDem(); resumo(); salvar();
   aviso(`${novos.length} circuito${novos.length!==1?"s":""} de ${Rq.length} quadro${Rq.length!==1?"s":""} importado${novos.length!==1?"s":""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
 }
