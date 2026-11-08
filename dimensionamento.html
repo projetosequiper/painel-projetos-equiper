@@ -6983,7 +6983,7 @@ function ligarImp(){
     e.preventDefault(); lerImagemQuadro(item.getAsFile());
   });
   const el = $("cm-imp");
-  el.addEventListener("change", e=>{ const t = e.target; if(t.dataset.rvModo!==undefined && RV){ RV.modo = t.value; return; } if(!IMP) return;
+  el.addEventListener("change", e=>{ const t = e.target; if(RV && rvCampo(t)) return; if(!IMP) return;
     if(t.dataset.impAba!==undefined){ IMP.aba = t.value; const d = detectarCab(IMP.abas[IMP.aba]); IMP.cab = d.linha; IMP.map = d.map; }
     if(t.dataset.impCab!==undefined) IMP.cab = Math.max(0, Math.round(num(t.value))-1);
     if(t.dataset.impCol) IMP.map[t.dataset.impCol] = t.value==="" ? undefined : +t.value;
@@ -7033,51 +7033,123 @@ function rvCirc(c){
     caboProj: sec(cb.f), caboN: temN ? sec(cb.n) : "", caboT: sec(cb.t), origem: "revit"};
 }
 const rvReserva = c => !(rvNum(c.va) > 0) || /\breserva/i.test(semAc(c.desc));
+// carga de cada circuito no Cálculo de demanda: il (iluminação e tomadas), aq (aquecimento), ar, mo (motor) ou "" (não entra)
+const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica"],[/boiler/,"Boiler"],[/sauna/,"Sauna"],[/bomba de calor/,"Bomba de calor"],
+  [/cooktop/,"Cooktop elétrico"],[/\bforno\b/,"Forno"],[/carregador|veiculo eletrico|carro eletrico/,"Carregador de carro elétrico"],[/adega/,"Evaporador adega"],[/aquec/,"Aquecedor"]];
+const RV_MO = [[/pressuriza/,"Pressurização"],[/piscina/,"Piscina"],[/recalque/,"Recalque"],[/reuso/,"Reúso"],[/drenagem/,"Drenagem"],[/irriga/,"Irrigação"],[/hidromassagem/,"Hidromassagem"],[/portao/,"Portão"],[/elevador/,"Elevador"],[/exaust/,"Exaustores"]];
+function rvCatAuto(c){
+  if(rvReserva(c)) return "";
+  const d = semAc(c.desc||"").toLowerCase(), va = rvNum(c.va);
+  if(/ar.?condicionado|\bsplit\b|condensadora|evaporadora/.test(d)) return "ar";
+  if(/\bbomba\b(?! de calor)|\bmotor|pressuriza|recalque|portao|elevador|hidromassagem/.test(d) || (/exaust/.test(d) && va >= 736)) return "mo";
+  if(RV_AQ.some(([re])=>re.test(d))) return "aq";
+  return "il";
+}
+const rvNomeAq = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_AQ.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
+const rvNomeMo = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_MO.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
+function rvCvAuto(c){                                     // CV pela tabela CV → kVA da concessionária (a mais próxima da potência do Revit)
+  const tab = concDe(S.dem.conc)?.t?.cvKva || concDe("light")?.t?.cvKva || [], kva = rvNum(c.va)/1000;
+  let m = null; tab.forEach(([cv, k])=>{ if(!m || Math.abs(k - kva) < Math.abs(m[1] - kva)) m = [cv, k]; });
+  return m ? Math.round(m[0]*1000)/1000 : "";
+}
+const rvChave = (q, c) => `${impNorm(q)}|${String(c.n||"").trim()}`;
 async function rvAbrir(f, alvo){
   try{
     const d = JSON.parse(await lerTextoArq(f));
     if(d?.formato==="equiper-dimensionamento"){ aviso("Este arquivo é a saída do Dimensionamento para o Revit: abra-o no Revit, com o botão Receber do Dimensionamento.", true); return; }
     if(d?.formato!=="equiper-revit" || !Array.isArray(d.quadros)){ aviso("Arquivo .json que não veio do botão Enviar ao Dimensionamento do Revit.", true); return; }
-    IMP = null; if(typeof renderImp==="function" && $("cm-imp")) renderImp(); RV = {d, arq: f.name, modo: "sub", alvo: alvo || "cm-imp"}; rvRender();
+    IMP = null; if(typeof renderImp==="function" && $("cm-imp")) renderImp(); RV = {d, arq: f.name, modo: "sub", alvo: alvo || "cm-imp", papel: {}, cat: {}, cv: {}, cargas: true, verCargas: false};
+    rvResumoBase().forEach(r=>{ RV.papel[impNorm(r.q.nome)] = r.papelAuto; r.circ.forEach(c=>{ const k = rvChave(r.q.nome, c); RV.cat[k] = rvCatAuto(c); if(RV.cat[k]==="mo") RV.cv[k] = rvCvAuto(c); }); });
+    rvRender();
   }catch(e){ aviso("Não foi possível ler o arquivo do Revit.", true); }
 }
+// papel de cada painel do Revit: "quadro"; "entrada" (só alimenta outros quadros e ninguém o alimenta, ex.: PRÉDIO, medição);
+// "ignorar" (sem circuitos e sem ligação com nenhum outro, ex.: quadro desenhado e ainda não ligado)
 function rvResumo(){
+  const R = rvResumoBase(), papel = n => RV.papel?.[impNorm(n)] || "quadro";
+  R.forEach(r=>{ r.papel = papel(r.q.nome); if(r.pai && papel(r.pai)!=="quadro") r.paiEnt = r.pai; });
+  return R;
+}
+function rvResumoBase(){
   const Q = RV.d.quadros, nomes = new Set(Q.map(q=>impNorm(q.nome)));
   return Q.map(q=>{ const cs = q.circuitos || [], alim = cs.filter(c=>String(c.quadro||"").trim() && impNorm(c.quadro)!==impNorm(q.nome)), res = cs.filter(c=>!alim.includes(c) && rvReserva(c)), circ = cs.filter(c=>!alim.includes(c) && !rvReserva(c));
     const pai = String(q.alimentadoPor||"").trim(), feed = pai ? (Q.find(x=>impNorm(x.nome)===impNorm(pai))?.circuitos || []).find(c=>impNorm(c.quadro)===impNorm(q.nome)) : null;
     const existe = S.dem.quadros.some(x=>impNorm(x.nome)===impNorm(q.nome));
-    return {q, pai, circ, res, alim, L: feed ? rvNum(feed.lmax) : NaN, existe, paiNoArq: pai && nomes.has(impNorm(pai))}; });
+    const temFilho = Q.some(x=>impNorm(x.alimentadoPor)===impNorm(q.nome)) || alim.length > 0;
+    const papelAuto = !pai && !circ.length && !temFilho ? "ignorar" : !pai && !circ.length && temFilho ? "entrada" : "quadro";
+    return {q, pai, circ, res, alim, L: feed ? rvNum(feed.lmax) : NaN, existe, paiNoArq: pai && nomes.has(impNorm(pai)), papelAuto}; });
 }
 function rvRender(){
   if(!RV){ ["cm-imp","dm-rv"].forEach(id=>{ const e = $(id); if(e && !(id==="cm-imp" && IMP)){ e.hidden = true; e.innerHTML = ""; } }); return; }
   const el = $(RV.alvo || "cm-imp");
-  const R = rvResumo(), nC = R.reduce((t,r)=>t + r.circ.length, 0), novos = R.filter(r=>!r.existe).length;
+  const R = rvResumo(), Rq = R.filter(r=>r.papel==="quadro"), nC = Rq.reduce((t,r)=>t + r.circ.length, 0), novos = Rq.filter(r=>!r.existe).length;
+  const met = concDe(S.dem.conc)?.t?.metodo || "light", CATS = [["il", met==="enel" ? "Não entra (Enel: pelos cômodos)" : "Iluminação e tomadas"],["aq","Aquecimento"],["ar","Ar-condicionado"],["mo","Motor"],["","Não entra"]];
+  const linhasCarga = Rq.flatMap(r=>r.circ.map(c=>{ const k = rvChave(r.q.nome, c), cat = RV.cat[k] ?? "il";
+    return `<tr><td>${esc(r.q.nome)}</td><td>${esc(c.n)} · ${esc(c.desc)}</td><td class="n">${fmt(rvNum(c.va),0)}</td>
+      <td><select data-rv-cat="${esc(k)}">${CATS.filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i).map(([v,t])=>`<option value="${v}" ${cat===v?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td>${cat==="mo" ? `<span class="unid" style="max-width:110px"><input data-rv-cv="${esc(k)}" type="text" inputmode="decimal" value="${esc(String(RV.cv[k] ?? "").replace(".", ","))}"><b>CV</b></span>` : cat==="ar" ? `${fmt(rvNum(c.va)/1000,2)} kVA` : cat ? `${fmt(rvNum(c.va),0)} W` : "—"}</td></tr>`; })).join("");
+  const cont = k => Rq.reduce((t,r)=>t + r.circ.filter(c=>(RV.cat[rvChave(r.q.nome, c)] ?? "il")===k).length, 0);
   el.hidden = false;
   el.innerHTML = `<div class="imp-cab"><h4>Importar do Revit</h4><button class="x" type="button" data-rv="fechar" aria-label="Fechar">×</button></div>
     <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit; os circuitos ${RV.alvo==="dm-rv" ? "vão para Comprimento de circuitos" : "vêm para cá"}, cada um no seu quadro. Reservas (0 W) ficam de fora.</p>
     <div class="grade" style="margin-bottom:10px"><label class="campo c3">Ao importar<select data-rv-modo><option value="sub" ${RV.modo==="sub"?"selected":""}>Substituir os circuitos destes quadros (e os sem quadro)</option><option value="add" ${RV.modo==="add"?"selected":""}>Adicionar aos atuais</option></select></label></div>
-    <div class="rolar"><table class="quadro"><thead><tr><th>Quadro</th><th>Alimentado por</th><th class="n">Comprimento do alimentador</th><th class="n">Circuitos</th><th class="n">Reservas</th><th>Quadros ligados nele</th><th>No Cálculo de demanda</th></tr></thead><tbody>
-      ${R.map(r=>`<tr><td><b>${esc(r.q.nome)}</b></td><td>${esc(r.pai) || "—"}</td><td class="n">${r.L > 0 ? fmt(r.L,1) + " m" : "—"}</td><td class="n">${r.circ.length}</td><td class="n">${r.res.length}</td><td>${esc(r.alim.map(c=>c.quadro).join(", ")) || "—"}</td><td>${r.existe ? "já existe (atualiza)" : "será criado"}</td></tr>`).join("")}
+    <div class="rolar"><table class="quadro"><thead><tr><th>Painel no Revit</th><th>Entra como</th><th>Alimentado por</th><th class="n">Comprimento do alimentador</th><th class="n">Circuitos</th><th class="n">Reservas</th><th>Quadros ligados nele</th><th>No Cálculo de demanda</th></tr></thead><tbody>
+      ${R.map(r=>`<tr${r.papel!=="quadro"?' style="opacity:.6"':""}><td><b>${esc(r.q.nome)}</b></td>
+        <td><select data-rv-papel="${esc(impNorm(r.q.nome))}"><option value="quadro" ${r.papel==="quadro"?"selected":""}>Quadro</option><option value="entrada" ${r.papel==="entrada"?"selected":""}>Entrada (medidor)</option><option value="ignorar" ${r.papel==="ignorar"?"selected":""}>Não importar</option></select></td>
+        <td>${r.paiEnt ? `Entrada (${esc(r.paiEnt)})` : esc(r.pai) || "Entrada"}</td><td class="n">${r.L > 0 ? fmt(r.L,1) + " m" : "—"}</td><td class="n">${r.circ.length}</td><td class="n">${r.res.length}</td><td>${esc(r.alim.map(c=>c.quadro).join(", ")) || "—"}</td>
+        <td>${r.papel!=="quadro" ? "—" : r.existe ? "já existe (atualiza)" : "será criado"}</td></tr>`).join("")}
     </tbody></table></div>
-    <div class="nm-bts" style="margin-top:12px"><button class="btn sec peq" type="button" data-rv="fechar">Cancelar</button><button class="btn peq" type="button" data-rv="ok" ${R.length?"":"disabled"}>Importar ${R.length} quadro${R.length!==1?"s":""} e ${nC} circuito${nC!==1?"s":""}</button></div>`;
+    <p class="fonte" style="margin:6px 0 0">Painel sem circuitos que só alimenta outros (ex.: PRÉDIO, medição) entra como <b>Entrada</b>; painel solto, sem circuitos e sem ligação, fica de fora. Troque se precisar.</p>
+    <label class="chave" style="margin-top:12px"><input type="checkbox" data-rv-cargas ${RV.cargas?"checked":""}> Levar as cargas dos circuitos para o Cálculo de demanda (substitui as cargas dos quadros importados)</label>
+    ${RV.cargas ? `<p class="fonte" style="margin:4px 0 6px">${cont("il")} em iluminação e tomadas · ${cont("aq")} em aquecimento · ${cont("ar")} ar-condicionado · ${cont("mo")} motores · ${cont("")} fora. A classificação vem do nome do circuito; confira. A área útil e o restante do quadro continuam com você.
+      <button type="button" class="lnk" data-rv="vercargas">${RV.verCargas ? "Esconder a lista" : "Ver e ajustar circuito por circuito"}</button></p>
+      ${RV.verCargas ? `<div class="rolar" style="max-height:420px;overflow:auto"><table class="quadro"><thead><tr><th>Quadro</th><th>Circuito</th><th class="n">VA</th><th>Vai para</th><th>Valor</th></tr></thead><tbody>${linhasCarga}</tbody></table></div>` : ""}` : ""}
+    <div class="nm-bts" style="margin-top:12px"><button class="btn sec peq" type="button" data-rv="fechar">Cancelar</button><button class="btn peq" type="button" data-rv="ok" ${Rq.length?"":"disabled"}>Importar ${Rq.length} quadro${Rq.length!==1?"s":""} e ${nC} circuito${nC!==1?"s":""}</button></div>`;
+}
+function rvCampo(t){
+  const d = t.dataset;
+  if(d.rvModo!==undefined){ RV.modo = t.value; return true; }
+  if(d.rvPapel!==undefined){ RV.papel[d.rvPapel] = t.value; rvRender(); return true; }
+  if(d.rvCargas!==undefined){ RV.cargas = t.checked; rvRender(); return true; }
+  if(d.rvCat!==undefined){ RV.cat[d.rvCat] = t.value; if(t.value==="mo" && RV.cv[d.rvCat]==null){ const [qn, n] = d.rvCat.split("|"); const q = RV.d.quadros.find(x=>impNorm(x.nome)===qn), c = q?.circuitos?.find(x=>String(x.n||"").trim()===n); if(c) RV.cv[d.rvCat] = rvCvAuto(c); } rvRender(); return true; }
+  if(d.rvCv!==undefined){ RV.cv[d.rvCv] = numTxt(t.value); return true; }
+  return false;
 }
 function rvAcao(a){
   if(a==="fechar"){ RV = null; rvRender(); return; }
+  if(a==="vercargas"){ RV.verCargas = !RV.verCargas; rvRender(); return; }
   const R = rvResumo(), D = S.dem, achar = nome => D.quadros.find(x=>impNorm(x.nome)===impNorm(nome));
   const criar = nome => { let q = achar(nome); if(!q){ q = {id:uid(), nome:String(nome).trim(), pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}; D.quadros.push(q); } return q; };
   let criados = 0; const antes = new Set(D.quadros.map(q=>q.id));
-  R.forEach(r=>criar(r.q.nome));
-  R.forEach(r=>{ const q = achar(r.q.nome);
-    if(r.pai){ const p = criar(r.pai); if(p.id!==q.id) q.pai = p.id; }
-    if(r.L > 0) (q.al = q.al || {}).L = String(Math.round(r.L*100)/100);
-    r.alim.forEach(c=>{ const a = criar(c.quadro); if(a.id!==q.id) a.pai = q.id; if(rvNum(c.lmax) > 0) (a.al = a.al || {}).L = String(Math.round(rvNum(c.lmax)*100)/100); }); });
+  const papel = n => RV.papel?.[impNorm(n)] || "quadro";
+  R.filter(r=>r.papel==="quadro").forEach(r=>criar(r.q.nome));
+  R.forEach(r=>{ if(r.papel==="quadro"){ const q = achar(r.q.nome);
+      if(r.pai && papel(r.pai)==="quadro"){ const p = criar(r.pai); if(p.id!==q.id) q.pai = p.id; } else if(r.pai) q.pai = "";
+      if(r.L > 0) (q.al = q.al || {}).L = String(Math.round(r.L*100)/100); }
+    if(r.papel==="ignorar") return;
+    r.alim.forEach(c=>{ if(papel(c.quadro)!=="quadro") return; const a = criar(c.quadro); const pq = r.papel==="quadro" ? achar(r.q.nome) : null;
+      if(pq && a.id!==pq.id) a.pai = pq.id; else if(!pq) a.pai = "";
+      if(rvNum(c.lmax) > 0) (a.al = a.al || {}).L = String(Math.round(rvNum(c.lmax)*100)/100); }); });
+  if(RV.cargas){                                          // cargas dos circuitos → itens do quadro na demanda
+    let fp = num(D.fp) > 0 ? num(D.fp) : 1;
+    R.filter(r=>r.papel==="quadro" && r.circ.length).forEach(r=>{ const q = achar(r.q.nome), il = [], aq = [], ar = [], mo = [];
+      r.circ.forEach(c=>{ const k = rvChave(r.q.nome, c), cat = RV.cat[k] ?? "il", va = rvNum(c.va); if(!(va > 0)) return;
+        if(cat==="il") il.push({n:`${String(c.n||"").trim()} · ${String(c.desc||"").trim()}`, qtd:1, w:String(Math.round(va))});
+        else if(cat==="aq") aq.push({n:rvNomeAq(c), qtd:1, w:String(Math.round(va))});
+        else if(cat==="ar") ar.push({n:"Ar-condicionado", qtd:1, kw:String(Math.round(va*fp)/1000), tipo:"split"});
+        else if(cat==="mo") mo.push({n:rvNomeMo(c), qtd:1, cv:String(num(RV.cv[k]) || rvCvAuto(c) || ""), cls: (Math.round(rvNum(c.polos))||1) >= 3 ? "tri" : "mono"}); });
+      q.il = il; q.aq = aq; q.ar = ar; q.mo = mo; q.ilum = "";
+      const tri = r.circ.some(c=>(Math.round(rvNum(c.polos))||1) >= 3) || (()=>{ const P = RV.d.quadros.flatMap(x=>x.circuitos||[]).find(c=>impNorm(c.quadro)===impNorm(r.q.nome)); return P && Math.round(rvNum(P.polos)) >= 3; })();
+      if(tri && !q.fases) q.fases = "tri"; });
+  }
   criados = D.quadros.filter(q=>!antes.has(q.id)).length;
-  const ids = new Set(R.map(r=>achar(r.q.nome).id)), novos = [];
-  R.forEach(r=>{ const qid = achar(r.q.nome).id; r.circ.forEach(c=>novos.push({...rvCirc(c), qid})); });
+  const Rq = R.filter(r=>r.papel==="quadro"), ids = new Set(Rq.map(r=>achar(r.q.nome).id)), novos = [];
+  Rq.forEach(r=>{ const qid = achar(r.q.nome).id; r.circ.forEach(c=>novos.push({...rvCirc(c), qid})); });
   const manter = S.cmx.circs.filter(c=>num(c.disj)>0 && (RV.modo!=="sub" || (c.qid && !ids.has(c.qid))));
   S.cmx.circs = [...manter, ...novos];
+  const RV_cargasMsg = RV.cargas ? " · cargas levadas ao Cálculo de demanda (falta a área útil de cada quadro)" : "";
   const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); if(S.modulo==="dem") renderDem(); resumo(); salvar();
-  aviso(`${novos.length} circuito${novos.length!==1?"s":""} de ${R.length} quadro${R.length!==1?"s":""} importado${novos.length!==1?"s":""}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
+  aviso(`${novos.length} circuito${novos.length!==1?"s":""} de ${Rq.length} quadro${Rq.length!==1?"s":""} importado${novos.length!==1?"s":""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
 }
 // app → Revit: {formato:"equiper-dimensionamento", versao:1, cliente, revisao, aprovado, aprovadoPor, dataAprovacao, gerado,
 //   quadros:[{nome, alimentadoPor, correnteDemanda, ok, avisos, alimentador:{fase, neutro, terra, paralelos, polos, disjuntor, eletroduto, texto, comprimento, quedaTrecho, quedaAcumulada, autotrafo}}]}
@@ -9711,7 +9783,7 @@ function ligarDmRv(){
   bt.addEventListener("click", ()=>{ arq.value = ""; arq.click(); });
   arq.addEventListener("change", e=>{ const f = e.target.files[0]; if(f) rvAbrir(f, "dm-rv"); });
   box.addEventListener("click", e=>{ const r = e.target.closest("[data-rv]"); if(r) rvAcao(r.dataset.rv); });
-  box.addEventListener("change", e=>{ if(e.target.dataset.rvModo!==undefined && RV) RV.modo = e.target.value; });
+  box.addEventListener("change", e=>{ if(RV) rvCampo(e.target); });
 }
 function preencherDem(){
   const D = S.dem;
