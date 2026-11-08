@@ -5659,6 +5659,8 @@ function elvCorte(r){                                       // corte esquemátic
     <text x="${x0+cw/2}" y="${yF+tw+18}" class="ecv" text-anchor="middle">${r.forma==="cir" ? `Ø interno ${fmt(r.D,2)} m` : `${fmt(r.L,2)} m`}</text>
     <text x="${x0+cw/2}" y="${yF+tw+42}" class="en" text-anchor="middle">${r.forma==="cir" ? `caixa circular Ø ${fmt(r.D,2)} m` : `caixa ${fmt(r.L,2)} × ${fmt(r.B,2)} m (interno)`} · volume útil ${fmt(r.Vu,2)} m³ · sem escala</text></svg>`;
 }
+// largura de texto no SVG (para posicionar legendas sem sobrepor as curvas)
+const elvTw = (t, f) => { const c = elvTw.c || (elvTw.c = document.createElement("canvas").getContext("2d")); c.font = f; return c.measureText(t).width; };
 function elvGrafico(r){
   if(!r.curva) return `<p class="vazio">Escolha a bomba para ver a curva dela e o ponto de operação.</p>`;
   const W = 560, H = 300, m = {l:46, r:16, t:14, b:38}, qMax = r.curva[r.curva.length-1][0]*1.05, hMax = Math.max(...r.curva.map(x=>x[1]), r.Hs ? r.Hs(qMax) : 0)*1.08 || 1;
@@ -5668,13 +5670,51 @@ function elvGrafico(r){
   const passo = v => v > 20 ? 5 : v > 8 ? 2 : v > 4 ? 1 : 0.5, gq = passo(qMax), gh = passo(hMax);
   const gx = Array.from({length:Math.floor(qMax/gq)+1}, (_,i)=>i*gq).map(q=>`<path d="M${X(q)} ${m.t} V${H-m.b}" class="gg"/><text x="${X(q)}" y="${H-m.b+14}" class="gt" text-anchor="middle">${fmt(q,gq<1?1:0)}</text>`).join("");
   const gy = Array.from({length:Math.floor(hMax/gh)+1}, (_,i)=>i*gh).map(h=>`<path d="M${m.l} ${Y(h)} H${W-m.r}" class="gg"/><text x="${m.l-6}" y="${Y(h)+4}" class="gt" text-anchor="end">${fmt(h,gh<1?1:0)}</text>`).join("");
-  const af = r.qa > 0 ? `<path d="M${X(r.qa)} ${m.t} V${H-m.b}" class="ga"/><text x="${X(r.qa)+4}" y="${m.t+12}" class="gt">vazão afluente ${fmt(r.qa,2)} L/s</text>` : "";
-  const op = r.Qop ? `<circle cx="${X(r.Qop)}" cy="${Y(r.Hop)}" r="5" class="gp"/><text x="${X(r.Qop)+8}" y="${Y(r.Hop)-8}" class="gl">${fmt(r.Qop,2)} L/s · ${fmt(r.Hop,1)} m</text>` : "";
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:640px" role="img" aria-label="Curva da bomba e curva do sistema">
-    <style>.gg{stroke:#e3e3e3;stroke-width:1}.gt{font:500 10.5px Barlow,Arial,sans-serif;fill:#666}.gb{fill:none;stroke:#000;stroke-width:2.2}.gs{fill:none;stroke:#d10a1e;stroke-width:2;stroke-dasharray:6 4}.ga{stroke:#888;stroke-dasharray:3 3}.gp{fill:#d10a1e}.gl{font:700 11.5px Barlow,Arial,sans-serif;fill:#000;paint-order:stroke;stroke:#fff;stroke-width:4px}</style>
+  // ---- posição dos textos: automática (lugar com menos curva por baixo) ou a que o usuário arrastou ----
+  const F1 = "500 10.5px Barlow, Arial, sans-serif", F2 = "700 11.5px Barlow, Arial, sans-serif";
+  const obst = [], add = (x, y) => obst.push([x, y]);
+  for(let i = 1; i < r.curva.length; i++){ const a = r.curva[i-1], b = r.curva[i]; for(let k = 0; k <= 20; k++){ const q = a[0] + (b[0]-a[0])*k/20, h = a[1] + (b[1]-a[1])*k/20; add(X(q), Y(h)); } }
+  if(r.Hs) for(let i = 0; i <= 120; i++){ const q = qMax*i/120; add(X(q), Y(r.Hs(q))); }
+  if(r.qa > 0) for(let y = m.t; y <= H-m.b; y += 4) add(X(r.qa), y);
+  if(r.Qop) for(let k = 0; k < 12; k++) add(X(r.Qop) + 7*Math.cos(k*Math.PI/6), Y(r.Hop) + 7*Math.sin(k*Math.PI/6));
+  const postos = [], cabe = b => b.x >= m.l + 2 && b.y >= m.t + 2 && b.x + b.w <= W - m.r - 2 && b.y + b.h <= H - m.b - 2;
+  const nota = b => obst.filter(([x,y]) => x >= b.x - 3 && x <= b.x + b.w + 3 && y >= b.y - 3 && y <= b.y + b.h + 3).length
+    + 40*postos.filter(o => b.x < o.x + o.w + 4 && o.x < b.x + b.w + 4 && b.y < o.y + o.h + 4 && o.y < b.y + b.h + 4).length + (cabe(b) ? 0 : 500);
+  const e = elvDados(), chave = JSON.stringify(r.curva), gp = e.grafPos && e.grafPos.chave===chave ? e.grafPos : {};
+  const pos = (id, w, h, cands) => { let b; const u = gp[id];
+    if(u && isFinite(u[0]) && isFinite(u[1])) b = {x: Math.min(Math.max(u[0], 0), W - w), y: Math.min(Math.max(u[1], 0), H - h), w, h, man: true};
+    else { let melhor = null; cands.forEach(([x, y], i) => { const c = {x, y, w, h}, n = nota(c) + i*0.01; if(!melhor || n < melhor.n) melhor = {...c, n}; }); b = melhor; }
+    postos.push(b); return b; };
+  let op = "";
+  if(r.Qop){ const t = `${fmt(r.Qop,2)} L/s · ${fmt(r.Hop,1)} m`, w = elvTw(t, F2) + 4, h = 15, px = X(r.Qop), py = Y(r.Hop);
+    const b = pos("op", w, h, [[px+8, py-h-6], [px-w-8, py-h-6], [px+8, py+6], [px-w-8, py+6], [px-w/2, py-h-10], [px-w/2, py+10], [px+10, py-h/2], [px-w-10, py-h/2]]);
+    op = `<circle cx="${px}" cy="${py}" r="5" class="gp"/><g data-mv="op" data-w="${w}" data-h="${h}" transform="translate(${b.x.toFixed(1)},${b.y.toFixed(1)})"><rect width="${w}" height="${h}" fill="transparent"/><text x="2" y="${h-3}" class="gl">${t}</text></g>`; }
+  let af = "";
+  if(r.qa > 0){ const t = `vazão afluente ${fmt(r.qa,2)} L/s`, w = elvTw(t, F1) + 4, h = 13, xa = X(r.qa), yb = H - m.b;
+    const b = pos("af", w, h, [[xa+4, m.t+2], [xa-w-4, m.t+2], [xa+4, (m.t+yb)/2], [xa-w-4, (m.t+yb)/2], [xa+4, yb-h-4], [xa-w-4, yb-h-4]]);
+    af = `<path d="M${xa} ${m.t} V${yb}" class="ga"/><g data-mv="af" data-w="${w}" data-h="${h}" transform="translate(${b.x.toFixed(1)},${b.y.toFixed(1)})"><rect width="${w}" height="${h}" class="gbx"/><text x="2" y="${h-3}" class="gt">${t}</text></g>`; }
+  const lw = 32 + Math.max(elvTw("curva da bomba", F1), ps ? elvTw("curva do sistema", F1) : 0) + 4, lh = ps ? 34 : 18, x1 = m.l + 8, x2 = W - m.r - lw - 8, y1 = m.t + 8, y2 = H - m.b - lh - 8;
+  const lb = pos("leg", lw, lh, [[x2, y1], [x2, y2], [x1, y2], [x1, y1], [x2, (y1+y2)/2], [(x1+x2)/2, y1], [(x1+x2)/2, y2], [x1, (y1+y2)/2]]);
+  const leg = `<g data-mv="leg" data-w="${lw}" data-h="${lh}" transform="translate(${lb.x.toFixed(1)},${lb.y.toFixed(1)})"><rect width="${lw}" height="${lh}" rx="3" class="gbx"/><path d="M6 10 H28" class="gb"/><text x="32" y="14" class="gt">curva da bomba</text>${ps ? `<path d="M6 26 H28" class="gs"/><text x="32" y="30" class="gt">curva do sistema</text>` : ""}</g>`;
+  return `<svg class="elv-graf" data-chave="${esc(chave)}" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:640px" role="img" aria-label="Curva da bomba e curva do sistema">
+    <style>.gg{stroke:#e3e3e3;stroke-width:1}.gt{font:500 10.5px Barlow,Arial,sans-serif;fill:#666}.gb{fill:none;stroke:#000;stroke-width:2.2}.gs{fill:none;stroke:#d10a1e;stroke-width:2;stroke-dasharray:6 4}.ga{stroke:#888;stroke-dasharray:3 3}.gp{fill:#d10a1e}.gl{font:700 11.5px Barlow,Arial,sans-serif;fill:#000;paint-order:stroke;stroke:#fff;stroke-width:4px}.gbx{fill:#fff;fill-opacity:.88}@media screen{.elv-graf [data-mv]{cursor:move;touch-action:none}.elv-graf [data-mv]:hover rect{stroke:#d10a1e;stroke-dasharray:2 2}}</style>
     ${gx}${gy}${af}<path d="${pb}" class="gb"/>${ps ? `<path d="${ps}" class="gs"/>` : ""}${op}
     <text x="${W-m.r}" y="${H-6}" class="gt" text-anchor="end">Q (L/s)</text><text x="6" y="${m.t+4}" class="gt">H (m)</text>
-    <g transform="translate(${m.l+12},${H-m.b-40})"><path d="M0 6 H22" class="gb"/><text x="28" y="10" class="gt">curva da bomba</text>${ps ? `<path d="M0 22 H22" class="gs"/><text x="28" y="26" class="gt">curva do sistema</text>` : ""}</g></svg>`;
+    ${leg}</svg>`;
+}
+// arrastar legenda, ponto de operação e vazão afluente (vale para a tela e para o documento impresso)
+function elvArrastar(){
+  let d = null;
+  document.addEventListener("pointerdown", ev=>{ const g = ev.target.closest?.(".elv-graf [data-mv]"); if(!g) return; const svg = g.ownerSVGElement, M = svg.getScreenCTM(); if(!M) return;
+    const t = g.transform.baseVal.consolidate()?.matrix; d = {g, svg, id: g.dataset.mv, k: 1/M.a, x0: ev.clientX, y0: ev.clientY, gx: t ? t.e : 0, gy: t ? t.f : 0, x: t ? t.e : 0, y: t ? t.f : 0};
+    g.setPointerCapture?.(ev.pointerId); ev.preventDefault(); });
+  document.addEventListener("pointermove", ev=>{ if(!d) return; const vb = d.svg.viewBox.baseVal, w = +d.g.dataset.w || 0, h = +d.g.dataset.h || 0;
+    d.x = Math.min(Math.max(d.gx + (ev.clientX - d.x0)*d.k, 0), vb.width - w); d.y = Math.min(Math.max(d.gy + (ev.clientY - d.y0)*d.k, 0), vb.height - h);
+    d.g.setAttribute("transform", `translate(${d.x.toFixed(1)},${d.y.toFixed(1)})`); });
+  const fim = () => { if(!d) return; const o = d; d = null; if(Math.abs(o.x - o.gx) < 0.5 && Math.abs(o.y - o.gy) < 0.5) return;
+    const e = elvDados(), chave = o.svg.dataset.chave; if(!e.grafPos || e.grafPos.chave!==chave) e.grafPos = {chave};
+    e.grafPos[o.id] = [Math.round(o.x*10)/10, Math.round(o.y*10)/10]; renderElv(); if(typeof resumo==="function") resumo(); salvar(); };
+  document.addEventListener("pointerup", fim); document.addEventListener("pointercancel", fim);
 }
 function elvMemorial(r, cls){
   if(r.erro) return `<p>${esc(r.erro)}</p>`;
@@ -5762,7 +5802,7 @@ function renderElv(){
     .map(([k,v,u])=>`<div class="param"><small>${k}</small><strong>${v}</strong><em>${u}</em></div>`).join("");
   $("elv-res").innerHTML = r.erro ? `<p class="vazio">${esc(r.erro)}</p>` : elvVerTab(r, "quadro") + (r.tMax!=null && r.t > r.tMax && r.tMax > 0 ? `<p class="fonte" style="margin-top:8px">Para a detenção ficar em até 30 min, o intervalo entre partidas pode ser no máximo <b>${fmt(r.tMax,1)} min</b>${r.tMax < 10 ? " (abaixo dos 10 min recomendados: confira a vazão da bomba e a vazão média)" : ""}.</p>` : "");
   $("elv-corte").innerHTML = elvCorte(r);
-  $("elv-graf").innerHTML = elvGrafico(r);
+  $("elv-graf").innerHTML = elvGrafico(r) + (r.curva ? `<p class="fonte" style="margin-top:6px">Arraste a legenda, o ponto de operação e o texto da vazão afluente para onde ficar melhor; a posição vale também para a impressão.${e.grafPos && Object.keys(e.grafPos).length > 1 ? ` <button type="button" class="add" id="elv-graf-auto" style="width:auto;display:inline-block;margin:6px 0 0 6px;padding:5px 12px">Voltar às posições automáticas</button>` : ""}</p>` : "");
   const outra = (elvVazio(e.bomba) ? "" : e.bomba)==="outra"; $("elv-curva-c").style.display = outra ? "" : "none";
   document.querySelectorAll("#mod-elv .elv-bsel").forEach(el=>el.style.display = (elvVazio(e.bomba) ? "" : e.bomba) ? "" : "none");
   $("elv-mem").innerHTML = elvMemorial(r, "quadro");
@@ -5784,7 +5824,7 @@ function relElv(){
     ${relAssinatura(E)}</div>`;
 }
 function ligarElv(){
-  const M = $("mod-elv"); if(!M) return;
+  const M = $("mod-elv"); if(!M) return; elvArrastar();
   const alt = el => { const e = elvDados(), k = el.dataset.ev; e[k] = el.type==="checkbox" ? el.checked : el.hasAttribute("data-mil") ? numBR(el.value) : el.value; renderElv(); resumo(); salvar(); };
   M.addEventListener("focusout", ev=>{ const t = ev.target; if(t.hasAttribute?.("data-mil")) t.value = fmtIn(numBR(t.value)); });
   M.addEventListener("input", ev=>{ if(ev.target.dataset.ev && ev.target.tagName==="INPUT" && ev.target.type!=="checkbox") alt(ev.target); else if(ev.target.dataset.ev && ev.target.tagName==="TEXTAREA") alt(ev.target); });
@@ -5795,6 +5835,7 @@ function ligarElv(){
   M.addEventListener("input", ev=>{ const t = ev.target; if(t.dataset.cq===undefined) return; const e = elvDados(); e.curva = e.curva || []; const p = e.curva[+t.dataset.cq]; if(!p) return; p[t.dataset.cf] = numBR(t.value); renderElv(); resumo(); salvar(); });
   M.addEventListener("change", ev=>{ if(ev.target.dataset.apf && ev.target.tagName==="SELECT") apAlt(ev); });
   M.addEventListener("click", ev=>{
+    if(ev.target.closest("#elv-graf-auto")){ delete elvDados().grafPos; renderElv(); resumo(); salvar(); return; }
     if(ev.target.closest("#elv-ap-add")){ const e = elvDados(); (e.aps = e.aps || []).push({ap:"bacia_cx", qtd:"1", sim:"1"}); renderElvAps(); renderElv(); resumo(); salvar(); return; }
     const rm = ev.target.closest("[data-ap-rm]"); if(rm){ const e = elvDados(), i = +rm.closest("[data-api]").dataset.api; e.aps.splice(i, 1); renderElvAps(); renderElv(); resumo(); salvar(); }
   });
