@@ -8056,6 +8056,12 @@ function alMotOutros(its){
 const AL_AT_V = [440, 480, 600, 660];
 const AL_AT_KVA = [5,10,15,20,30,45,50,75,100,112.5,150,200,225,300,400,500,630,750,1000];
 const AL_AT_UCC = 3.5, AL_AT_ETA = 97;                                     // adotados na falta de dados do fabricante (confirmar)
+// perdas em carga adotadas, em % de Sn (uR), quando Pk não é informado. Fontes (enrolamento de alumínio):
+// Enel PM-R 120.01.0 (autotrafo BT a seco): 5 kVA 90 W = 1,80 %, 15 kVA 248 W = 1,65 %; Eletrotrafo 40 kVA: (985 − 251) W = 1,84 %.
+// Cobre: sem ficha com números; Square D Bulletin 7400PD9601 e Transformers Magazine 8(4) 2021: projetos de cobre e de alumínio
+// com a mesma elevação de temperatura têm perdas praticamente iguais (o alumínio usa seção maior), então o mesmo valor para os dois.
+const AL_AT_UR = 1.8;
+const AL_AT_ENR = {cu:"cobre", al:"alumínio"};
 function alDuto(p, x, q){
   if(!x || !alNum(x.p?.S)) return null;
   const a = q.al || {}, cat = ALT.cat[p.modelo], dCat = S => cat.find(r=>r[0]===S)?.[4], d = S => p.dextMan > 0 && p.dextS===S ? p.dextMan : dCat(S);
@@ -8076,16 +8082,23 @@ function alAtParam(q, p, SnForce){
   if(!(t.Lat > 0)) { t.erro = "Informe o comprimento do cabo na tensão elevada."; return t; }
   t.eta = (num(a.atEta) > 0 ? num(a.atEta) : AL_AT_ETA)/100; t.etaPad = !(num(a.atEta) > 0);
   t.ucc = num(a.atUcc) > 0 ? num(a.atUcc) : AL_AT_UCC; t.uccPad = !(num(a.atUcc) > 0);
+  t.enr = AL_AT_ENR[a.atEnr] ? a.atEnr : ""; t.pk = num(a.atPk) > 0 ? num(a.atPk) : 0;
+  t.cos = p.fp===2 ? 0.95 : 0.8; t.sen = Math.sqrt(1 - t.cos**2);                     // mesmo cosφ da queda nos cabos
+  const urPad = Math.min(AL_AT_UR, 0.9*t.ucc), ue = u => u*t.cos + Math.sqrt(Math.max(0, t.ucc**2 - u**2))*t.sen;
   const k = p.sis===1 ? Math.sqrt(3) : 1;
   t.Sload = k*Vb*p.Ib/1000;                                                        // kVA da carga
-  const SnMin = Math.max(t.Sload, p.dv > 0 ? (tipo==="dois" ? 2 : 1)*t.ucc/100*t.Sload/(0.5*p.dv) : t.Sload);   // queda nos autotrafos ≤ metade da disponível
+  const SnMin = Math.max(t.Sload, p.dv > 0 ? (tipo==="dois" ? 2 : 1)*ue(urPad)/100*t.Sload/(0.5*p.dv) : t.Sload);   // queda nos autotrafos ≤ metade da disponível
   t.SnSug = AL_AT_KVA.find(s=>s >= SnMin - 1e-9) || AL_AT_KVA[AL_AT_KVA.length-1];
   t.Sn = num(a.atS) > 0 ? num(a.atS) : (SnForce || AL_AT_KVA.find(s=>s >= t.Sload - 1e-9) || AL_AT_KVA[AL_AT_KVA.length-1]); t.SnPad = !(num(a.atS) > 0);
   t.IbA = tipo==="dois" ? p.Ib*t.r/t.eta : p.Ib*t.r;                                // corrente no cabo na tensão elevada
   t.IbB = tipo==="dois" ? p.Ib/t.eta**2 : p.Ib/t.eta;                               // corrente no cabo na tensão de distribuição (a favor da segurança no trecho todo)
   t.InA = p.In > 0 ? p.In*t.r : 0;                                                   // disjuntor do lado de baixa referido ao cabo na tensão elevada
-  t.dvT1 = t.ucc/100*t.Sload/t.Sn; t.dvT = t.nT*t.dvT1;                              // queda em cada autotrafo ≈ Ucc × S/Sn (a favor da segurança)
-  t.Zt = t.ucc/100*Vb**2/(t.Sn*1000);                                                // Ω referida ao lado de baixa, toda reativa
+  // uR = Pk/Sn (perdas em carga de cada autotrafo; só com a potência informada, pois Pk é da placa daquela unidade), uX = √(Ucc² − uR²)
+  t.pkUsa = t.pk > 0 && !t.SnPad; t.urPad = !t.pkUsa; t.ur = t.pkUsa ? t.pk/(t.Sn*1000)*100 : urPad;
+  if(t.ur >= t.ucc){ t.erro = `As perdas em carga informadas (${fmt(t.pk,0)} W = ${fmt(t.ur,2)} % de ${fmt(t.Sn,1)} kVA) não podem ser maiores que a impedância (${fmt(t.ucc,1)} %): confira Pk e Ucc.`; return t; }
+  t.ux = Math.sqrt(t.ucc**2 - t.ur**2);
+  t.dvT1 = ue(t.ur)/100*t.Sload/t.Sn; t.dvT = t.nT*t.dvT1;                          // queda em cada autotrafo = (uR·cosφ + uX·senφ) × S/Sn
+  t.Zb = Vb**2/(t.Sn*1000); t.Zt = t.ucc/100*t.Zb; t.Rt = t.ur/100*t.Zb; t.Xt = t.ux/100*t.Zb;   // Ω referidas ao lado de baixa
   return t;
 }
 function alAtSel(it, p, base, mont){
@@ -8099,7 +8112,7 @@ function alAtSel(it, p, base, mont){
   const avalia = (xA, xB) => {
     const dvA = xA.dVp, dvB = xB ? xB.dVp : 0; if(dvA==null || (xB && dvB==null)) return null;
     const dv = dvA + dvB + t.dvT;
-    const zsEq = (zsOf(xA, t.Lat) || 0)*t.r**2 + (xB ? zsOf(xB, t.Lbt) || 0 : 0) + t.nT*t.Zt*Math.sqrt(1 - AL_COS_PART**2);
+    const zsEq = (zsOf(xA, t.Lat) || 0)*t.r**2 + (xB ? zsOf(xB, t.Lbt) || 0 : 0) + t.nT*(t.Rt*AL_COS_PART + t.Xt*Math.sqrt(1 - AL_COS_PART**2));
     let part = null;
     if(m){ const k = m.fases==="tri" ? Math.sqrt(3) : 2, Iref = t.tipo==="ele" ? m.Ipart*m.V/t.Vb : m.Ipart;
       const extra = k*((mont?.zs || 0) + zsEq)*Iref/t.Vb, base0 = (mont?.dv || 0) + dv; part = {zsT: zsEq, zsUp: mont?.zs || 0, base: base0, extra, dv: base0 + extra, k}; }
@@ -8121,10 +8134,10 @@ function alAtSel(it, p, base, mont){
   // impedâncias para a Icc presumida (referidas à tensão de distribuição)
   const xB = esc.xB, rA = alNum(xA.R0) ? xA.R0*t.Lat/1000/n*t.r**2 : null, XA = alNum(xA.Xl) ? xA.Xl*t.Lat/1000/n*t.r**2 : null;
   const rB = xB && alNum(xB.R0) ? xB.R0*t.Lbt/1000/n : 0, XB = xB && alNum(xB.Xl) ? xB.Xl*t.Lbt/1000/n : 0;
-  if(rA!=null && XA!=null){ const kA = icKth(xA.th), kB = xB ? icKth(xB.th) : 1, Xt = t.nT*t.Zt;
+  if(rA!=null && XA!=null){ const kA = icKth(xA.th), kB = xB ? icKth(xB.th) : 1, Xt = t.nT*t.Xt, Rt = t.nT*t.Rt;
     const pe = (x, L, f) => { const v = ALT.t18.find(r=>r[0]===x?.PE)?.[(p.mat===1 ? 4 : 3) - 1]; return alNum(v) ? v*L/1000*f : null; };
     const peA = pe(xA, t.Lat, t.r**2), peB = xB ? pe(xB, t.Lbt, 1) : 0;
-    it.atZ = {R: rA + rB, X: XA + XB + Xt, nR: 2*(rA*kA + rB*kB), nX: 2*(XA + XB) + Xt, pR: (rA + (peA ?? rA*n))*kA + (rB + (peB ?? rB*n))*kB, pX: 2*(XA + XB) + Xt}; }
+    it.atZ = {R: rA + rB + Rt, X: XA + XB + Xt, nR: 2*(rA*kA + rB*kB) + Rt, nX: 2*(XA + XB) + Xt, pR: (rA + (peA ?? rA*n))*kA + (rB + (peB ?? rB*n))*kB + Rt, pX: 2*(XA + XB) + Xt}; }
 }
 function alItem(q, r, T, mont){
   const p = alParam(q, r, T), pai = dmPai(q);
@@ -8172,7 +8185,7 @@ function alItem(q, r, T, mont){
   if(p.dextMan > 0 && x?.p && p.dextS!==x.p.S) it.avisos.push(`O diâmetro externo informado (${fmt(p.dextMan,1)} mm) vale para o cabo de ${alS(p.dextS)} mm²; a seção agora é ${alS(x.p.S)} mm², então foi usado o do catálogo. Informe de novo se quiser.`);
   if(p.at?.erro) it.avisos.push(`Autotransformador: ${p.at.erro}`);
   if(p.at && !p.at.erro){ const t = p.at;
-    if(t.uccPad || t.etaPad || t.SnPad) it.avisos.push(`Autotransformador: ${[t.SnPad ? `potência adotada ${fmt(t.Sn,1)} kVA (${t.SnAuto ? "a menor padronizada com queda nos autotrafos de até metade da disponível no trecho" + (p.mot && !p.mot.erro ? ", que fecha a partida do motor" : "") + " e que deixa o cabo elevado mais fino que sem autotrafo" : "nenhuma potência fecha"}; carga de ${fmt(t.Sload,1)} kVA)` : "", t.uccPad ? `impedância adotada ${fmt(t.ucc,1)} %` : "", t.etaPad ? `rendimento adotado ${fmt(t.eta*100,0)} %` : ""].filter(Boolean).join(", ")}. Confirme com os dados do fabricante.`);
+    if(t.uccPad || t.etaPad || t.SnPad || t.urPad || !t.enr) it.avisos.push(`Autotransformador: ${[t.SnPad ? `potência adotada ${fmt(t.Sn,1)} kVA (${t.SnAuto ? "a menor padronizada com queda nos autotrafos de até metade da disponível no trecho" + (p.mot && !p.mot.erro ? ", que fecha a partida do motor" : "") + " e que deixa o cabo elevado mais fino que sem autotrafo" : "nenhuma potência fecha"}; carga de ${fmt(t.Sload,1)} kVA)` : "", t.uccPad ? `impedância adotada ${fmt(t.ucc,1)} %` : "", t.etaPad ? `rendimento adotado ${fmt(t.eta*100,0)} %` : "", t.urPad ? `perdas em carga adotadas ${fmt(t.ur,1)} % de Sn${t.pk > 0 ? " (o Pk informado só vale com a potência do autotrafo informada)" : ""}` : "", !t.enr ? "material do enrolamento não informado" : ""].filter(Boolean).join(", ")}. Confirme com os dados do fabricante.`);
     if(!it.semSecao && it.semAt!=null && it.semAt <= it.res.p.S && (!it.resB || it.semAt <= it.resB.p.S)) it.avisos.push(`Sem autotransformador o cabo seria ${alS(it.semAt)} mm², não maior que com ele: aqui o autotrafo não compensa.`);
     if(it.semSecao) it.avisos.push(`Com o autotransformador nenhuma combinação de cabos atende (relação ${fmt(t.Vb)} → ${fmt(t.Va)} V: a corrente no cabo elevado cai para ${fmt(t.r*100,0)} %, mas cada autotrafo acrescenta queda): ${t.dvT > p.dv ? `só a queda nos autotrafos (${fmt(t.dvT*100,2)} %) já passa da queda disponível no trecho (${fmt(p.dv*100,2)} %)` : "a queda nos cabos e nos autotrafos passa da disponível"}${p.mot && !p.mot.erro ? " (ou a queda na partida do motor passa de 10 %)" : ""}. ${t.SnSug > t.Sn ? `${t.SnPad ? "Nem com autotrafo de 1.000 kVA fecha: veja a queda a montante, a impedância ou a tensão elevada" : t.SnSug > t.Sn ? `Seria preciso autotrafo de ${fmt(t.SnSug,1)} kVA ou mais (deixe a potência em branco para o app procurar a menor que fecha)` : "Aumente a potência do autotrafo"}, ` : ""}ou de menor impedância, ou tensão elevada maior${it.semAt ? `; sem autotrafo o cabo seria ${alS(it.semAt)} mm²` : ""}. Os cabos mostrados atendem só à capacidade de condução.`);
     if(t.Sn < t.Sload - 1e-9) it.avisos.push(`Autotransformador de ${fmt(t.Sn,1)} kVA menor que a carga (${fmt(t.Sload,1)} kVA).`);
@@ -8219,7 +8232,7 @@ function alItens(){
     let z = null;
     if(zp){ const x = it.res, L = it.p.L, n = it.p.npar || 1;
       if(it.atZ){ const c = it.atZ; z = {R: zp.R + c.R, X: zp.X + c.X, nR: zp.nR + c.nR, nX: zp.nX + c.nX, pR: zp.pR + c.pR, pX: zp.pX + c.pX};
-        it.icTrecho = {R:c.R, X:c.X, txt:`${it.cond} · ${it.p.at.tipo==="dois" ? "2 autotrafos" : "autotrafo elevador"} ${fmt(it.p.at.Sn,1)} kVA ${fmt(it.p.at.ucc,1)} % · impedâncias referidas a ${fmt(it.p.at.Vb)} V`}; }
+        it.icTrecho = {R:c.R, X:c.X, txt:`${it.cond} · ${it.p.at.tipo==="dois" ? "2 autotrafos" : "autotrafo elevador"} ${fmt(it.p.at.Sn,1)} kVA ${fmt(it.p.at.ucc,1)} % (uR ${fmt(it.p.at.ur,2)} %${it.p.at.enr ? `, enrolamento de ${AL_AT_ENR[it.p.at.enr]}` : ""}) · impedâncias referidas a ${fmt(it.p.at.Vb)} V`}; }
       else if(x && L > 0 && alNum(x.R0) && alNum(x.Xl)){ const Rt = x.R0*L/1000/n, Xt = x.Xl*L/1000/n, kq = icKth(x.th);
         const rpe = ALT.t18.find(r=>r[0]===x.PE)?.[(it.p.mat===1 ? 4 : 3) - 1], Rpe = alNum(rpe) ? rpe*L/1000 : Rt*n, Xpe = x.Xl*L/1000;   // PE: um condutor (seção da tabela 58)
         z = {R: zp.R + Rt, X: zp.X + Xt, nR: zp.nR + 2*Rt*kq, nX: zp.nX + 2*Xt, pR: zp.pR + (Rt + Rpe)*kq, pX: zp.pX + Xt + Xpe};
@@ -8313,6 +8326,8 @@ function alAtCampos(q, a, p){
     ${n("atS", ["Potência de cada autotrafo", t.Sn ? `${fmt(t.Sn,1)} (adotada)` : "kVA"], "kVA")}
     ${n("atUcc", ["Impedância Ucc", fmt(AL_AT_UCC,1)], "%")}
     ${n("atEta", ["Rendimento", String(AL_AT_ETA)], "%")}
+    <label class="campo">Enrolamento${alSel("atEnr", a.atEnr ?? "", [["cu","Cobre"],["al","Alumínio"]], "Não informado")}</label>
+    ${n("atPk", ["Perdas em carga (Pk)", t.ur && t.urPad && t.Sn ? `${fmt(t.ur/100*t.Sn*1000,0)} (adotada)` : "W"], "W", "1")}
   </div></div>`;
 }
 function alMotCampos(q, a, p){
@@ -8408,7 +8423,9 @@ function alMemorial(it, cls){
     ${L("Corrente no cabo na tensão elevada", fmt(p.at.IbA,1), "A", `Ib × Vb/Va${p.at.tipo==="dois" ? " ÷ η" : ""} · ${fmt(p.at.Lat)} m · ${esc(it.condA || "")}`)}
     ${p.at.Lbt > 0 ? L("Corrente no cabo na tensão de distribuição", fmt(p.at.IbB,1), "A", `Ib ÷ η${p.at.tipo==="dois" ? "²" : ""} · ${fmt(p.at.Lbt)} m · ${esc(it.condB || "")}`) : ""}
     ${L("Disjuntor referido ao cabo elevado", p.at.InA ? fmt(p.at.InA,1) : "—", "A", "In × Vb/Va (o disjuntor fica no lado de baixa)")}
-    ${L("Queda nos autotrafos", fmt(p.at.dvT*100,2), "%", `${p.at.nT} × Ucc × S/Sn = ${p.at.nT} × ${fmt(p.at.ucc,1)} % × ${fmt(p.at.Sload,1)}/${fmt(p.at.Sn,1)} (a favor da segurança)`)}
+    ${L("Enrolamento / perdas em carga", `${p.at.enr ? AL_AT_ENR[p.at.enr] : "não informado"} · ${fmt(p.at.ur/100*p.at.Sn*1000,0)} W`, "", `${p.at.pkUsa ? "Pk informado" : `Pk adotado ${fmt(AL_AT_UR,1)} % de Sn (Enel PM-R 120.01.0 e ficha Eletrotrafo 40 kVA; cobre e alumínio com perdas praticamente iguais para a mesma elevação de temperatura, Square D 7400PD9601)`} · uR = Pk/Sn = ${fmt(p.at.ur,2)} % · uX = √(Ucc² − uR²) = ${fmt(p.at.ux,2)} %`)}
+    ${L("Impedância de cada autotrafo", `${fmt(p.at.Rt*1000,2)} + j${fmt(p.at.Xt*1000,2)}`, "mΩ", `referida a ${fmt(p.at.Vb)} V: Zbase = Vb²/Sn = ${fmt(p.at.Zb*1000,2)} mΩ · R = uR·Zbase · X = uX·Zbase`)}
+    ${L("Queda nos autotrafos", fmt(p.at.dvT*100,2), "%", `${p.at.nT} × (uR·cosφ + uX·senφ) × S/Sn = ${p.at.nT} × (${fmt(p.at.ur,2)} × ${fmt(p.at.cos,2)} + ${fmt(p.at.ux,2)} × ${fmt(p.at.sen,2)}) % × ${fmt(p.at.Sload,1)}/${fmt(p.at.Sn,1)}`)}
     ${L("Queda no trecho (cabos + autotrafos)", it.atDv!=null ? fmt(it.atDv*100,2) : "—", "%", `${fmt((x.dVp||0)*100,2)} % no cabo elevado${it.resB ? ` + ${fmt((it.resB.dVp||0)*100,2)} % no cabo de distribuição` : ""} + ${fmt(p.at.dvT*100,2)} % nos autotrafos`)}` : ""}
     ${p.mot && !p.mot.erro ? `${H("Partida do motor (NBR 5410, 6.5.1)")}
     ${L("Motor", `${cvTxt(p.mot.cv)} CV`, "", `${p.mot.fases==="tri" ? "trifásico" : "monofásico"} ${fmt(p.mot.V)} V · ${fmt(p.mot.f)} Hz · ${esc(AL_PART.find(z=>z[0]===p.mot.part)[1].toLowerCase())}`)}
@@ -10215,6 +10232,23 @@ ligarAli();
 ligarRsk();
 ligarIcc();
 apvIniciar();
+
+/* ---- números no padrão brasileiro em todos os campos numéricos (1.000,50) ----
+   Os campos type="number" viram texto: a tela mostra 1.000,5 e o código continua lendo e gravando 1000.5 (getter/setter de value). */
+const VAL_NATIVO = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+function numBRCampo(el){
+  if(el.dataset.brnum) return; el.dataset.brnum = "1";
+  const ini = VAL_NATIVO.get.call(el);
+  el.type = "text"; if(!el.inputMode) el.inputMode = "decimal"; el.autocomplete = "off";
+  Object.defineProperty(el, "value", {configurable:true,
+    get(){ const t = VAL_NATIVO.get.call(el); if(String(t).trim()==="") return ""; const v = numBR(t); return v==="" ? "" : v; },
+    set(v){ VAL_NATIVO.set.call(el, v==null || String(v).trim()==="" ? "" : fmtIn(v)); }});
+  if(ini!=="") el.value = ini;
+}
+function numBRVarrer(raiz){ (raiz.querySelectorAll ? raiz : document).querySelectorAll('input[type="number"]').forEach(numBRCampo); if(raiz.matches?.('input[type="number"]')) numBRCampo(raiz); }
+document.addEventListener("focusout", ev=>{ const t = ev.target; if(t?.dataset?.brnum){ const v = t.value; VAL_NATIVO.set.call(t, v==="" ? "" : fmtIn(v)); } }, true);
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) numBRVarrer(n); }))).observe(document.documentElement, {childList:true, subtree:true});
+numBRVarrer(document);
 ligarImp();
 ligarGruposNav();
 ligarHist();
