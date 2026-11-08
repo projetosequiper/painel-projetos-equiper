@@ -789,6 +789,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <button class="nav-it nsub" type="button" data-mod="cmx">Comprimento de circuitos</button>
         <button class="nav-it nsub" type="button" data-mod="dem">Cálculo de demanda</button>
         <button class="nav-it nsub" type="button" data-mod="ali">Alimentadores</button>
+        <button class="nav-it nsub" type="button" data-mod="icc">Icc presumida</button>
         <button class="nav-it nsub" type="button" data-mod="rsk">Análise de risco (SPDA)</button>
       </div>
     </div>
@@ -1392,6 +1393,50 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   </section>
 
   <!-- ================= ELÉTRICA · COMPRIMENTO MÁXIMO ================= -->
+  <section class="modulo" id="mod-icc" hidden>
+    <h1>Elétrica · Icc presumida</h1>
+    <p class="sub">Correntes de curto-circuito presumidas no padrão e em cada quadro (trifásica máxima, pico e mínimas fase-neutro e fase-PE), somando as impedâncias da rede, do transformador, do ramal e dos alimentadores (comprimentos e cabos da aba Alimentadores). Método da fonte de tensão equivalente da IEC 60909-0:2001. A Icc máxima calculada entra automaticamente na verificação dos cabos ao curto-circuito nos Alimentadores.</p>
+    <div class="mod-na"><label class="chave"><input type="checkbox" data-na="icc"> Esta obra não terá cálculo de Icc presumida</label>
+      <p class="mod-na-msg">Marcado como <b>não se aplica</b> nesta obra. O cálculo não entra no relatório e os alimentadores voltam a usar só o curto-circuito digitado.</p></div>
+    <section class="bloco-dados">
+      <h2>Origem</h2>
+      <div class="grade">
+        <label class="campo c3">Como obter a impedância no padrão<select data-ic="modo" data-pad="calc"></select></label>
+        <label class="campo c2">Fator de tensão (IEC 60909-0, Tabela 1)<select data-ic="c" data-pad="1.10"></select></label>
+        <label class="campo c1">Tensão Un (fase-fase)<span class="unid"><input data-ic="un" data-mil type="text" inputmode="decimal" placeholder="V"><b>V</b></span></label>
+        <label class="campo c2 ic-calc">Potência de curto da rede de MT<span class="unid"><input data-ic="sk" data-mil type="text" inputmode="decimal" placeholder="infinita"><b>MVA</b></span></label>
+        <label class="campo c2 ic-calc">Potência do transformador<span class="unid"><input data-ic="st" data-mil type="text" inputmode="decimal" placeholder="0"><b>kVA</b></span></label>
+        <label class="campo c1 ic-calc">Impedância Ucc<span class="unid"><input data-ic="uk" data-mil type="text" inputmode="decimal" placeholder="ex.: 4,5"><b>%</b></span></label>
+        <label class="campo c1 ic-calc">Perdas no cobre Pk<span class="unid"><input data-ic="pk" data-mil type="text" inputmode="decimal" placeholder="opcional"><b>W</b></span></label>
+        <label class="campo c2 ic-calc">Ramal transformador → padrão<select data-ic="rMat" data-pad="al"></select></label>
+        <label class="campo c1 ic-calc">Seção do ramal<span class="unid"><select data-ic="rS" data-pad="35"></select><b>mm²</b></span></label>
+        <label class="campo c1 ic-calc">Condutores por fase<input data-ic="rN" data-mil type="text" inputmode="decimal" placeholder="1"></label>
+        <label class="campo c1 ic-calc">Distância até o transformador<span class="unid"><input data-ic="rL" data-mil type="text" inputmode="decimal" placeholder="0"><b>m</b></span></label>
+        <label class="campo c1 ic-calc">Reatância do ramal<span class="unid"><input data-ic="rX" data-mil type="text" inputmode="decimal" placeholder="desprezada"><b>Ω/km</b></span></label>
+        <label class="campo c4 ic-med">O que foi medido ou informado<select data-ic="medTipo" data-pad="icc"></select></label>
+        <label class="campo c2 ic-med">Valor<input data-ic="medV" data-mil type="text" inputmode="decimal" placeholder="kA ou Ω"></label>
+        <label class="campo c1 ic-med">R medida<span class="unid"><input data-ic="medR" data-mil type="text" inputmode="decimal" placeholder="opcional"><b>Ω</b></span></label>
+        <label class="campo c1 ic-med">X medida<span class="unid"><input data-ic="medX" data-mil type="text" inputmode="decimal" placeholder="opcional"><b>Ω</b></span></label>
+      </div>
+      <p class="fonte ic-calc" style="margin-top:8px">Sem a potência de curto da rede de média tensão, ela é considerada infinita (corrente maior, a favor da segurança); com ela, RQ = 0,1·XQ (3.2). Ucc e Pk estão na placa do transformador; sem Pk, a resistência do transformador é desprezada. O fator KT (3.3.3) é aplicado ao transformador. Resistência do ramal a 20 °C pela tabela 18 da planilha R4.</p>
+      <p class="fonte ic-med" style="margin-top:8px">Com o valor medido, a impedância a montante do padrão vem da medição; daí para baixo o cálculo segue pelos alimentadores. Impedância fase-fase: Z1 = Zff/2. Laço fase-neutro: Z1 ≈ Zlaço/2 (aproximação: neutro com a mesma impedância da fase). Sem R e X separados, a impedância é tomada toda reativa (a favor da segurança).</p>
+    </section>
+    <div class="params p4" id="ic-params"></div>
+    <section class="etapas">
+      <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Impedância até o padrão</h3><span class="nbr">IEC 60909-0 · 3.2, 3.3, 3.4</span></div><div class="rolar" id="ic-orig"></div></div></article>
+      <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Icc presumida nos quadros</h3><span class="nbr">eq. (29), (53), (54)</span></div><div class="rolar" id="ic-quad"></div></div></article>
+    </section>
+    <section class="bloco-dados" style="margin-top:28px">
+      <h2>Documento</h2>
+      <div class="grade">
+        <label class="campo c2">Responsável técnico<select id="i-resp"></select><button type="button" class="lnk lnk-tec" data-ir-tecnicos>cadastrar ou editar técnicos</button><button type="button" class="lnk lnk-tec" data-resp-todos title="Coloca este responsável técnico em todos os dimensionamentos desta obra">usar em todos desta obra</button></label>
+        <label class="campo c2">Nº do documento<input data-ic="doc" autocomplete="off" placeholder="Ex.: MC-ELE-010"></label>
+        <label class="campo c2">Revisão<input data-ic="rev" autocomplete="off" placeholder="00"></label>
+        <label class="campo c6">Observações<textarea data-ic="obs" placeholder="Opcional. Aparece no relatório impresso, uma observação por linha."></textarea></label>
+      </div>
+      <p class="fonte" style="margin-top:8px">O responsável técnico é o mesmo do cálculo de demanda e dos alimentadores (mudando aqui, muda lá).</p>
+    </section>
+  </section>
   <section class="modulo" id="mod-rsk" hidden>
     <h1>Elétrica · análise de risco (SPDA)</h1>
     <p class="sub">Gerenciamento de risco de descargas atmosféricas pela ABNT NBR 5419-2:2026: número de eventos perigosos, componentes RA a RZ, risco R1 (vida humana) e R3 (patrimônio cultural) contra os toleráveis da Tabela 4, frequência de danos F e as combinações de SPDA e DPS que resolvem.</p>
@@ -2044,7 +2089,7 @@ const kcalCat = c => ({kgn: num(c.gn)*PCS.GN/60, kglp: num(c.glp)*PCS.GLP/60});
 
 function estadoNovo(){
   return {
-    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, dem:false, ali:false, rsk:false, elv:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
+    v:2, id:uid(), modulo:"esgoto", inst:{}, naoAplica:{esgoto:false, est:false, gas:false, plu:false, hid:false, res:false, ele:false, cmx:false, dem:false, ali:false, icc:false, rsk:false, elv:false, cgl:false, paq:false, pfi:false, pcl:false, phi:false},
     obra:{cliente:"", endereco:"", resp:"", crea:"", local:"", clienteIdExterno:""},
     esg:{predio:0, solo:3, n:5, limpeza:1, temp:20,
       cg:{on:false, modelo:"auto", qtd:1}, fs:{modelo:"auto", qtd:1}, fa:{modelo:"auto", qtd:1},
@@ -2079,7 +2124,7 @@ function migrar(o){
     e.usado = campos.some(k=>e[k]!==undefined && String(e[k])!==String(d[k])) || !!(e.cg&&e.cg.on);
   }
   return {
-    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","dem","ali","rsk","elv","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
+    v:2, id: o.id || uid(), modulo: ["gas","cgl","plu","hid","res","est","ele","cmx","dem","ali","icc","rsk","elv","paq","pfi","pcl","phi","pls"].includes(o.modulo) ? o.modulo : "esgoto",
     naoAplica: {...b.naoAplica, ...(o.naoAplica||{})},
     inst: (o.inst && typeof o.inst==="object") ? o.inst : {},
     plu:{...b.plu, ...lim(o.plu)},
@@ -2124,11 +2169,11 @@ function nomePDF(){
 }
 function atualizarTitulo(){ try{ document.title = OBRA_INTEIRA ? `${(S.obra.cliente||"").trim() || "Sem cliente"}_Memórias de cálculo`.replace(/[\\/:*?"<>|]+/g, "-") : nomePDF(); }catch(e){} }
 let OBRA_INTEIRA = false;
-const relDeBase = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : m==="rsk" ? relRsk() : m==="elv" ? relElv() : relEsgoto();
+const relDeBase = m => m==="gas" ? relGas() : m==="plu" ? relPluvial() : m==="hid" ? relHid() : m==="est" ? relEst() : m==="ele" ? relEle() : PIS_PARTES[m] ? relPis() : m==="res" ? relRes() : m==="cmx" ? relCmx() : m==="cgl" ? relCgl() : m==="dem" ? relDem() : m==="ali" ? relAli() : m==="icc" ? relIcc() : m==="rsk" ? relRsk() : m==="elv" ? relElv() : relEsgoto();
 const relDe = m => relComAprov(m, relDeBase(m));
 // todas as memórias da obra num PDF só (cada dimensionamento e cada edificação começa numa página)
 function htmlObraInteira(){
-  const ordem = ["hid","res","esgoto","est","elv","gas","cgl","plu","ele","cmx","dem","ali","rsk","paq","pfi","pcl","phi"];
+  const ordem = ["hid","res","esgoto","est","elv","gas","cgl","plu","ele","cmx","dem","ali","icc","rsk","paq","pfi","pcl","phi"];
   const itens = resumoObra(S).filter(r=>!S.naoAplica?.[r.mod]).sort((a,b)=>ordem.indexOf(a.mod)-ordem.indexOf(b.mod));
   // lista de equipamentos da piscina: uma por piscina que tenha alguma parte dimensionada
   const pis = itens.filter(r=>HIST_CHAVE[r.mod]==="pis"); const vistos = new Set();
@@ -3024,12 +3069,13 @@ function relGas(){
 function trocarModulo(m){
   S.modulo = m;
   if(typeof marcarNav==="function") marcarNav();
-  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-dem").hidden = m!=="dem"; $("mod-ali").hidden = m!=="ali"; $("mod-rsk").hidden = m!=="rsk"; $("mod-elv").hidden = m!=="elv"; $("mod-cgl").hidden = m!=="cgl";
+  $("mod-esgoto").hidden = m!=="esgoto"; $("mod-gas").hidden = m!=="gas"; $("mod-plu").hidden = m!=="plu"; $("mod-hid").hidden = m!=="hid"; $("mod-est").hidden = m!=="est"; $("mod-ele").hidden = m!=="ele"; $("mod-pis").hidden = !PIS_PARTES[m]; $("mod-res").hidden = m!=="res"; $("mod-cmx").hidden = m!=="cmx"; $("mod-dem").hidden = m!=="dem"; $("mod-ali").hidden = m!=="ali"; $("mod-rsk").hidden = m!=="rsk"; $("mod-icc").hidden = m!=="icc"; $("mod-elv").hidden = m!=="elv"; $("mod-cgl").hidden = m!=="cgl";
   if(m==="cmx") atualizarCmx();
   if(m==="cgl") renderCgl();
   if(m==="dem") renderDem();
   if(m==="ali") preencherAli();
   if(m==="rsk") preencherRsk();
+  if(m==="icc") preencherIcc();
   if(m==="elv") preencherElv();
   if(m==="res") renderRes();
   if(PIS_PARTES[m]) renderPis();
@@ -3052,6 +3098,11 @@ function resumo(){
   if(S.modulo==="elv"){
     const r = resumoElvParte();
     $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Elevatória</span><span class="rotulo">${r.det}</span>` : `<span class="pilula">Elevatória</span><span class="rotulo">informe a vazão que chega na caixa</span>`;
+    return;
+  }
+  if(S.modulo==="icc"){
+    const r = resumoIccParte();
+    $("resumo").innerHTML = r ? `<span class="pilula ${r.ok?"":"falha"}">Icc</span><span class="rotulo">${esc(r.det)}</span>` : `<span class="pilula">Icc</span><span class="rotulo">informe o transformador ou o valor medido no padrão</span>`;
     return;
   }
   if(S.modulo==="rsk"){
@@ -3117,7 +3168,7 @@ function resumo(){
     `<span class="rotulo">${falhas ? `${falhas} ${falhas>1?"itens não atendem":"item não atende"}` : "Tudo atende"}</span>`;
 }
 function aplicarNA(){
-  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","dem","ali","rsk","elv","paq","pfi","pcl","phi","pls"].forEach(m=>{
+  ["esgoto","est","gas","cgl","plu","hid","res","ele","cmx","dem","ali","icc","rsk","elv","paq","pfi","pcl","phi","pls"].forEach(m=>{
     const na = !!S.naoAplica?.[m];
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
@@ -3185,7 +3236,7 @@ function ligar(){
   for(const k of ["cliente","endereco"]) $(k).addEventListener("input", e=>{ S.obra[k]=e.target.value; salvar(); });
   $("local").addEventListener("input", e=>{ try{ localStorage.setItem("equiper-local-emissao", e.target.value); }catch(err){} });
 
-  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","rsk","elv","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); else if(m==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } });
+  addEventListener("hashchange", ()=>{ const m = location.hash.slice(1); if(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","icc","rsk","elv","paq","pfi","pcl","phi","pls"].includes(m)){ fecharClientes(); trocarModulo(m); } else if(m==="clientes") abrirClientes(); else if(m==="tecnicos") abrirTecnicos(); else if(m==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } });
 
   // Esgoto
   const E = () => S.esg;
@@ -3354,9 +3405,9 @@ function ligar(){
    CLIENTES: cadastro de clientes e obras (com todos os dimensionamentos)
    ===================================================================== */
 const CHAVE_BIB = "equiper-clientes-v1";
-const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", elv:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", dem:"ELE", ali:"ELE", rsk:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
-const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", elv:"Esgoto · elevatória", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", dem:"Elétrica · cálculo de demanda", ali:"Elétrica · alimentadores", rsk:"Elétrica · análise de risco (SPDA)", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
-const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est","elv"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["dem","ali","rsk","ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
+const ABREV = {hid:"HID", res:"HID", esgoto:"ESG", est:"ESG", elv:"ESG", gas:"GÁS", cgl:"GÁS", plu:"PLU", ele:"ELE", cmx:"ELE", dem:"ELE", ali:"ELE", icc:"ELE", rsk:"ELE", paq:"PIS", pfi:"PIS", pcl:"PIS", phi:"PIS"};
+const NOME_MOD = {hid:"Hidráulica · água fria", res:"Hidráulica · reservatórios", esgoto:"Esgoto · tratamento", est:"Esgoto · tubulação", elv:"Esgoto · elevatória", gas:"Tubulação de gás - RIP", cgl:"Gás · casa de gás (GLP)", plu:"Água pluvial", ele:"Elétrica · eletrodutos", cmx:"Elétrica · comprimento de circuitos", dem:"Elétrica · cálculo de demanda", ali:"Elétrica · alimentadores", icc:"Elétrica · Icc presumida", rsk:"Elétrica · análise de risco (SPDA)", paq:"Piscina · aquecimento", pfi:"Piscina · filtração", pcl:"Piscina · gerador de cloro", phi:"Piscina · hidromassagem", pls:"Piscina · lista de equipamentos"};
+const DISC = [{s:"HID", n:"Hidráulica", m:["hid","res"]}, {s:"ESG", n:"Esgoto sanitário", m:["esgoto","est","elv"]}, {s:"GÁS", n:"Gás", m:["gas","cgl"]}, {s:"PLU", n:"Água pluvial", m:["plu"]}, {s:"ELE", n:"Elétrica", m:["dem","ali","icc","rsk","ele","cmx"]}, {s:"PIS", n:"Piscina", m:["paq","pfi","pcl","phi"]}];
 function juntarSt(sts){ if(sts.every(v=>v==="na")) return "na"; const r = sts.filter(v=>v!=="na"); return r.includes("rev") ? "rev" : r.every(v=>v==="ok") ? "ok" : "pend"; }
 const chaveCliente = n => String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
 function bibLer(){
@@ -3424,6 +3475,7 @@ function resumoObraBase(dados){
     { const r = resumoCglParte(); if(r) out.push({mod:"cgl", det:r.det, ok:r.ok}); }
     { const r = resumoDemParte(); if(r) out.push({mod:"dem", det:r.det, ok:r.ok}); }
     { const r = resumoAliParte(); if(r) out.push({mod:"ali", det:r.det, ok:r.ok}); }
+    { const r = resumoIccParte(); if(r) out.push({mod:"icc", det:r.det, ok:r.ok}); }
     { const r = resumoRskParte(); if(r) out.push({mod:"rsk", det:r.det, ok:r.ok}); }
     { const r = resumoElvParte(); if(r) out.push({mod:"elv", det:r.det, ok:r.ok}); }
     { const r = resumoCmxParte(); if(r) out.push({mod:"cmx", det:r.det.replace(/<[^>]+>/g,""), ok:r.ok}); }
@@ -7946,6 +7998,9 @@ function alItem(q, r, T, mont){
   mont = mont || {dv:0, ok:true}; p.dvMont = mont.dv; p.dvTot = num(alPad("dv"))/100;            // limite geral: queda acumulada desde a origem
   p.dvCustom = !alVazio(q.al?.dv) && num(q.al.dv) > 0;                                            // personalizado: limite só deste trecho
   p.dvAuto = Math.max(0, p.dvTot - mont.dv); p.dv = p.dvCustom ? num(q.al.dv)/100 : p.dvAuto;
+  if(mont.ik!=null && isFinite(mont.ik) && alVazio(q.al?.icc)){                        // Icc presumida calculada (aba Icc presumida), no início do alimentador
+    const tt = num(alVazio(q.al?.t) ? alPad("t") : q.al.t); p.iccCalc = mont.ik;
+    if(tt > 0){ p.icc = mont.ik; p.t = tt; p.iccAuto = true; } }
   const it = {q, r, p, nome:`${pai ? (pai.nome || "—") : "Entrada"} → ${q.nome || "—"}`, avisos:[], ok:false};
   it.metRef = alMetRef(p.met, p.modelo, p.tipo);
   if(!(p.Ib > 0)){ it.erro = "Quadro sem demanda calculada: confira as cargas no cálculo de demanda."; return it; }
@@ -7969,6 +8024,7 @@ function alItem(q, r, T, mont){
   if(!alNum(x.fsolo)) it.avisos.push("Resistividade do solo fora da tabela 12.");
   if(x.metOk && alNum(x.fc) && !alNum(x.Iz)) it.avisos.push(`Seção ${alS(x.p.S)} mm² sem capacidade de condução na tabela${p.mat===2 ? " (alumínio só a partir de 16 mm²)" : ""}.`);
   if(!(p.L > 0)) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
+  if(p.iccCalc!=null && !p.iccAuto) it.avisos.push(`Icc presumida calculada no início do alimentador: ${fmt(p.iccCalc,2)} kA. Informe a duração do curto-circuito para verificar o cabo.`);
   if(pai && !mont.ok) it.avisos.push("Falta o comprimento (ou a seção) de algum alimentador a montante: a queda acumulada deste quadro está incompleta.");
   if(pai && !p.dvCustom && p.dvMont >= p.dvTot - 1e-12) it.avisos.push(`A queda acumulada até ${pai.nome || "o quadro de origem"} (${fmt(p.dvMont*100,2)}%) já chega ao limite de ${fmt(p.dvTot*100,1)}%: diminua a queda dos alimentadores a montante.`);
   if(it.auto && it.semSecao && x.metOk && !x.aviso && alNum(x.fc)) it.avisos.push(`Nenhuma seção do catálogo do ${AL_MOD[p.modelo-1].n} atende com ${p.npar} cabo${p.npar>1?"s":""} por fase: aumente os cabos em paralelo.`);
@@ -7990,10 +8046,21 @@ function alItem(q, r, T, mont){
 function alItens(){
   const D = S.dem, T = concDe(D.conc)?.t; if(!T) return [];
   const R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)]));
-  const acc = {};                                           // queda acumulada desde a origem, quadro a quadro (pais antes dos filhos)
-  return dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
+  const acc = {};                                           // queda acumulada e impedância desde a origem, quadro a quadro (pais antes dos filhos)
+  let o = null; if(icAtivo()){ const x = icOrigem(); if(x && !x.erro) o = x; }
+  return dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m0 = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
+    const zp = o ? (pai ? acc[pai.id]?.z || null : {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}) : null, m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null};
     const it = alItem(q, R[q.id], T, m); it.nivel = nivel;
-    acc[q.id] = it.dvTrecho!=null ? {dv: m.dv + it.dvTrecho, ok: m.ok} : {dv: m.dv, ok:false};
+    let z = null;
+    if(zp){ const x = it.res, L = it.p.L, n = it.p.npar || 1;
+      if(x && L > 0 && alNum(x.R0) && alNum(x.Xl)){ const Rt = x.R0*L/1000/n, Xt = x.Xl*L/1000/n, kq = icKth(x.th);
+        const rpe = ALT.t18.find(r=>r[0]===x.PE)?.[(it.p.mat===1 ? 4 : 3) - 1], Rpe = alNum(rpe) ? rpe*L/1000 : Rt*n, Xpe = x.Xl*L/1000;   // PE: um condutor (seção da tabela 58)
+        z = {R: zp.R + Rt, X: zp.X + Xt, nR: zp.nR + 2*Rt*kq, nX: zp.nX + 2*Xt, pR: zp.pR + (Rt + Rpe)*kq, pX: zp.pX + Xt + Xpe};
+        it.icTrecho = {R:Rt, X:Xt, txt:`${it.cond || alS(x.p.S)} · ${fmt(L)} m · R'20 ${fmt(x.R0,3)} · X' ${fmt(x.Xl,3)} Ω/km · θe ${x.th===70 ? 160 : 250} °C`}; }
+      else it.icFalta = !(L > 0) ? "sem comprimento" : "cabo sem resistência na tabela"; }
+    else if(o) it.icFalta = "falta o quadro a montante";
+    it.icZPai = zp; it.icZ = z;
+    acc[q.id] = {...(it.dvTrecho!=null ? {dv: m0.dv + it.dvTrecho, ok: m0.ok} : {dv: m0.dv, ok:false}), z};
     return it; });
 }
 function alRotulos(){                                      // texto dos cabos no diagrama do cálculo de demanda
@@ -8049,7 +8116,7 @@ function renderAliLista(){
         <label class="campo">Cabos em paralelo por fase<input data-af="npar" type="number" min="1" step="1" inputmode="numeric" value="${esc(a.npar ?? "")}" placeholder="1"></label>
         <label class="campo">Corrente de projeto<span class="unid"><input data-af="ib" type="number" min="0" step="any" inputmode="decimal" value="${esc(a.ib ?? "")}" placeholder="${r?.I>0?fmt(r.I,1):"0"}"><b>A</b></span></label>
         <label class="campo">Disjuntor<span class="unid"><input data-af="in" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.in ?? "")}" placeholder="${r?.disj||""}"><b>A</b></span></label>
-        <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}"><b>kA</b></span></label>
+        <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${p.iccCalc!=null ? `auto ${esc(fmt(p.iccCalc,2))}` : num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}" title="Em branco: usa a Icc presumida calculada (aba Icc presumida) ou a geral."><b>kA</b></span></label>
         <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}"><b>s</b></span></label>
         <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
       </div>
@@ -8128,7 +8195,7 @@ function alMemorial(it, cls){
     ${H("Curto-circuito e condutor de proteção")}
     ${it.semCurto ? L("Curto-circuito", "—", "–", "não verificado: informe a corrente de curto-circuito e o tempo") : ""}
     ${it.semCurto ? "" : L("Fator k (fase/neutro)", v(x.k,0), "–", "tabela 37")}
-    ${it.semCurto ? "" : L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,1)} kA · ${fmt(p.t,2)} s · ${alSit(x.ver.cc)}`)}
+    ${it.semCurto ? "" : L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,p.iccAuto?2:1)} kA${p.iccAuto ? " (Icc presumida calculada no início do alimentador)" : ""} · ${fmt(p.t,2)} s · ${alSit(x.ver.cc)}`)}
     ${L("Condutor de proteção (PE)", alNum(x.PE) ? alS(x.PE) : "—", "mm²", "NBR 5410, tabela 58")}
     ${it.semCurto ? "" : L("Fator k do PE / seção mínima", `${v(x.kPE,0)} / ${v(x.SccPE,1)}`, "mm²", `${esc(AL_PE[p.pe-1])} · ${alSit(x.ver.pe)}`)}
     ${it.econ ? `${H("Dimensionamento econômico (indicativo, não entra na escolha da seção)")}
@@ -8653,7 +8720,7 @@ const apvDataBR = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); 
 function apvEstado(m){ const k = HIST_CHAVE[m] || m; if(!S[k]) return null; S[k].aprov = S[k].aprov || {}; const A = S[k].aprov[m] = S[k].aprov[m] || {};
   if(!Array.isArray(A.revs)) A.revs = []; if(!A.form) A.form = {}; return A; }
 function apvSecao(m){ return PIS_PARTES[m] ? $("mod-pis") : $("mod-" + m); }
-function apvBase(m){ const sec = apvSecao(m), el = sec && [...sec.querySelectorAll('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"]')][0];
+function apvBase(m){ const sec = apvSecao(m), el = sec && [...sec.querySelectorAll('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"], input[data-ic="rev"]')][0];
   const n = parseInt(String(el?.dataset.apvBase ?? el?.value ?? "").replace(/\D/g,""), 10); return isFinite(n) ? n : 0; }
 function apvUltima(A){ return A.revs.length ? A.revs[A.revs.length-1] : null; }
 function apvNumAtual(m, A){ A = A || apvEstado(m); if(A.aberta) return A.aberta.n; const u = apvUltima(A); return u ? u.n : apvBase(m); }
@@ -8722,7 +8789,7 @@ function apvRender(){
   if(box.contains(document.activeElement) && document.activeElement.matches("input, textarea")) return;   // não atrapalha quem está digitando
   let st; try{ st = apvSituacao(m); }catch(e){ box.innerHTML = ""; return; }
   if(!st) { box.innerHTML = ""; return; }
-  const {A, u, mud, n} = st, f = A.form, revIn = sec.querySelector('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"]');
+  const {A, u, mud, n} = st, f = A.form, revIn = sec.querySelector('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"], input[data-ic="rev"]');
   if(revIn){ if(A.revs.length || A.aberta){ if(revIn.dataset.apvBase===undefined) revIn.dataset.apvBase = revIn.value; revIn.readOnly = true; revIn.value = apvPad(n); revIn.title = "Controlada pela aprovação: use “Criar nova revisão”."; }
     else { revIn.readOnly = false; revIn.title = "Revisão inicial. Depois da primeira aprovação, passa a ser controlada pela aprovação."; } }
   const emAprov = !u || A.aberta;
@@ -8780,6 +8847,135 @@ function apvIniciar(){
   document.querySelectorAll("section.modulo").forEach(sec=>{ const b = [...sec.querySelectorAll(".bloco-dados")].find(x=>x.querySelector("h2")?.textContent.trim()==="Documento"); if(b && !b.querySelector(".apv-box")) b.insertAdjacentHTML("beforeend", `<div class="apv-box"></div>`); });
   const r = $("resumo"); if(r) new MutationObserver(apvAgendar).observe(r, {childList:true, subtree:true, characterData:true});
   apvAgendar();
+}
+
+/* =====================================================================
+   ELÉTRICA · Icc PRESUMIDA (método da fonte de tensão equivalente, IEC 60909-0)
+   Icc trifásica máxima: Ik" = c·Un / (√3·|Z|), Z = rede + transformador + ramal + alimentadores (R a 20 °C)
+   Material de referência: ABB "Short Circuit Currents According to IEC 60909" (Tabela 1, ZT, RT, XT, RL' = ρ/qn, Zknet = Un²/Sk)
+   ===================================================================== */
+const IC_C = [["1.10","c máx = 1,10 · tolerância de ±10 % (Tabela 1)"],["1.05","c máx = 1,05 · tolerância de ±6 % (Tabela 1)"]];
+const IC_MODO = [["calc","Calcular pela rede e pelo transformador"],["med","Valor medido ou informado no padrão"]];
+const IC_MED = [["icc","Icc trifásica no padrão (kA), informada pela concessionária ou pelo instrumento"],["zff","Impedância fase-fase medida no padrão (Ω)"],["zfn","Impedância de laço fase-neutro medida no padrão (Ω)"]];
+const IC_RMAT = [["al","Alumínio (multiplexado)"],["cu","Cobre"]];
+function icDados(){ const D = S.dem; if(!D.icc || typeof D.icc!=="object") D.icc = {}; return D.icc; }
+function icUn(){ const D = S.dem, T = concDe(D.conc)?.t, q = dmRaizes()[0]; if(!T || !q) return 0; try{ return dmTens(q, T, "tri").Vff || 0; }catch(e){ return 0; } }
+function icR20(S, mat){ const row = ALT.t18.find(x=>x[0]===S); const v = row ? row[mat==="al" ? 2 : 1] : null; return alNum(v) ? v : null; }   // Ω/km a 20 °C, tabela 18 da planilha R4 (cobre classe 2, alumínio)
+function icSecoes(){ return ALT.t18.map(x=>x[0]); }
+// impedância no padrão (ponto de entrega), IEC 60909-0:2001
+// Para cada parte: R, X = impedância de sequência positiva (corrente máxima, cabos a 20 °C);
+//                  lR, lX = contribuição ao laço fase-neutro (2·Z1 + Z0)/3 para a corrente mínima (cabos na temperatura final, 2.5)
+const IC_CMIN = 0.95;                                                         // Tabela 1, baixa tensão
+const icKth = th => 1 + 0.004*((th===70 ? 160 : 250) - 20);                   // (3): θe = temperatura máxima do condutor no curto (PVC 160 °C; EPR/XLPE 250 °C)
+function icOrigem(e){
+  e = e || S.dem.icc; if(!e) return null;
+  const Un = num(e.un) > 0 ? num(e.un) : icUn(), c = num(e.c) || 1.10, o = {Un, c, cmin: IC_CMIN, partes:[], modo: e.modo==="med" ? "med" : "calc"};
+  if(!(Un > 0)) return {erro:"Tensão da instalação não definida (escolha a concessionária e a tensão no cálculo de demanda)."};
+  if(o.modo==="med"){
+    const t = e.medTipo || "icc", v = num(e.medV), Rm = num(e.medR), Xm = num(e.medX), temRX = Rm > 0 || Xm > 0;
+    if(!(v > 0)) return {erro:"Informe o valor medido (ou informado) no padrão."};
+    if(t==="icc"){ const Z = c*Un/(Math.sqrt(3)*v*1000); o.partes.push({n:"Fonte equivalente pela Icc no padrão", f:`Z = c·Un / (√3·Ik) = ${fmt(c,2)} × ${fmt(Un)} / (√3 × ${fmt(v,2)} kA) · sequência zero igual à positiva`, R:0, X:Z, lR:0, lX:Z, nota:"toda reativa (a favor da segurança na corrente máxima)"}); }
+    else if(t==="zff"){ const R = temRX ? Rm/2 : 0, X = temRX ? Xm/2 : v/2;
+      o.partes.push({n:"Impedância fase-fase medida", f:`Z1 = Zff / 2 = ${fmt(v,4)} Ω / 2 · sequência zero igual à positiva`, R, X, lR:R, lX:X, nota: temRX ? "R e X medidos" : "toda reativa (a favor da segurança)"}); }
+    else { const lR = temRX ? Rm : 0, lX = temRX ? Xm : v;
+      o.partes.push({n:"Impedância de laço fase-neutro medida", f:`laço = ${fmt(v,4)} Ω (usado direto na corrente mínima) · Z1 ≈ Zlaço / 2 na máxima (neutro com a mesma impedância da fase)`, R:lR/2, X:lX/2, lR, lX, nota: temRX ? "R e X medidos" : "toda reativa"}); }
+  } else {
+    const Sk = num(e.sk), St = num(e.st), uk = num(e.uk), Pk = num(e.pk);
+    if(Sk > 0){ const ZQ = 1.10*Un**2/(Sk*1e6), XQ = 0.995*ZQ, RQ = 0.1*XQ;                 // 3.2: ZQt = c·UnQ²/S"kQ·1/tr², c = 1,10 (MT); RQ = 0,1·XQ, XQ = 0,995·ZQ
+      o.partes.push({n:"Rede de média tensão", f:`ZQ = c·Un² / S"kQ = 1,10 × ${fmt(Un)}² / ${fmt(Sk,0)} MVA = ${fmt(ZQ*1000,3)} mΩ · XQ = 0,995·ZQ · RQ = 0,1·XQ · no laço entra 2/3 (o Dyn bloqueia a sequência zero)`, R:RQ, X:XQ, lR:2*RQ/3, lX:2*XQ/3, nota:""}); }
+    else o.partes.push({n:"Rede de média tensão", f:"rede infinita (potência de curto não informada)", R:0, X:0, lR:0, lX:0, nota:""});
+    if(!(St > 0 && uk > 0)) return {erro:"Informe a potência e a impedância percentual (Ucc %) do transformador."};
+    const ZT = uk/100*Un**2/(St*1000), Ir = St*1000/(Math.sqrt(3)*Un), RT = Pk > 0 ? Pk/(3*Ir**2) : 0;
+    if(RT >= ZT) return {erro:"As perdas no cobre informadas dão RT maior que ZT: confira Pk e Ucc."};
+    const XT = Math.sqrt(ZT**2 - RT**2), xT = XT/(Un**2/(St*1000)), KT = 0.95*c/(1 + 0.6*xT);   // (7)(8)(9) e (12a)
+    o.KT = KT;
+    o.partes.push({n:`Transformador ${fmt(St,0)} kVA (Dyn)`, f:`ZT = ukr/100 · U²/S = ${fmt(uk,2)}/100 × ${fmt(Un)}² / ${fmt(St,0)} kVA${Pk > 0 ? ` · RT = PkrT / (3·IrT²) = ${fmt(Pk,0)} W / (3 × ${fmt(Ir,1)}²)` : " · sem perdas: RT = 0"} · XT = √(ZT² − RT²) · KT = 0,95·cmáx / (1 + 0,6·xT) = 0,95 × ${fmt(c,2)} / (1 + 0,6 × ${fmt(xT,4)}) = ${fmt(KT,4)} · sequência zero igual à positiva (nota de 3.3.2)`, R:KT*RT, X:KT*XT, lR:KT*RT, lX:KT*XT, nota:""});
+    const Lr = num(e.rL), Sr = num(e.rS), mat = e.rMat==="cu" ? "cu" : "al", np = Math.max(1, Math.round(num(e.rN)) || 1);
+    if(Lr > 0){ const r20 = icR20(Sr, mat); if(r20==null) return {erro: mat==="al" ? "Seção do ramal sem resistência de alumínio na tabela (alumínio a partir de 16 mm²)." : "Escolha a seção do ramal."};
+      const xr = num(e.rX), R = r20*Lr/1000/np, X = xr*Lr/1000/np, kq = icKth(90);
+      o.partes.push({n:`Ramal até o padrão · ${mat==="al" ? "alumínio" : "cobre"} ${fmt(Sr)} mm²${np>1?` × ${np}`:""} · ${fmt(Lr)} m`, f:`R = R'20 × L / n = ${fmt(r20,3)} Ω/km × ${fmt(Lr)} m${np>1?` / ${np}`:""}${xr > 0 ? ` · X = ${fmt(xr,3)} Ω/km × L` : " · X desprezada"} · no laço: fase + neutro de mesma seção a 250 °C (× ${fmt(kq,2)})`, R, X, lR:2*R*kq, lX:2*X, nota:""}); }
+    else o.partes.push({n:"Ramal até o padrão", f:"comprimento não informado (desprezado)", R:0, X:0, lR:0, lX:0, nota:""});
+  }
+  const sm = k => o.partes.reduce((t,x)=>t + x[k], 0);
+  o.R = sm("R"); o.X = sm("X"); o.lR = sm("lR"); o.lX = sm("lX"); o.Z = Math.hypot(o.R, o.X);
+  Object.assign(o, icPonto(o, {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}));
+  return o;
+}
+// correntes num ponto: z = {R, X (seq. positiva, máx.), nR, nX (laço fase-neutro, mín.), pR, pX (laço fase-PE, mín.)}
+function icPonto(o, z){
+  const Z = Math.hypot(z.R, z.X), Ik = Z > 0 ? o.c*o.Un/(Math.sqrt(3)*Z)/1000 : Infinity;   // (29)
+  const kappa = z.X > 0 ? 1.02 + 0.98*Math.exp(-3*z.R/z.X) : 1.02;                          // (55)
+  const U0 = o.Un/Math.sqrt(3), Zn = Math.hypot(z.nR, z.nX), Zp = Math.hypot(z.pR, z.pX);
+  return {Ik, kappa, ip: kappa*Math.SQRT2*Ik,                                               // (54)
+    Ik1n: Zn > 0 ? o.cmin*U0/Zn/1000 : Infinity, Ik1p: Zp > 0 ? o.cmin*U0/Zp/1000 : Infinity};   // (53): √3·c·Un / |2Z1 + Z0| = c·U0 / |laço|
+}
+const icIk = (o, R, X) => { const Z = Math.hypot(R, X); return Z > 0 ? o.c*o.Un/(Math.sqrt(3)*Z)/1000 : Infinity; };
+function icAtivo(){ return !S.naoAplica?.icc && S.dem.icc && Object.keys(S.dem.icc).length > 0; }
+function icCalc(){
+  const e = icDados(), o = icOrigem(e); if(!o) return {erro:"Sem dados."}; if(o.erro) return o;
+  const its = alItens(); o.its = its;
+  o.quadros = its.map(it=>{ const z = it.icZ, zp = it.icZPai; return {it, nome: it.q.nome || "—", pai: dmPai(it.q)?.nome || "Padrão", nivel: it.nivel, IkPai: zp ? icIk(o, zp.R, zp.X) : null, z, zp, trecho: it.icTrecho, ...(z ? icPonto(o, z) : {})}; });
+  return o;
+}
+// ---- apresentação ----
+const icMO = x => fmt(x*1000, 2);
+function icTabOrigem(o, cls){
+  return `<table class="${cls}"><thead><tr><th>Trecho</th><th>Cálculo</th><th class="n">R (mΩ)</th><th class="n">X (mΩ)</th><th class="n">Laço mín. R / X (mΩ)</th></tr></thead><tbody>
+    ${o.partes.map(p=>`<tr><td>${esc(p.n)}</td><td>${esc(p.f)}${p.nota ? ` <i>(${esc(p.nota)})</i>` : ""}</td><td class="n">${icMO(p.R)}</td><td class="n">${icMO(p.X)}</td><td class="n">${icMO(p.lR)} / ${icMO(p.lX)}</td></tr>`).join("")}
+    <tr style="font-weight:700"><td>No padrão</td><td>Ik" = c·Un / (√3·|Z|) = ${fmt(o.c,2)} × ${fmt(o.Un)} V / (√3 × ${icMO(o.Z)} mΩ) = ${fmt(o.Ik,2)} kA · ip = κ·√2·Ik" (κ = ${fmt(o.kappa,3)}) = ${fmt(o.ip,2)} kA · Ik1 mín. = cmín·U0 / |laço| = ${fmt(o.Ik1n,2)} kA</td><td class="n">${icMO(o.R)}</td><td class="n">${icMO(o.X)}</td><td class="n">${icMO(o.lR)} / ${icMO(o.lX)}</td></tr></tbody></table>`;
+}
+function icTabQuadros(r, cls){
+  const v = x => x==null || !isFinite(x) ? "—" : fmt(x, 2);
+  return `<table class="${cls}"><thead><tr><th>Quadro</th><th>Alimentado por · cabo do alimentador</th><th class="n">Icc máx. no início do alimentador (kA)</th><th class="n">Icc máx. no quadro (kA)</th><th class="n">Pico ip (kA)</th><th class="n">Icc mín. fase-neutro (kA)</th><th class="n">Icc mín. fase-PE (kA)</th></tr></thead><tbody>
+    <tr><td><b>Padrão</b></td><td>${r.modo==="med" ? "valor medido/informado" : "rede e transformador"}</td><td class="n">—</td><td class="n"><b>${v(r.Ik)}</b></td><td class="n">${v(r.ip)}</td><td class="n">${v(r.Ik1n)}</td><td class="n">${v(r.Ik1p)}</td></tr>
+    ${r.quadros.map(x=>`<tr><td>${"&nbsp;&nbsp;&nbsp;".repeat(x.nivel)}${x.nivel?"└ ":""}${esc(x.nome)}</td><td>${esc(x.pai)} · ${x.trecho ? esc(x.trecho.txt) : `<span class="falha">${esc(x.it.icFalta || "sem cabo definido")}</span>`}</td><td class="n">${v(x.IkPai)}</td><td class="n"><b>${v(x.Ik)}</b></td><td class="n">${v(x.ip)}</td><td class="n">${v(x.Ik1n)}</td><td class="n">${v(x.Ik1p)}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+function renderIcc(){
+  const M = $("mod-icc"); if(!M) return; const e = icDados();
+  M.querySelectorAll(".ic-calc").forEach(x=>x.style.display = e.modo==="med" ? "none" : ""); M.querySelectorAll(".ic-med").forEach(x=>x.style.display = e.modo!=="med" ? "none" : "");
+  const r = icCalc(), un = icUn();
+  M.querySelector('[data-ic="un"]').placeholder = un > 0 ? `${fmt(un)} (da demanda)` : "V";
+  $("ic-params").innerHTML = r.erro ? "" : [["Icc máx. no padrão", fmt(r.Ik,2), "kA"], ["Pico no padrão", fmt(r.ip,2), "kA"], ["Icc mín. fase-neutro no padrão", fmt(r.Ik1n,2), "kA"], ["Quadros calculados", `${r.quadros.filter(x=>x.Ik!=null).length}/${r.quadros.length}`, `c máx ${fmt(r.c,2)} · c mín 0,95`]].map(([k,v,u])=>`<div class="param"><small>${k}</small><strong>${v}</strong><em>${u}</em></div>`).join("");
+  $("ic-orig").innerHTML = r.erro ? `<p class="vazio">${esc(r.erro)}</p>` : icTabOrigem(r, "quadro");
+  $("ic-quad").innerHTML = r.erro ? "" : (r.quadros.length ? icTabQuadros(r, "quadro") + `<p class="fonte" style="margin-top:8px">A Icc máxima no início de cada alimentador é a do quadro de onde ele sai: é a que o disjuntor desse alimentador tem de interromper (Icu/Ics ≥ Icc; Icm ≥ pico) e a que entra automaticamente na verificação do cabo ao curto-circuito na aba Alimentadores, quando o campo de curto-circuito do alimentador está vazio. A Icc mínima fase-PE no quadro deve ser maior que o disparo magnético do disjuntor do alimentador. Cabos com R a 20 °C (máxima) e na temperatura final do curto (mínima), tabela 18 da planilha R4; X da aba Alimentadores; PE pela tabela 58.</p>` : `<p class="vazio">Nenhum quadro no cálculo de demanda.</p>`);
+}
+function preencherIcc(){
+  const e = icDados(), M = $("mod-icc"); if(!M) return;
+  const OPS = {modo:IC_MODO, c:IC_C, medTipo:IC_MED, rMat:IC_RMAT, rS: icSecoes().map(s=>[String(s), fmt(s)])};
+  Object.entries(OPS).forEach(([k,t])=>{ const s = M.querySelector(`[data-ic="${k}"]`); if(s && !s.options.length) s.innerHTML = t.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(""); });
+  M.querySelectorAll("[data-ic]").forEach(el=>{ const k = el.dataset.ic, v = e[k];
+    if(el.tagName==="SELECT") el.value = v ?? el.dataset.pad ?? el.options[0]?.value ?? "";
+    else el.value = el.hasAttribute("data-mil") ? fmtIn(v ?? "") : (v ?? ""); });
+  $("i-resp").innerHTML = opcoesResp(S.dem.respId);
+  renderIcc();
+}
+function resumoIccParte(){
+  const e = S.dem.icc; if(!e || !Object.keys(e).length) return null;
+  const r = icCalc(); if(r.erro) return {det:r.erro, ok:false};
+  const mx = r.quadros.reduce((m,x)=>x.Ik!=null && x.Ik > m ? x.Ik : m, 0);
+  return {det:`Icc no padrão ${fmt(r.Ik,2)} kA (mín. ${fmt(r.Ik1n,2)} kA) · ${r.quadros.filter(x=>x.Ik!=null).length}/${r.quadros.length} quadros calculados`, ok: r.quadros.every(x=>x.Ik!=null)};
+}
+function relIcc(){
+  const D = S.dem, e = icDados(), r = icCalc(), S2 = secoes(), sec = S2.sec;
+  const cab = `${relCarimbo("Corrente de curto-circuito presumida nos quadros", e.doc, e.rev, "Instalações elétricas")}${sec("Identificação", relIdent(D))}
+    ${sec("Objetivo e método", `<p>Determinar as correntes de curto-circuito presumidas no padrão de entrada e em cada quadro: a trifásica máxima e o pico, para a capacidade de interrupção e de estabelecimento dos disjuntores e a verificação térmica dos condutores; e as mínimas fase-neutro e fase-PE, para a verificação da atuação dos dispositivos de proteção.</p><p>Método da fonte de tensão equivalente no ponto de curto-circuito (IEC 60909-0:2001). Máxima (2.4): Ik" = cmáx·Un / (√3·|Z(1)|), eq. (29), com cabos a 20 °C, fator KT do transformador (12a) e rede com RQ = 0,1·XQ (3.2); pico ip = κ·√2·Ik", κ = 1,02 + 0,98·e<sup>−3R/X</sup> (54)(55). Mínima (2.5): Ik1 = √3·cmín·Un / |2·Z(1) + Z(0)|, eq. (53), com cmín = 0,95 (Tabela 1), cabos na temperatura do fim do curto, RL = [1 + 0,004·(θe − 20)]·RL20 (3), θe = 160 °C (PVC) ou 250 °C (EPR/XLPE). Transformador Dyn com Z(0) igual à de sequência positiva (nota de 3.3.2) e rede de média tensão fora da sequência zero; nos cabos, Z(0) = Zfase + 3·Zretorno (neutro ou PE), o que equivale ao laço fase-retorno. Arco, cargas e motores desprezados.</p>`)}`;
+  if(r.erro) return `<div class="r">${cab}<p>${esc(r.erro)}</p>${relAssinatura(D)}</div>`;
+  return `<div class="r">${cab}
+    ${sec("Dados", `<table class="r-t"><tbody><tr><td class="k">Tensão nominal Un</td><td>${fmt(r.Un)} V (entre fases)</td></tr><tr><td class="k">Fator de tensão</td><td>${esc(rskOp(IC_C, e.c || "1.10", "1.10")[1])}</td></tr><tr><td class="k">Origem</td><td>${esc(rskOp(IC_MODO, e.modo || "calc", "calc")[1])}${r.modo==="med" ? ` · ${esc(rskOp(IC_MED, e.medTipo || "icc", "icc")[1])}` : ""}</td></tr></tbody></table>`)}
+    ${sec("Impedância até o padrão", icTabOrigem(r, "r-t"))}
+    ${sec("Corrente de curto-circuito presumida nos quadros", icTabQuadros(r, "r-t") + `<p style="margin-top:6px;font-size:8.5pt">Icc máx. no início do alimentador: capacidade de interrupção do disjuntor do alimentador (Icu/Ics) e verificação térmica do cabo (S ≥ Icc·√t/k). Pico ip: capacidade de estabelecimento (Icm). Icc mín. fase-PE no quadro: deve ser maior que a corrente de disparo instantâneo (magnético) do disjuntor do alimentador para o seccionamento automático. Para quadros monofásicos ou bifásicos, a Icc trifásica é só um limite superior.</p>`)}
+    ${linhasObs(e.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(e.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
+    ${relAssinatura(D)}</div>`;
+}
+function ligarIcc(){
+  const M = $("mod-icc"); if(!M) return;
+  const trata = (ev, mudou) => { const t = ev.target; if(!t.dataset?.ic) return; const e = icDados(), k = t.dataset.ic;
+    const texto = t.tagName==="TEXTAREA" || (t.tagName==="INPUT" && t.type!=="checkbox"); if(mudou && texto) return; if(!mudou && !texto) return;
+    e[k] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value;
+    if(!["doc","rev","obs"].includes(k)) renderIcc(); resumo(); salvar(); };
+  M.addEventListener("input", ev=>trata(ev, false)); M.addEventListener("change", ev=>trata(ev, true));
+  M.addEventListener("focusout", ev=>{ const t = ev.target; if(t.hasAttribute?.("data-mil")) t.value = fmtIn(numBR(t.value)); });
 }
 
 function dmNomeCopia(nome){                                 // QDC2 → QDC3 (próximo livre); outros nomes → "nome (cópia)"
@@ -9317,7 +9513,7 @@ function renderResp(){
   $("g-resp").innerHTML = opcoesResp(S.gas.respId);
   $("p-resp").innerHTML = opcoesResp(S.plu.respId);
   $("h-resp").innerHTML = opcoesResp(S.hid.respId);
-  $("t-resp").innerHTML = opcoesResp(S.est.respId); $("v-resp").innerHTML = opcoesResp(S.est.respId); $("u-resp").innerHTML = opcoesResp(S.dem.respId); $("s-resp").innerHTML = opcoesResp(S.dem.respId);
+  $("t-resp").innerHTML = opcoesResp(S.est.respId); $("v-resp").innerHTML = opcoesResp(S.est.respId); $("u-resp").innerHTML = opcoesResp(S.dem.respId); $("s-resp").innerHTML = opcoesResp(S.dem.respId); $("i-resp").innerHTML = opcoesResp(S.dem.respId);
   $("l-resp").innerHTML = opcoesResp(S.ele.respId);
   $("q-resp").innerHTML = opcoesResp(S.pis.respId);
   $("r-resp").innerHTML = opcoesResp(S.res.respId);
@@ -9332,7 +9528,7 @@ function renderResp(){
     </div>`).join("") : `<p class="vazio" style="font-size:15px">Nenhum responsável cadastrado.</p>`;
 }
 function ligarResp(){
-  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl", d:"dem", v:"est", u:"dem", s:"dem"};
+  const PRE = {e:"esg", g:"gas", p:"plu", h:"hid", t:"est", l:"ele", q:"pis", r:"res", k:"cmx", b:"cgl", d:"dem", v:"est", u:"dem", s:"dem", i:"dem"};
   Object.entries(PRE).forEach(([pre,k])=>{
     $(pre+"-resp").addEventListener("change", e=>{ aplicarResp(S[k], e.target.value); renderResp(); salvar(); });
   });
@@ -9359,7 +9555,7 @@ function ligarResp(){
 /* =====================================================================
    DESFAZER / REFAZER (Ctrl+Z / Ctrl+Y) por disciplina da obra aberta
    ===================================================================== */
-const HIST_CHAVE = {esgoto:"esg", est:"est", elv:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", dem:"dem", ali:"dem", rsk:"dem", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
+const HIST_CHAVE = {esgoto:"esg", est:"est", elv:"est", gas:"gas", plu:"plu", hid:"hid", res:"res", ele:"ele", cmx:"cmx", dem:"dem", ali:"dem", icc:"dem", rsk:"dem", cgl:"cgl", paq:"pis", pfi:"pis", pcl:"pis", phi:"pis", pls:"pis"};
 const HIST = {obra:null, ultimo:{}, desfazer:{}, refazer:{}, t:{}, restaurando:false};
 function histBase(){                                       // ponto de partida (abrir obra, obra nova)
   HIST.obra = S.id; HIST.ultimo = {}; HIST.desfazer = {}; HIST.refazer = {}; HIST.t = {};
@@ -9394,7 +9590,7 @@ function histRestaurar(k){                                 // redesenha a discip
     if(k==="res") preencherRes();
     if(k==="cmx") preencherCmx();
     if(k==="cgl") preencherCgl();
-    if(k==="dem"){ preencherDem(); if(S.modulo==="ali") preencherAli(); if(S.modulo==="rsk") preencherRsk(); }
+    if(k==="dem"){ preencherDem(); if(S.modulo==="ali") preencherAli(); if(S.modulo==="rsk") preencherRsk(); if(S.modulo==="icc") preencherIcc(); }
     aplicarNA(); resumo();
     gravarS();
     if(typeof bibAtualizar==="function") bibAtualizar();
@@ -9591,7 +9787,11 @@ const CONF_CASOS = [
   {mod:"rsk", nome:"Análise de risco · loja em Niterói com R4 e avaliação econômica (SPDA III + DPS III)", norma:"NBR 5419-2:2026, Anexo D · R4 = 1,29 × 10⁻³, CL = R$ 2.684,97, SM = −R$ 2.254,48 (conferidos em cálculo independente)", ini:s=>{ s.dem.rsk = {nome:"Loja", uso:"com", rs:"1", L:"30", W:"20", H:"8", cd:"1", uf:"RJ", mun:"Niterói", pb:"III", r4:true, r4tipo:"com", cp:"40000", ti:"6", ta:"5", tm:"1",
       linhas:[{id:"e",nome:"Energia",tipo:"pot",LL:"300",inst:"ent",ct:"bt",ce:"urb",b4:"3",uw:"2.5",eb:"III",spd:"III",ks3:"1"}],
       zonas:[{id:"z",nome:"Loja",nz:"20",tz:"3000",rt:"m",rp:"man",rf:"normal",hz:"2",vida:"0",ca:"0",cb:"800000",cc:"300000",cs:"100000"}]}; },
-    f:()=>{ const r = rskCalc(); r.custo = rskCusto(rskDados(), r); return r; }, ver:r=>`R4 ${rskE(r.R4,3)} · CL R$ ${fmt(r.custo.CL,2)} · CRL R$ ${fmt(r.custo.CRL,2)} · SM R$ ${fmt(r.custo.SM,2)}`}
+    f:()=>{ const r = rskCalc(); r.custo = rskCusto(rskDados(), r); return r; }, ver:r=>`R4 ${rskE(r.R4,3)} · CL R$ ${fmt(r.custo.CL,2)} · CRL R$ ${fmt(r.custo.CRL,2)} · SM R$ ${fmt(r.custo.SM,2)}`},
+  {mod:"icc", nome:"Icc presumida · exemplo ABB/IEC 60909: rede 500 MVA, transformador 400 kVA 4 %, 400 V", norma:"IEC 60909-0:2001 · KT = 0,9741, Ik\" = 15,22 kA, ip = 42,90 kA, Ik1 mín. = 13,87 kA (conferidos em cálculo independente; sem c e sem KT o material da ABB dá 14,1 kA)", ini:s=>{ s.dem.icc = {un:"400", c:"1.05", sk:"500", st:"400", uk:"4"}; },
+    f:()=>icOrigem(S.dem.icc), ver:r=>`Z ${fmt(r.Z*1000,3)} mΩ · Ik" ${fmt(r.Ik,2)} kA · ip ${fmt(r.ip,2)} kA · Ik1 mín. ${fmt(r.Ik1n,2)} kA`},
+  {mod:"icc", nome:"Icc presumida · transformador 150 kVA 3,5 % (Pk 2.200 W), ramal alumínio 70 mm² 40 m, 380 V, rede infinita", norma:"IEC 60909-0:2001 · KT = 1,0254, Ik\" = 5,368 kA, ip = 8,09 kA, Ik1 mín. = 2,36 kA (conferidos em cálculo independente)", ini:s=>{ s.dem.icc = {un:"380", c:"1.10", st:"150", uk:"3.5", pk:"2200", rMat:"al", rS:"70", rL:"40"}; },
+    f:()=>icOrigem(S.dem.icc), ver:r=>`R ${fmt(r.R*1000,2)} · X ${fmt(r.X*1000,2)} mΩ · Ik" ${fmt(r.Ik,3)} kA · ip ${fmt(r.ip,2)} kA · Ik1 mín. ${fmt(r.Ik1n,2)} kA`}
 ];
 function confGas(s){ const G = s.gas; G.trechos=[{id:"t1",L:5,de:0,dir:"h"},{id:"t2",L:8,de:1,dir:"u"},{id:"t3",L:6,de:2,dir:"h"}];
   G.pontos=[{id:"p1",nome:"Fogão",equip:"",qtd:1,kgn:216,kglp:180,no:1,ramal:2},{id:"p2",nome:"Aquecedor",equip:"",qtd:1,kgn:400,kglp:330,no:2,ramal:1.5},{id:"p3",nome:"Churrasqueira",equip:"",qtd:2,kgn:150,kglp:125,no:3,ramal:3}]; }
@@ -9644,11 +9844,11 @@ function rodarConferencia(){
   return out;
 }
 // resultados de referência (versão de 30/10/2026, Light pela RECON BT, Enel RJ com tipos de fornecimento da GRI-0017): qualquer diferença aparece em vermelho
-const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75", "06d4837a·108", "c1ef22ce·128", "9f68c7a7·132", "0d70e7e7·305", "0d929ff9·173", "c4a000a0·221"];
+const CONF_ESPERADO = ["fa805cf2·67", "b30cfb0d·67", "3bad3456·25", "6ba33c85·747", "382473e8·24", "23360887·99", "cb25657d·112", "d1c1ce30·112", "7661dcfc·46", "540b1a9c·46", "5255e824·168", "0ca089dc·177", "f2106e3f·292", "395f818d·168", "f7d163d7·168", "668403ed·107", "da227538·131", "0dac4058·90", "039c2714·580", "0f682af4·139", "232149c2·116", "3f2c9207·238", "c8cfe134·471", "1d408368·546", "c85c4e45·344", "5d40a4db·352", "f47d1776·378", "9dc85e50·75", "101b73d9·75", "d0666d35·75", "ee60dc25·75", "06d4837a·108", "c1ef22ce·128", "9f68c7a7·132", "0d70e7e7·305", "0d929ff9·173", "c4a000a0·221", "ef7ee1d8·34", "7bfec2c9·34"];
 function renderConferencia(rodar){
   const el = $("conf-res"); if(!el) return;
   if(!rodar){ el.innerHTML = `<p class="fonte">Clique em <b>Conferir agora</b> para refazer ${CONF_CASOS.length} casos de teste (exemplos das normas e obras de teste) e comparar com os resultados de referência.</p>`; return; }
-  const R = rodarConferencia(), ok = R.filter(x=>x.ok).length, nomes = {esgoto:"Esgoto", est:"Esgoto", elv:"Esgoto", hid:"Hidráulica", res:"Hidráulica", plu:"Pluvial", gas:"Gás", cgl:"Gás", ele:"Elétrica", cmx:"Elétrica", dem:"Elétrica", ali:"Elétrica", rsk:"Elétrica", pis:"Piscina"};
+  const R = rodarConferencia(), ok = R.filter(x=>x.ok).length, nomes = {esgoto:"Esgoto", est:"Esgoto", elv:"Esgoto", hid:"Hidráulica", res:"Hidráulica", plu:"Pluvial", gas:"Gás", cgl:"Gás", ele:"Elétrica", cmx:"Elétrica", dem:"Elétrica", ali:"Elétrica", icc:"Elétrica", rsk:"Elétrica", pis:"Piscina"};
   el.innerHTML = `<div class="conf-tot ${ok===R.length?"ok":"falha"}">${ok===R.length ? `✓ Todos os ${R.length} casos deram exatamente o resultado de referência.` : `✗ ${R.length-ok} de ${R.length} casos deram diferente da referência. Não use esta versão para emitir antes de conferir.`}</div>
     <div class="rolar"><table class="quadro conf-t"><thead><tr><th>Disciplina</th><th>Caso</th><th>Resultado</th><th>Referência da norma</th><th class="c">Igual</th></tr></thead><tbody>
     ${R.map(x=>`<tr class="${x.ok?"":"falha"}"><td>${nomes[x.c.mod]||""}</td><td>${esc(x.c.nome)}</td><td>${x.erro?`<span class="falha">erro: ${esc(x.erro)}</span>`:esc(x.ver)||"<span class=\"fonte\">todos os números do cálculo</span>"}</td><td>${esc(x.c.norma||"")}</td><td class="c">${x.ok?"✓":"✗"}</td></tr>`).join("")}</tbody></table></div>`;
@@ -9785,6 +9985,7 @@ ligarCgl();
 ligarDem();
 ligarAli();
 ligarRsk();
+ligarIcc();
 apvIniciar();
 ligarImp();
 ligarGruposNav();
@@ -9801,7 +10002,7 @@ document.addEventListener("click", e=>{                   // mesmo responsável 
 });
 ligarResp(); respPadrao(S.esg); respPadrao(S.gas); respPadrao(S.plu); respPadrao(S.hid); respPadrao(S.est); respPadrao(S.ele); respPadrao(S.pis); respPadrao(S.res); respPadrao(S.cmx); respPadrao(S.cgl); respPadrao(S.dem); renderResp();
 renderEsgoto();
-{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","rsk","elv","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); if(h==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } renderLateralObra(); }
+{ let h=""; try{ h = location.hash.slice(1); }catch(e){} trocarModulo(["gas","cgl","esgoto","plu","hid","res","est","ele","cmx","dem","ali","icc","rsk","elv","paq","pfi","pcl","phi","pls"].includes(h) ? h : S.modulo); if(h==="clientes") abrirClientes(); if(h==="tecnicos") abrirTecnicos(); if(h==="conferencia"){ abrirTecnicos(); renderConferencia(true); $("conf")?.scrollIntoView(); } renderLateralObra(); }
 
 var EMBUTIDO = false;
 try{ EMBUTIDO = !!(window.parent && window.parent !== window && window.parent.EQUIPER_PAINEL_HOST); }catch(e){}
