@@ -198,6 +198,12 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 #al-diag [data-alq]{cursor:pointer}#al-diag [data-alq]:hover rect{stroke-width:2.5}
 .elv-ap{display:grid;grid-template-columns:2.2fr 1fr 1.3fr 40px;gap:8px;align-items:end;margin-top:8px}@media(max-width:620px){.elv-ap{grid-template-columns:1fr 1fr 40px}.elv-ap .campo:first-child{grid-column:1/-1}}
 .elv-curva{display:grid;grid-template-columns:repeat(10,minmax(70px,1fr));gap:6px}@media(max-width:900px){.elv-curva{grid-template-columns:repeat(4,1fr)}}
+.aj-i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;border-radius:50%;border:1.5px solid var(--cinza-4,#777);background:#fff;color:var(--cinza-4,#777);font:italic 700 12px/1 Georgia,serif;cursor:pointer;vertical-align:middle;padding:0;flex:none}
+.aj-i:hover,.aj-i[aria-expanded=true]{border-color:var(--vermelho,#d10a1e);color:#fff;background:var(--vermelho,#d10a1e)}
+.aj-rot{display:inline-flex;align-items:center;flex-wrap:wrap}
+.aj-pop{position:absolute;z-index:10050;width:min(380px,92vw);background:#fff;border:1px solid #ccc;border-top:3px solid var(--vermelho,#d10a1e);box-shadow:0 8px 28px rgba(0,0,0,.18);padding:12px 14px;font-size:14px;line-height:1.45;color:#111}
+.aj-pop b{display:block;margin-bottom:4px;font-size:15px}.aj-pop p{margin:0 0 8px}.aj-pop small{display:block;color:var(--cinza-4,#666);font-size:12px}
+@media print{.aj-i,.aj-pop{display:none!important}}
 .rsk-r4f[hidden]{display:none}.rsk-pf strong{color:var(--vermelho)}.rsk-chk{display:flex;flex-direction:column;gap:4px}.rsk-chk small{font-size:13px;color:var(--cinza-4)}.rsk-chk .chave{font-size:14px}.rsk-lista{display:grid;gap:12px;margin-bottom:10px}
 .rsk-mat td.rsk-ok{color:#1d6b2f}.rsk-mat td.rsk-best{outline:2px solid #1d6b2f;outline-offset:-2px;font-weight:700}.rsk-concl{margin:10px 0 0;padding-left:20px}.rsk-av{margin:8px 0 0;padding:8px 12px 8px 30px;background:#fff4f4;color:var(--vermelho);font-size:14px}
 .apv-box:empty{display:none}.apv{margin-top:18px;border-top:1px solid var(--cinza-2);padding-top:14px}.apv-cab{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;margin-bottom:10px}.apv-cab b{font-size:17px}.apv-st{font-weight:700;padding:2px 10px;border-radius:999px;font-size:14px}.apv-st.ok{background:#e3f1e6;color:#1d6b2f}.apv-st.pend{background:#fff4d6;color:#7a5600}.apv-st.alt{background:#fde7e7;color:var(--vermelho)}.apv-sub{font-size:13px;color:var(--cinza-4)}.apv-bloco{margin:10px 0}.apv-bloco>small{display:block;font-size:13px;color:var(--cinza-4);margin-bottom:4px}.apv-mud{margin:0;padding-left:18px;font-size:14px}.apv-mud small{color:var(--cinza-4)}.apv-bts{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.apv-bt{background:var(--preto);color:#fff;border:0;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}.apv-bt.sec{background:#fff;color:var(--preto);border:2px solid var(--preto)}.apv-hist td{vertical-align:top}.apv-aviso{color:var(--vermelho)}
@@ -1502,7 +1508,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
     <section class="etapas">
       <article class="etapa"><div class="num">1</div><div><div class="etapa-cab"><h3>Resultado e necessidade de proteção</h3><span class="nbr">5.4 e 7.3</span></div><div class="rolar" id="rsk-res"></div></div></article>
       <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Componentes de risco</h3><span class="nbr">seção 6 · Tabela 6</span></div><div class="rolar" id="rsk-comp"></div></div></article>
-      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Combinações de SPDA e DPS</h3><span class="nbr">Figura 1</span></div><div class="rolar" id="rsk-mat"></div></div></article>
+      <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Combinações de SPDA e DPS<button type="button" class="aj-i" data-aj="comparar" aria-label="Ajuda: comparar duas análises" title="Comparar duas análises">i</button></h3><span class="nbr">Figura 1</span></div><div class="rolar" id="rsk-mat"></div></div></article>
       <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Número anual de eventos perigosos</h3><span class="nbr">Anexo A</span></div><div class="rolar" id="rsk-n"></div></div></article>
       <article class="etapa"><div class="num">5</div><div><div class="etapa-cab"><h3>Probabilidades e perdas</h3><span class="nbr">Anexos B e C</span></div><div class="rolar" id="rsk-p"></div></div></article>
       <article class="etapa" id="rsk-r4-et" hidden><div class="num">6</div><div><div class="etapa-cab"><h3>Perda de valor econômico R4</h3><span class="nbr">Anexo D · informativo</span></div><div class="rolar" id="rsk-r4"></div></div></article>
@@ -7045,7 +7051,7 @@ function rvCirc(c){
 }
 const rvReserva = c => !(rvNum(c.va) > 0) || /\breserva/i.test(semAc(c.desc));
 // carga de cada circuito no Cálculo de demanda: il (iluminação e tomadas), aq (aquecimento), ar, mo (motor) ou "" (não entra)
-const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica"],[/boiler/,"Boiler"],[/sauna/,"Sauna"],[/bomba de calor/,"Bomba de calor"],[/trocador de calor/,"Trocador de calor"],[/resistenc/,"Resistência"],
+const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica"],[/boiler/,"Boiler"],[/sauna/,"Sauna"],[/bomba de calor/,"Bomba de calor"],[/trocador de calor/,"Trocador de calor"],[/resistenc/,"Resistência"],[/desembac/,"Desembaçador"],
   [/cooktop/,"Cooktop elétrico"],[/\bforno\b/,"Forno"],[/carregador|veiculo eletrico|carro eletrico/,"Carregador de carro elétrico"],[/adega/,"Evaporador adega"],[/aquec/,"Aquecedor"]];
 const RV_MO = [[/pressuriza/,"Pressurização"],[/piscina/,"Piscina"],[/recalque/,"Recalque"],[/reuso/,"Reúso"],[/drenagem/,"Drenagem"],[/irriga/,"Irrigação"],[/hidromassagem/,"Hidromassagem"],[/portao/,"Portão"],[/elevador/,"Elevador"],[/exaust/,"Exaustores"]];
 function rvCatAuto(c){
@@ -8872,7 +8878,7 @@ function rskCalc(e, ov){
   r.CD = rskV(RSK_CD, e.cd, "1");
   r.ND = r.NG*r.AD*r.CD*1e-6;                                         // (A.3)
   r.AM = 2*500*(L+W) + Math.PI*500**2; r.NM = r.NG*r.AM*1e-6;          // (A.5)(A.6)
-  const uso = rskOp(RSK_USOS, e.uso, "res"); r.uso = uso[1]; r.LF = uso[2]; r.LT = uso[0]==="exp" ? 0.1 : 0.01;
+  const uso = rskOp(RSK_USOS, e.uso, "res"); r.uso = uso[1]; r.LF = uso[2]; r.LT = 0.01;   // Tabela C.2: LT = 10⁻² em todos os tipos (o 10⁻¹ de risco de explosão é de LF e LO)
   r.rs = rskV(RSK_RS, e.rs, "1");
   const pbK = ov.pb!=null ? ov.pb : e.pb;
   r.pbTxt = rskOp(RSK_PB, pbK, "0")[1]; r.PB = rskV(RSK_PB, pbK, "0"); r.spda = r.PB < 1;
@@ -9212,9 +9218,678 @@ function relRsk(){
     ${sec("Componentes de risco (seção 6, Tabela 6)", rskTabComp(r, "r-t"))}
     ${sec("Resultado", `<div class="r-resumo">${rskTabRes(r, "r-t")}<div class="r-concl ${r.ok?"":"falha"}"><b>Conclusão:</b> ${rskConclusao(r).map(esc).join(" ")}</div></div>${r.avisos.length ? `<ul class="r-obs">${r.avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` : ""}`)}
     ${sec("Combinações de SPDA e DPS (Figura 1)", rskTabMat(r, rskMatriz(e), "r-t"))}
+    ${sec("O que executar e garantir na obra", rskObraRel(e, r))}
     ${r.r4 ? sec("Perda de valor econômico R4 (Anexo D, informativo)", rskTabR4(r, "r-t", e)) : ""}
     ${linhasObs(e.obs).length ? sec("Observações", `<ol class="r-obs">${linhasObs(e.obs).map(o=>`<li>${esc(o)}</li>`).join("")}</ol>`) : ""}
     ${relAssinatura(D)}</div>`;
+}
+// ---- o que a obra precisa executar e manter para valer o cálculo (cada escolha → ação na obra) ----
+const RSK_OBRA = /*OBRA*/{
+"pb:IV": {
+"o": "Executar SPDA nível IV conforme a NBR 5419-3 em toda a estrutura: captação pela esfera rolante de raio 60 m ou malha de até 20 m × 20 m (ângulo da Figura 1 só em estruturas simples); descidas a cada 20 m em média no perímetro, de preferência nos cantos (até 20 % a mais sem reduzir a quantidade; mínimo 2). Executar também aterramento e ligações equipotenciais na BEP e respeitar as distâncias de segurança do projeto.",
+"ref": "NBR 5419-2:2026, Tabela B.2, B.1.1 e B.1.3; NBR 5419-3:2026, 5.3.2, Tabela 2 e Figura 1, 5.4.3.1, 5.4.3.3 e Tabela 5, 5.5, 6.2, 6.3, Anexo A",
+"tipo": "medida"
+},
+"pb:III": {
+"o": "Executar SPDA nível III conforme a NBR 5419-3 em toda a estrutura: captação pela esfera rolante de raio 45 m ou malha de até 15 m × 15 m (ângulo da Figura 1 só em estruturas simples); descidas a cada 15 m em média no perímetro, de preferência nos cantos (até 20 % a mais sem reduzir a quantidade; mínimo 2). Executar também aterramento e ligações equipotenciais na BEP e respeitar as distâncias de segurança do projeto.",
+"ref": "NBR 5419-2:2026, Tabela B.2, B.1.1 e B.1.3; NBR 5419-3:2026, 5.3.2, Tabela 2 e Figura 1, 5.4.3.1, 5.4.3.3 e Tabela 5, 5.5, 6.2, 6.3, Anexo A",
+"tipo": "medida"
+},
+"pb:II": {
+"o": "Executar SPDA nível II conforme a NBR 5419-3 em toda a estrutura: captação pela esfera rolante de raio 30 m ou malha de até 10 m × 10 m (ângulo da Figura 1 só em estruturas simples); descidas a cada 10 m em média no perímetro, de preferência nos cantos (até 20 % a mais sem reduzir a quantidade; mínimo 2). Executar também aterramento e ligações equipotenciais na BEP e respeitar as distâncias de segurança do projeto.",
+"ref": "NBR 5419-2:2026, Tabela B.2, B.1.1 e B.1.3; NBR 5419-3:2026, 5.3.2, Tabela 2 e Figura 1, 5.4.3.1, 5.4.3.3 e Tabela 5, 5.5, 6.2, 6.3, Anexo A",
+"tipo": "medida"
+},
+"pb:I": {
+"o": "Executar SPDA nível I conforme a NBR 5419-3 em toda a estrutura: captação pela esfera rolante de raio 20 m ou malha de até 5 m × 5 m (ângulo da Figura 1 só em estruturas simples); descidas a cada 10 m em média no perímetro, de preferência nos cantos (até 20 % a mais sem reduzir a quantidade; mínimo 2). Executar também aterramento e ligações equipotenciais na BEP e respeitar as distâncias de segurança do projeto.",
+"ref": "NBR 5419-2:2026, Tabela B.2, B.1.1 e B.1.3; NBR 5419-3:2026, 5.3.2, Tabela 2 e Figura 1, 5.4.3.1, 5.4.3.3 e Tabela 5, 5.5, 6.2, 6.3, Anexo A",
+"tipo": "medida"
+},
+"pb:IN": {
+"o": "Executar captação nível I (esfera de raio 20 m ou malha ≤ 5 m × 5 m) ligada a ≥ 10 descidas naturais (pilares de aço ou armaduras, nunca protendidas) interligadas por lajes, vigas ou cobertura metálica. Obra nova: ligar em cada pilar uma linha de barras do topo à base (solda, arame ou grampo), firmar ≥ 50 % das ligações entre barras horizontais e verticais e trespassar ≥ 20 Ø, com registro fotográfico; estrutura pronta: ensaio do Anexo F (≤ 1 Ω). Ao concluir, medir ≤ 0,2 Ω entre captação e BEP.",
+"ref": "NBR 5419-2:2026, Tabela B.2; NBR 5419-3:2026, Tabela 2, 8.1.2-b), 5.1.3.2, 5.4.5.1-b) e c), 5.4.5.2, Anexo F (F.1.2.2, F.2.2.2, F.2.2.3.3, F.4.1 e F.4.4)",
+"tipo": "medida"
+},
+"pb:CM": {
+"o": "Usar a cobertura metálica como captação: chapas com continuidade duradoura (solda, frisamento, costura ou parafusos), revestimento isolante ≤ 1 mm e espessura ≥ t' da Tabela 3 da NBR 5419-3 (aço 0,5 mm; alumínio 0,65 mm), ou ≥ t (aço 4 mm; alumínio 7 mm) onde a perfuração não for admitida. Proteger as instalações da cobertura contra impacto direto e centelhamento. Descidas: ≥ 10 caminhos naturais interligados (8.1.2-b), com continuidade das armaduras conforme 5.4.5 e Anexo F (≤ 1 Ω; ≤ 0,2 Ω entre captação e BEP).",
+"ref": "NBR 5419-2:2026, Tabela B.2; NBR 5419-3:2026, 5.3.2.16.1.1 e Tabela 3, 6.1.3, 8.1.2-b), 5.4.5, Anexo F (F.2.2.3.3 e F.4.4)",
+"tipo": "medida"
+},
+"pta:aviso": {
+"o": "Fixar avisos de alerta bem visíveis junto a cada condutor de descida e nos acessos à faixa de 3 m em volta deles, advertindo para não tocar nas descidas nem permanecer nessa faixa durante tempestades. Definir posição e quantidade para que sejam vistos e respeitados (análise de viabilidade) e mantê-los legíveis.",
+"ref": "NBR 5419-2:2026, Tabela B.1 e nota b, B.2.2; NBR 5419-3:2026, 8.1.3-b) e 8.2.2-a)",
+"tipo": "medida"
+},
+"pta:isol": {
+"o": "Revestir os trechos dos condutores de descida expostos ao toque com isolação que suporte impulso de 100 kV, 1,2/50 µs, por exemplo pelo menos 3 mm de polietileno reticulado (XLPE). Tubo de PVC de proteção mecânica não serve como isolação. Esta medida protege só contra tensão de toque.",
+"ref": "NBR 5419-2:2026, Tabela B.1; NBR 5419-3:2026, 8.1.1 (nota 2) e 8.1.3-a)",
+"tipo": "medida"
+},
+"pta:malha": {
+"o": "Junto a cada condutor de descida, construir eletrodo de aterramento reticulado complementar (malha), ligado ao eletrodo no ponto de conexão da descida e cobrindo raio mínimo de 3 m em volta dela, com condutores da Tabela 8 da NBR 5419-3 (ex.: cobre 50 mm²). Esta medida protege só contra tensão de passo.",
+"ref": "NBR 5419-2:2026, Tabela B.1; NBR 5419-3:2026, 3.83, 8.2.2-b) e Tabela 8",
+"tipo": "medida"
+},
+"pta:nat": {
+"o": "Usar como descidas a estrutura metálica contínua ou as armaduras do concreto armado, com pelo menos 10 caminhos naturais interligados por lajes, vigas ou cobertura metálica. Garantir a continuidade (obra nova: em cada pilar, uma linha de barras firmada do topo à base, ≥ 50 % dos cruzamentos ligados e trespasse ≥ 20 Ø; estrutura pronta: ensaio do Anexo F, ≤ 1 Ω) e ligar os pilares à captação no topo e ao aterramento na base.",
+"ref": "NBR 5419-2:2026, Tabela B.1 e nota a, B.2.2 (nota 1); NBR 5419-3:2026, 8.1.2-b), 8.2.1, 5.4.5.1, Anexo F (F.2.2.1.1 e F.2.2.3.3)",
+"tipo": "medida"
+},
+"pta:restr": {
+"o": "Instalar barreiras físicas fixas (grade, cerca, mureta ou fechamento permanente) que impeçam as pessoas de tocar nos condutores de descida e de entrar na faixa de 3 m em volta deles, valendo contra toque e passo. Não usar elementos removíveis e mantê-las íntegras.",
+"ref": "NBR 5419-2:2026, Tabela B.1; NBR 5419-3:2026, 8.1.3-b) e 8.2.2-a)",
+"tipo": "medida"
+},
+"ptu:aviso": {
+"o": "Fixar avisos de alerta bem visíveis onde a linha entra na estrutura e junto às partes condutoras ligadas a ela que possam ser tocadas (quadro de entrada, distribuidor de telecomunicações, carcaças), advertindo para o risco de choque durante tempestades. Posicioná-los para serem vistos e respeitados e mantê-los legíveis.",
+"ref": "NBR 5419-2:2026, B.5.1, Tabela B.6 e nota 1; NBR 5419-3:2026, Seção 8",
+"tipo": "medida"
+},
+"ptu:isol": {
+"o": "Isolar as partes condutoras ligadas à linha que possam ser tocadas dentro da estrutura (ponto de entrada, quadros, caixas e eletrodutos metálicos expostos), por exemplo com invólucros isolantes. A Tabela B.6 remete à Seção 8 da NBR 5419-3, cujo critério de isolação é 100 kV, 1,2/50 µs (ex.: ≥ 3 mm de XLPE).",
+"ref": "NBR 5419-2:2026, B.5.1 e Tabela B.6; NBR 5419-3:2026, 8.1.3-a)",
+"tipo": "medida"
+},
+"ptu:restr": {
+"o": "Impedir fisicamente o acesso às partes condutoras ligadas à linha onde pode surgir tensão de toque: instalar entrada, quadros e distribuidores em compartimento fechado ou atrás de barreira fixa, acessível só a pessoal autorizado.",
+"ref": "NBR 5419-2:2026, B.5.1 e Tabela B.6; NBR 5419-3:2026, Seção 8",
+"tipo": "medida"
+},
+"eb:III": {
+"o": "Na entrada da linha {linha} ({tipo}), junto à BEP, ligar cada condutor vivo à barra por DPS classe I (Iimp 10/350 µs) para NP III-IV, com ligações curtas (Cu ≥ 16 mm²); PE/PEN (TN) pode ir direto. Iimp ≥ corrente típica por condutor (NBR 5419-1, Tabelas E.1/E.2): energia BT 5 kA (descarga na linha) e 12,5 kA (descarga na estrutura, linha única 3F+N); sinal 1 e 1,25 kA. Os valores mudam com o número de linhas e de condutores: confirmar no projeto.",
+"ref": "NBR 5419-2:2026, B.5.2, B.6.2, Tabela B.7; NBR 5419-3:2026, 6.2.4.2 e 6.2.4.7; NBR 5419-1:2026, 3.50, E.2, Tabelas E.1 (nota e) e E.2; NBR 5419-4:2026, Tabela 1 e D.3.2",
+"tipo": "medida"
+},
+"eb:II": {
+"o": "Na entrada da linha {linha} ({tipo}), junto à BEP, ligar cada condutor vivo à barra por DPS classe I (Iimp 10/350 µs) para NP II, com ligações curtas (Cu ≥ 16 mm²); PE/PEN (TN) pode ir direto. Iimp ≥ corrente típica por condutor (NBR 5419-1, Tabelas E.1/E.2): energia BT 7,5 kA (descarga na linha) e 18,75 kA (descarga na estrutura, linha única 3F+N); sinal 1,5 e 1,875 kA. Os valores mudam com o número de linhas e de condutores: confirmar no projeto.",
+"ref": "NBR 5419-2:2026, B.5.2, B.6.2, Tabela B.7; NBR 5419-3:2026, 6.2.4.2 e 6.2.4.7; NBR 5419-1:2026, 3.50, E.2, Tabelas E.1 (nota e) e E.2; NBR 5419-4:2026, Tabela 1 e D.3.2",
+"tipo": "medida"
+},
+"eb:I": {
+"o": "Na entrada da linha {linha} ({tipo}), junto à BEP, ligar cada condutor vivo à barra por DPS classe I (Iimp 10/350 µs) para NP I, com ligações curtas (Cu ≥ 16 mm²); PE/PEN (TN) pode ir direto. Iimp ≥ corrente típica por condutor (NBR 5419-1, Tabelas E.1/E.2): energia BT 10 kA (descarga na linha) e 25 kA (descarga na estrutura, linha única 3F+N); sinal 2 e 2,5 kA. Os valores mudam com o número de linhas e de condutores: confirmar no projeto.",
+"ref": "NBR 5419-2:2026, B.5.2, B.6.2, Tabela B.7; NBR 5419-3:2026, 6.2.4.2 e 6.2.4.7; NBR 5419-1:2026, 3.50, E.2, Tabelas E.1 (nota e) e E.2; NBR 5419-4:2026, Tabela 1 e D.3.2",
+"tipo": "medida"
+},
+"eb:I5": {
+"o": "Na entrada da linha {linha} ({tipo}), junto à BEP, ligar cada condutor vivo à barra por DPS classe I (Iimp 10/350 µs) acima do exigido para NP I, com ligações curtas (Cu ≥ 16 mm²); PE/PEN (TN) pode ir direto. Correntes de NP I por condutor (NBR 5419-1, Tabelas E.1/E.2): energia BT 10 kA (descarga na linha) e 25 kA (na estrutura); sinal 2 e 2,5 kA. A norma não diz quanto acima vale 0,005: seguir o Iimp do projeto.",
+"ref": "NBR 5419-2:2026, B.5.2, B.6.2, Tabela B.7 e nota 2; NBR 5419-3:2026, 6.2.4.2 e 6.2.4.7; NBR 5419-1:2026, 3.50, E.2, Tabelas E.1 (nota e) e E.2; NBR 5419-4:2026, Tabela 1 e D.3.2",
+"tipo": "medida"
+},
+"eb:I1": {
+"o": "Na entrada da linha {linha} ({tipo}), junto à BEP, ligar cada condutor vivo à barra por DPS classe I (Iimp 10/350 µs) acima do exigido para NP I, com ligações curtas (Cu ≥ 16 mm²); PE/PEN (TN) pode ir direto. Correntes de NP I por condutor (NBR 5419-1, Tabelas E.1/E.2): energia BT 10 kA (descarga na linha) e 25 kA (na estrutura); sinal 2 e 2,5 kA. A norma não diz quanto acima vale 0,001: seguir o Iimp do projeto.",
+"ref": "NBR 5419-2:2026, B.5.2, B.6.2, Tabela B.7 e nota 2; NBR 5419-3:2026, 6.2.4.2 e 6.2.4.7; NBR 5419-1:2026, 3.50, E.2, Tabelas E.1 (nota e) e E.2; NBR 5419-4:2026, Tabela 1 e D.3.2",
+"tipo": "medida"
+},
+"spd:III": {
+"o": "Na linha {linha}, instalar o sistema coordenado de DPS do projeto (NBR 5419-4) para todos os equipamentos ligados a ela: na entrada da estrutura (classe I se houver SPDA), na entrada de cada ZPR interna e junto ao equipamento se o circuito passar de 10 m, com energia coordenada e ligações curtas. Garantir Up/f (Up + queda nas ligações) ≤ 0,8 UW dos equipamentos até 10 m de circuito (0,5 UW se crítico). NP III-IV: DPS internos para 5 kA (8/20 µs) por condutor.",
+"ref": "NBR 5419-2:2026, 3.1.107, B.1.3, Tabela B.3; NBR 5419-4:2026, 5.4.2-d), 7.1, C.1.7, C.2.1.9, C.3.2 a C.3.4; NBR 5419-1:2026, E.5 e Tabelas E.1 e E.2",
+"tipo": "medida"
+},
+"spd:II": {
+"o": "Na linha {linha}, instalar o sistema coordenado de DPS do projeto (NBR 5419-4) para todos os equipamentos ligados a ela: na entrada da estrutura (classe I se houver SPDA), na entrada de cada ZPR interna e junto ao equipamento se o circuito passar de 10 m, com energia coordenada e ligações curtas. Garantir Up/f (Up + queda nas ligações) ≤ 0,8 UW dos equipamentos até 10 m de circuito (0,5 UW se crítico). NP II: DPS internos para 7,5 kA (8/20 µs) por condutor.",
+"ref": "NBR 5419-2:2026, 3.1.107, B.1.3, Tabela B.3; NBR 5419-4:2026, 5.4.2-d), 7.1, C.1.7, C.2.1.9, C.3.2 a C.3.4; NBR 5419-1:2026, E.5 e Tabelas E.1 e E.2",
+"tipo": "medida"
+},
+"spd:I": {
+"o": "Na linha {linha}, instalar o sistema coordenado de DPS do projeto (NBR 5419-4) para todos os equipamentos ligados a ela: na entrada da estrutura (classe I se houver SPDA), na entrada de cada ZPR interna e junto ao equipamento se o circuito passar de 10 m, com energia coordenada e ligações curtas. Garantir Up/f (Up + queda nas ligações) ≤ 0,8 UW dos equipamentos até 10 m de circuito (0,5 UW se crítico). NP I: DPS internos para 10 kA (8/20 µs) por condutor.",
+"ref": "NBR 5419-2:2026, 3.1.107, B.1.3, Tabela B.3; NBR 5419-4:2026, 5.4.2-d), 7.1, C.1.7, C.2.1.9, C.3.2 a C.3.4; NBR 5419-1:2026, E.5 e Tabelas E.1 e E.2",
+"tipo": "medida"
+},
+"spd:I5": {
+"o": "Na linha {linha}, instalar o sistema coordenado de DPS do projeto (NBR 5419-4) para todos os equipamentos ligados a ela: na entrada da estrutura (classe I se houver SPDA), na entrada de cada ZPR interna e junto ao equipamento se o circuito passar de 10 m, com energia coordenada e ligações curtas. Garantir Up/f (Up + queda nas ligações) ≤ 0,8 UW dos equipamentos até 10 m de circuito (0,5 UW se crítico). Para 0,005: DPS melhores que os de NP I (maior In, menor Up), com dados do fabricante.",
+"ref": "NBR 5419-2:2026, 3.1.107, B.1.3, Tabela B.3 e nota 2; NBR 5419-4:2026, 5.4.2-d), 7.1, C.1.7, C.2.1.9, C.3.2 a C.3.4; NBR 5419-1:2026, E.5 e Tabelas E.1 e E.2",
+"tipo": "medida"
+},
+"spd:I1": {
+"o": "Na linha {linha}, instalar o sistema coordenado de DPS do projeto (NBR 5419-4) para todos os equipamentos ligados a ela: na entrada da estrutura (classe I se houver SPDA), na entrada de cada ZPR interna e junto ao equipamento se o circuito passar de 10 m, com energia coordenada e ligações curtas. Garantir Up/f (Up + queda nas ligações) ≤ 0,8 UW dos equipamentos até 10 m de circuito (0,5 UW se crítico). Para 0,001: DPS melhores que os de NP I (maior In, menor Up), com dados do fabricante.",
+"ref": "NBR 5419-2:2026, 3.1.107, B.1.3, Tabela B.3 e nota 2; NBR 5419-4:2026, 5.4.2-d), 7.1, C.1.7, C.2.1.9, C.3.2 a C.3.4; NBR 5419-1:2026, E.5 e Tabelas E.1 e E.2",
+"tipo": "medida"
+},
+"b4:3": {
+"o": "A linha de energia da concessionária tem neutro multiaterrado ao longo da rede (o cálculo não considerou blindagem da linha). Confirmar com a concessionária; se não for assim, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela B.4; Seção 1",
+"tipo": "condicao"
+},
+"b4:4": {
+"o": "Executar a linha em cabo blindado enterrado em todo o trecho até o nó; trecho sem blindagem invalida a hipótese. O cálculo não contou com a ligação da blindagem à barra de equipotencialização do equipamento, mas, havendo SPDA, a blindagem deve ser equipotencializada na entrada da estrutura (NBR 5419-3, 6.2.4.3).",
+"ref": "NBR 5419-2:2026, Tabela B.4 e 6.8.2; NBR 5419-3:2026, 6.2.4.3 e 6.2.4.4",
+"tipo": "medida"
+},
+"b4:5": {
+"o": "Executar a linha em cabo aéreo blindado em todo o trecho até o nó; trecho sem blindagem invalida a hipótese. O cálculo não contou com a ligação da blindagem à barra de equipotencialização do equipamento, mas, havendo SPDA, a blindagem deve ser equipotencializada na entrada da estrutura (NBR 5419-3, 6.2.4.3).",
+"ref": "NBR 5419-2:2026, Tabela B.4 e 6.8.2; NBR 5419-3:2026, 6.2.4.3 e 6.2.4.4",
+"tipo": "medida"
+},
+"b4:6": {
+"o": "Executar a linha em cabo blindado (aéreo ou enterrado) em todo o trecho até o nó e ligar a blindagem, junto à entrada na estrutura, à mesma barra de equipotencialização do equipamento, com condutor da Tabela 10 da NBR 5419-3 (ex.: Cu ≥ 6 mm²). Se a seção da blindagem for menor que a mínima do Anexo B da NBR 5419-3, instalar DPS entre blindagem e condutores vivos.",
+"ref": "NBR 5419-2:2026, Tabelas B.4 e B.8, 6.8.2; NBR 5419-3:2026, 6.2.4.3 a 6.2.4.5, Tabela 10, Anexo B (B.3)",
+"tipo": "medida"
+},
+"b4:7": {
+"o": "Instalar a linha, em todo o trecho até o nó, dentro de eletroduto, duto ou tubo metálico eletricamente contínuo (ou usar cabo de proteção contra descargas atmosféricas), ligado no ponto de entrada à mesma barra de equipotencialização do equipamento. Garantir a continuidade entre segmentos (rosca, pressão ou condutor de interligação). Qualquer trecho fora do conduto metálico invalida a hipótese.",
+"ref": "NBR 5419-2:2026, Tabela B.4 e 6.8.2; NBR 5419-3:2026, 6.2.4.3; NBR 5419-4:2026, B.10.1-d) e B.12.3",
+"tipo": "medida"
+},
+"b4:8": {
+"o": "Não usar linha metálica externa: a ligação deve ser por fibra óptica sem nenhum componente metálico (armadura, fio de aço ou elemento de tração metálico) ou o sistema deve ser independente, sem conexão externa. Se for incluído cabo metálico ou fibra com metal, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela B.4; NBR 5419-4:2026, B.12.1.1 e B.12.2",
+"tipo": "medida"
+},
+"b4:9": {
+"o": "Instalar na entrada da linha interface isolante conforme a NBR 5419-4 (transformador de isolação, acoplador óptico ou trecho em fibra óptica sem metal). Para valer, proteger a interface com DPS a montante, o mais perto possível, com Up menor que a UW da interface, ou comprovar por ensaio que a UW dela supera a sobretensão prevista no ponto.",
+"ref": "NBR 5419-2:2026, Tabela B.4 e nota a, B.4.3; NBR 5419-4:2026, Seção 8, B.9.2 e C.2.1",
+"tipo": "medida"
+},
+"rsb:20": {
+"o": "Especificar cabo cuja blindagem tenha resistência RS ≤ 20 Ω/km, comprovada no catálogo do fabricante, com a blindagem ligada à mesma barra de equipotencialização do equipamento. Guardar a folha de dados; não trocar por cabo de blindagem mais resistiva.",
+"ref": "NBR 5419-2:2026, Tabela B.8; Tabela B.4",
+"tipo": "medida"
+},
+"rsb:5": {
+"o": "Especificar cabo cuja blindagem tenha resistência RS ≤ 5 Ω/km, comprovada no catálogo do fabricante, com a blindagem ligada à mesma barra de equipotencialização do equipamento. Guardar a folha de dados; não trocar por cabo de blindagem mais resistiva.",
+"ref": "NBR 5419-2:2026, Tabela B.8; Tabela B.4",
+"tipo": "medida"
+},
+"rsb:1": {
+"o": "Especificar cabo cuja blindagem tenha resistência RS ≤ 1 Ω/km, comprovada no catálogo do fabricante, com a blindagem ligada à mesma barra de equipotencialização do equipamento. Guardar a folha de dados; não trocar por cabo de blindagem mais resistiva.",
+"ref": "NBR 5419-2:2026, Tabela B.8; Tabela B.4",
+"tipo": "medida"
+},
+"ks3:0.5": {
+"o": "Na fiação interna ligada à linha, passar condutores vivos e PE juntos, no mesmo conduto, a no máximo 0,25 m entre eles; em estrutura pequena, laços da ordem de 25 m² no máximo. Não alongar os circuitos além do comprimento adotado no cálculo (valores para 100 m).",
+"ref": "NBR 5419-2:2026, Tabela B.5, notas f e e; NBR 5419-4:2026, 6.4",
+"tipo": "medida"
+},
+"ks3:0.2": {
+"o": "Na fiação interna ligada à linha, passar condutores vivos e PE juntos, no mesmo conduto, a no máximo 0,1 m entre eles; em estrutura pequena, laços da ordem de 10 m² no máximo. Não alongar os circuitos além do comprimento adotado no cálculo (valores para 100 m).",
+"ref": "NBR 5419-2:2026, Tabela B.5, notas b e e; NBR 5419-4:2026, 6.4",
+"tipo": "medida"
+},
+"ks3:0.01": {
+"o": "Na fiação interna ligada à linha, usar condutores vivos e PE no mesmo cabo (multipolar), a no máximo 0,005 m entre eles, formando laços pequenos (da ordem de 0,5 m²). Não alongar os circuitos além do comprimento adotado no cálculo (valores para 100 m).",
+"ref": "NBR 5419-2:2026, Tabela B.5, notas c e e; NBR 5419-4:2026, 6.4",
+"tipo": "medida"
+},
+"ks3:0.0001": {
+"o": "Na fiação interna ligada à linha, usar cabos blindados ou condutos metálicos eletricamente contínuos, com a blindagem ou o conduto ligados à equipotencialização nas duas extremidades (ex.: BEL e carcaça metálica do equipamento). Não alongar os circuitos além do comprimento adotado no cálculo (valores para 100 m).",
+"ref": "NBR 5419-2:2026, Tabela B.5, notas d e e; NBR 5419-4:2026, 5.4.2-e) e 6.3",
+"tipo": "medida"
+},
+"ks1:malha": {
+"o": "Formar a blindagem espacial da estrutura (ZPR 1) em malha de largura ≤ {w} m com armaduras de lajes, vigas e pilares, estrutura ou fachada metálica, ou descidas de SPDA com captação em malha (espaçamento médio < 5 m), tudo interligado (solda, conexão mecânica ou amarração) e ligado ao aterramento. Manter equipamentos e cabos a pelo menos {w} m da blindagem; mais perto, a atenuação diminui.",
+"ref": "NBR 5419-2:2026, B.4.6, B.4.12 (eq. B.5), B.4.13, Tabela 3 (nota a); NBR 5419-4:2026, 5.3.2, 6.2, A.3.2.1 a A.3.2.3 e Figura A.3",
+"tipo": "medida"
+},
+"ks1:cont": {
+"o": "Formar a envoltória da ZPR 1 com blindagem metálica contínua (chapas) de espessura ≥ 0,1 mm, com continuidade elétrica entre as partes e ligada ao aterramento. Onde ela puder receber ou conduzir descarga direta, a espessura deve atender à Tabela 3 da NBR 5419-3.",
+"ref": "NBR 5419-2:2026, B.4.12; NBR 5419-4:2026, 5.3.2, 6.2 e 6.6.1",
+"tipo": "medida"
+},
+"ks2:malha": {
+"o": "Formar a blindagem interna (sala, armário ou gabinete da ZPR 2) em grade com a largura de malha adotada no cálculo, interligada e ligada à barra de equipotencialização da ZPR; conectar seu anel ao da ZPR 1 em pelo menos dois pontos opostos. Manter equipamentos e cabos afastados da grade pelo menos uma largura de malha.",
+"ref": "NBR 5419-2:2026, B.4.12 (eq. B.6) e B.4.13; NBR 5419-4:2026, 5.4.1-d), B.4.2 e A.3.2.3",
+"tipo": "medida"
+},
+"ks2:cont": {
+"o": "Formar a blindagem interna (sala, armário ou gabinete) com chapa metálica contínua de espessura ≥ 0,1 mm, com continuidade entre as partes e ligada à barra de equipotencialização da ZPR. Manter a distância de segurança s entre ela e o SPDA; se não for possível, atender também à Tabela 3 da NBR 5419-3.",
+"ref": "NBR 5419-2:2026, B.4.12; NBR 5419-4:2026, 5.4.1-d), 6.6.1 e 6.6.2-a)",
+"tipo": "medida"
+},
+"malhaEq": {
+"o": "Executar ligação equipotencial em rede (malha) de baixa impedância, com reticulado típico de 5 m ou menor, interligando em vários pontos armaduras, estruturas e fachadas metálicas, bandejas, tubulações, barras de equipotencialização e blindagens das ZPR. Ligar gabinetes, racks e o condutor PE à malha (o PEN não diretamente), em configuração estrela ou malha.",
+"ref": "NBR 5419-2:2026, B.4.12 (nota); NBR 5419-4:2026, 5.3, B.7.3, B.7.4 e B.14.6.1",
+"tipo": "medida"
+},
+"pms0": {
+"o": "Os equipamentos do sistema considerado devem ter interface isolante do tipo transformador de isolação com blindagem aterrada entre os enrolamentos, ou ser ligados por fibra óptica ou acoplador óptico. Aterrar a blindagem do transformador e não substituir esses equipamentos ou ligações por outros sem essa interface.",
+"ref": "NBR 5419-2:2026, B.4.11; NBR 5419-4:2026, B.9.2",
+"tipo": "medida"
+},
+"ifProt": {
+"o": "Proteger a interface isolante com DPS instalado a montante e o mais perto possível dela, com Up menor que a UW da interface, ou guardar o ensaio que comprove UW da interface maior que a sobretensão prevista no ponto de instalação. Sem uma dessas condições, o benefício da interface não vale.",
+"ref": "NBR 5419-2:2026, Tabela B.4 (nota a) e B.4.3; NBR 5419-4:2026, Seção 8 e C.2.1",
+"tipo": "medida"
+},
+"uw": {
+"o": "Exigir de todos os equipamentos ligados à linha {linha}, inclusive os de reposição, tensão suportável de impulso UW ≥ {uw} kV, conferida na documentação do fabricante. Referência (NBR 5419-4, Tabela A.1), em 127/220 V: 4 kV na origem da instalação, 2,5 kV em quadros e circuitos, 1,5 kV em equipamentos de utilização e 0,8 kV nos especialmente protegidos (220/380 V: 6; 4; 2,5; 1,5 kV). Portas de sinal ligadas a linha externa: 1,5 kV.",
+"ref": "NBR 5419-2:2026, B.4.14, B.4.15, Tabelas B.8 e B.9; NBR 5419-4:2026, A.2.3, A.2.4, Tabela A.1 e C.2.1.2",
+"tipo": "medida"
+},
+"semUW": {
+"o": "Os equipamentos ligados a esta linha não têm UW garantida por norma de produto, e o cálculo adotou PM = 1 para eles: blindagens, roteamento e DPS não reduzem esse valor. Para reduzir o risco, especificar equipamentos com UW declarada conforme a norma do produto e refazer a análise.",
+"ref": "NBR 5419-2:2026, B.4.10",
+"tipo": "condicao"
+},
+"rp:man": {
+"o": "Instalar e manter em condição de uso, na zona, ao menos uma das providências consideradas: extintores, hidrantes, instalação fixa de acionamento manual, alarme manual, compartimentação à prova de fogo ou rotas de fuga. Sem ela, o fator volta a 1; em zona com risco de explosão, ele é 1 de qualquer forma.",
+"ref": "NBR 5419-2:2026, Tabela C.4, C.3.3 e C.3.4",
+"tipo": "medida"
+},
+"rp:aut": {
+"o": "Instalar e manter em operação extinção fixa automática (ex.: chuveiros automáticos) ou alarme automático de incêndio, protegidos contra sobretensões (DPS nas linhas de energia e de sinal, conforme a NBR 5419-4) e contra outros danos. Para o alarme automático, manter no local pessoas capacitadas para combater o incêndio. Sem essas condições, o fator 0,2 não vale.",
+"ref": "NBR 5419-2:2026, Tabela C.4 e notas a e b, C.3.4",
+"tipo": "medida"
+},
+"rt:t": {
+"o": "O piso da zona e o solo até 3 m das descidas foram tratados como terra ou concreto (≤ 1 kΩ), o caso mais desfavorável da Tabela C.3; nenhum revestimento é exigido.",
+"ref": "NBR 5419-2:2026, Tabela C.3; 4.2.2.1-a); 6.9.1.2-a)",
+"tipo": "condicao"
+},
+"rt:m": {
+"o": "O piso da zona (e o solo até 3 m das descidas, se houver) deve ser de mármore ou cerâmica, com resistência de contato de 1 a 10 kΩ (eletrodo de 400 cm² comprimido com 500 N). Se for trocado por terra, concreto ou outro piso de menor resistência, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.3 e nota a; 4.2.2.1-a); 6.9.1.2-a)",
+"tipo": "condicao"
+},
+"rt:b": {
+"o": "Manter brita, tapete ou carpete em toda a zona (e no solo até 3 m das descidas, se houver), com resistência de contato de 10 a 100 kΩ (eletrodo de 400 cm² comprimido com 500 N). Se o revestimento for removido ou trocado por outro de menor resistência, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.3 e nota a; 4.2.2.1-a); 6.9.1.2-a)",
+"tipo": "condicao"
+},
+"rt:a": {
+"o": "Manter asfalto, linóleo ou madeira (≥ 100 kΩ) em toda a zona (e no solo até 3 m das descidas, se houver); uma camada de 5 cm de asfalto em geral basta. Evitar que a camada isolante fique úmida ou coberta de água. Se o revestimento for removido ou trocado, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.3, notas a e b e Nota; 4.2.2.1-a); 6.9.1.2-a); NBR 5419-3:2026, 8.1.2-c)",
+"tipo": "condicao"
+},
+"rf:ex0": {
+"o": "Há zonas 0 ou 20 ou explosivos sólidos, conforme classificação de áreas documentada (NBR IEC 60079-10-1 e -10-2). Executar o SPDA com os requisitos do Anexo D da NBR 5419-3 (partes do SPDA a ≥ 1 m das áreas classificadas, DPS fora delas ou certificados; SPDA isolado recomendado para explosivos sólidos) e inspecionar anualmente. Se a classificação mudar, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5 e nota, C.3.4; NBR 5419-3:2026, 7.3.2-f), Anexo D (D.2.2, D.3, D.4.1, D.4.3 e D.4.4)",
+"tipo": "condicao"
+},
+"rf:ex1": {
+"o": "Há zonas 1 ou 21, conforme classificação de áreas documentada (NBR IEC 60079-10-1 e -10-2). Executar o SPDA com os requisitos do Anexo D da NBR 5419-3 (pontos de impacto e demais partes do SPDA a ≥ 1 m das áreas classificadas; centelhadores, peças isoladas e DPS fora delas ou certificados) e inspecionar anualmente. Se a classificação mudar, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5 e nota, C.3.4; NBR 5419-3:2026, 7.3.2-f), Anexo D (D.2.2, D.4.1 e D.4.3)",
+"tipo": "condicao"
+},
+"rf:ex2": {
+"o": "Há somente zonas 2 ou 22, conforme classificação de áreas documentada (NBR IEC 60079-10-1 e -10-2); o Anexo D da NBR 5419-3 não exige medidas além das da análise de risco. Se surgirem zonas 0, 1, 20 ou 21 ou a classificação mudar, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5 e nota, C.3.4; NBR 5419-3:2026, Anexo D (D.2.2 e D.4.2)",
+"tipo": "condicao"
+},
+"rf:alto": {
+"o": "Risco de incêndio alto (carga específica ≥ 800 MJ/m² ou construção ou cobertura combustível), o maior para incêndio. Só é preciso refazer a análise se passar a haver risco de explosão (áreas classificadas ou explosivos).",
+"ref": "NBR 5419-2:2026, Tabela C.5, C.3.4.1",
+"tipo": "condicao"
+},
+"rf:normal": {
+"o": "Carga de incêndio específica de 400 a 800 MJ/m² (energia do material combustível dividida pela área total), sem construção ou cobertura combustível; valem estas faixas mesmo que o Corpo de Bombeiros adote outras. Se a carga passar de 800 MJ/m², se houver construção ou cobertura combustível ou risco de explosão, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5, C.3.4.1, C.3.4.2, C.3.4.4 e C.3.4.5",
+"tipo": "condicao"
+},
+"rf:baixo": {
+"o": "Carga de incêndio específica abaixo de 400 MJ/m², ou só pequena quantidade de material combustível. Se a ocupação, o estoque ou os acabamentos elevarem a carga a 400 MJ/m² ou mais, ou se houver risco de explosão, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5, C.3.4.2 a C.3.4.5",
+"tipo": "condicao"
+},
+"rf:nenhum": {
+"o": "A zona não tem risco de incêndio nem de explosão (nenhum material combustível na construção, na cobertura ou no conteúdo), por isso os danos físicos foram desconsiderados. Qualquer carga combustível, mesmo pequena, já é risco baixo: nesse caso, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.5, C.3.4.3; Tabela C.1 (eq. C.3)",
+"tipo": "condicao"
+},
+"hz": {
+"o": "O perigo especial foi fixado pela ocupação prevista (até 2 andares e até 100 pessoas: pânico baixo; eventos de 100 a 1.000 pessoas: médio; acima de 1.000: alto; pessoas imobilizadas ou hospital: evacuação difícil). Se o número de andares, a lotação ou o uso mudar, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.6; Seção 1",
+"tipo": "condicao"
+},
+"inst:aer": {
+"o": "Linha aérea, o caso mais desfavorável (CI = 1); qualquer forma de instalação atende.",
+"ref": "NBR 5419-2:2026, Tabela A.2",
+"tipo": "condicao"
+},
+"inst:ent": {
+"o": "A linha deve ser enterrada em todo o trecho até o nó; se houver trecho aéreo, a linha inteira passa a contar como aérea e a análise deve ser refeita. Os valores supõem solo de 400 Ω·m, salvo resistividade medida informada no cálculo.",
+"ref": "NBR 5419-2:2026, Tabela A.2 e nota 1, A.4.2, 6.8.2",
+"tipo": "condicao"
+},
+"inst:malha": {
+"o": "A linha deve ser enterrada em todo o trecho e passar inteiramente dentro da área de um eletrodo de aterramento em malha (NBR 5419-4, 5.2; malha típica de 5 m). Se algum trecho sair da malha ou ficar aéreo, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela A.2, A.4.2, 6.8.2; NBR 5419-4:2026, 5.2.2 e Figura 6",
+"tipo": "condicao"
+},
+"ce": {
+"o": "O ambiente ao longo de todo o percurso da linha (rural, suburbano, urbano ou urbano com prédios acima de 20 m) é o informado; em trecho único vale o mais desfavorável. Se o traçado mudar ou a linha passar por área menos edificada, refazer a análise.",
+"ref": "NBR 5419-2:2026, 3.1.2 a 3.1.4, Tabela A.4, A.4.2",
+"tipo": "condicao"
+},
+"ct:at": {
+"o": "A linha de energia é em AT, com transformador AT/BT de enrolamentos eletricamente separados, dentro da estrutura ou no trecho externo. Se a estrutura passar a ser atendida em BT pela rede ou o transformador não tiver enrolamentos separados, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela A.3 e nota; 3.1.91",
+"tipo": "condicao"
+},
+"ct:bt": {
+"o": "Linha de energia em BT ou linha de sinal: foi adotado o valor mais desfavorável (CT = 1), sem exigência quanto ao tipo de alimentação.",
+"ref": "NBR 5419-2:2026, Tabela A.3",
+"tipo": "condicao"
+},
+"LL": {
+"o": "A linha tem {LL} m entre a estrutura e o nó (energia: transformador AT/BT; sinal: central ou equipamento como multiplexador ou xDSL). Se o comprimento real for maior ou o nó mudar de lugar, refazer a análise; sem dado confiável, a norma permite adotar 1.000 m.",
+"ref": "NBR 5419-2:2026, 3.1.91, 6.4.3, A.4.1 e A.5.1",
+"tipo": "condicao"
+},
+"adj": {
+"o": "A linha liga esta estrutura a uma estrutura adjacente, com as dimensões e a localização informadas. Se ela for ampliada, se o entorno dela mudar ou se outra estrutura for ligada à mesma linha, refazer a análise.",
+"ref": "NBR 5419-2:2026, A.1.4-e), A.2.5, Tabela A.1, 6.4.1",
+"tipo": "condicao"
+},
+"cd": {
+"o": "A vizinhança num raio de 3 vezes a altura da estrutura (objetos e terreno) é a informada. Se objetos mais altos do entorno forem removidos ou a estrutura passar a se destacar (ex.: ampliação em altura), refazer a análise.",
+"ref": "NBR 5419-2:2026, A.2.3 e Tabela A.1",
+"tipo": "condicao"
+},
+"rs": {
+"o": "O tipo de construção executado deve ser o considerado: robusto (estrutura metálica ou concreto armado) ou simples (madeira ou alvenaria simples). Se o sistema estrutural mudar em relação ao projeto, refazer a análise.",
+"ref": "NBR 5419-2:2026, Tabela C.7",
+"tipo": "condicao"
+},
+"ocupacao": {
+"o": "Valem o número de pessoas na zona (nz), o total na estrutura, incluindo quem fica até 3 m do lado de fora (nt), e as horas por ano de presença na zona (tz) informados. Se a lotação, a distribuição entre zonas ou o tempo de permanência mudar, refazer a análise.",
+"ref": "NBR 5419-2:2026, 5.2-d), C.3.1 e Tabela C.1",
+"tipo": "condicao"
+},
+"vida": {
+"o": "Vale o que foi informado sobre a falha dos sistemas internos pôr vidas em risco imediato (risco de explosão, UTI ou bloco cirúrgico, outras áreas de hospital). Se a destinação mudar nesse aspecto (ex.: instalar equipamentos de apoio à vida ou área com risco de explosão), refazer a análise.",
+"ref": "NBR 5419-2:2026, 4.3.1 e nota, Tabela C.2",
+"tipo": "condicao"
+},
+"geral": {
+"o": "Inspecionar SPDA e DPS na instalação, na entrega (as built), após qualquer alteração ou suspeita de descarga e, periodicamente, por profissional qualificado, com relatório técnico: anual em estruturas com zonas 0, 1, 20 ou 21, explosivos, tóxicos, corrosão atmosférica severa (ex.: litoral) ou serviço essencial; trienal nas demais. Nos DPS, conferir a sinalização de fim de vida. Corrigir as não conformidades e manter no local a documentação as built, com a posição de todos os DPS. Não trabalhar sob ameaça de tempestade.",
+"ref": "NBR 5419-3:2026, 7.1.2, 7.2, 7.3.2, 7.3.3, 7.4 e 7.5; NBR 5419-4:2026, 9.2.2, 9.2.3, 9.2.5-e), 9.3, 9.4 e B.8.3; NBR 5419-2:2026, Seção 1",
+"tipo": "medida"
+}
+}/*FIM*/;
+function rskObraLinhas(e, r){
+  const med = [], condE = [], condZ = [], condL = [];
+  const v = x => !(x > 0) ? "0" : x >= 1e-3 ? String(+x.toPrecision(3)).replace(".", ",") : rskE(x, 0);   // 0,2 · 0,05 · 1 × 10⁻⁴
+  const put = (lista, onde, valor, k, rep, obs) => { const o = RSK_OBRA[k]; if(!o) return;
+    let t = o.o; Object.entries(rep||{}).forEach(([a,b])=>{ t = t.split("{"+a+"}").join(b); });
+    lista.push({onde, valor, o: t + (obs ? " " + obs : ""), ref: o.ref}); };
+  // estrutura
+  const pbK = rskOp(RSK_PB, e.pb, "0")[0];
+  if(pbK!=="0") put(med, "Estrutura", `${r.pbTxt} (PB = ${v(r.PB)})`, "pb:" + pbK);
+  // zonas
+  (e.zonas||[]).forEach((z, i)=>{ const q = r.zonas[i] || {}, nm = q.nome || z.nome || "Zona";
+    RSK_PTA.filter(m=>(z.pta||{})[m[0]]).forEach(m=>put(med, nm, `${m[1]} (PTA = ${v(m[2])})`, "pta:" + m[0], {}, q.ptaIgnorado ? "(Neste cálculo a medida não reduz o risco, pois a estrutura não tem SPDA: nota 1 de B.2.2.)" : ""));
+    RSK_PTU.filter(m=>(z.ptu||{})[m[0]]).forEach(m=>put(med, nm, `${m[1]} (PTU = ${v(m[2])})`, "ptu:" + m[0]));
+    if(!q.expl && ["man","aut"].includes(z.rp)) put(med, nm, `${q.rpTxt} (rp = ${v(q.rp)})`, "rp:" + z.rp);
+    ["ks1","ks2"].forEach((k, j)=>{ if(["malha","cont"].includes(z[k])){ const w = num(z[j ? "w2" : "w1"]);
+      put(med, nm, `${j ? "Blindagem interna ZPR 1/2" : "Blindagem na interface ZPR 0/1"}: ${rskOp(RSK_KS, z[k], "0")[1]}${z[k]==="malha" && w ? ` · w = ${fmt(w, 2)} m` : ""}`, `${k}:${z[k]}`, {w: fmt(w, 2)}); } });
+    if(z.malhaEq) put(med, nm, "Rede de equipotencialização em malha", "malhaEq");
+  });
+  // linhas
+  (e.linhas||[]).forEach((l, i)=>{ const x = r.linhas[i] || {}, nm = `Linha ${x.nome || l.nome || ""}`.trim(), rp = {linha: x.nome || l.nome || "", tipo: x.tipo==="sig" ? "sinal" : "energia", uw: fmt(x.UW, 2), LL: fmt(x.LL, 0)};
+    if(rskOp(RSK_DPS, l.eb, "0")[0]!=="0") put(med, nm, `DPS classe I na entrada: ${x.ebTxt} (PEB = ${v(x.PEB)})`, "eb:" + rskOp(RSK_DPS, l.eb, "0")[0], rp);
+    if(rskOp(RSK_DPS, l.spd, "0")[0]!=="0") put(med, nm, `Sistema coordenado de DPS: ${x.spdTxt} (PSPD = ${v(x.PSPD)})`, "spd:" + rskOp(RSK_DPS, l.spd, "0")[0], rp);
+    if(["4","5","6","7","8","9"].includes(x.b4)) put(med, nm, `${x.b4Txt} (CLD = ${fmt(x.CLD, 1)}, CLI = ${fmt(x.CLI, 1)})`, "b4:" + x.b4, rp);
+    if(x.b4==="6") put(med, nm, `Resistência da blindagem: ${rskOp(RSK_RSB, l.rsb, "20")[1]}`, "rsb:" + rskOp(RSK_RSB, l.rsb, "20")[0], rp);
+    if(x.b4==="9" && l.ifProt) put(med, nm, "Interface protegida por DPS ou com UW ensaiada acima da prevista", "ifProt", rp);
+    const ks3 = rskOp(RSK_KS3, l.ks3, "1"); if(ks3[0]!=="1") put(med, nm, `Fiação interna: ${ks3[1]} (KS3 = ${v(ks3[2])})${num(l.ks3L) > 0 && num(l.ks3L) < 100 ? ` · circuito de ${fmt(num(l.ks3L), 0)} m` : ""}`, "ks3:" + ks3[0], rp);
+    if(l.pms0) put(med, nm, "Transformador de isolação com blindagem aterrada, fibra ou acoplamento óptico (PMS = 0)", "pms0", rp);
+    if(x.ext!==false && !l.semUW) put(med, nm, `Tensão suportável de impulso dos equipamentos UW = ${fmt(x.UW, 2)} kV`, "uw", rp);
+    if(l.semUW) put(condL, nm, "Equipamentos sem UW conforme norma de produto (PM = 1)", "semUW", rp);
+    if(x.b4==="3") put(condL, nm, x.b4Txt, "b4:3", rp);
+    if(x.ext!==false){
+      put(condL, nm, `${x.inst} (CI = ${fmt(x.CI, 2)})`, "inst:" + rskOp(RSK_CI, l.inst, "aer")[0], rp);
+      put(condL, nm, `${fmt(x.LL, 0)} m${x.LLpad ? " (adotado: comprimento não informado)" : ""}`, "LL", rp);
+      put(condL, nm, `${x.ce} (CE = ${fmt(x.CE, 2)})`, "ce", rp);
+      if(x.tipo==="pot") put(condL, nm, x.CT < 1 ? "Energia em AT com transformador AT/BT (CT = 0,2)" : "Energia em BT (CT = 1)", "ct:" + (x.CT < 1 ? "at" : "bt"), rp);
+      if(x.adj) put(condL, nm, `Estrutura adjacente ${fmt(num(l.LJ), 1)} × ${fmt(num(l.WJ), 1)} m, altura ${fmt(num(l.HJ), 1)} m`, "adj", rp);
+    }
+  });
+  // condições da estrutura e das zonas
+  put(condE, "Estrutura", rskOp(RSK_CD, e.cd, "1")[1] + ` (CD = ${fmt(r.CD, 2)})`, "cd");
+  put(condE, "Estrutura", rskOp(RSK_RS, e.rs, "1")[1] + ` (rS = ${fmt(r.rs, 0)})`, "rs");
+  (e.zonas||[]).forEach((z, i)=>{ const q = r.zonas[i] || {}, nm = q.nome || z.nome || "Zona";
+    put(condZ, nm, `${fmt(q.nz, 0)} pessoas · ${fmt(q.tz, 0)} h/ano (total da estrutura: ${fmt(r.nt, 0)})`, "ocupacao");
+    put(condZ, nm, `${q.rtTxt} (rt = ${v(q.rt)})`, "rt:" + rskOp(RSK_RT, z.rt, "t")[0]);
+    put(condZ, nm, `${q.rfTxt} (rf = ${q.rf ? v(q.rf) : "0"})`, "rf:" + rskOp(RSK_RF, z.rf, "normal")[0]);
+    put(condZ, nm, `${q.hzTxt} (hz = ${fmt(q.hz, 0)})`, "hz");
+    put(condZ, nm, q.vidaTxt, "vida");
+  });
+  put(med, "Estrutura e linhas", "Inspeção e manutenção", "geral");
+  return {med, cond: [...condE, ...condZ, ...condL]};
+}
+function rskObraRel(e, r){
+  const {med, cond} = rskObraLinhas(e, r);
+  const mat = !r.ok ? rskMatriz(e) : null, melhor = mat?.melhor;
+  const tab = (L, ini) => `<table class="r-t"><thead><tr><th>Nº</th><th>Onde</th><th>Escolha no cálculo</th><th>O que fazer na obra</th><th>Referência</th></tr></thead><tbody>
+    ${L.map((x, i)=>`<tr><td>${ini}${i + 1}</td><td>${esc(x.onde)}</td><td>${esc(x.valor)}</td><td>${esc(x.o)}</td><td>${esc(x.ref)}</td></tr>`).join("")}</tbody></table>`;
+  return `<p>O resultado desta análise só vale se a obra executar as medidas de proteção e mantiver as condições abaixo, que são as escolhas feitas no cálculo. Se alguma delas mudar (por exemplo, linha aérea em vez de enterrada, outro piso, outro nível de SPDA ou de DPS), a análise deve ser refeita.</p>
+    ${!r.ok ? `<div class="r-concl falha"><b>Atenção:</b> com as escolhas atuais o risco passa do tolerável, então as medidas abaixo não bastam.${melhor ? ` A menor combinação que atende é ${melhor.pb==="0" ? "sem SPDA" : `SPDA NP ${esc(melhor.pb)}`} com ${melhor.dps==="0" ? "nenhum DPS" : melhor.dps==="III" ? "DPS NP III/IV" : `DPS NP ${esc(melhor.dps)}`} nas linhas (seção de combinações): ajuste o projeto e refaça a análise antes de executar.` : " Adote medidas adicionais e refaça a análise antes de executar."}</div>` : ""}
+    <div class="r-sub" style="break-inside:auto;margin-top:3mm"><h3>A · Medidas de proteção a executar<span>cada item é uma escolha que reduz o risco no cálculo</span></h3>${med.length ? tab(med, "A") : "<p>Nenhuma medida de proteção foi considerada no cálculo.</p>"}</div>
+    <div class="r-sub" style="break-inside:auto"><h3>B · Condições adotadas que a obra deve manter<span>se mudarem, refazer a análise</span></h3>${tab(cond, "B")}</div>`;
+}
+// ---- ajuda "i" em cada escolha da análise de risco (texto da NBR 5419-2:2026 resumido) ----
+const RSK_AJUDA = /*AJUDA*/{
+"uso": {
+"t": "Uso da estrutura (LF)",
+"txt": "Define LF, a perda típica de vidas por danos físicos (incêndio, explosão) da Tabela C.2, que entra em RB e RV. Em uso misto, adote o tipo de maior LF, pois só um valor vale por parâmetro (6.9.1.2 a). LT, a perda por choque, é 10⁻² para todos os tipos. Os valores pressupõem presença contínua de pessoas (nota 1); com risco de explosão, a nota 2 pede avaliação mais detalhada.",
+"ref": "NBR 5419-2:2026, Tabela C.2 e notas 1 e 2; 6.9.1.2 a)"
+},
+"rs": {
+"t": "Tipo de construção (rS)",
+"txt": "rS aumenta todas as perdas de vida humana (LA, LU, LB, LV e LC a LZ) conforme a construção. Robusta, com estrutura metálica ou de concreto armado: rS = 1; simples, de madeira ou alvenaria simples: rS = 2. Classifique pelo sistema estrutural da edificação e, na dúvida, use simples (2), que é o conservador. Não entra em R3 nem em R4.",
+"ref": "NBR 5419-2:2026, Tabela C.7; Tabela C.1 (eq. C.1 a C.4)"
+},
+"dims": {
+"t": "Dimensões L, W, H e saliência Hp",
+"txt": "L, W e H (m) dão a área de exposição AD da estrutura retangular e, com L e W, a área AM; em planta irregular, use o retângulo envolvente (conservador). Com caixa d'água, torre ou outra saliência, H é a altura da estrutura (HMÍN) e Hp a altura do topo da saliência medida do solo (HMÁX). Vale a maior entre AD e π·(3Hp)², então Hp só pesa quando essa área supera AD (A.2.1.3.2). Analisar só parte da estrutura exige as condições de A.2.2 (volume vertical inteiro, TRRF ≥ 120 min, DPS na transição, sem risco de explosão).",
+"ref": "NBR 5419-2:2026, A.2.1.2 (eq. A.1), A.2.1.3 (eq. A.2 e Figura A.3), A.2.2, A.3.2 (eq. A.6)"
+},
+"cd": {
+"t": "Localização da estrutura (CD)",
+"txt": "CD corrige o número de descargas diretas na estrutura (ND) conforme a vizinhança. Compare a altura da estrutura com a dos objetos e do terreno num raio de 3·H em volta dela (A.2.3.2). Use 2 só para estrutura isolada no topo de colina ou monte. Na dúvida entre duas opções, fique com a de maior CD (conservador).",
+"ref": "NBR 5419-2:2026, A.2.3 e Tabela A.1; eq. A.3"
+},
+"ng": {
+"t": "Densidade de descargas NG",
+"txt": "NG (raios/km²·ano) tem de ser o do Anexo F da norma: escolha a UF e o município da Tabela F.1. Valores de qualquer outra fonte não podem ser usados (A.1.3 e F.1.1). Cada município recebeu o maior valor das células de 12,5 km × 12,5 km que o cruzam (F.1.4). Use o NG manual só se o município não estiver na tabela, lendo o valor nos mapas F.1 a F.6 do mesmo anexo.",
+"ref": "NBR 5419-2:2026, A.1.3; Anexo F (F.1.1, F.1.4, F.2, Tabela F.1, Figuras F.1 a F.6)"
+},
+"nt": {
+"t": "Total de pessoas (nt)",
+"txt": "Número total esperado de pessoas na estrutura, incluindo quem fica até 3 m do lado de fora (5.2 d). As perdas de cada zona usam a razão nz/nt (Tabela C.1), então nt deve ser a soma dos nz; em branco, o app faz essa soma. Com zona única, nz/nt = 1 e o número absoluto de pessoas não altera R1: ele só pesa na escolha do hz e na divisão entre zonas.",
+"ref": "NBR 5419-2:2026, 5.2 d); C.3.1 b); Tabela C.1"
+},
+"pb": {
+"t": "SPDA (PB)",
+"txt": "PB é a probabilidade de uma descarga na estrutura causar danos físicos, pelo nível (NP) do SPDA conforme a NBR 5419-3; entra em RB, FB e PA = PTA·PB. As duas últimas opções exigem descida natural metálica ou de concreto armado com pelo menos dez caminhos interligados (NBR 5419-3, 8.1.2-b). SPDA existente só conta se atender à NBR 5419-3 e cobrir toda a estrutura (B.1.1, B.1.3). Se RA + RB < RT, ligações equipotenciais podem bastar sem SPDA completo (Figura 1, nota a); com risco de explosão e proteção exigida, o mínimo é o nível II (5.4.7).",
+"ref": "NBR 5419-2:2026, B.3 e Tabela B.2; B.1.1, B.1.3; Figura 1, nota a; 5.4.7; NBR 5419-3:2026, 8.1.2-b)"
+},
+"rt1": {
+"t": "Risco tolerável R1",
+"txt": "Valor máximo aceito para o risco de perda de vida humana, incluindo ferimentos permanentes: 10⁻⁵ por ano (Tabela 4). A autoridade com jurisdição local tem prioridade para fixar outro valor; sem essa definição, use 10⁻⁵ (5.3). Se R1 > RT, medidas de proteção são obrigatórias até R1 ≤ RT (5.4.4); se não for possível, informe o proprietário e adote o nível de proteção mais alto (5.4.6).",
+"ref": "NBR 5419-2:2026, 5.3 e Tabela 4; 5.4.4; 5.4.6"
+},
+"r3": {
+"t": "Patrimônio cultural (R3)",
+"txt": "Marque quando a estrutura abrigar patrimônio cultural (perda L3), como museus, galerias ou edificação de valor cultural. R3 só considera danos físicos (RB + RV, eq. 2), com perda rp·rf·LF·cz/ct por zona e LF = 10⁻¹; o cz/ct é pedido em cada zona. O RT de R3 é 10⁻⁴ por ano (Tabela 4); outro valor, só se a autoridade com jurisdição local definir (5.3).",
+"ref": "NBR 5419-2:2026, 4.1.3, 4.3.1 b) (eq. 2); C.4, Tabelas C.8 e C.9; 5.3 e Tabela 4"
+},
+"ft": {
+"t": "Frequência de danos F e FT",
+"txt": "F é a soma das frequências parciais de falha dos sistemas internos (eq. 14), comparada com FT. Marque quando a falha (D3) causar perda de serviço ou econômica (7.1.2): mesmo com R ≤ RT, F pode exigir medidas (5.4.3); efeito ambiental ou em equipamento crítico de segurança vai para o risco (4.1.3.3). Sistema crítico, cuja falha pode afetar uma comunidade (bairro, cidade, região) com perdas irreversíveis ou longas ou ameaça indireta à vida, tem FT = 0,1/ano, que só a autoridade com jurisdição pode aumentar. Nos demais, FT = 1/ano é só representativo.",
+"ref": "NBR 5419-2:2026, 7.1 (eq. 14), 7.3.3, 7.3.4, Tabela 7; 5.4.3; 4.1.3.3"
+},
+"r4": {
+"t": "Perda econômica R4 (Anexo D)",
+"txt": "R4 é informativo e opcional: não decide a necessidade de proteção (D.1.1), e 10⁻³ é só um RT representativo (D.1.2); nessa comparação, as razões de valor da Tabela D.1 valem 1 (nota a). O tipo de estrutura define LF e LO da Tabela D.2; os valores das zonas (ca, cb, cc, cs, em R$) servem à análise de custo, e ca só entra se houver animais de valor comercial (D.1.4). Nela, CPM = CP·(i + a + m) e a proteção se justifica se SM = CL − (CPM + CRL) > 0; a norma não dá valores típicos para i, a e m.",
+"ref": "NBR 5419-2:2026, Anexo D: D.1.1, D.1.2, D.1.4, D.2, D.3, Tabela D.1 e nota a, Tabela D.2, D.4 (eq. D.7 a D.12)"
+},
+"zona": {
+"t": "Zona de estudo",
+"txt": "Zona de estudo é uma parte da estrutura com características homogêneas (3.1.136). A zona única é aceita, mas obriga cada medida de proteção a cobrir a estrutura inteira (6.9.2.2). Divida quando mudar o piso ou solo (RA, RU), o compartimento à prova de fogo (RB, RV), a blindagem espacial (RC, RM), o leiaute dos sistemas internos, as medidas de proteção ou as perdas (6.7.1). Pessoas até 3 m para fora entram na análise (5.2 d), o que pode justificar uma zona externa; o risco total é a soma das zonas (6.6.4).",
+"ref": "NBR 5419-2:2026, 3.1.136; 5.2 d); 6.6.4; 6.7; 6.9"
+},
+"nz": {
+"t": "Pessoas na zona (nz)",
+"txt": "Número de pessoas que podem estar na zona, isto é, as possíveis vítimas. Entra como nz/nt em todas as perdas de vida da zona (Tabela C.1), dividindo o risco entre as zonas. A soma dos nz de todas as zonas deve fechar o total nt. Em zona única, informe o total da estrutura.",
+"ref": "NBR 5419-2:2026, C.3.1 b); Tabela C.1; 3.2 (nz, nt)"
+},
+"tz": {
+"t": "Tempo de presença (tz)",
+"txt": "Horas por ano em que há pessoas na zona; entra como tz/8.760 nas perdas de vida (Tabela C.1). Use 8.760 h/ano para presença permanente, que é o padrão e o conservador, já que os valores da Tabela C.2 pressupõem presença contínua (nota 1). Só reduza se a ocupação for de fato menor (C.3.1 c), calculando horas por dia × dias por ano de ocupação.",
+"ref": "NBR 5419-2:2026, C.3.1 c); Tabela C.1; Tabela C.2, nota 1"
+},
+"rt": {
+"t": "Piso ou solo (rt)",
+"txt": "rt reduz só as perdas por choque (RA, RU) conforme a resistência de contato do piso ou solo onde as pessoas ficam; para RA conta também o solo até 3 m das descidas. A resistência é medida entre um eletrodo de 400 cm² comprimido com 500 N e um ponto no infinito (nota a). Camada isolante, como 5 cm de asfalto, em geral reduz o perigo a nível tolerável, mas cuidado se ficar úmida ou alagada. Com pisos diferentes na zona, use o de maior rt (6.9.1.2 a).",
+"ref": "NBR 5419-2:2026, Tabela C.3, notas a e b e Nota; 4.2.2.1 a); 6.9.1.2 a)"
+},
+"rf": {
+"t": "Risco de incêndio ou explosão (rf)",
+"txt": "rf multiplica as perdas por danos físicos (RB, RV, R3). Incêndio pela carga específica (energia do combustível ÷ área total): alto ≥ 800 MJ/m² ou construção/cobertura combustível; normal de 400 a 800; baixo abaixo de 400 ou pouco combustível; use estas faixas mesmo que o Corpo de Bombeiros adote outras (C.3.4.5). Explosão segue as zonas da NBR IEC 60079-10 e força rp = 1; a norma não recomenda considerá-la nos casos de C.3.4.6 (ex.: substância presente menos de 0,1 h/ano). 'Nenhum' zera RB e RV: pouco combustível ainda é 'baixo'.",
+"ref": "NBR 5419-2:2026, Tabela C.5 e nota; C.3.4 a C.3.4.7"
+},
+"rp": {
+"t": "Providências contra incêndio (rp)",
+"txt": "rp reduz as perdas por danos físicos (RB, RV, R3) conforme as providências tomadas. Instalação fixa automática ou alarme automático (0,2) só vale se protegida contra sobretensões e outros danos; no alarme, também é preciso haver pessoas capacitadas para combater o incêndio no local. Com várias providências, use o menor valor aplicável, sem multiplicar (C.3.3). Em zona com risco de explosão, rp = 1 (C.3.4).",
+"ref": "NBR 5419-2:2026, Tabela C.4 e notas a e b; C.3.3; C.3.4"
+},
+"hz": {
+"t": "Perigo especial (hz)",
+"txt": "hz aumenta a perda de vidas por danos físicos (RB e RV de R1) quando há pânico ou dificuldade de evacuação. Os exemplos da tabela orientam: estrutura de até dois andares com até 100 pessoas é pânico baixo (2); eventos culturais ou esportivos dão pânico médio (100 a 1.000 pessoas) ou alto (acima de 1.000); hospitais e pessoas imobilizadas, dificuldade de evacuação (5). A norma não detalha quando usar 'sem perigo especial' (1).",
+"ref": "NBR 5419-2:2026, Tabela C.6; Tabela C.1 (eq. C.3)"
+},
+"vida": {
+"t": "Falha de sistemas e risco à vida (LO)",
+"txt": "Responda sim só se a falha dos sistemas internos puder pôr vidas (ou o meio ambiente) em risco imediato, como em estrutura com risco de explosão ou hospital. Só nesse caso RC, RM, RW e RZ entram em R1, com o LO da Tabela C.2. Em 'outro caso', o LO deve ser fixado e justificado pelo projetista, pois a norma não dá valor (C.1). Perda de serviço ou econômica não entra aqui: é avaliada pela frequência de danos F.",
+"ref": "NBR 5419-2:2026, 4.3.1 (eq. 1 e nota); Tabela 2, nota a; Tabela C.2 (LO); C.1; 4.1.3.3"
+},
+"pta": {
+"t": "Proteção contra toque e passo (PTA)",
+"txt": "Medidas adicionais contra tensões de toque e passo de uma descarga na estrutura; com várias marcadas, o PTA é o produto (B.2.2). Isolação (≥ 3 mm de XLPE, 100 kV 1,2/50 µs) cobre só o toque, e tubo de PVC de proteção mecânica não isola (NBR 5419-3, 8.1.1, nota 2). A malha de equipotencialização do solo cobre só o passo, e avisos só valem após análise de viabilidade (nota b). PTA só reduz PA (RA) em estrutura com SPDA ou descida natural conforme a NBR 5419-3 (nota 1 de B.2.2). Em prédio de concreto armado com as armaduras usadas como descida natural (NBR 5419-3), marque essa opção: PTA = 10⁻³.",
+"ref": "NBR 5419-2:2026, B.2, Tabela B.1 e notas, B.2.2 e nota 1; NBR 5419-3:2026, 8.1 e 8.2"
+},
+"ptu": {
+"t": "Proteção contra toque por descarga na linha (PTU)",
+"txt": "Medidas contra a tensão de toque dentro da estrutura causada por descarga numa linha conectada. Com várias marcadas, o PTU é o produto (nota 1). Só reduz PU, ou seja, a componente RU. A ligação equipotencial na entrada por DPS classe I ou interface isolante é tratada à parte, nos campos da linha (PEB e CLD).",
+"ref": "NBR 5419-2:2026, B.5 (eq. B.8), Tabela B.6 e nota 1; NBR 5419-3:2026, Seção 8"
+},
+"ks1": {
+"t": "Blindagem ZPR 0/1 (KS1)",
+"txt": "KS1 mede a blindagem espacial externa e entra ao quadrado em PMS, reduzindo PM (RM, FM). Em malha, KS1 = 0,12·w1, com w1 a largura da malha ou o espaçamento entre descidas do SPDA, pilares metálicos ou de concreto armado; acima de ~8,3 m não reduz (máximo 1), e blindagem metálica contínua ≥ 0,1 mm dá 10⁻⁴. SPDA só conta se a captação for em malha com descidas a menos de 5 m em média (B.4.6). Vale para equipamento a pelo menos w da blindagem; mais perto, KS cresce (B.4.13).",
+"ref": "NBR 5419-2:2026, B.4.10 (eq. B.4), B.4.12 (eq. B.5) e nota, B.4.13, B.4.6; Tabela 3, nota a"
+},
+"ks2": {
+"t": "Blindagem interna ZPR 1/2 (KS2)",
+"txt": "KS2 mede uma blindagem espacial interna (interface ZPR 1/2 ou seguinte), como uma sala ou um armário blindado. O cálculo é o mesmo do KS1: 0,12·w2 para malha (máximo 1) ou 10⁻⁴ para blindagem metálica contínua ≥ 0,1 mm. Em ZPRs em cascata, a norma multiplica os KS2 de cada uma (B.4.13). Sem blindagem interna, KS2 = 1; o fator entra ao quadrado em PMS e só reduz PM (RM, FM).",
+"ref": "NBR 5419-2:2026, B.4.10 (eq. B.4), B.4.12 (eq. B.6) e nota, B.4.13"
+},
+"czct": {
+"t": "Valor cultural na zona (cz/ct)",
+"txt": "Parte, em %, do valor total da estrutura (edificação e conteúdo, ct) que é patrimônio cultural nesta zona (cz). Multiplica a perda de R3 da zona (eq. C.7). Edificação toda de valor cultural ou zona única: 100%, que é o conservador. A soma das zonas não deve passar de 100%.",
+"ref": "NBR 5419-2:2026, C.4.1 b); Tabela C.8 (eq. C.7)"
+},
+"linha": {
+"t": "Linha elétrica",
+"txt": "Linha é cada linha de energia ou de sinal (telefone, dados, controle, automação) que entra ou sai da estrutura; avalie todas (Tabela B.9, nota 2). Cadastre uma por roteamento diferente (6.4.4); no mesmo caminho, só a de piores características: sinal antes de energia, não blindada antes de blindada, BT antes de AT com transformador (6.4.5). Fibra óptica sem metal não é linha metálica (Tabela B.4). Tubulação metálica ligada ao barramento de equipotencialização na entrada não é fonte de dano (4.2.4.2).",
+"ref": "NBR 5419-2:2026, 3.1.80 a 3.1.82; 4.2.4; 6.4.4, 6.4.5, 6.5.4, 6.5.5; Tabela B.4; Tabela B.9, nota 2"
+},
+"tipo": {
+"t": "Tipo de linha (energia ou sinal)",
+"txt": "Energia é a linha que alimenta os equipamentos (BT ou AT); sinal é a de telecomunicações, dados, controle ou automação (3.1.81, 3.1.82). O tipo escolhe a linha da Tabela B.9 (PLI, descargas perto da linha) e, em energia, libera o fator CT; linha de sinal tem CT = 1 (Tabela A.3). As contribuições de energia e de sinal se somam no risco e podem ser vistas separadamente (6.6.3).",
+"ref": "NBR 5419-2:2026, 3.1.81, 3.1.82; Tabela B.9; Tabela A.3; 6.6.3"
+},
+"b4": {
+"t": "Blindagem e ligação na entrada (CLD, CLI)",
+"txt": "Escolha pelo tipo de linha externa e pela ligação da blindagem na entrada; CLD multiplica PC, PU, PV e PW, e CLI multiplica PZ. Blindagem ligada ao mesmo barramento do equipamento zera CLI e reduz PLD conforme RS (Tabela B.8); não ligada, só reduz CLI. As opções 7 a 9 (CLD = CLI = 0) zeram essas parcelas e só valem se todo o trecho for assim (6.8.2). Na interface isolante, CLD = 0 exige DPS ou UW ensaiada acima da prevista (nota a); em sistema interno não blindado, o PC usa CLD = 1 (B.4.4).",
+"ref": "NBR 5419-2:2026, Tabela B.4, nota a e Nota 1; B.4.3; B.4.4; 6.8.2"
+},
+"rsb": {
+"t": "Resistência da blindagem (RS)",
+"txt": "RS é a resistência da blindagem do cabo por quilômetro, do catálogo do fabricante. Só se aplica à linha com blindagem ligada ao mesmo barramento do equipamento (opção 6 da Tabela B.4). Com o UW, define PLD, que reduz PU, PV e PW: quanto menor RS e maior UW, menor PLD. A tabela não traz faixa acima de 20 Ω/km; a norma não define esse caso, e o conservador é tratar a linha como não blindada (PLD = 1).",
+"ref": "NBR 5419-2:2026, Tabela B.8; Tabela B.4; eq. B.8, B.9 e B.10"
+},
+"LL": {
+"t": "Comprimento do trecho (LL)",
+"txt": "LL vai da estrutura até o nó, ponto a partir do qual o surto é desprezável: na energia, o transformador AT/BT; no sinal, a central ou um equipamento como multiplexador ou xDSL (3.1.91, 6.4.3). NL e NI crescem em proporção (AL = 40·LL; AI = 4.000·LL). Se o comprimento for desconhecido, use 1.000 m, que o app adota com o campo vazio (A.4.1, A.5.1). Tratada como trecho único, a linha deve usar os fatores CI, CE e CT mais conservadores (A.4.2).",
+"ref": "NBR 5419-2:2026, 3.1.91; 6.4.3; A.4.1 (eq. A.8); A.4.2; A.5.1 (eq. A.10)"
+},
+"inst": {
+"t": "Instalação da linha (CI)",
+"txt": "CI reduz NL e NI de trecho enterrado (0,5) e, mais ainda, de trecho enterrado dentro dos limites de um eletrodo de aterramento em malha ao longo de todo o LL (0,01; NBR 5419-4, 5.2). Se a linha tem parte aérea e parte enterrada e é tratada como trecho único, use aérea (A.4.2, 6.8.2). Para trecho enterrado, os valores pressupõem solo de 400 Ω·m (nota 1).",
+"ref": "NBR 5419-2:2026, Tabela A.2 e nota 1; A.4.2; 6.8.2; NBR 5419-4:2026, 5.2"
+},
+"rho": {
+"t": "Resistividade do solo (ρ)",
+"txt": "Só vale para trecho enterrado. A Tabela A.2 é baseada em ρ = 400 Ω·m; para ρ > 400 Ω·m, a nota 1 manda usar AL = 0,6·√ρ·LL no lugar de 40·LL. Deixe em branco se ρ ≤ 400 Ω·m ou se não houver medição. Atenção: até cerca de 4.400 Ω·m essa fórmula dá AL menor que 40·LL, embora a própria nota diga que AL cresce com ρ; na dúvida, deixe em branco, que é o conservador.",
+"ref": "NBR 5419-2:2026, Tabela A.2, nota 1; eq. A.7 e A.8"
+},
+"ce": {
+"t": "Ambiente da linha (CE)",
+"txt": "CE depende da densidade de construções ao longo da linha, não em volta do prédio: rural é baixa, suburbano é média e urbano é alta (3.1.2 a 3.1.4); 0,01 só para urbano com estruturas acima de 20 m. Se o percurso passa por ambientes diferentes, use o de maior CE no trecho único (A.4.2). CE muda NL e NI em até 100 vezes, logo pesa em RU, RV, RW, RZ e F.",
+"ref": "NBR 5419-2:2026, 3.1.2 a 3.1.4; Tabela A.4; A.4.2"
+},
+"ct": {
+"t": "Tipo de linha de energia (CT)",
+"txt": "CT = 0,2 só para linha de energia em AT com transformador AT/BT de enrolamentos separados, dentro da estrutura ou no trecho externo (nota). Estrutura atendida em BT tem CT = 1, pois o transformador da rede é o nó que encerra a linha (3.1.91). Na dúvida, use 1. CT reduz NL, NI e também o NDJ da estrutura adjacente.",
+"ref": "NBR 5419-2:2026, Tabela A.3 e nota; 3.1.91; eq. A.4, A.7 e A.9"
+},
+"uw": {
+"t": "Tensão suportável UW",
+"txt": "UW é a tensão suportável de impulso dos equipamentos ligados à linha; havendo vários, vale o menor (B.4.15). Entra em PLD, PLI e KS4 = 1/UW. Pela NBR 5419-4 (Tabela A.1), em 127/220 V o equipamento de utilização (cat. II) tem 1,5 kV e o especialmente protegido (cat. I) 0,8 kV; em 220/380 V, 2,5 e 1,5 kV; portas de sinal de ETI ligadas à linha externa, 1,5 kV (A.2.3). Fora das colunas, escolha a de baixo; sem dado, consulte o fabricante, e equipamento sem UW por norma de produto leva PM = 1 (B.4.10).",
+"ref": "NBR 5419-2:2026, B.4.10, B.4.14 (eq. B.7), B.4.15, Tabelas B.8 e B.9; NBR 5419-4:2026, A.2.3, Tabela A.1, C.2.1.2"
+},
+"eb": {
+"t": "DPS classe I na entrada (PEB)",
+"txt": "PEB considera os DPS classe I da ligação equipotencial na entrada da linha (NBR 5419-3), pelo NP para o qual foram dimensionados. Reduz PU e PV, isto é, choque e danos físicos por descarga na linha (RU, RV), e a frequência FV; o sistema coordenado não reduz PV (nota de B.6.1). Valores de 0,005 a 0,001 só se o Iimp for maior que o exigido para NP I (nota 2). Correntes típicas por condutor em cada NP: NBR 5419-1, Anexo E.",
+"ref": "NBR 5419-2:2026, B.5, B.6, Tabela B.7 e nota 2; Tabela 7; NBR 5419-1:2026, Anexo E (Tabelas E.1 e E.2)"
+},
+"spd": {
+"t": "Sistema coordenado de DPS (PSPD)",
+"txt": "PSPD vale para DPS selecionados, coordenados e instalados conforme a NBR 5419-4 (3.1.107), cobrindo todos os equipamentos pertinentes (B.1.3), pelo NP para o qual foram projetados. Reduz PC, PM, PW e PZ e as frequências FC, FM, FW e FZ; não reduz PU nem PV. Só reduz PC em estrutura com SPDA ou descida natural (nota 1), e 0,005 a 0,001 exige DPS melhores que o pedido para NP I, como maior In e menor Up (nota 2). Sem risco à vida pela falha dos sistemas, o efeito aparece em F e R4, não em R1.",
+"ref": "NBR 5419-2:2026, 3.1.107; B.1.3; B.4.2, Tabela B.3 e notas 1 e 2; B.4.9; B.7; B.8; Tabela 7; 4.3.1, nota"
+},
+"ks3": {
+"t": "Fiação interna (KS3) e comprimento",
+"txt": "KS3 mede o laço formado pela fiação interna do sistema ligado à linha: de 1 (sem cuidado no roteamento, laços da ordem de 50 m²) até 10⁻⁴ (cabo blindado ou conduto metálico contínuo ligado à equipotencialização nas duas pontas). Os valores são para circuito de 100 m; informe o comprimento se for menor e o KS3 cai na proporção (nota e). Em branco, vale o de 100 m, que é o conservador. KS3 só afeta PM, isto é, RM e FM.",
+"ref": "NBR 5419-2:2026, Tabela B.5 e notas a a f; B.4.10 (eq. B.4)"
+},
+"adj": {
+"t": "Estrutura adjacente (NDJ)",
+"txt": "Marque quando a linha liga esta estrutura a outra na outra ponta, de onde descargas diretas também chegam pela linha (A.1.4 e); por exemplo, o prédio principal que alimenta uma casa de máquinas. Informe LJ, WJ e HJ da adjacente (área ADJ pela eq. A.1) e a localização CDJ pela Tabela A.1. NDJ = NG·ADJ·CDJ·CT·10⁻⁶ soma-se a NL em RU, RV, RW, FV e FW. Em muitos casos NDJ pode ser desprezado (nota de 6.4.1).",
+"ref": "NBR 5419-2:2026, A.1.4 e); A.2.5 (eq. A.4); Figura A.5; Tabela A.1; 6.4.1, nota"
+},
+"comparar": {
+"t": "Comparar duas análises",
+"txt": "Ao comparar análises da mesma estrutura, confira:\nNG fora do Anexo F (A.1.3), H/Hp e CD;\nlinhas: quantidade, LL (1.000 m se desconhecido), CI e CE (até 100 vezes cada), CT, opção da Tabela B.4 (CLD/CLI), RS e UW;\nDPS de cada linha: PEB (classe I) e PSPD (coordenado), de 1 a 0,001;\nzonas: divisão, nz/nt, tz, rt (10⁻² a 10⁻⁵), rp, rf, hz, rS, PTA/PTU (PTA sem SPDA não vale), KS1 a KS3 e se a falha dos sistemas põe vida em risco;\ncritérios: RT, FT e se F entra; a edição 2015 tinha R2, hoje substituído por F.",
+"ref": "NBR 5419-2:2026, eq. 1, 3 e 14; Anexos A, B e C; Tabela 4; 7.3.4; 4.2.1.2, nota 1"
+}
+}/*FIM*/;
+const RSK_AJ_MAPA = {L:"dims", W:"dims", H:"dims", Hp:"dims", uf:"ng", mun:"ng", ngMan:"ng", rt3:"r3", fOn:"ft", r4tipo:"r4", rt4:"r4", cp:"r4", ti:"r4", ta:"r4", tm:"r4",
+  w1:"ks1", w2:"ks2", ks3L:"ks3", LJ:"adj", WJ:"adj", HJ:"adj", cdj:"adj", ca:"r4", cb:"r4", cc:"r4", cs:"r4", lo:"vida", ifProt:"b4", semUW:"uw", malhaEq:"ks1", zpr0a:"ft"};
+function rskAjudaMarcar(){
+  const M = $("mod-rsk"); if(!M) return;
+  M.querySelectorAll("[data-rk],[data-zf],[data-lf]").forEach(el=>{
+    let k = el.dataset.rk ?? el.dataset.zf ?? el.dataset.lf;
+    if(k==="nome") k = el.dataset.zf!==undefined ? "zona" : el.dataset.lf!==undefined ? "linha" : null;
+    k = RSK_AJ_MAPA[k] || k; if(!k || !RSK_AJUDA[k]) return;
+    const lb = el.closest("label"); if(!lb || lb.querySelector(".aj-i")) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "aj-i"; b.dataset.aj = k; b.textContent = "i"; b.setAttribute("aria-label", "Ajuda: " + RSK_AJUDA[k].t); b.title = RSK_AJUDA[k].t;
+    const tx = [...lb.childNodes].find(n=>n.nodeType===3 && n.textContent.trim());
+    if(tx && !lb.classList.contains("chave")){ const sp = document.createElement("span"); sp.className = "aj-rot"; tx.replaceWith(sp); sp.append(tx, b); } else lb.append(b);
+  });
+  M.querySelectorAll(".rsk-chk").forEach(g=>{ const sm = g.querySelector("small"), k = g.querySelector("[data-zm]")?.dataset.zm;
+    if(!sm || !k || !RSK_AJUDA[k] || sm.querySelector(".aj-i")) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "aj-i"; b.dataset.aj = k; b.textContent = "i"; b.title = RSK_AJUDA[k].t; sm.classList.add("aj-rot"); sm.append(b); });
+}
+function rskAjudaAbrir(b){
+  document.querySelectorAll(".aj-pop").forEach(p=>p.remove()); document.querySelectorAll('.aj-i[aria-expanded="true"]').forEach(x=>x.setAttribute("aria-expanded","false"));
+  const a = RSK_AJUDA[b.dataset.aj]; if(!a) return;
+  const p = document.createElement("div"); p.className = "aj-pop"; p.setAttribute("role", "dialog");
+  p.innerHTML = `<b>${esc(a.t)}</b>${String(a.txt).split(/\n+/).map(x=>`<p>${esc(x)}</p>`).join("")}<small>${esc(a.ref || "")}</small>`;
+  document.body.append(p); b.setAttribute("aria-expanded","true");
+  const r = b.getBoundingClientRect(), w = p.offsetWidth, x = Math.max(8, Math.min(window.scrollX + r.left - 12, window.scrollX + document.documentElement.clientWidth - w - 8));
+  const h = p.offsetHeight, vh = document.documentElement.clientHeight, cabe = r.bottom + 8 + h <= vh - 80;   // a barra fixa de baixo ocupa ~70 px
+  p.style.left = x + "px"; p.style.top = (cabe || r.top < h + 16 ? window.scrollY + r.bottom + 8 : window.scrollY + r.top - h - 8) + "px";
+}
+function ligarRskAjuda(){
+  document.addEventListener("click", e=>{ const b = e.target.closest?.(".aj-i");
+    if(b){ e.preventDefault(); e.stopPropagation(); if(b.getAttribute("aria-expanded")==="true"){ document.querySelectorAll(".aj-pop").forEach(p=>p.remove()); b.setAttribute("aria-expanded","false"); } else rskAjudaAbrir(b); return; }
+    if(!e.target.closest?.(".aj-pop")){ document.querySelectorAll(".aj-pop").forEach(p=>p.remove()); document.querySelectorAll('.aj-i[aria-expanded="true"]').forEach(x=>x.setAttribute("aria-expanded","false")); } }, true);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") document.querySelectorAll(".aj-pop").forEach(p=>p.remove()); });
+  const M = $("mod-rsk"); if(!M) return; let t = 0;
+  new MutationObserver(()=>{ clearTimeout(t); t = setTimeout(rskAjudaMarcar, 30); }).observe(M, {childList:true, subtree:true});
+  rskAjudaMarcar();
 }
 function ligarRsk(){
   const M = $("mod-rsk"); if(!M) return;
@@ -10549,7 +11224,7 @@ ligarCmx();
 ligarCgl();
 ligarDem();
 ligarAli();
-ligarRsk();
+ligarRsk(); ligarRskAjuda();
 ligarIcc();
 apvIniciar();
 
