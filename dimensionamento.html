@@ -5857,9 +5857,10 @@ function calcAlim(a){
 }
 const nomeAlim = a => a.nome || (a.de && a.para ? `${nomeEc(a.de)} → ${nomeEc(a.para)}` : "Alimentador");
 // Escolhe o eletroduto; se os fios não couberem no maior, completa o maior e acrescenta outra tubulação para o excedente
-function escDuto(tipo, cabos, necTotal){
+function escDuto(tipo, cabos, necTotal, soP){
   const dmin = num(S.ele?.dmin ?? 1) || 0;                    // regra Equiper: eletroduto mínimo de 1"
-  const l = DUTOS[tipo].l.map(([p,di])=>({p, di, A:areaCirc(di)})).filter(x=>x.p >= dmin - 1e-9), maior = l[l.length-1];
+  const l = DUTOS[tipo].l.map(([p,di])=>({p, di, A:areaCirc(di)})).filter(x=>soP!=null ? Math.abs(x.p - soP) < 1e-9 : x.p >= dmin - 1e-9), maior = l[l.length-1];
+  if(!l.length) return {ok:null, tubos:[], erro:"diâmetro inexistente"};
   const nec = g => g.reduce((s,c)=>s+c.ar,0) / taxaOcup(g.length);
   const mk = (duto, g) => { const area = g.reduce((s,c)=>s+c.ar,0); return {duto, cabos:g, n:g.length, area, taxa:taxaOcup(g.length), nec:nec(g), ocup:area/duto.A}; };
   let resto = [...cabos].sort((a,b)=>b.ar-a.ar); const tubos = []; let erro = null;
@@ -7870,7 +7871,7 @@ function alCalc(p){
   r.arrDesc = A[5];
   r.aviso = A[1]!==p.sis ? "arranjo de cabos incompatível com o tipo de sistema (mono/tri)" : A[0]!==p.tipo ? "arranjo de cabos incompatível com o tipo de cabo (uni/multipolar)"
     : tabQ===20 && [2,4,6].includes(arr) ? "arranjo sem dados na Tabela 20 (cabos 750 V)" : tabQ===20 && arr===9 ? "Tabela 20 col. J:K (mono, s = 20 cm) com dados corrompidos – redigitar do catálogo" : "";
-  const cat = T.cat[m].find(x=>x[0]===S), dext = cat ? cat[4] : null, dc = cat ? cat[1] : null, esI = cat ? cat[2] : null;
+  const cat = T.cat[m].find(x=>x[0]===S), dext = p.dextMan > 0 && p.dextS===S ? p.dextMan : (cat ? cat[4] : null), dc = cat ? cat[1] : null, esI = cat ? cat[2] : null;
   const esp = A[3];
   const Sd = esp===0 ? dext : esp===1 ? (dext!=null ? 2*dext : null) : esp===2 ? 130 : esp===3 ? 200 : (dc!=null ? dc + 2*esI : null);
   const GMD = Sd==null ? null : A[4]===2 ? Sd*Math.cbrt(2) : Sd;
@@ -8055,6 +8056,18 @@ function alMotOutros(its){
 const AL_AT_V = [440, 480, 600, 660];
 const AL_AT_KVA = [5,10,15,20,30,45,50,75,100,112.5,150,200,225,300,400,500,630,750,1000];
 const AL_AT_UCC = 3.5, AL_AT_ETA = 97;                                     // adotados na falta de dados do fabricante (confirmar)
+function alDuto(p, x, q){
+  if(!x || !alNum(x.p?.S)) return null;
+  const a = q.al || {}, cat = ALT.cat[p.modelo], dCat = S => cat.find(r=>r[0]===S)?.[4], d = S => p.dextMan > 0 && p.dextS===S ? p.dextMan : dCat(S);
+  const nC = (p.fases==="tri" ? 3 : p.fases==="bi" ? 2 : 1) + 1, cabos = [];                 // fases + neutro, por circuito em paralelo
+  for(let i = 0; i < (p.npar||1)*nC; i++) cabos.push({ar:areaCirc(d(x.p.S)), b:x.p.S, t:"fase/neutro"});
+  if(alNum(x.PE)) cabos.push({ar:areaCirc(d(x.PE) ?? d(x.p.S)), b:x.PE, t:"PE"});
+  if(cabos.some(c=>!isFinite(c.ar))) return {erro:"cabo sem diâmetro no catálogo"};
+  const tipo = a.dutoTipo==="kanaflex" || a.dutoTipo==="rigido" ? a.dutoTipo : (x.solo ? "kanaflex" : "rigido");
+  const area = cabos.reduce((t,c)=>t + c.ar, 0), nec = area/taxaOcup(cabos.length);
+  const auto = escDuto(tipo, cabos, nec), man = num(a.dutoD) > 0 ? escDuto(tipo, cabos, nec, num(a.dutoD)) : null;
+  return {tipo, n:cabos.length, area, nec, taxa: taxaOcup(cabos.length), auto, man, res: man || auto, dCabo: d(x.p.S), dCaboCat: dCat(x.p.S), dPE: alNum(x.PE) ? d(x.PE) : null};
+}
 function alAtParam(q, p, SnForce){
   const a = q.al || {}; if(!a.atOn) return null;
   const tipo = a.atTipo==="ele" ? "ele" : "dois", nT = tipo==="dois" ? 2 : 1, Vb = p.V, Va = num(a.atV) > 0 ? num(a.atV) : 440;
@@ -8115,6 +8128,7 @@ function alAtSel(it, p, base, mont){
 }
 function alItem(q, r, T, mont){
   const p = alParam(q, r, T), pai = dmPai(q);
+  p.dextMan = num(q.al?.dext); p.dextS = num(q.al?.dextS);                            // diâmetro externo do cabo informado (vale para a seção em que foi digitado)
   mont = mont || {dv:0, ok:true}; p.dvMont = mont.dv; p.dvTot = num(alPad("dv"))/100;            // limite geral: queda acumulada desde a origem
   p.dvCustom = !alVazio(q.al?.dv) && num(q.al.dv) > 0;                                            // personalizado: limite só deste trecho
   p.dvAuto = Math.max(0, p.dvTot - mont.dv); p.dv = p.dvCustom ? num(q.al.dv)/100 : p.dvAuto;
@@ -8155,6 +8169,7 @@ function alItem(q, r, T, mont){
   if(x.metOk && alNum(x.fc) && !alNum(x.Iz)) it.avisos.push(`Seção ${alS(x.p.S)} mm² sem capacidade de condução na tabela${p.mat===2 ? " (alumínio só a partir de 16 mm²)" : ""}.`);
   if(!(p.L > 0)) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
   if(p.mot?.erro) it.avisos.push(`Partida do motor: ${p.mot.erro}`);
+  if(p.dextMan > 0 && x?.p && p.dextS!==x.p.S) it.avisos.push(`O diâmetro externo informado (${fmt(p.dextMan,1)} mm) vale para o cabo de ${alS(p.dextS)} mm²; a seção agora é ${alS(x.p.S)} mm², então foi usado o do catálogo. Informe de novo se quiser.`);
   if(p.at?.erro) it.avisos.push(`Autotransformador: ${p.at.erro}`);
   if(p.at && !p.at.erro){ const t = p.at;
     if(t.uccPad || t.etaPad || t.SnPad) it.avisos.push(`Autotransformador: ${[t.SnPad ? `potência adotada ${fmt(t.Sn,1)} kVA (${t.SnAuto ? "a menor padronizada com queda nos autotrafos de até metade da disponível no trecho" + (p.mot && !p.mot.erro ? ", que fecha a partida do motor" : "") + " e que deixa o cabo elevado mais fino que sem autotrafo" : "nenhuma potência fecha"}; carga de ${fmt(t.Sload,1)} kVA)` : "", t.uccPad ? `impedância adotada ${fmt(t.ucc,1)} %` : "", t.etaPad ? `rendimento adotado ${fmt(t.eta*100,0)} %` : ""].filter(Boolean).join(", ")}. Confirme com os dados do fabricante.`);
@@ -8177,6 +8192,11 @@ function alItem(q, r, T, mont){
   const nF = p.sis===1 ? 3 : p.bi ? 2 : 1, S2 = x.p.S;
   const fCond = y => `${p.npar>1 ? `${p.npar}×(` : ""}${nF}#${alS(y.p.S)} + N${alS(y.p.S)}${p.npar>1 ? ")" : ""} + PE${alNum(y.PE) ? alS(y.PE) : "—"}`;
   it.cond = fCond(x);
+  it.duto = alDuto(p, x, q);
+  if(it.duto?.man){ const D = it.duto, m = D.man;
+    if(m.erro) it.avisos.push(`Eletroduto de ${POL[num(q.al.dutoD)] || q.al.dutoD}: ${m.erro}.`);
+    else if(m.multi) it.avisos.push(`No eletroduto de ${POL[num(q.al.dutoD)]} escolhido os cabos não cabem num só: são necessários ${m.tubos.length} eletrodutos (ocupação ${m.ocupTxt}). O calculado é ${D.auto?.txt || "—"}.`);
+    else if(D.auto?.ok && m.ok && m.ok.p > D.auto.ok.p) it.avisos.push(`Eletroduto escolhido (${POL[m.ok.p]}) maior que o necessário (${D.auto.txt}).`); }
   if(p.at && !p.at.erro){ it.condA = it.cond; it.condB = it.resB ? fCond(it.resB) : null; it.cond = `${it.condA} em ${fmt(p.at.Va)} V${it.condB ? ` · ${it.condB} em ${fmt(p.at.Vb)} V` : ""}`; }
   it.nF = nF;
   it.econ = alEcon(p.Ib/p.npar, p.modelo);
@@ -8268,6 +8288,9 @@ function renderAliLista(){
         <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${p.iccCalc!=null ? `auto ${esc(fmt(p.iccCalc,2))}` : num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}" title="Em branco: usa a Icc presumida calculada (aba Icc presumida) ou a geral."><b>kA</b></span></label>
         <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}"><b>s</b></span></label>
         <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
+        <label class="campo">Diâmetro externo do cabo<span class="unid"><input data-af="dext" data-sec="${esc(String(it.res?.p?.S ?? ""))}" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(p.dextMan > 0 && p.dextS===it.res?.p?.S ? a.dext : "")}" placeholder="${it.duto?.dCaboCat ? `${fmt(it.duto.dCaboCat,1)} (catálogo)` : "mm"}" title="Em branco: diâmetro do catálogo para a seção calculada. Preenchido: vale para a seção atual e entra na reatância (queda de tensão) e no eletroduto."><b>mm</b></span></label>
+        <label class="campo">Eletroduto${alSel("dutoTipo", a.dutoTipo ?? "", [["rigido","Rígido roscável"],["kanaflex","PEAD corrugado (Kanaflex)"]], `Padrão · ${(it.duto?.tipo || (it.res?.solo ? "kanaflex" : "rigido"))==="kanaflex" ? "Kanaflex" : "rígido"}`)}</label>
+        <label class="campo">Diâmetro do eletroduto${alSel("dutoD", a.dutoD ?? "", DUTOS[it.duto?.tipo || "rigido"].l.map(([pp])=>[pp, POL[pp]]), `Calculado · ${it.duto?.auto?.txt || "—"}`)}</label>
         <label class="chave al-w2" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-af="motOn" ${a.motOn?"checked":""}> Considerar a partida do motor</label>
         ${a.motOn ? alMotCampos(q, a, p) : ""}
         <label class="chave al-w2" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-af="atOn" ${a.atOn?"checked":""}> Usar autotransformador (elevador/abaixador)</label>
@@ -8318,6 +8341,7 @@ function atualizarAli(its){
       <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${alNum(x.In) ? fmt(x.In) : "—"} A · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
       <div><small>Queda de tensão</small><strong>${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) : "—"}</strong><em>% no trecho${it.p.dvMont > 0 || dmPai(it.q) ? ` · acumulada <b>${it.dvAcum!=null ? fmt(it.dvAcum*100,2) + "%" : "—"}</b>${it.montOk ? "" : " (incompleta)"} (a montante ${fmt(p.dvMont*100,2)}%)` : ""} · ${p.dvCustom ? `limite do trecho <b>${fmt(p.dv*100,2)}%</b> (personalizado) · geral ${fmt(p.dvTot*100,1)}%` : `limite ${fmt(p.dvTot*100,1)}%`}</em></div>
       <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²</em>`}</div>
+      ${it.duto && !it.duto.erro ? (D=>`<div><small>Eletroduto${D.man ? " (escolhido)" : " (calculado)"}</small><strong class="${D.man && (D.man.multi || D.man.erro) ? "falha" : ""}">${D.res?.txt || "—"}</strong><em>${D.tipo==="kanaflex" ? "Kanaflex" : "rígido"} · ${D.n} cabos · Ø ${fmt(D.dCabo,1)} mm${p.dextMan > 0 && p.dextS===x.p.S ? " (informado)" : ""} · ocupação ${D.res?.ocupTxt || "—"} (máx. ${fmt(D.taxa*100,0)} %)${D.man ? ` · calculado: ${D.auto?.txt || "—"}` : ""}</em></div>`)(it.duto) : ""}
       <div><small>Seção econômica</small><strong>${it.econ ? fmt(it.econ.Se,0) : "—"}</strong><em>mm²${it.econ ? ` por cabo · catálogo ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}` : ""}</em></div>
       ${p.at && !p.at.erro ? `<div><small>Autotransformador</small><strong>${fmt(p.at.Vb)} → ${fmt(p.at.Va)} V</strong><em>${p.at.tipo==="dois" ? "elevador e abaixador" : "só elevador"} · ${fmt(p.at.Sn,1)} kVA · ${fmt(p.at.IbA,1)} A no cabo elevado · queda nos autotrafos ${fmt(p.at.dvT*100,2)} %${it.semAt ? ` · sem autotrafo: ${alS(it.semAt)} mm²` : ""}</em></div>` : ""}
       ${p.mot && !p.mot.erro ? `<div><small>Partida do motor</small><strong class="${x.ver?.part==="NÃO ATENDE" ? "falha" : ""}">${x.motPart ? fmt(x.motPart.dv*100,2) : "—"}</strong><em>% na partida (limite 10 %) · ${fmt(p.mot.Ipart,0)} A na partida${it.motOutros ? ` · outros quadros: até ${fmt(it.motOutros.dv*100,2)} % (${esc(it.motOutros.nome)})` : ""}</em></div>` : ""}
@@ -8342,7 +8366,7 @@ function alRotulosDe(its){ const out = {}; its.forEach(it=>{ if(!it.res || it.er
 function alTabela(its, cls){
   return `<table class="${cls}"><thead><tr><th>Alimentador</th><th>Sistema</th><th class="n">Ib (A)</th><th class="n">In (A)</th><th class="n">L (m)</th><th>Método</th><th>Cabo</th><th>Condutores (mm²)</th><th class="n">Iz (A)</th><th class="n">ΔV trecho (%)</th><th class="n">ΔV acumulada (%)</th><th>Situação</th></tr></thead><tbody>
     ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}${p.IbDem?` <small>(disj.; demanda ${fmt(p.IbDem,1)})</small>`:""}</td><td class="n">${p.at && !p.at.erro ? fmt(p.In) : x&&alNum(x.In)?fmt(x.In):"—"}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
-      <td>${esc(it.metRef||"—")} <small>(${esc(alCod(ALT.t5[p.met-1][1]))})</small></td><td>${esc(AL_MOD[p.modelo-1].cur)}${p.mat===2?" Al":""}</td><td>${x&&!it.erro?esc(it.cond):"—"}</td><td class="n">${x&&alNum(x.Iz)?fmt(x.Iz,0):"—"}</td><td class="n">${it.dvTrecho!=null?fmt(it.dvTrecho*100,2):"—"}</td><td class="n">${it.dvAcum!=null?fmt(it.dvAcum*100,2)+(it.montOk?"":"*"):"—"}</td><td>${it.erro ? esc(it.erro) : it.ok ? (p.IbDem ? "atende, com ressalva (disjuntor menor que a demanda)" : "atende") : esc(it.avisos[0] || "rever")}</td></tr>`; }).join("")}</tbody></table>`;
+      <td>${esc(it.metRef||"—")} <small>(${esc(alCod(ALT.t5[p.met-1][1]))})</small></td><td>${esc(AL_MOD[p.modelo-1].cur)}${p.mat===2?" Al":""}</td><td>${x&&!it.erro?esc(it.cond):"—"}${it.duto?.res?.txt ? `<br><small>eletroduto ${esc(it.duto.res.txt)}${it.duto.man ? " (escolhido)" : ""}</small>` : ""}</td><td class="n">${x&&alNum(x.Iz)?fmt(x.Iz,0):"—"}</td><td class="n">${it.dvTrecho!=null?fmt(it.dvTrecho*100,2):"—"}</td><td class="n">${it.dvAcum!=null?fmt(it.dvAcum*100,2)+(it.montOk?"":"*"):"—"}</td><td>${it.erro ? esc(it.erro) : it.ok ? (p.IbDem ? "atende, com ressalva (disjuntor menor que a demanda)" : "atende") : esc(it.avisos[0] || "rever")}</td></tr>`; }).join("")}</tbody></table>`;
 }
 function alMemorial(it, cls){
   if(it.erro) return `<p>${esc(it.nome)}: ${esc(it.erro)}</p>`;
@@ -8365,6 +8389,7 @@ function alMemorial(it, cls){
     ${L("Efeito pelicular (ys)", v(x.ys,5), "–", "ys = xs⁴ / (192 + 0,8·xs⁴)")}
     ${L("Efeito de proximidade (yp)", v(x.yp,5), "–", p.sis===2 ? "yp = ys·(dc/s)²·2,9" : "yp = ys·(dc/s)²·[0,312·(dc/s)² + 1,18/(ys + 0,27)]")}
     ${L("Resistência CA (R)", v(x.R,4), "Ω/km", "R = R'·(1 + ys + yp)")}
+    ${it.duto && !it.duto.erro ? L("Eletroduto", it.duto.res?.txt || "—", "", `${it.duto.tipo==="kanaflex" ? "Kanaflex" : "rígido"} · ${it.duto.n} cabos · Ø externo ${fmt(it.duto.dCabo,1)} mm${p.dextMan > 0 && p.dextS===x.p.S ? " (informado)" : " (catálogo)"}${it.duto.dPE ? `, PE ${fmt(it.duto.dPE,1)} mm` : ""} · área dos cabos ${fmt(it.duto.area,0)} mm² ÷ taxa ${fmt(it.duto.taxa*100,0)} % = ${fmt(it.duto.nec,0)} mm² · ocupação ${it.duto.res?.ocupTxt || "—"}${it.duto.man ? ` · escolhido (calculado: ${it.duto.auto?.txt || "—"})` : ""} (NBR 5410, 6.2.11.1.6)`) : ""}
     ${L("Diâmetro do condutor (dc) / GMD", `${v(x.dc,1)} / ${v(x.GMD,1)}`, "mm", "catálogo do cabo · GMD = s (trifólio) ou s·∛2 (plano)")}
     ${L("Reatância (Xl)", v(x.Xl,4), "Ω/km", "Xl = 2π·f·(0,05 + 0,2·ln(2·GMD/dc))·10⁻³")}
     ${L("Queda de tensão (ΔV)", v(x.dV,2), "V", `ΔV = ${nf}·(R·cosφ + Xl·senφ)·(Ib/n)·L/1000 · cosφ = ${fmt(x.cos ?? (p.fp===2?0.95:0.8),2)}`)}
@@ -8434,7 +8459,7 @@ function ligarAli(){
   const valor = el => el.type==="checkbox" ? el.checked : el.value;
   M.addEventListener("input", e=>{ const t = e.target;
     if(t.dataset.alc && t.tagName==="INPUT" && t.type!=="checkbox"){ alCfg()[t.dataset.alc] = t.value; alt(); return; }
-    if(t.dataset.af && t.tagName==="INPUT" && t.type!=="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; alt(); return; }
+    if(t.dataset.af && t.tagName==="INPUT" && t.type!=="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; if(t.dataset.af==="dext") q.al.dextS = t.dataset.sec; alt(); return; }
     if(t.id==="al-doc" || t.id==="al-rev" || t.id==="al-obs"){ alCfg()[t.id.slice(3)] = t.value; salvar(); }
   });
   M.addEventListener("change", e=>{ const t = e.target;
