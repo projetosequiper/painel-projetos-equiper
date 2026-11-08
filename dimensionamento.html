@@ -1324,6 +1324,9 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <div id="dm-conc-info"></div>
       <p class="fonte" style="margin-top:10px"><button type="button" class="lnk" id="dm-imp-bt">Importar cálculo de demanda de um arquivo (.equiper)</button> · troca só o cálculo de demanda e os alimentadores desta edificação; as outras disciplinas ficam como estão.</p>
       <input type="file" id="dm-imp-arq" accept=".equiper,.json,application/json" hidden>
+      <p style="margin:12px 0 0"><button class="btn peq" type="button" id="dm-rv-bt">⇪ Importar quadros e circuitos do Revit</button><input type="file" id="dm-rv-arq" accept=".json,application/json" hidden>
+        <span class="fonte" style="margin-left:8px">arquivo do botão <b>Enviar ao Dimensionamento</b> (aba Equiper EL do Revit): cria os quadros ligados como no Revit e leva os circuitos para Comprimento de circuitos</span></p>
+      <div class="imp-box" id="dm-rv" hidden style="margin-top:12px"></div>
     </section>
     <div id="dm-corpo">
       <div class="params p4" id="dm-params"></div>
@@ -7030,12 +7033,12 @@ function rvCirc(c){
     caboProj: sec(cb.f), caboN: temN ? sec(cb.n) : "", caboT: sec(cb.t), origem: "revit"};
 }
 const rvReserva = c => !(rvNum(c.va) > 0) || /\breserva/i.test(semAc(c.desc));
-async function rvAbrir(f){
+async function rvAbrir(f, alvo){
   try{
     const d = JSON.parse(await lerTextoArq(f));
     if(d?.formato==="equiper-dimensionamento"){ aviso("Este arquivo é a saída do Dimensionamento para o Revit: abra-o no Revit, com o botão Receber do Dimensionamento.", true); return; }
     if(d?.formato!=="equiper-revit" || !Array.isArray(d.quadros)){ aviso("Arquivo .json que não veio do botão Enviar ao Dimensionamento do Revit.", true); return; }
-    IMP = null; RV = {d, arq: f.name, modo: "sub"}; rvRender();
+    IMP = null; if(typeof renderImp==="function" && $("cm-imp")) renderImp(); RV = {d, arq: f.name, modo: "sub", alvo: alvo || "cm-imp"}; rvRender();
   }catch(e){ aviso("Não foi possível ler o arquivo do Revit.", true); }
 }
 function rvResumo(){
@@ -7046,11 +7049,12 @@ function rvResumo(){
     return {q, pai, circ, res, alim, L: feed ? rvNum(feed.lmax) : NaN, existe, paiNoArq: pai && nomes.has(impNorm(pai))}; });
 }
 function rvRender(){
-  const el = $("cm-imp"); if(!RV){ el.hidden = true; el.innerHTML = ""; return; }
+  if(!RV){ ["cm-imp","dm-rv"].forEach(id=>{ const e = $(id); if(e && !(id==="cm-imp" && IMP)){ e.hidden = true; e.innerHTML = ""; } }); return; }
+  const el = $(RV.alvo || "cm-imp");
   const R = rvResumo(), nC = R.reduce((t,r)=>t + r.circ.length, 0), novos = R.filter(r=>!r.existe).length;
   el.hidden = false;
   el.innerHTML = `<div class="imp-cab"><h4>Importar do Revit</h4><button class="x" type="button" data-rv="fechar" aria-label="Fechar">×</button></div>
-    <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit; os circuitos vêm para cá, cada um no seu quadro. Reservas (0 W) ficam de fora.</p>
+    <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit; os circuitos ${RV.alvo==="dm-rv" ? "vão para Comprimento de circuitos" : "vêm para cá"}, cada um no seu quadro. Reservas (0 W) ficam de fora.</p>
     <div class="grade" style="margin-bottom:10px"><label class="campo c3">Ao importar<select data-rv-modo><option value="sub" ${RV.modo==="sub"?"selected":""}>Substituir os circuitos destes quadros (e os sem quadro)</option><option value="add" ${RV.modo==="add"?"selected":""}>Adicionar aos atuais</option></select></label></div>
     <div class="rolar"><table class="quadro"><thead><tr><th>Quadro</th><th>Alimentado por</th><th class="n">Comprimento do alimentador</th><th class="n">Circuitos</th><th class="n">Reservas</th><th>Quadros ligados nele</th><th>No Cálculo de demanda</th></tr></thead><tbody>
       ${R.map(r=>`<tr><td><b>${esc(r.q.nome)}</b></td><td>${esc(r.pai) || "—"}</td><td class="n">${r.L > 0 ? fmt(r.L,1) + " m" : "—"}</td><td class="n">${r.circ.length}</td><td class="n">${r.res.length}</td><td>${esc(r.alim.map(c=>c.quadro).join(", ")) || "—"}</td><td>${r.existe ? "já existe (atualiza)" : "será criado"}</td></tr>`).join("")}
@@ -7072,7 +7076,7 @@ function rvAcao(a){
   R.forEach(r=>{ const qid = achar(r.q.nome).id; r.circ.forEach(c=>novos.push({...rvCirc(c), qid})); });
   const manter = S.cmx.circs.filter(c=>num(c.disj)>0 && (RV.modo!=="sub" || (c.qid && !ids.has(c.qid))));
   S.cmx.circs = [...manter, ...novos];
-  const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); resumo(); salvar();
+  const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); if(S.modulo==="dem") renderDem(); resumo(); salvar();
   aviso(`${novos.length} circuito${novos.length!==1?"s":""} de ${R.length} quadro${R.length!==1?"s":""} importado${novos.length!==1?"s":""}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
 }
 // app → Revit: {formato:"equiper-dimensionamento", versao:1, cliente, revisao, aprovado, aprovadoPor, dataAprovacao, gerado,
@@ -9702,6 +9706,13 @@ function memorialDem(r){
       ${r.avisos.map(a=>`<p class="mc-l mc-aviso">${a}</p>`).join("")}
       <p class="mc-l fim">${r.memFinal ? r.memFinal : r.cat && r.porCorrente ? `Corrente de demanda ${fmt(r.I,0)} A → <b>disjuntor geral ${r.polos} ${r.disj} A</b>${r.disjManual?` (adotado; calculado ${r.disjCalc} A)`:""} (disjuntor padronizado igual ou acima da corrente)` : r.cat?`${r.porCarga?`Carga instalada de ${fmt(r.instKW,2)} kW → categoria`:`Demanda de ${fmt(r.Dt,2)} kVA → categoria`} <b>${r.cat[5] ? `${r.cat[5]} · ` : ""}${r.cat[0]}</b> (${fmt(r.cat[1])} &lt; ${r.porCarga?"C (kW)":"D (kVA)"} ≤ ${fmt(r.cat[2])}) → <b>disjuntor geral ${r.polos} ${r.disj} A</b>${r.disjManual?` (adotado; calculado ${r.disjCalc} A)`:""} · ${r.cat[4]||""} (${T.catFonte})`:r.acima?`<span class="mc-aviso">Demanda acima da tabela da concessionária — consultar.</span> Corrente nominal com a demanda de ${fmt(r.Dt,2)} kVA: <b>I = ${fmt(r.I,1)} A</b> (${r.formulaI || ({mono:"I = D ÷ Vfn", bi:"I = D ÷ Vff"})[r.fases] || "I = D ÷ (√3 × Vff)"}). Escolha o disjuntor manualmente, igual ou acima dessa corrente.`:"Sem demanda."}</p></div>`;
 }
+function ligarDmRv(){
+  const bt = $("dm-rv-bt"), arq = $("dm-rv-arq"), box = $("dm-rv"); if(!bt || bt.dataset.lig) return; bt.dataset.lig = "1";
+  bt.addEventListener("click", ()=>{ arq.value = ""; arq.click(); });
+  arq.addEventListener("change", e=>{ const f = e.target.files[0]; if(f) rvAbrir(f, "dm-rv"); });
+  box.addEventListener("click", e=>{ const r = e.target.closest("[data-rv]"); if(r) rvAcao(r.dataset.rv); });
+  box.addEventListener("change", e=>{ if(e.target.dataset.rvModo!==undefined && RV) RV.modo = e.target.value; });
+}
 function preencherDem(){
   const D = S.dem;
   $("dm-conc").innerHTML = `<option value="">— escolha a concessionária —</option>` + CONCESSIONARIAS.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.t?"":" (tabelas a cadastrar)"}</option>`).join("");
@@ -10430,7 +10441,7 @@ function numBRVarrer(raiz){ (raiz.querySelectorAll ? raiz : document).querySelec
 document.addEventListener("focusout", ev=>{ const t = ev.target; if(t?.dataset?.brnum){ const v = t.value; VAL_NATIVO.set.call(t, v==="" ? "" : fmtIn(v)); } }, true);
 new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) numBRVarrer(n); }))).observe(document.documentElement, {childList:true, subtree:true});
 numBRVarrer(document);
-ligarImp();
+ligarImp(); ligarDmRv();
 ligarGruposNav();
 ligarHist();
 ligarClientes();
