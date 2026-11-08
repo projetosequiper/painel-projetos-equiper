@@ -174,12 +174,14 @@ label.campo{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weigh
 .dm-q{background:var(--cinza-1);border-radius:4px;padding:14px 16px}
 .dm-sub{font-family:var(--cond);font-weight:700;font-size:18px;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .dm-sub span{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cinza-4)}
-.dm-lin{display:grid;gap:8px;grid-template-columns:2fr 90px 140px 92px 40px;align-items:end;margin-bottom:6px}
-.dm-lin.ar{grid-template-columns:2fr 170px 90px 140px 92px 40px}
-.dm-lin.arE{grid-template-columns:2fr 210px 200px 90px 92px 40px}
+.dm-lin{display:grid;gap:8px;grid-template-columns:2fr 90px 140px 92px 64px 40px;align-items:end;margin-bottom:6px}
+.dm-lin.ar{grid-template-columns:2fr 170px 90px 140px 92px 64px 40px}
+.dm-lin.arE{grid-template-columns:2fr 210px 200px 90px 92px 64px 40px}
+.dm-mov{font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:4px}
+.dm-mov select{width:64px;padding:8px 2px;font-size:14px;border:1px solid var(--linha,#ccc);border-radius:4px;background:#fff;cursor:pointer}
 .dm-prev{font-size:13px;display:flex;align-items:center;gap:6px;padding-bottom:12px;white-space:nowrap;cursor:pointer}
 .dm-chk{font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px;padding-bottom:12px;white-space:nowrap;cursor:pointer}
-.dm-lin.il{grid-template-columns:2fr 90px 140px 70px 70px 40px}
+.dm-lin.il{grid-template-columns:2fr 90px 140px 70px 70px 64px 40px}
 .dm-lin.prev{background:#fff8e6;outline:1px dashed #e0a000;outline-offset:3px;border-radius:2px}
 .dm-prev-tag{font-style:italic;color:#9a6a00}
 .dm-lin .campo input,.dm-lin .campo select{padding:8px 9px;font-size:15px}
@@ -6889,6 +6891,13 @@ function detectarCab(linhas){
   return melhor;
 }
 const numTxt = v => { const m = String(v??"").replace(/\./g, m=>m).match(/-?\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : NaN; };
+// texto todo em maiúsculas (como vem do Revit) → só a primeira letra maiúscula. Siglas sem vogal (QDC, TV, PVC) e palavras com número (A1, 2º) ficam como estão.
+function capFrase(t){
+  const s = String(t ?? "").trim();
+  if(!s || /[a-zà-ÿ]/.test(s) || !/[A-ZÀ-Þ]/.test(s)) return s;
+  const r = s.replace(/[A-Za-zÀ-ÿ0-9ºª]+/g, w => /\d/.test(w) || !/[AEIOUÁÉÍÓÚÂÊÔÃÕÀaeiou]/i.test(w) ? w : w.toLowerCase());
+  return r.replace(/^([^A-Za-zÀ-ÿ]*)([a-zà-ÿ])/, (m, a, b) => a + b.toUpperCase());
+}
 function linhaParaCirc(l){
   const M = IMP.map, g = k => M[k]===undefined || M[k]==="" ? "" : l[M[k]];
   const disjTxt = String(g("disj")), dt = disjTxt.replace(",", ".");
@@ -6914,7 +6923,7 @@ function linhaParaCirc(l){
   if(tipo==="tn" && tensao>=200) tensao = Math.round(tensao/Math.sqrt(3));     // trifásico com neutro: tensão fase-neutro
   const fUn = {m:1, cm:0.01, mm:0.001}[IMP.unid||"m"];
   const comp = Math.round(numTxt(g("comp"))*fUn*100)/100;
-  const nome = [String(g("nome")).trim(), String(g("desc")).trim()].filter(Boolean).join(" · ");
+  const nome = [String(g("nome")).trim(), capFrase(g("desc"))].filter(Boolean).join(" · ");
   // corrente pela potência (mais confiável que ler a coluna de corrente)
   const pot = numTxt(String(g("pot")).replace(/o/gi,"0")), Uq = numTxt(g("tensao"));
   let corr = pot>0 && Uq>0 ? (tipo==="tn"||tipo==="ts" ? pot/(Math.sqrt(3)*Uq) : pot/Uq) : NaN;
@@ -7030,7 +7039,7 @@ function rvCirc(c){
   if(tipo==="mn" && U >= 200 && !temN) tipo = "ms";
   if(tipo==="tn" && U >= 200) U = Math.round(U/Math.sqrt(3));
   const sec = v => v > 0 && SECOES.includes(v) ? v : "";
-  return {nome: [String(c.n||"").trim(), String(c.desc||"").trim()].filter(Boolean).join(" · ") || "C", tipo, tensao: U > 0 ? U : "", disj: rvNum(c.disj) > 0 ? rvNum(c.disj) : "",
+  return {nome: [String(c.n||"").trim(), capFrase(c.desc)].filter(Boolean).join(" · ") || "C", tipo, tensao: U > 0 ? U : "", disj: rvNum(c.disj) > 0 ? rvNum(c.disj) : "",
     curva: /^[BCD]$/i.test(String(c.curva||"").trim()) ? String(c.curva).trim().toUpperCase() : "", comp: rvNum(c.lmax) > 0 ? Math.round(rvNum(c.lmax)*100)/100 : "",
     caboProj: sec(cb.f), caboN: temN ? sec(cb.n) : "", caboT: sec(cb.t), origem: "revit"};
 }
@@ -7041,17 +7050,19 @@ const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica
 const RV_MO = [[/pressuriza/,"Pressurização"],[/piscina/,"Piscina"],[/recalque/,"Recalque"],[/reuso/,"Reúso"],[/drenagem/,"Drenagem"],[/irriga/,"Irrigação"],[/hidromassagem/,"Hidromassagem"],[/portao/,"Portão"],[/elevador/,"Elevador"],[/exaust/,"Exaustores"]];
 function rvCatAuto(c){
   if(rvReserva(c)) return "";
-  const d = semAc(c.desc||"").toLowerCase(), va = rvNum(c.va), enel = (concDe(S.dem.conc)?.t?.metodo)==="enel";
+  const d = rvDesc(c), enel = (concDe(S.dem.conc)?.t?.metodo)==="enel";
   // bomba de calor e trocador de calor: parecem ar-condicionado, mas entram como aquecimento (carga de aquecimento)
   if(/bomba de calor|trocador de calor/.test(d)) return "aq";
   // Enel RJ: iluminação, tomadas e ar-condicionado entram pelos cômodos e módulos; do Revit vêm só as cargas especiais
   if(/ar.?condicionado|\bsplit\b|condensadora|evaporadora/.test(d)) return enel ? "" : "ar";
-  if(/\bbomba\b|\bmotor|pressuriza|recalque|portao|elevador|hidromassagem/.test(d) || (/exaust/.test(d) && va >= 736)) return "mo";
+  if(/\bbomba\b|\bmotor|pressuriza|recalque|portao|elevador|hidromassagem|exaust/.test(d)) return "mo";
   if(RV_AQ.some(([re])=>re.test(d))) return "aq";
   return enel ? "" : "il";
 }
-const rvNomeAq = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_AQ.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
-const rvNomeMo = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_MO.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
+// texto para classificar: sem acento, minúsculo, "bba" = bomba
+const rvDesc = c => semAc(c.desc||"").toLowerCase().replace(/\bbbas?\b\.?/g, "bomba");
+const rvNomeAq = c => { const d = rvDesc(c); return (RV_AQ.find(([re])=>re.test(d)) || [0, capFrase(c.desc)])[1]; };
+const rvNomeMo = c => { const d = rvDesc(c); return (RV_MO.find(([re])=>re.test(d)) || [0, capFrase(c.desc)])[1]; };
 function rvCvAuto(c){                                     // CV pela tabela CV → kVA da concessionária (a mais próxima da potência do Revit)
   const tab = concDe(S.dem.conc)?.t?.cvKva || concDe("light")?.t?.cvKva || [], kva = rvNum(c.va)/1000;
   let m = null; tab.forEach(([cv, k])=>{ if(!m || Math.abs(k - kva) < Math.abs(m[1] - kva)) m = [cv, k]; });
@@ -7142,9 +7153,10 @@ function rvAcao(a){
     R.filter(r=>r.papel==="quadro" && r.circ.length).forEach(r=>{ const q = achar(r.q.nome), il = [], aq = [], ar = [], mo = [];
       r.circ.forEach(c=>{ const k = rvChave(r.q.nome, c), cat = RV.cat[k] ?? "il", va = rvNum(c.va); if(!(va > 0)) return;
         const pv = rvPrev(c.desc), extra = pv.prev ? {prev:true} : {}, cc = {...c, desc: pv.t};
-        if(cat==="il") il.push({n:`${String(c.n||"").trim()} · ${pv.t}`, qtd:1, w:String(Math.round(va)), det:false, ...extra});
+        if(cat==="il") il.push({n:`${String(c.n||"").trim()} · ${capFrase(pv.t)}`, qtd:1, w:String(Math.round(va)), det:false, ...extra});
         else if(cat==="aq") aq.push({n:rvNomeAq(cc), qtd:1, w:String(Math.round(va)), ...extra});
-        else if(cat==="ar") ar.push({n:"Ar-condicionado", qtd:1, kw:String(Math.round(va*fp)/1000), tipo:"split", ...extra});
+        else if(cat==="ar"){ const d = rvDesc(c);   // tipo pelo texto: evaporadora / condensadora = central; o resto, split/janela
+          ar.push({n:"Ar-condicionado", qtd:1, kw:String(Math.round(va*fp)/1000), tipo: /evaporadora/.test(d) ? "evap" : /condensadora/.test(d) ? "cond" : "split", ...extra}); }
         else if(cat==="mo") mo.push({n:rvNomeMo(cc), qtd:1, cv:String(num(RV.cv[k]) || rvCvAuto(c) || ""), cls: (Math.round(rvNum(c.polos))||1) >= 3 ? "tri" : "mono", ...extra}); });
       q.il = il; q.aq = aq; q.ar = ar; q.mo = mo; q.ilum = "";
       const tri = r.circ.some(c=>(Math.round(rvNum(c.polos))||1) >= 3) || (()=>{ const P = RV.d.quadros.flatMap(x=>x.circuitos||[]).find(c=>impNorm(c.quadro)===impNorm(r.q.nome)); return P && Math.round(rvNum(P.polos)) >= 3; })();
@@ -9562,6 +9574,7 @@ function renderDemQuadro(){
       ${tipo==="ar" && met==="enel" ? "" : `<label class="campo">${ehW(tipo)?"Potência (W)":tipo==="ar"?"Potência (kW)":"Potência (CV)"}<input data-df="${ehW(tipo)?"w":tipo==="ar"?"kw":"cv"}" data-mil type="text" inputmode="decimal" value="${fmtIn(ehW(tipo)?x.w:tipo==="ar"?x.kw:x.cv)}"></label>`}
       <label class="dm-chk" title="Carga prevista: ainda falta confirmar a potência exata (sai sempre detalhada no memorial)"><span>previsão</span><input type="checkbox" data-df="prev" ${x.prev?"checked":""}></label>
       ${tipo==="il" ? `<label class="dm-chk" title="Marcado: o item aparece sozinho no memorial. Desmarcado: no memorial entra somado em Iluminação e tomadas (kW); na conta não muda nada"><span>detalhe</span><input type="checkbox" data-df="det" ${x.det!==false?"checked":""}></label>` : ""}
+      <label class="dm-mov" title="Mover esta carga para outro grupo do quadro (a potência é convertida)"><span>mover</span><select data-dmmov><option value="">⇄</option>${[["il", met==="enel" && !servQ ? "Iluminação especial" : "Iluminação e tomadas"],["aq","Aquecimento"],["ar","Ar-condicionado"],["mo","Motor"]].filter(([k])=>k!==lista).map(([k,t])=>`<option value="${k}">${t}</option>`).join("")}</select></label>
       <button class="x" type="button" data-dmrm aria-label="Remover">×</button></div>`).join("");
   const com = q.com || {};
   const campoCom = (k, t) => `<label class="campo c1">${t}<input data-qc="${k}" type="number" min="0" step="1" inputmode="numeric" value="${esc(com[k]??"")}" placeholder="0"></label>`;
@@ -9798,6 +9811,20 @@ function ligarDmRv(){
   box.addEventListener("click", e=>{ const r = e.target.closest("[data-rv]"); if(r) rvAcao(r.dataset.rv); });
   box.addEventListener("change", e=>{ if(RV) rvCampo(e.target); });
 }
+// move uma carga entre iluminação/tomadas (W), aquecimento (W), ar-condicionado (kW) e motor (CV), convertendo a potência
+function dmMover(q, de, i, para){
+  const x = (q[de]||[])[i]; if(!x || de===para) return;
+  const T = concDe(S.dem.conc)?.t, tab = T?.cvKva || concDe("light")?.t?.cvKva || [];
+  const w = de==="ar" ? num(x.kw)*1000 : de==="mo" ? degrau(tab, num(x.cv))*1000 : num(x.w);
+  const base = {n: x.n || "", qtd: x.qtd, ...(x.prev ? {prev:true} : {})};
+  let y;
+  if(para==="il" || para==="aq") y = {...base, w: w > 0 ? String(Math.round(w)) : ""};
+  else if(para==="ar") y = {...base, kw: w > 0 ? String(Math.round(w)/1000) : "", tipo: "split", ...(T?.metodo==="enel" ? {cap:""} : {})};
+  else { let m = null; tab.forEach(([cv, k])=>{ if(!m || Math.abs(k*1000 - w) < Math.abs(m[1]*1000 - w)) m = [cv, k]; });
+    y = {...base, cv: m && w > 0 ? String(Math.round(m[0]*1000)/1000) : "", cls: (q.fases||"tri")==="tri" ? "tri" : "mono"}; }
+  q[de].splice(i, 1); (q[para] = q[para] || []).push(y);
+  aviso(`${x.n || "Carga"} movida para ${({il:"iluminação e tomadas", aq:"aquecimento", ar:"ar-condicionado", mo:"motores"})[para]}${para==="mo" && y.cv ? ` (${String(y.cv).replace(".", ",")} CV pela tabela)` : ""}.`);
+}
 function preencherDem(){
   const D = S.dem;
   $("dm-conc").innerHTML = `<option value="">— escolha a concessionária —</option>` + CONCESSIONARIAS.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.t?"":" (tabelas a cadastrar)"}</option>`).join("");
@@ -9931,6 +9958,7 @@ function ligarDem(){
       if(t.checked && t.dataset.qf==="agrup") q.nres = false;
       if(t.dataset.qf==="agrup" || t.dataset.qf==="serv" || t.dataset.qf==="nres") tudo(); else alt(); return; }
     if(t.dataset.qf){ q[t.dataset.qf] = t.hasAttribute("data-mil") ? numBR(t.value) : t.value; if(t.dataset.qf==="fases") q.tensao = ""; if(t.dataset.qf==="pai" || t.dataset.qf==="ativ" || t.dataset.qf==="fases"){ tudo(); return; } if(t.dataset.qf==="nome"){ const ab = document.querySelector(`#dm-abas [data-dmq="${q.id}"]`); if(ab && ab.firstChild) ab.firstChild.textContent = (ab.firstChild.textContent.match(/^(› )*/)[0]) + (t.value || "—"); } alt(); return; }
+    if(t.dataset.dmmov!==undefined){ if(e.type!=="change" || !t.value) return; const lm = t.closest("[data-dml]"); if(lm) dmMover(q, lm.dataset.dml, +lm.dataset.i, t.value); tudo(); return; }
     const l = t.closest("[data-dml]"); if(!l || !t.dataset.df) return;
     const x = q[l.dataset.dml][+l.dataset.i];
     if(t.type==="checkbox"){ if(e.type!=="change") return; x[t.dataset.df] = t.checked; if(t.dataset.df==="prev") l.classList.toggle("prev", t.checked); alt(); return; }
