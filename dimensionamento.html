@@ -1348,7 +1348,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3><span class="nbr" id="dm-mem-q"></span></div><div id="dm-memorial"></div></div></article>
       </section>
     </div>
-    <datalist id="dm-l-aq"><option value="Sauna"><option value="Bomba de calor"><option value="Evaporador adega"><option value="Forno"><option value="Boiler"><option value="Carregador de carro elétrico"><option value="Chuveiro elétrico"><option value="Torneira elétrica"><option value="Cooktop elétrico"></datalist>
+    <datalist id="dm-l-aq"><option value="Sauna"><option value="Bomba de calor"><option value="Trocador de calor"><option value="Evaporador adega"><option value="Forno"><option value="Boiler"><option value="Carregador de carro elétrico"><option value="Chuveiro elétrico"><option value="Torneira elétrica"><option value="Cooktop elétrico"></datalist>
     <datalist id="dm-l-ar"><option value="Ar-condicionado"><option value="Condensadora"><option value="Evaporadora"></datalist>
     <datalist id="dm-l-mo"><option value="Exaustores"><option value="Piscina"><option value="Reúso"><option value="Recalque"><option value="Irrigação"><option value="Pressurização"><option value="Hidromassagem"><option value="Portão"></datalist>
     <section class="bloco-dados" style="margin-top:28px">
@@ -7036,16 +7036,19 @@ function rvCirc(c){
 }
 const rvReserva = c => !(rvNum(c.va) > 0) || /\breserva/i.test(semAc(c.desc));
 // carga de cada circuito no Cálculo de demanda: il (iluminação e tomadas), aq (aquecimento), ar, mo (motor) ou "" (não entra)
-const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica"],[/boiler/,"Boiler"],[/sauna/,"Sauna"],[/bomba de calor/,"Bomba de calor"],
+const RV_AQ = [[/chuveiro/,"Chuveiro elétrico"],[/torneira/,"Torneira elétrica"],[/boiler/,"Boiler"],[/sauna/,"Sauna"],[/bomba de calor/,"Bomba de calor"],[/trocador de calor/,"Trocador de calor"],[/resistenc/,"Resistência"],
   [/cooktop/,"Cooktop elétrico"],[/\bforno\b/,"Forno"],[/carregador|veiculo eletrico|carro eletrico/,"Carregador de carro elétrico"],[/adega/,"Evaporador adega"],[/aquec/,"Aquecedor"]];
 const RV_MO = [[/pressuriza/,"Pressurização"],[/piscina/,"Piscina"],[/recalque/,"Recalque"],[/reuso/,"Reúso"],[/drenagem/,"Drenagem"],[/irriga/,"Irrigação"],[/hidromassagem/,"Hidromassagem"],[/portao/,"Portão"],[/elevador/,"Elevador"],[/exaust/,"Exaustores"]];
 function rvCatAuto(c){
   if(rvReserva(c)) return "";
-  const d = semAc(c.desc||"").toLowerCase(), va = rvNum(c.va);
-  if(/ar.?condicionado|\bsplit\b|condensadora|evaporadora/.test(d)) return "ar";
-  if(/\bbomba\b(?! de calor)|\bmotor|pressuriza|recalque|portao|elevador|hidromassagem/.test(d) || (/exaust/.test(d) && va >= 736)) return "mo";
+  const d = semAc(c.desc||"").toLowerCase(), va = rvNum(c.va), enel = (concDe(S.dem.conc)?.t?.metodo)==="enel";
+  // bomba de calor e trocador de calor: parecem ar-condicionado, mas entram como aquecimento (carga de aquecimento)
+  if(/bomba de calor|trocador de calor/.test(d)) return "aq";
+  // Enel RJ: iluminação, tomadas e ar-condicionado entram pelos cômodos e módulos; do Revit vêm só as cargas especiais
+  if(/ar.?condicionado|\bsplit\b|condensadora|evaporadora/.test(d)) return enel ? "" : "ar";
+  if(/\bbomba\b|\bmotor|pressuriza|recalque|portao|elevador|hidromassagem/.test(d) || (/exaust/.test(d) && va >= 736)) return "mo";
   if(RV_AQ.some(([re])=>re.test(d))) return "aq";
-  return "il";
+  return enel ? "" : "il";
 }
 const rvNomeAq = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_AQ.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
 const rvNomeMo = c => { const d = semAc(c.desc||"").toLowerCase(); return (RV_MO.find(([re])=>re.test(d)) || [0, String(c.desc||"").trim()])[1]; };
