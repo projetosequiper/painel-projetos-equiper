@@ -9930,6 +9930,7 @@ function renderRskZonasNomes(){ const e = rskDados(); document.querySelectorAll(
    A comparação usa o texto do relatório (sem carimbo, sem assinatura e sem Observações).
    ===================================================================== */
 const APV_MAX_MUD = 80;
+const APV_VER = new Set();   // revisões com a lista de alterações aberta no histórico (só na tela)
 const apvPad = n => String(n).padStart(2, "0");
 const apvHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const apvDataBR = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso||"—"); };
@@ -9941,10 +9942,13 @@ function apvBase(m){ const sec = apvSecao(m), el = sec && [...sec.querySelectorA
 function apvUltima(A){ return A.revs.length ? A.revs[A.revs.length-1] : null; }
 function apvNumAtual(m, A){ A = A || apvEstado(m); if(A.aberta) return A.aberta.n; const u = apvUltima(A); return u ? u.n : apvBase(m); }
 // texto do relatório em linhas comparáveis
+// seções que não contam como alteração: observações e o que executar na obra (texto que só repete as escolhas já comparadas)
+const APV_SEC_FORA = /^\s*\d*\s*(Observações|O que executar e garantir na obra)\s*$/i;
+const apvSemFora = L => (L || []).filter(x=>!/^O que executar e garantir na obra ▸ /.test(x));
 function apvLinhas(html){
   const d = document.createElement("div"); d.innerHTML = html;
   d.querySelectorAll(".r-carimbo, .r-ass, .apv-rel, svg, style, script").forEach(x=>x.remove());
-  d.querySelectorAll("section.r-sec").forEach(s=>{ const h = s.querySelector("h2"); if(h && /^\s*\d*\s*Observações\s*$/i.test(h.textContent)) s.remove(); });
+  d.querySelectorAll("section.r-sec").forEach(s=>{ const h = s.querySelector("h2"); if(h && APV_SEC_FORA.test(h.textContent)) s.remove(); });
   const out = []; let sec = "";
   const lim = t => t.replace(/\s+/g, " ").trim();
   d.querySelectorAll("h2, h3, h4, tr, p, li, .r-concl").forEach(el=>{
@@ -9994,7 +9998,7 @@ function apvMudHtml(lista, max){
 function apvSituacao(m, html){                            // {A, n, aprovada, alterada, mud}
   const A = apvEstado(m); if(!A) return null;
   const u = apvUltima(A), atual = apvLinhas(html ?? relDeBase(m));
-  const mud = u && A.snap ? apvDiff(A.snap, atual) : [];
+  const mud = u && A.snap ? apvDiff(apvSemFora(A.snap), atual) : [];
   return {A, u, atual, mud, n: apvNumAtual(m, A), aprovada: !!u && !A.aberta, alterada: mud.length > 0};
 }
 // ---- quadro na seção Documento ----
@@ -10002,7 +10006,7 @@ let APV_T = null;
 function apvAgendar(){ clearTimeout(APV_T); APV_T = setTimeout(apvRender, 500); }
 function apvRender(){
   const m = S.modulo, sec = apvSecao(m), box = sec?.querySelector(".apv-box"); if(!box) return;
-  if(box.contains(document.activeElement) && document.activeElement.matches("input, textarea")) return;   // não atrapalha quem está digitando
+  if(box.contains(document.activeElement) && document.activeElement.matches("input:not([type=checkbox]), textarea")) return;   // não atrapalha quem está digitando
   let st; try{ st = apvSituacao(m); }catch(e){ box.innerHTML = ""; return; }
   if(!st) { box.innerHTML = ""; return; }
   const {A, u, mud, n} = st, f = A.form, revIn = sec.querySelector('input[id$="-rev"], input[data-ev="rev"], input[data-rk="rev"], input[data-ic="rev"]');
@@ -10024,7 +10028,13 @@ function apvRender(){
         <div class="campo c2 apv-bts"><button type="button" class="apv-bt" data-apv-acao="aprovar">Aprovar revisão ${apvPad(n)}</button>${A.aberta ? `<button type="button" class="lnk" data-apv-acao="cancelar">cancelar a nova revisão</button>` : ""}</div>
         <label class="campo c6">Observações da revisão<textarea data-apv="obs" placeholder="${u ? "Opcional. Motivo ou descrição desta revisão; aparece no histórico do relatório." : "Opcional. Ex.: emissão inicial."}">${esc(f.obs||"")}</textarea></label>
       </div>` : `<div class="apv-bts"><button type="button" class="apv-bt sec" data-apv-acao="nova">Criar nova revisão (${apvPad(u.n + 1)})</button></div>`}
-    ${A.revs.length ? `<div class="apv-bloco"><small>Histórico</small><table class="quadro apv-hist"><thead><tr><th>Rev.</th><th>Data</th><th>Aprovado por</th><th>Alterações</th><th>Observações</th></tr></thead><tbody>${A.revs.slice().reverse().map(r=>`<tr><td>${apvPad(r.n)}</td><td>${apvDataBR(r.data)}</td><td>${esc(r.por)}</td><td>${r.mud?.length ? `${r.mud.length} alteração(ões)` : r===A.revs[0] ? "emissão" : "—"}</td><td>${esc(r.obs||"")}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    ${A.revs.length || A.aberta ? `<label class="chave apv-imp" style="margin-top:10px"><input type="checkbox" data-apv-imp ${A.semHist ? "" : "checked"}> Imprimir o controle de revisões no relatório</label>
+    <p class="fonte" style="margin:2px 0 0">${A.semHist ? "Desmarcado: o relatório sai só com a versão atual (número da revisão no carimbo), sem a seção de controle de revisões." : "Desmarque enquanto o material ainda não foi enviado ao cliente: o relatório sai só com a versão atual."}</p>` : ""}
+    ${A.revs.length ? `<div class="apv-bloco"><small>Histórico</small><table class="quadro apv-hist"><thead><tr><th>Rev.</th><th>Data</th><th>Aprovado por</th><th>Alterações</th><th>Observações</th><th></th></tr></thead><tbody>${A.revs.slice().reverse().map(r=>{ const k = `${m}:${r.n}`, tot = Math.max(r.nMud||0, r.mud?.length||0), ab = APV_VER.has(k) && r.mud?.length;
+      return `<tr><td>${apvPad(r.n)}</td><td>${apvDataBR(r.data)}</td><td>${esc(r.por)}</td><td>${tot ? `${tot} alteração(ões)` : r===A.revs[0] ? "emissão" : "—"}</td><td>${esc(r.obs||"")}</td>
+        <td style="text-align:right">${r.mud?.length ? `<button type="button" class="lnk" data-apv-ver="${esc(k)}" aria-expanded="${ab ? "true" : "false"}">${ab ? "ocultar" : "ver alterações"}</button>` : ""}</td></tr>
+        ${ab ? `<tr class="apv-det"><td colspan="6"><div class="apv-bloco" style="margin:2px 0 8px"><small>O que mudou na revisão ${apvPad(r.n)} em relação à ${apvPad(r.n - 1)}</small>
+          <ul class="apv-mud">${r.mud.map(x=>{ const i = x.indexOf(" ▸ "); return `<li>${i > 0 ? `<small>${esc(x.slice(0, i))}</small> ${esc(x.slice(i + 3))}` : esc(x)}</li>`; }).join("")}${tot > r.mud.length ? `<li><i>… e mais ${tot - r.mud.length} alteração(ões); o histórico guarda as primeiras ${APV_MAX_MUD}</i></li>` : ""}</ul></div></td></tr>` : ""}`; }).join("")}</tbody></table></div>` : ""}
   </div>`;
 }
 function apvAcao(acao){
@@ -10041,9 +10051,12 @@ function apvAcao(acao){
   }
   salvar(); apvRender();
 }
-document.addEventListener("click", ev=>{ const b = ev.target.closest("[data-apv-acao]"); if(b){ apvAcao(b.dataset.apvAcao); } });
+document.addEventListener("click", ev=>{ const b = ev.target.closest("[data-apv-acao]"); if(b){ apvAcao(b.dataset.apvAcao); }
+  const v = ev.target.closest("[data-apv-ver]"); if(v){ const k = v.dataset.apvVer; APV_VER.has(k) ? APV_VER.delete(k) : APV_VER.add(k); apvRender(); } });
 document.addEventListener("input", ev=>{ const t = ev.target; if(!t.dataset?.apv) return; const A = apvEstado(S.modulo); if(!A) return; A.form[t.dataset.apv] = t.value; salvar(); });
-document.addEventListener("change", ev=>{ const t = ev.target; if(t.dataset?.apv==="porId"){ apvRender(); } });
+document.addEventListener("change", ev=>{ const t = ev.target; if(t.dataset?.apv==="porId"){ apvRender(); }
+  if(t.dataset?.apvImp!==undefined){ const A = apvEstado(S.modulo); if(!A) return; A.semHist = !t.checked; salvar(); apvRender(); if(typeof resumo==="function") resumo();
+    aviso(t.checked ? "O controle de revisões volta a sair no relatório." : "O relatório vai sair sem o controle de revisões, só com a versão atual."); } });
 // ---- relatório: revisão e data no carimbo + histórico antes da assinatura ----
 function relComAprov(m, html){
   let st; try{ st = apvSituacao(m, html); }catch(e){ return html; }
@@ -10052,6 +10065,7 @@ function relComAprov(m, html){
   d.querySelectorAll(".r-carimbo .r-meta > div").forEach(x=>{ const s = x.querySelector("span")?.textContent || "", b = x.querySelector("b"); if(!b) return;
     if(/Revisão/.test(s)) b.textContent = apvPad(n);
     if(/Data/.test(s) && st.aprovada && !st.alterada) b.textContent = apvDataBR(u.data); });
+  if(A.semHist) return d.innerHTML;   // impressão sem o controle de revisões (material ainda não enviado ao cliente): só a versão atual
   const nSec = d.querySelectorAll("section.r-sec").length + 1;
   const sit = A.aberta || !u ? `<p class="apv-aviso"><b>Revisão ${apvPad(n)} em elaboração · não aprovada.</b></p>` : st.alterada ? `<p class="apv-aviso"><b>Atenção:</b> o cálculo foi alterado depois da aprovação da revisão ${apvPad(u.n)} e ainda não teve nova revisão aprovada.</p>` : "";
   const hist = A.revs.map(r=>`<tr><td>${apvPad(r.n)}</td><td>${apvDataBR(r.data)}</td><td>${esc(r.por)}${r.crea?`<br><small>CREA ${esc(r.crea)}</small>`:""}</td><td>${r.mud?.length ? `<ul class="apv-mud">${r.mud.map(x=>{ const i = x.indexOf(" ▸ "); return `<li>${i>0 ? `<small>${esc(x.slice(0,i))}</small> ${esc(x.slice(i+3))}` : esc(x)}</li>`; }).join("")}${r.nMud > r.mud.length ? `<li><i>… e mais ${r.nMud - r.mud.length}</i></li>` : ""}</ul>` : r===A.revs[0] ? "Emissão" : "—"}</td><td>${esc(r.obs||"")}</td></tr>`).join("");
