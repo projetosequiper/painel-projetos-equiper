@@ -6763,7 +6763,7 @@ function calcCirc(c){
   const porCorr = K.capac ? cand.find(x=>x.iz >= I) : cand[0];
   let adot = porComp && porCorr ? (porComp.s >= porCorr.s ? porComp : porCorr) : null;
   // circuitos de quadro (QDC…): o cabo é sempre o do projeto
-  const qdc = /^\s*qdc/i.test(c.nome||"") && num(c.caboProj) > 0;
+  const qdc = (c.alim || /^\s*qdc/i.test(c.nome||"")) && num(c.caboProj) > 0;
   if(qdc){ const sp = num(c.caboProj); adot = linhas.find(x=>x.s===sp) || {s:sp, lmax:lMax(U,sp,I,curva), iz:(T36[sp]?.[col]||0)*f}; }
   return {c, U, I, L, curva, tipo, cond, f, linhas, porComp, porCorr, adot, qdc,
     erro: qdc ? null : !porComp ? "Comprimento acima do possível com 240 mm²" : !porCorr ? "Corrente acima da tabela" : null};
@@ -6779,9 +6779,18 @@ function eletrodutoCirc(r){
   const res = calcAlim(alim), d = dutoRes(res);
   return {alim, res, d, tipoDuto: dutoEsc(alim), origem: r.qdc ? "projeto" : pF > r.adot.s ? "projeto (maior que o calculado)" : "calculado", cond:`${nF}×${fmt(sf,sf%1?1:0)}${comN?` + N${fmt(sn||sf,(sn||sf)%1?1:0)}`:""} + T${fmt(st,st%1?1:0)}`};
 }
+document.addEventListener("click", async ev=>{ const b = ev.target.closest?.("[data-cm-limpar]"); if(!b) return;
+  const n = S.cmx.circs.filter(c=>c.origem==="revit" && !c.alim).length; if(!n) return;
+  const ok = await caixaConfirmar(`Retirar de Comprimento de circuitos os ${n} circuitos terminais que vieram do Revit? Ficam os alimentadores dos quadros e os circuitos incluídos à mão. As cargas no Cálculo de demanda não mudam.`, {titulo:"Retirar circuitos do Revit", ok:`Retirar ${n} circuitos`, cancelar:"Manter", perigo:true});
+  if(!ok) return;
+  S.cmx.circs = S.cmx.circs.filter(c=>!(c.origem==="revit" && !c.alim));
+  if(!S.cmx.circs.length) S.cmx.circs = [{nome:"C1", tipo:"mn", tensao:"", disj:"", curva:"", comp:"", caboProj:"", caboN:"", caboT:""}];
+  renderCmxLista(); if(typeof atualizarCmx==="function") atualizarCmx(); resumo(); salvar(); aviso(`${n} circuitos retirados.`); });
 function renderCmxLista(){
-  const K = S.cmx;
-  $("cm-lista").innerHTML = K.circs.length ? K.circs.map((c,i)=>`<div class="trecho cm-c" data-i="${i}">
+  const K = S.cmx, nRv = K.circs.filter(c=>c.origem==="revit" && !c.alim).length;
+  // aviso para obras que já tinham puxado todos os circuitos do Revit (agora só os alimentadores vêm para cá)
+  const avRv = nRv ? `<div class="dica" style="margin:0 0 12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:240px">${nRv} circuito${nRv!==1?"s terminais vieram":" terminal veio"} do Revit. Este item agora avalia só os alimentadores dos quadros e os circuitos que você incluir à mão; o Revit já verifica o comprimento dos terminais.</span><button type="button" class="btn sec peq" data-cm-limpar>Retirar os ${nRv} circuitos do Revit</button></div>` : "";
+  $("cm-lista").innerHTML = avRv + (K.circs.length ? K.circs.map((c,i)=>`<div class="trecho cm-c" data-i="${i}">
     <div class="cm-cab">
       ${S.dem.quadros.length ? `<label class="campo">Quadro<select data-cf="qid"><option value="">—</option>${S.dem.quadros.map(q=>`<option value="${q.id}" ${c.qid===q.id?"selected":""}>${esc(q.nome)}</option>`).join("")}</select></label>` : ""}
       <label class="campo">Circuito<input data-cf="nome" value="${esc(c.nome)}" placeholder="Ex.: C1 · Chuveiro"></label>
@@ -6792,7 +6801,7 @@ function renderCmxLista(){
       <label class="campo">Cabo projeto<select data-cf="caboProj"><option value="">—</option>${SECOES.map(x=>`<option value="${x}" ${num(c.caboProj)===x?"selected":""}>${fmt(x,x%1?1:0)}</option>`).join("")}</select></label>
       <label class="campo">Comprimento<span class="unid"><input data-cf="comp" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.comp)}" placeholder="0"><b>m</b></span></label>
       <button class="x" type="button" data-rm aria-label="Remover circuito">×</button>
-    </div><div class="tr-res" data-res></div></div>`).join("") : `<p class="vazio">Nenhum circuito.</p>`;
+    </div><div class="tr-res" data-res></div></div>`).join("") : `<p class="vazio">Nenhum circuito.</p>`);
   atualizarCmx();
 }
 const mm2 = s => `${fmt(s, s%1?1:0)} mm²`;
@@ -7115,8 +7124,8 @@ function rvRender(){
   const cont = k => Rq.reduce((t,r)=>t + r.circ.filter(c=>(RV.cat[rvChave(r.q.nome, c)] ?? "il")===k).length, 0);
   el.hidden = false;
   el.innerHTML = `<div class="imp-cab"><h4>Importar do Revit</h4><button class="x" type="button" data-rv="fechar" aria-label="Fechar">×</button></div>
-    <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit; os circuitos ${RV.alvo==="dm-rv" ? "vão para Comprimento de circuitos" : "vêm para cá"}, cada um no seu quadro. Reservas (0 W) ficam de fora.</p>
-    <div class="grade" style="margin-bottom:10px"><label class="campo c3">Ao importar<select data-rv-modo><option value="sub" ${RV.modo==="sub"?"selected":""}>Substituir os circuitos destes quadros (e os sem quadro)</option><option value="add" ${RV.modo==="add"?"selected":""}>Adicionar aos atuais</option></select></label></div>
+    <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit, com as cargas dos circuitos. Em Comprimento de circuitos entram só os alimentadores dos quadros; os circuitos terminais ficam no Revit, que já verifica o comprimento deles. Reservas (0 W) ficam de fora.</p>
+    ${(n=>n ? `<p class="dica" style="margin:0 0 10px">${n} circuito${n!==1?"s terminais":" terminal"} de importações anteriores do Revit ${n!==1?"saem":"sai"} de Comprimento de circuitos (ficam só no Revit). Os circuitos que você incluiu à mão continuam.</p>` : "")(S.cmx.circs.filter(c=>c.origem==="revit" && !c.alim).length)}
     <div class="rolar"><table class="quadro"><thead><tr><th>Painel no Revit</th><th>Entra como</th><th>Alimentado por</th><th class="n">Comprimento do alimentador</th><th class="n">Circuitos</th><th class="n">Reservas</th><th>Quadros ligados nele</th><th>No Cálculo de demanda</th></tr></thead><tbody>
       ${R.map(r=>`<tr${r.papel!=="quadro"?' style="opacity:.6"':""}><td><b>${esc(r.q.nome)}</b></td>
         <td><select data-rv-papel="${esc(impNorm(r.q.nome))}"><option value="quadro" ${r.papel==="quadro"?"selected":""}>Quadro</option><option value="entrada" ${r.papel==="entrada"?"selected":""}>Entrada (medidor)</option><option value="ignorar" ${r.papel==="ignorar"?"selected":""}>Não importar</option></select></td>
@@ -7182,15 +7191,25 @@ async function rvAcao(a){
       if(tri && !q.fases) q.fases = "tri"; });
   }
   criados = D.quadros.filter(q=>!antes.has(q.id)).length;
-  const Rq = R.filter(r=>r.papel==="quadro"), ids = new Set(Rq.map(r=>achar(r.q.nome).id)), novos = [];
-  Rq.forEach(r=>{ const qid = achar(r.q.nome).id; r.circ.forEach(c=>novos.push({...rvCirc(c), qid})); });
-  const manter = S.cmx.circs.filter(c=>num(c.disj)>0 && (RV.modo!=="sub" || (c.qid && !ids.has(c.qid))));
+  // Comprimento de circuitos recebe só os alimentadores dos quadros (o Revit já verifica os circuitos terminais)
+  const Rq = R.filter(r=>r.papel==="quadro"), ids = new Set(Rq.map(r=>achar(r.q.nome).id)), novos = [], alCalc0 = {};
+  try{ alItens().forEach(it=>{ if(!it.semCond && it.res?.p && alNum(it.res.p.S)) alCalc0[it.q.id] = {S: it.res.p.S, PE: alNum(it.res.PE) ? it.res.PE : "", In: alNum(it.p.In) ? it.p.In : ""}; }); }catch(e){}
+  let doCalc = 0;
+  const comCabo = (x, nomeQ) => { if(num(x.caboProj) > 0) return x; const a = alCalc0[achar(nomeQ)?.id]; if(!a) return x; doCalc++;   // sem cabo no Revit: o calculado em Alimentadores
+    return {...x, caboProj: a.S, caboN: a.S, caboT: a.PE, disj: a.In || x.disj, caboDoCalc: true}; };
+  Rq.forEach(r=>{ const fq = achar(r.q.nome);
+    r.alim.forEach(c=>{ if((RV.papel?.[impNorm(c.quadro)] || "quadro")!=="quadro") return; novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador`, alim: true, qid: fq.id}, c.quadro)); }); });
+  R.filter(r=>r.papel==="entrada").forEach(r=>r.alim.forEach(c=>{ if((RV.papel?.[impNorm(c.quadro)] || "quadro")!=="quadro") return;
+    novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador (${String(r.q.nome).trim()})`, alim: true, qid: ""}, c.quadro)); }));
+  const nomesNovos = new Set(novos.map(c=>impNorm(c.nome)));
+  // ficam os circuitos manuais e os alimentadores que não vieram agora; saem os terminais de importações antigas do Revit
+  const manter = S.cmx.circs.filter(c=>(num(c.disj) > 0 || c.alim) && !(c.origem==="revit" && !c.alim) && !(c.alim && nomesNovos.has(impNorm(c.nome))));
   S.cmx.circs = [...manter, ...novos];
   let RV_cargasMsg = RV.cargas ? " · cargas levadas ao Cálculo de demanda (falta a área útil de cada quadro)" : "";
   if(apagar){ const fora = new Set(brancos.filter(q=>dmVazio(q)).map(q=>q.id)); D.quadros = D.quadros.filter(q=>!fora.has(q.id)); if(fora.has(DM.sel)) DM.sel = D.quadros[0]?.id;
     if(fora.size) RV_cargasMsg += ` · ${brancos.filter(q=>fora.has(q.id)).map(q=>q.nome).join(", ")} apagado${fora.size>1?"s":""}`; }
   const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); if(S.modulo==="dem") renderDem(); resumo(); salvar();
-  aviso(`${novos.length} circuito${novos.length!==1?"s":""} de ${Rq.length} quadro${Rq.length!==1?"s":""} importado${novos.length!==1?"s":""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
+  aviso(`${Rq.length} quadro${Rq.length!==1?"s":""} importado${Rq.length!==1?"s":""} · ${novos.length} alimentador${novos.length!==1?"es":""} em Comprimento de circuitos${doCalc ? ` (${doCalc} sem cabo no Revit: usado o cabo e o disjuntor de Alimentadores)` : ""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
 }
 // app → Revit: {formato:"equiper-dimensionamento", versao:1, cliente, revisao, aprovado, aprovadoPor, dataAprovacao, gerado,
 //   quadros:[{nome, alimentadoPor, correnteDemanda, ok, avisos, alimentador:{fase, neutro, terra, paralelos, polos, disjuntor, eletroduto, texto, comprimento, quedaTrecho, quedaAcumulada, autotrafo}}]}
