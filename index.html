@@ -282,6 +282,19 @@
   }
   .dia-modal-box{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-lg); max-width:440px; width:100%; max-height:80vh; overflow:auto; padding:22px; box-shadow:var(--shadow-lg); animation:popIn .22s cubic-bezier(.2,.9,.3,1);}
   .dia-modal-box.dia-modal-grande{max-width:900px; max-height:92vh;}
+  .ver-hist{cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px;}
+  .ver-hist:hover{color:var(--blue-deep); text-decoration-style:solid;}
+  .hist-cab{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;}
+  .hist-cab h3{margin:0; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:0.5px; color:var(--blue-deep); font-size:14px;}
+  .hist-busca{width:100%; box-sizing:border-box; padding:8px 10px; font-size:13px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:8px;}
+  .hist-filtros{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .hist-disc{margin:12px 0 4px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink); border-bottom:1px solid var(--border); padding-bottom:3px;}
+  .hist-item{padding:8px 10px; border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:var(--r-sm); margin:6px 0; background:var(--sheet);}
+  .hist-item .meta{font-size:11.5px; color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center;}
+  .hist-item .obs{margin-top:5px; font-size:12.5px; white-space:pre-wrap; word-break:break-word;}
+  .hist-item mark{background:var(--amber-soft); color:inherit; padding:0 1px;}
+  .hist-st{font-weight:700; font-size:10.5px; padding:2px 8px; border-radius:999px; border:1px solid var(--border);}
+  .hist-st.ok{color:#fff; background:var(--green); border-color:var(--green);}
   @media (max-width:900px){
     .dia-modal-box.dia-modal-grande{max-width:96vw;}
   }
@@ -751,7 +764,7 @@
     <div id="formPanelTarefa"></div>
     <div id="prazosBar" class="prazos-bar"></div>
     <div class="toolbar" id="toolbarQuadro">
-      <input type="text" id="fSearch" placeholder="Buscar por projeto ou cliente" style="min-width:220px" />
+      <input type="text" id="fSearch" placeholder="Buscar cliente, disciplina ou texto das observações" style="min-width:220px" />
       <button class="btn secondary small" id="btnFiltrosToggle" type="button">⚙ Filtros</button>
       <div id="fSelWrap">
         <select id="fResp"><option value="">Todos os responsáveis</option></select>
@@ -2316,7 +2329,9 @@
       }
       if(filters.search){
         var q = filters.search.toLowerCase();
-        if(t.projetoNome.toLowerCase().indexOf(q) === -1 && t.cliente.toLowerCase().indexOf(q) === -1) return false;
+        var qn = normalizarTexto(q);
+        var alvoBusca = normalizarTexto([t.projetoNome, t.cliente, t.tipo, t.responsavel, t.obs].join(' '));
+        if(alvoBusca.indexOf(qn) === -1) return false;
       }
       if(filters.resp && t.responsavel !== filters.resp) return false;
       if(filters.tipo && t.tipo !== filters.tipo) return false;
@@ -2760,6 +2775,12 @@
     card.style.borderTopColor = t.responsavel ? corDesenhista(t.responsavel) : 'var(--blue)';
 
     card.setAttribute('data-task-id', t.id);
+    card.addEventListener('click', function(e){
+      var h = e.target.closest && e.target.closest('.ver-hist');
+      if(!h) return;
+      e.stopPropagation(); e.preventDefault();
+      abrirHistoricoCliente(h.getAttribute('data-hist-pj'));
+    }, true);
     if(true){
       card.classList.add('draggable-card');
       card.style.touchAction = 'none';
@@ -2767,6 +2788,7 @@
         var tag = (e.target.tagName||'').toLowerCase();
         if(['select','input','textarea','button','option'].indexOf(tag) !== -1) return;
         if(e.target.closest && e.target.closest('.actions')) return;
+        if(e.target.closest && e.target.closest('.ver-hist')) return;
         iniciarArrasto(card, t, e);
       });
     }
@@ -2778,7 +2800,7 @@
         '<div class="card-compact">'+
           dotHtml(t.responsavel)+
           '<b>'+escapeHtml(t.responsavel||'—')+'</b>'+
-          '<span class="sep">·</span>'+escapeHtml(t.cliente)+
+          '<span class="sep">·</span><span class="ver-hist" data-hist-pj="'+escapeHtml(t.projetoId)+'" title="Ver tudo o que foi feito neste cliente">'+escapeHtml(t.cliente)+'</span>'+
           '<span class="sep">·</span><span class="disc-inline">'+escapeHtml(t.tipo)+'</span>'+
           '<span class="sep">·</span><span class="prazo '+prazoClass(t.prazo, t.status)+'" style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;">'+(t.status==='Em espera' ? '⏳ aguardando info' : fmtDate(t.prazo))+'</span>'+
           (t.status==='Concluído' ? '<label class="mini-enviado" style="margin-left:6px;display:inline-flex;align-items:center;gap:3px;'+(t.enviado?'color:var(--green);':'color:var(--red);font-weight:600;')+'"><input type="checkbox" class="check-enviado-mini" '+(t.enviado?'checked':'')+'> '+(t.enviado?'Enviado':'Pendente')+'</label>' : '')+
@@ -2831,9 +2853,9 @@
     var respOptions = '<option value="">—</option>' + state.equipe.map(function(n){ return '<option value="'+escapeHtml(n)+'"'+(t.responsavel===n?' selected':'')+'>'+escapeHtml(n)+'</option>'; }).join('');
     card.innerHTML =
       (t.status==='Fechar quadro' && t.quadroFechado ? '<div class="alerta-quadro-fechado">⚠ Quadro já fechado</div>' : '')+
-      '<div class="name">'+escapeHtml(t.projetoNome)+'</div>'+
+      '<div class="name"><span class="ver-hist" data-hist-pj="'+escapeHtml(t.projetoId)+'" title="Ver tudo o que foi feito neste cliente">'+escapeHtml(t.projetoNome)+'</span></div>'+
       '<div class="rows">'+
-        '<div class="row"><div class="k">Cliente</div><div class="v">'+escapeHtml(t.cliente)+'</div></div>'+
+        '<div class="row"><div class="k">Cliente</div><div class="v"><span class="ver-hist" data-hist-pj="'+escapeHtml(t.projetoId)+'" title="Ver tudo o que foi feito neste cliente">'+escapeHtml(t.cliente)+'</span></div></div>'+
         '<div class="row"><div class="k">Discipl.</div><div class="v"><select class="inline-edit" data-field="tipo">'+tipoOptions+'</select></div></div>'+
         '<div class="row"><div class="k">Respons.</div><div class="v">'+dotHtml(t.responsavel)+'<select class="inline-edit" data-field="responsavel" style="flex:1">'+respOptions+'</select></div></div>'+
         (t.status==='Em espera'
@@ -4113,9 +4135,34 @@
         state.registrosArt.push(registro);
       }
       saveRegistrosArt();
+      // ART criada → marca no Financeiro do cliente que a ART já foi emitida
+      if(f && existente && existente.numeroArt && f.artNumero === existente.numeroArt) f.artNumero = registro.numeroArt;
+      sincronizarArtsNoFinanceiro();
       fecharDiaModal();
       renderRegistrosArtLista();
     };
+  }
+  // Leva os registros de ART para o Financeiro (ART emitida + número, se o cliente ainda não tiver).
+  // Só grava quando o financeiro completo está carregado (o projetista só tem a lista resumida
+  // de clientes; gravar dali apagaria dados). Nesse caso a gravação acontece quando o gerente
+  // ou o financeiro abrir a aba Financeiro.
+  function sincronizarArtsNoFinanceiro(){
+    try{
+      if(!financeiroCarregado || financeiroBloqueado || !state.financeiro || !state.financeiro.length) return false;
+      var mudou = false;
+      (state.registrosArt||[]).forEach(function(a){
+        var rec = state.financeiro.find(function(x){ return x.id === a.clienteId; });
+        if(!rec) return;
+        if(!rec.artEmitidaManual){ rec.artEmitidaManual = true; mudou = true; }
+        if(!rec.artNumero && a.numeroArt){ rec.artNumero = a.numeroArt; mudou = true; }
+      });
+      if(mudou){
+        saveFinanceiro();
+        try{ renderFinanceiroLista(); }catch(e){}
+        try{ renderFinArt(); }catch(e){}
+      }
+      return mudou;
+    }catch(e){ return false; }
   }
 
   var dimensionamentoClienteAberto = null;
@@ -7254,6 +7301,89 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     overlay.style.display = 'flex';
     document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
   }
+  // Histórico do cliente: tudo o que foi feito, por disciplina, com busca por texto.
+  // Mostra todas as tarefas do cliente (inclusive de outros projetistas), só para leitura.
+  function abrirHistoricoCliente(projetoId){
+    var pj = state.projetos.find(function(p){ return p.id === projetoId; });
+    if(!pj) return;
+    var chaveCli = normalizarTexto(pj.cliente || pj.nome);
+    var pjs = state.projetos.filter(function(p){ return p.id === pj.id || (chaveCli && normalizarTexto(p.cliente || p.nome) === chaveCli); });
+    var idsPj = pjs.map(function(p){ return p.id; });
+    var variasObras = pjs.length > 1;
+    var tarefas = (state.tarefas||[]).filter(function(t){ return idsPj.indexOf(t.projetoId) !== -1; }).map(function(t){
+      var p = pjs.find(function(x){ return x.id === t.projetoId; }) || {};
+      return Object.assign({}, t, { projetoNome: p.nome || '', cliente: p.cliente || '' });
+    });
+    var discs = [];
+    tarefas.forEach(function(t){ var d = t.tipo || '(sem disciplina)'; if(discs.indexOf(d) === -1) discs.push(d); });
+    discs.sort(function(a,b){ return a.localeCompare(b); });
+    var discSel = '';
+    var overlay = document.getElementById('diaModalOverlay');
+    var box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
+    box.innerHTML =
+      '<div class="hist-cab"><div><h3>Histórico · '+escapeHtml(pj.cliente || pj.nome)+'</h3>'+
+        '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">'+tarefas.length+' tarefa(s)'+(variasObras?' em '+pjs.length+' obras':'')+' · clique numa disciplina para filtrar</div></div>'+
+        '<button class="btn small secondary" id="btnFecharDiaModal">Fechar</button></div>'+
+      '<input type="search" class="hist-busca" id="histBusca" placeholder="Pesquisar no texto (observações, disciplina, responsável, obra)">'+
+      '<div class="hist-filtros" id="histFiltros"></div>'+
+      '<div id="histLista"></div>';
+    function dataRef(t){ return t.dataConclusao || t.prazo || t.criadoEm || ''; }
+    function marcar(txt, q){
+      var e = escapeHtml(txt || '');
+      if(!q) return e;
+      var base = normalizarTexto(txt || ''), out = '', i = 0, k;
+      if(base.length !== (txt||'').length) return e;   // acentos que mudam o tamanho: sem destaque
+      while((k = base.indexOf(q, i)) !== -1){ out += escapeHtml(txt.slice(i, k)) + '<mark>' + escapeHtml(txt.slice(k, k + q.length)) + '</mark>'; i = k + q.length; }
+      return out + escapeHtml(txt.slice(i));
+    }
+    function desenhar(){
+      var q = normalizarTexto(document.getElementById('histBusca').value.trim());
+      var visiveis = tarefas.filter(function(t){
+        if(discSel && (t.tipo || '(sem disciplina)') !== discSel) return false;
+        if(!q) return true;
+        return normalizarTexto([t.tipo, t.responsavel, t.status, t.obs, t.projetoNome].join(' ')).indexOf(q) !== -1;
+      });
+      document.getElementById('histFiltros').innerHTML =
+        '<button type="button" class="btn small'+(discSel?' secondary':'')+'" data-hist-d="">Todas</button>'+
+        discs.map(function(d){
+          var n = tarefas.filter(function(t){ return (t.tipo || '(sem disciplina)') === d; }).length;
+          return '<button type="button" class="btn small'+(discSel===d?'':' secondary')+'" data-hist-d="'+escapeHtml(d)+'">'+escapeHtml(d)+' ('+n+')</button>';
+        }).join('');
+      document.getElementById('histFiltros').querySelectorAll('[data-hist-d]').forEach(function(b){
+        b.onclick = function(){ discSel = b.getAttribute('data-hist-d'); desenhar(); };
+      });
+      if(!visiveis.length){ document.getElementById('histLista').innerHTML = '<div class="empty-hint">'+(tarefas.length?'Nada encontrado com esse texto.':'Nenhuma tarefa deste cliente.')+'</div>'; return; }
+      var html = '';
+      discs.forEach(function(d){
+        var itens = visiveis.filter(function(t){ return (t.tipo || '(sem disciplina)') === d; });
+        if(!itens.length) return;
+        itens.sort(function(a,b){ return String(dataRef(b)).localeCompare(String(dataRef(a))); });
+        html += '<div class="hist-disc">'+escapeHtml(d)+' · '+itens.length+'</div>';
+        itens.forEach(function(t){
+          var ok = t.status === 'Concluído';
+          html += '<div class="hist-item" style="border-left-color:'+(t.responsavel ? corDesenhista(t.responsavel) : 'var(--blue)')+'">'+
+            '<div class="meta">'+
+              '<span class="hist-st'+(ok?' ok':'')+'">'+escapeHtml(t.status||'')+'</span>'+
+              (ok && t.dataConclusao ? '<span>concluída em '+escapeHtml(fmtDate(t.dataConclusao))+'</span>' : (t.prazo ? '<span>prazo '+escapeHtml(fmtDate(t.prazo))+'</span>' : ''))+
+              (t.criadoEm ? '<span>criada em '+escapeHtml(fmtDate(t.criadoEm))+'</span>' : '')+
+              '<span>'+dotHtml(t.responsavel)+marcar(t.responsavel||'—', q)+'</span>'+
+              (variasObras ? '<span>obra: '+marcar(t.projetoNome, q)+'</span>' : '')+
+              (ok ? '<span>'+(t.enviado?'✓ enviado ao cliente':'não enviado')+'</span>' : '')+
+              ((t.anexos||[]).length ? '<span>📎 '+t.anexos.length+' anexo(s)</span>' : '')+
+            '</div>'+
+            (t.obs ? '<div class="obs">'+marcar(t.obs, q)+'</div>' : '<div class="obs" style="color:var(--ink-soft);">(sem observações)</div>')+
+          '</div>';
+        });
+      });
+      document.getElementById('histLista').innerHTML = html;
+    }
+    document.getElementById('histBusca').addEventListener('input', desenhar);
+    desenhar();
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
+    setTimeout(function(){ try{ document.getElementById('histBusca').focus(); }catch(e){} }, 30);
+  }
   function fecharDiaModal(){
     if(typeof obsEditorFlush === 'function' && obsEditorFlush){ var _f = obsEditorFlush; obsEditorFlush = null; try{ _f(); }catch(e){} }
     document.querySelectorAll('.planta-pin-popup').forEach(function(el){ el.remove(); });
@@ -7476,7 +7606,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     var original = btn.textContent;
     btn.textContent = 'Sincronizando...';
     if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
-    importarArtsUmaVez();
+    importarArtsUmaVez(); sincronizarArtsNoFinanceiro();
     var mudou = sincronizarProjetosComFinanceiro();
     render();
     btn.textContent = mudou ? '✓ Sincronizado!' : 'Já estava tudo em dia';
@@ -7619,7 +7749,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       document.getElementById('financeiroConteudo').style.display = 'block';
       if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
       renderFinanceiro();
-      importarArtsUmaVez();
+      importarArtsUmaVez(); sincronizarArtsNoFinanceiro();
     }
   };
   document.getElementById('btnBloquearFinanceiro').onclick = function(){ bloquearFinanceiro(); };
@@ -8689,7 +8819,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     document.getElementById('financeiroConteudo').style.display = 'block';
     if(!financeiroCarregado){ await carregarFinanceiro(); financeiroCarregado = true; }
     renderFinanceiro();
-    importarArtsUmaVez();
+    importarArtsUmaVez(); sincronizarArtsNoFinanceiro();
     try{ if(!chat.ativo){ chatIniciar(); } }catch(e){}
   }
 
