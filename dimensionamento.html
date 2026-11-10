@@ -752,6 +752,24 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
 .r-concl{border:1pt solid #000;padding:2.5mm 3mm;font-size:9.5pt;margin-top:2mm;break-inside:avoid}
 .r-concl.falha{border-color:#d10a1e}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* visão da obra */
+.vo-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:4vh 16px;overflow:auto}
+.vo-ov[hidden]{display:none}
+.vo-box{background:#fff;max-width:1100px;width:100%;padding:22px 24px;border-radius:4px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.vo-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.vo-cab h2{margin:0;font-size:24px}
+.vo-tab{width:100%;border-collapse:collapse;font-size:14px}
+.vo-tab th{text-align:left;font-size:12px;color:#666;font-weight:600;padding:6px 8px;border-bottom:2px solid #000}
+.vo-tab td{padding:9px 8px;border-bottom:1px solid #e3e3e3;vertical-align:top}
+.vo-tab tbody tr{cursor:pointer}.vo-tab tbody tr:hover{background:#f5f5f5}
+.vo-det{color:#555;font-size:13px;max-width:360px}
+.vo-abrir{color:#888;white-space:nowrap;font-size:13px}
+.vo-st,.vo-ap{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:#eee;white-space:nowrap}
+.vo-st.ok,.vo-ap.ok{background:#e8f5ec;color:#1f8a4c}.vo-st.rev,.vo-ap.rev{background:#fcf0d0;color:#9a6200}.vo-st.pend{background:#eee;color:#555}
+.vo-fora{margin-top:12px;font-size:13px;color:#555}
+.nav-it.nav-na{opacity:.45}
+.nav-it.nav-na::after{content:"não se aplica";margin-left:auto;font-size:10px;font-weight:500}
+@media(max-width:700px){.vo-tab th:nth-child(3),.vo-tab td:nth-child(3),.vo-tab td:nth-child(5),.vo-tab th:nth-child(5){display:none}}
 </style>
 </head>
 <body>
@@ -766,6 +784,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
   <button class="lat-menu" id="lat-menu" type="button" aria-expanded="false" aria-controls="lat-nav-cel">☰ Menu</button>
   <nav class="lat-nav" id="lat-nav-cel">
     <button class="nav-it" type="button" data-view="clientes"><i aria-hidden="true">◧</i>Clientes</button>
+    <button class="nav-it" type="button" data-view="obra" title="Situação de todos os dimensionamentos desta obra"><i aria-hidden="true">▦</i>Visão da obra</button>
     <button class="nav-it" type="button" data-view="tecnicos"><i aria-hidden="true">✎</i>Responsáveis técnicos</button>
     <button class="nav-it" type="button" data-view="livre" title="Dimensionar sem cliente e sem salvar"><i aria-hidden="true">⚡</i>Dimensionamento livre</button>
     <p class="lat-sec">Disciplinas</p>
@@ -3186,7 +3205,40 @@ function aplicarNA(){
     if(PIS_PARTES[m]){ if(S.modulo===m) $("mod-pis").classList.toggle("na", na); }
     else $("mod-"+m).classList.toggle("na", na);
     const cb = document.querySelector(`[data-na="${m}"]`); if(cb) cb.checked = na;
+    document.querySelectorAll(`.nav-it[data-mod="${m}"]`).forEach(b=>b.classList.toggle("nav-na", na));
   });
+}
+// ---- Visão da obra: situação de cada dimensionamento (atende / revisar / não iniciado), revisão e aprovação ----
+function abrirVisaoObra(){
+  let ov = $("visao-obra");
+  if(!ov){ ov = document.createElement("div"); ov.id = "visao-obra"; ov.className = "vo-ov"; document.body.appendChild(ov);
+    ov.addEventListener("click", e=>{ if(e.target===ov) ov.hidden = true; }); }
+  const ordem = ["hid","res","esgoto","est","elv","gas","cgl","plu","rsk","dem","ali","icc","cmx","ele","paq","pfi","pcl","phi"];
+  let st = {}; try{ st = statusObra(S); }catch(e){}
+  const na = S.naoAplica || {};
+  const dois = n => String(n).padStart(2,"0");
+  const linha = m => {
+    const s = st[m] || {st:"pend"};
+    let ap = "—", apCls = "";
+    if(s.st!=="na" && s.st!=="pend"){
+      try{ const a = apvSituacao(m);
+        if(a){ if(a.aprovada && a.alterada){ ap = `alterada depois da revisão ${dois(a.u.n)}`; apCls = "rev"; }
+               else if(a.aprovada){ ap = `revisão ${dois(a.u.n)} aprovada${a.u.data?` em ${String(a.u.data).split("-").reverse().join("/")}`:""}${a.u.por?` · ${a.u.por}`:""}`; apCls = "ok"; }
+               else { ap = `revisão ${dois(a.n)} em elaboração`; } }
+      }catch(e){}
+    }
+    const cls = {ok:"ok", rev:"rev", pend:"pend", na:"na"}[s.st] || "pend";
+    return `<tr data-vo="${m}"><td><b>${esc(NOME_MOD[m]||m)}</b></td><td><span class="vo-st ${cls}">${TXT_ST[s.st]||""}</span></td><td class="vo-det">${esc(String(s.det||"").split("\n").join(" · "))}</td><td>${ap==="—" ? '<span style="color:#999">—</span>' : `<span class="vo-ap ${apCls}">${esc(ap)}</span>`}</td><td class="vo-abrir">abrir ›</td></tr>`;
+  };
+  const ativos = ordem.filter(m=>!na[m]), fora = ordem.filter(m=>na[m]);
+  const cont = {ok:0, rev:0, pend:0}; ativos.forEach(m=>{ const k = (st[m]||{}).st || "pend"; if(cont[k]!==undefined) cont[k]++; });
+  ov.innerHTML = `<div class="vo-box"><div class="vo-cab"><div><h2>Visão da obra</h2><p class="fonte">${esc((S.obra.cliente||"").trim() || "Sem cliente")}${S.obra.endereco?` · ${esc(S.obra.endereco)}`:""} · ${cont.ok} atende · ${cont.rev} para revisar · ${cont.pend} não iniciado</p></div><button type="button" class="btn sec peq" id="vo-fechar">Fechar</button></div>
+    <table class="vo-tab"><thead><tr><th>Dimensionamento</th><th>Situação</th><th>Resumo</th><th>Revisão / aprovação</th><th></th></tr></thead><tbody>${ativos.map(linha).join("")}</tbody></table>
+    ${fora.length ? `<p class="vo-fora"><b>Não se aplica nesta obra:</b> ${fora.map(m=>`<button type="button" class="lnk" data-vo="${m}">${esc(NOME_MOD[m]||m)}</button>`).join(" · ")}</p>` : ""}
+    <p class="fonte">Clique numa linha para abrir o dimensionamento. “Revisar” = algum item não atende ou falta dado.</p></div>`;
+  ov.hidden = false;
+  $("vo-fechar").onclick = ()=>{ ov.hidden = true; };
+  ov.querySelectorAll("[data-vo]").forEach(r=>r.addEventListener("click", ()=>{ ov.hidden = true; fecharClientes(); trocarModulo(r.dataset.vo); window.scrollTo({top:0}); }));
 }
 function renderTudo(){ renderEsgoto(); atualizarGas(); renderPluvial(); renderHid(); renderEst(); atualizarEle(); renderPis(); renderRes(); atualizarCmx(); renderCgl(); renderDem(); resumo(); salvar(); }
 function preencherTudo(){
@@ -3662,6 +3714,7 @@ function ligarClientes(){
     if(bt.dataset.view==="clientes") abrirClientes();
     else if(bt.dataset.view==="tecnicos") abrirTecnicos();
     else if(bt.dataset.view==="livre") entrarLivre();
+    else if(bt.dataset.view==="obra") abrirVisaoObra();
     else { fecharClientes(); trocarModulo(bt.dataset.mod); window.scrollTo({top:0}); }
   }));
   $("cli-busca").addEventListener("input", renderClientes);
@@ -10244,14 +10297,14 @@ function renderDem(){
   const comAtiv = T && T.ativ && D.tipo==="nres"; $("dm-ativ-c").style.display = comAtiv ? "" : "none";
   if(comAtiv){ if(!T.ativ.some(a=>a[0]===D.ativ)) D.ativ = T.ativ[0][0]; $("dm-ativ").innerHTML = T.ativ.map(a=>`<option value="${a[0]}" ${a[0]===D.ativ?"selected":""}>${esc(a[1])}</option>`).join(""); }
   $("dm-loc-c").style.display = T && T.metodo==="enel" ? "" : "none"; $("dm-rede-c").style.display = T && T.metodo==="enel" ? "" : "none"; $("dm-rede").value = enelRede(); $("dm-fp-c").style.display = T && T.metodo==="enel" ? "none" : ""; $("dm-arc-c").style.display = T && T.metodo==="neo" ? "" : "none"; $("dm-arc").value = D.arCentral==="tabela" ? "tabela" : "um";
-  $("dm-ger-pot").style.visibility = D.gerador ? "" : "hidden";
+  $("dm-ger-pot").style.display = D.gerador ? "" : "none";
   document.querySelectorAll(".dm-ger-c").forEach(el=>el.style.display = D.gerador ? "" : "none");
   const rzIds = dmRaizes().map(q=>q.id); if(!D.quadros.some(q=>q.id===D.gerQ)) D.gerQ = rzIds[0] || "";
   $("dm-gerq").innerHTML = D.quadros.map(q=>`<option value="${q.id}" ${q.id===D.gerQ?"selected":""}>${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}${rzIds.includes(q.id)?" (entrada)":""}</option>`).join("");
   $("dm-fvlig").innerHTML = `<option value="entrada">Entrada (medidor)</option><option value="qta" ${D.gerador?"":"disabled"}>QTA${D.gerador?"":" (marque o gerador)"}</option>` + D.quadros.map(q=>`<option value="${q.id}">Quadro ${esc(q.nome)||"—"}${q.local?` · ${esc(q.local)}`:""}</option>`).join("");
   $("dm-fvlig").value = D.fvLig==="qta" ? (D.gerador ? "qta" : "entrada") : D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : "entrada";
   if(D.gerador && T){ const gq = D.quadros.find(q=>q.id===D.gerQ) || dmRaizes()[0], rz = gq, rr = rz && calcDemQ(rz.id);
-    $("dm-ger-ref").innerHTML = `<b>Sugestão Equiper — precisa ser validada com o fornecedor do gerador.</b> Referência: demanda ${rr?`do ${esc(rz.nome)} (quadro atendido pelo gerador) = <b>${fmt(rr.Dt,1)} kVA</b>`:"ainda não calculada"}. A potência final depende das cargas que o gerador vai atender, das partidas de motores e da regulagem do fabricante.`; } $("dm-fv-pot").style.visibility = D.fv ? "" : "hidden";
+    $("dm-ger-ref").innerHTML = `<b>Sugestão Equiper — precisa ser validada com o fornecedor do gerador.</b> Referência: demanda ${rr?`do ${esc(rz.nome)} (quadro atendido pelo gerador) = <b>${fmt(rr.Dt,1)} kVA</b>`:"ainda não calculada"}. A potência final depende das cargas que o gerador vai atender, das partidas de motores e da regulagem do fabricante.`; } $("dm-fv-pot").style.display = D.fv ? "" : "none";
   $("dm-fv-lig-c").hidden = !D.fv;
   document.querySelectorAll(".dm-hib-c").forEach(el=>el.style.display = D.hib ? "" : "none"); $("dm-hibkwp-c").style.display = D.hib && D.hibPlacas!==false ? "" : "none";
   $("dm-fv-lig-c").style.display = D.fv ? "" : "none";
@@ -11353,22 +11406,24 @@ if(EMBUTIDO){
   var toastT, msgT, ackT, manual = false;
   const hh = ()=>{ const t = new Date(); return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0"); };
   function toast(txt, erro){ toastEl.textContent = txt; toastEl.classList.toggle("erro", !!erro); toastEl.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(()=>toastEl.classList.remove("on"), erro ? 6000 : 2600); }
+  // o aviso flutuante só aparece ao salvar na mão ou no celular (lá o "✓ Salvo hh:mm" fica escondido); no computador basta o "✓ Salvo" da barra
+  function telaEstreita(){ try{ return window.matchMedia("(max-width:560px)").matches; }catch(e){ return false; } }
   function estado(txt, erro){ estadoEl.textContent = txt; estadoEl.classList.toggle("erro", !!erro); }
   const ativo = ()=> !LIVRE && $("tela-clientes") && $("tela-clientes").hidden && (!EMBUTIDO || (typeof _pontePronta !== "undefined" && _pontePronta));
   // mostra "salvo" (e, dentro do painel, espera a confirmação do painel de que gravou no banco)
   var aguardando = null, ultimoAck = null;
   function finalizar(manualmente, ok, hora){
     aguardando = null; clearTimeout(ackT);
-    if(ok){ estado("✓ Salvo "+hora); toast(manualmente ? "✓ Salvo no painel às "+hora : "✓ Salvo automaticamente no painel às "+hora); }
+    if(ok){ estado("✓ Salvo "+hora); if(manualmente || telaEstreita()) toast(manualmente ? "✓ Salvo no painel às "+hora : "✓ Salvo automaticamente no painel às "+hora); }
     else { estado("⚠ Não salvou", true); toast("⚠ O painel não conseguiu salvar. Clique em Salvar para tentar de novo.", true); }
   }
   function concluir(manualmente){
     const agora = hh();
-    if(!EMBUTIDO){ estado("✓ Salvo "+agora); toast(manualmente ? "✓ Salvo neste aparelho" : "✓ Salvo automaticamente neste aparelho"); return; }
+    if(!EMBUTIDO){ estado("✓ Salvo "+agora); if(manualmente || telaEstreita()) toast(manualmente ? "✓ Salvo neste aparelho" : "✓ Salvo automaticamente neste aparelho"); return; }
     const alvo = (typeof _ponteTimer !== "undefined" && _ponteTimer) ? _ponteSeq + 1 : _ponteSeq;   // número do envio que precisa ser confirmado
     if(ultimoAck && ultimoAck.seq >= alvo){ finalizar(manualmente, ultimoAck.ok, agora); return; }  // a confirmação já chegou
     aguardando = {seq: alvo, manual: manualmente, hora: agora};
-    estado("Salvando…"); toast(manualmente ? "Salvando…" : "✓ Salvo automaticamente…");
+    estado("Salvando…"); if(manualmente || telaEstreita()) toast(manualmente ? "Salvando…" : "✓ Salvo automaticamente…");
     clearTimeout(ackT);
     ackT = setTimeout(()=>{
       if(!aguardando) return;
