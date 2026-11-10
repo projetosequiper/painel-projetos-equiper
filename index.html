@@ -846,6 +846,10 @@
     <h2><span id="lblRelatoriosVisita" style="cursor:pointer; user-select:none;">▾ Relatórios de visita</span> <button class="btn small" id="btnNovoRelatorioVisita">+ Novo relatório</button></h2>
     <div id="relatoriosVisitaConteudo" style="margin-top:10px;">
       <input type="text" id="relatoriosVisitaBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin:-4px 0 10px;">
+        Ordenar: <select id="relatoriosVisitaOrdem" style="font-size:12.5px; padding:5px 7px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet);"><option value="alfa">Ordem alfabética (cliente)</option><option value="data">Data de criação (mais recente primeiro)</option></select>
+        <button type="button" class="btn small secondary" id="relatoriosVisitaRecolher">Recolher todos</button>
+      </div>
       <div id="relatoriosVisitaLista"></div>
     </div>
   </section>
@@ -3967,19 +3971,28 @@
     document.getElementById('btnImprimirRV').onclick = function(){ imprimirComNomeArquivo('Relatório de visita_'+(registro.clienteNome||'')); };
   }
 
+  var relVisitaAbertos = {};   // relatórios abertos nesta sessão; os demais ficam minimizados
   function renderRelatoriosVisitaLista(){
     var lista = document.getElementById('relatoriosVisitaLista');
     if(!lista) return;
     var busca = (document.getElementById('relatoriosVisitaBusca').value || '').toLowerCase();
-    var itens = (state.relatoriosVisita||[]).filter(function(r){ return !busca || r.clienteNome.toLowerCase().indexOf(busca) !== -1; })
-      .slice().sort(function(a,b){ return (b.criadoEm||0) - (a.criadoEm||0); });
+    var ordemSel = document.getElementById('relatoriosVisitaOrdem');
+    var ordem = ordemSel ? ordemSel.value : 'alfa';
+    var itens = (state.relatoriosVisita||[]).filter(function(r){ return !busca || (r.clienteNome||'').toLowerCase().indexOf(busca) !== -1; })
+      .slice().sort(function(a,b){
+        if(ordem === 'data') return (b.criadoEm||0) - (a.criadoEm||0);
+        return (a.clienteNome||'').localeCompare(b.clienteNome||'', 'pt-BR', { sensitivity:'base' }) || ((b.criadoEm||0) - (a.criadoEm||0));
+      });
     if(itens.length === 0){
       lista.innerHTML = '<div class="empty-hint">Nenhum relatório de visita registrado ainda.</div>';
       return;
     }
     lista.innerHTML = itens.map(function(r){
       var podeExcluir = !modoDesenhista || mesmaPessoa(r.autor, nomeProjetistaAtual);
-      var conteudoHtml;
+      var aberto = !!relVisitaAbertos[r.id];
+      var conteudoHtml = '';
+      if(!aberto){ /* minimizado: só o cabeçalho */ }
+      else
       if(r.modo === 'itens' && r.itens){
         conteudoHtml = r.itens.map(function(it){
           return '<div style="border-top:1px solid var(--border); padding-top:6px; margin-top:6px; width:100%;">'+
@@ -3992,7 +4005,7 @@
         conteudoHtml = '<div style="font-size:12.5px; white-space:pre-wrap;">'+escapeHtml(r.texto||'')+'</div>'+
           (r.fotos && r.fotos.length ? '<div class="anexos-area">'+r.fotos.map(function(f){ return '<span class="anexo-chip anexo-img"><img src="'+f+'" class="rel-foto-abrir" data-src="'+f+'"></span>'; }).join('')+'</div>' : '');
       }
-      var plantasListHtml = (r.plantas && r.plantas.length) ? r.plantas.map(function(p, idxP){
+      var plantasListHtml = (aberto && r.plantas && r.plantas.length) ? r.plantas.map(function(p, idxP){
         var pinsHtml = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">'+
           (p.pins||[]).map(function(pin, idx){ return desenharConePin(pin, idx, {raio:1.8, stroke:0.6, strokeCirc:0.6, fonte:3.2, strokeTexto:0.8}); }).join('') +
         '</svg>';
@@ -4011,9 +4024,9 @@
         '</div>';
       }).join('') : '';
       return '<div class="projeto-row" style="flex-direction:column; align-items:flex-start; gap:6px;">'+
-        '<div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">'+
-          '<b>'+escapeHtml(r.clienteNome)+filaEtiqueta('rel', r.id)+'</b>'+
-          '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(nomeCanon(r.autor))+'</span>'+
+        '<div class="rel-cab" data-id="'+r.id+'" title="'+(aberto?'Clique para minimizar':'Clique para abrir')+'" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px; cursor:pointer; user-select:none;">'+
+          '<b>'+(aberto?'▾ ':'▸ ')+escapeHtml(r.clienteNome)+filaEtiqueta('rel', r.id)+'</b>'+
+          '<span style="color:var(--ink-soft); font-size:11.5px;">'+fmtDate(r.data)+' · '+escapeHtml(nomeCanon(r.autor))+(r.criadoEm?' · criado em '+new Date(r.criadoEm).toLocaleDateString('pt-BR'):'')+'</span>'+
         '</div>'+
         conteudoHtml+
         plantasListHtml+
@@ -4024,6 +4037,9 @@
         '</div>'+
       '</div>';
     }).join('');
+    lista.querySelectorAll('.rel-cab').forEach(function(cab){
+      cab.onclick = function(){ var id = cab.getAttribute('data-id'); relVisitaAbertos[id] = !relVisitaAbertos[id]; renderRelatoriosVisitaLista(); };
+    });
     lista.querySelectorAll('.btn-editar-relatorio').forEach(function(btn){
       btn.onclick = function(){ abrirFormRelatorioVisita(btn.getAttribute('data-id')); };
     });
@@ -8101,6 +8117,12 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   };
   document.getElementById('btnNovoRelatorioVisita').onclick = function(){ abrirFormRelatorioVisita(); };
   document.getElementById('relatoriosVisitaBusca').addEventListener('input', function(){ renderRelatoriosVisitaLista(); });
+  (function(){
+    var sel = document.getElementById('relatoriosVisitaOrdem');
+    try{ var o = localStorage.getItem('equiper-rel-visita-ordem'); if(o === 'data' || o === 'alfa') sel.value = o; }catch(e){}
+    sel.addEventListener('change', function(){ try{ localStorage.setItem('equiper-rel-visita-ordem', sel.value); }catch(e){} renderRelatoriosVisitaLista(); });
+    document.getElementById('relatoriosVisitaRecolher').onclick = function(){ relVisitaAbertos = {}; renderRelatoriosVisitaLista(); };
+  })();
   document.getElementById('lblStatusClientes').onclick = function(){
     var content = document.getElementById('statusClientesConteudo');
     var visible = content.style.display !== 'none';
