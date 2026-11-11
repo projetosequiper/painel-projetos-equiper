@@ -3715,6 +3715,7 @@ function ligarClientes(){
     else if(bt.dataset.view==="tecnicos") abrirTecnicos();
     else if(bt.dataset.view==="livre") entrarLivre();
     else if(bt.dataset.view==="obra") abrirVisaoObra();
+    else if(bt.dataset.view==="lev") return;
     else { fecharClientes(); trocarModulo(bt.dataset.mod); window.scrollTo({top:0}); }
   }));
   $("cli-busca").addEventListener("input", renderClientes);
@@ -11452,6 +11453,138 @@ if(EMBUTIDO){
   btn.addEventListener("click", salvarAgora);
   addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase()==="s"){ e.preventDefault(); salvarAgora(); } });
   setInterval(()=>{ btn.hidden = !!LIVRE; estadoEl.hidden = !!LIVRE; }, 700);
+})();
+</script>
+<style>
+/* dados do levantamento (Verificações do painel) */
+.nav-it[hidden]{display:none!important}
+.lev-faixa{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px;padding:10px 14px;border-left:4px solid #2563EB;background:#eef4ff;font-size:14px}
+.lev-faixa button{margin-left:auto}
+.lev-tab{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.lev-tab th{text-align:left;font-size:12px;color:#666;font-weight:600;padding:6px 8px;border-bottom:2px solid #000}
+.lev-tab td{padding:8px;border-bottom:1px solid #e3e3e3;vertical-align:top}
+.lev-tab tr.igual td{color:#999}
+.lev-tab .subst{color:#9a6200;font-size:12px;font-weight:600}
+.lev-tab .lev-mod{font-size:12px;color:#555;white-space:nowrap}
+.lev-cons{margin-top:18px}
+.lev-cons summary{cursor:pointer;font-weight:600}
+.lev-cons h4{margin:14px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#555}
+.lev-cons .li{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #eee;font-size:13.5px}
+.lev-cons .li b{flex:0 0 36%;font-weight:600}
+.lev-cons .li span{flex:1}
+.lev-cons .st{flex:0 0 auto;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;background:#eee;color:#555;white-space:nowrap}
+.lev-cons .st.ok{background:#e8f5ec;color:#1f8a4c}.lev-cons .st.pend{background:#fcf0d0;color:#9a6200}
+.lev-rod{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+@media(max-width:700px){.lev-tab .lev-mod{display:none}.lev-cons .li{flex-direction:column;gap:2px}.lev-cons .li b{flex:none}}
+@media print{.lev-faixa{display:none!important}}
+</style>
+<script>
+/* ===== Dados do levantamento (aba Verificações do painel) =====
+   O painel manda os valores levantados na obra; aqui eles só PREENCHEM campos de entrada (nada muda nos cálculos).
+   Campos vazios vêm marcados; campos já preenchidos com outro valor vêm desmarcados ("substitui"). */
+let LEV = null;
+const LEV_MODS = ["dem","icc","rsk","res","gas"];
+function levV(ch, k){ const it = ((LEV||{}).itens||{})[ch]; return it && it.v && it.v[k] != null ? String(it.v[k]) : ""; }
+function levSecaoCabo(txt){
+  const t = String(txt||"").replace(/,/g, ".");
+  const m = t.match(/\d+\s*[x×X]\s*(\d+(?:\.\d+)?)/) || t.match(/(\d+(?:\.\d+)?)\s*mm/) || t.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+  if(!m) return "";
+  const n = parseFloat(m[1]); const ok = icSecoes().find(x=>Math.abs(num(x)-n) < 1e-9);
+  return ok != null ? String(ok) : "";
+}
+function levCandidatos(){
+  if(!LEV) return [];
+  const L = [], ic = S.dem.icc || {}, rk = S.dem.rsk || {};
+  const vazio = v => v===undefined || v===null || v==="";
+  const fv = (v,u) => vazio(v) ? "—" : fmtIn(v) + (u ? " " + u : "");
+  const rotOp = (tab, v) => (tab.find(x=>x[0]===v) || [null, "—"])[1];
+  const add = c => { if(vazio(c.novo)) return; c.igual = String(c.atual ?? "") === String(c.novo); L.push(c); };
+  // cálculo de demanda: concessionária
+  const conc = levV("energia.forn","conc");
+  if(concDe(conc)) add({mod:"dem", rot:"Concessionária", novo:conc, novoTxt:concDe(conc).nome, atual:S.dem.conc, atualTxt:concDe(S.dem.conc)?.nome || "—", vazio:vazio(S.dem.conc), aplicar:v=>{ S.dem.conc = v; }});
+  // Icc presumida
+  const icSet = k => v => { icDados()[k] = v; };
+  const icVazio = !Object.keys(ic).some(k=>!["doc","rev","obs"].includes(k) && !vazio(ic[k]));
+  const pot = numBR(levV("energia.trafo","pot")), uk = numBR(levV("energia.trafo","uk")), dist = numBR(levV("energia.trafo","dist"));
+  const mat = levV("energia.ramal","material"), matV = /cobre/i.test(mat) ? "cu" : /alum/i.test(mat) ? "al" : "";
+  const sec = levSecaoCabo(levV("energia.ramal","secao"));
+  const z = numBR(levV("energia.imped","z")), tz = levV("energia.imped","tipoZ"), tzV = /neutro/i.test(tz) ? "zfn" : /fase-fase/i.test(tz) ? "zff" : "";
+  const modoNovo = (z && tzV) ? "med" : pot ? "calc" : "";
+  if(modoNovo) add({mod:"icc", rot:"Como obter a impedância no padrão", novo:modoNovo, novoTxt:rotOp(IC_MODO, modoNovo), atual:ic.modo, atualTxt: vazio(ic.modo) ? "—" : rotOp(IC_MODO, ic.modo), vazio:icVazio, aplicar:icSet("modo")});
+  if(z && tzV){
+    add({mod:"icc", rot:"O que foi medido", novo:tzV, novoTxt:rotOp(IC_MED, tzV), atual:ic.medTipo, atualTxt: vazio(ic.medTipo) ? "—" : rotOp(IC_MED, ic.medTipo), vazio:vazio(ic.medTipo), aplicar:icSet("medTipo")});
+    add({mod:"icc", rot:"Valor medido", novo:z, novoTxt:fv(z,"Ω"), atual:ic.medV, atualTxt:fv(ic.medV,"Ω"), vazio:vazio(ic.medV), aplicar:icSet("medV")});
+  }
+  if(pot) add({mod:"icc", rot:"Potência do transformador", novo:pot, novoTxt:fv(pot,"kVA"), atual:ic.st, atualTxt:fv(ic.st,"kVA"), vazio:vazio(ic.st), aplicar:icSet("st")});
+  if(uk) add({mod:"icc", rot:"Impedância Ucc do transformador", novo:uk, novoTxt:fv(uk,"%"), atual:ic.uk, atualTxt:fv(ic.uk,"%"), vazio:vazio(ic.uk), aplicar:icSet("uk")});
+  if(dist) add({mod:"icc", rot:"Distância até o transformador", novo:dist, novoTxt:fv(dist,"m"), atual:ic.rL, atualTxt:fv(ic.rL,"m"), vazio:vazio(ic.rL), aplicar:icSet("rL")});
+  if(matV) add({mod:"icc", rot:"Material do ramal", novo:matV, novoTxt:rotOp(IC_RMAT, matV), atual:ic.rMat, atualTxt: vazio(ic.rMat) ? "—" : rotOp(IC_RMAT, ic.rMat), vazio:vazio(ic.rMat), aplicar:icSet("rMat")});
+  if(sec) add({mod:"icc", rot:"Seção do ramal", novo:sec, novoTxt:fv(sec,"mm²"), atual:ic.rS, atualTxt:fv(ic.rS,"mm²"), vazio:vazio(ic.rS), aplicar:icSet("rS")});
+  // análise de risco (SPDA): dimensões da estrutura
+  [["comp","L","Comprimento da estrutura (L)"],["larg","W","Largura da estrutura (W)"],["alt","H","Altura da estrutura (H)"]].forEach(([k, kr, rot])=>{
+    const v = numBR(levV("spda.dim", k));
+    if(v) add({mod:"rsk", rot, novo:v, novoTxt:fv(v,"m"), atual:rk[kr], atualTxt:fv(rk[kr],"m"), vazio:vazio(rk[kr]), aplicar:x=>{ rskDados()[kr] = x; }});
+  });
+  // reservatórios: o que já existe (desmarcado: a obra pode ter reservatório novo)
+  const cis = levV("agua.cisterna","tem"), cx = levV("agua.caixa","tem");
+  if(cis==="Sim" || cis==="Não") add({mod:"res", rot:"Cisterna", novo:cis==="Sim", novoTxt:cis==="Sim" ? "tem cisterna" : "não tem cisterna", atual:!!S.res.cisterna, atualTxt:S.res.cisterna ? "com cisterna" : "sem cisterna", vazio:false, aplicar:v=>{ S.res.cisterna = v; }});
+  if(cx==="Sim" || cx==="Não") add({mod:"res", rot:"Caixa d'água superior", novo:cx==="Sim", novoTxt:cx==="Sim" ? "tem caixa superior" : "não tem caixa superior", atual:!!S.res.superior, atualTxt:S.res.superior ? "com caixa superior" : "sem caixa superior", vazio:false, aplicar:v=>{ S.res.superior = v; }});
+  // gás
+  const gt = levV("gas.forn","tipo"), gv = /^GN/.test(gt) ? "GN" : /^GLP/.test(gt) ? "GLP" : "";
+  if(gv) add({mod:"gas", rot:"Tipo de gás", novo:gv, novoTxt:gv, atual:S.gas.gas, atualTxt:S.gas.gas || "—", vazio:false, aplicar:v=>{ S.gas.gas = v; }});
+  return L;
+}
+function levFaixas(){
+  const cands = levCandidatos();
+  LEV_MODS.forEach(m=>{
+    const M = $("mod-" + m); if(!M) return;
+    let f = M.querySelector(".lev-faixa");
+    const n = cands.filter(c=>c.mod===m && !c.igual).length;
+    if(!LEV || !n){ if(f) f.remove(); return; }
+    if(!f){ f = document.createElement("div"); f.className = "lev-faixa"; const ref = M.querySelector(".mod-na") || M.querySelector(".sub"); if(ref) ref.after(f); else M.prepend(f); }
+    f.innerHTML = `<span>📋 O levantamento da obra (Verificações) tem <b>${n}</b> dado${n>1?"s":""} para esta planilha.</span><button type="button" class="btn sec peq">Ver e usar</button>`;
+    f.querySelector("button").onclick = ()=>abrirLevantamento(m);
+  });
+  document.querySelectorAll('.nav-it[data-view="lev"]').forEach(b=>{ b.hidden = !LEV; });
+}
+function abrirLevantamento(modFoco){
+  if(!LEV) return;
+  let ov = $("lev-ov");
+  if(!ov){ ov = document.createElement("div"); ov.id = "lev-ov"; ov.className = "vo-ov"; document.body.appendChild(ov);
+    ov.addEventListener("click", e=>{ if(e.target===ov) ov.hidden = true; }); }
+  const cands = levCandidatos();
+  if(modFoco) cands.sort((a,b)=>(a.mod===modFoco ? 0 : 1) - (b.mod===modFoco ? 0 : 1));
+  const quando = LEV.atualizadoEm ? new Date(LEV.atualizadoEm).toLocaleDateString("pt-BR") : "";
+  const linhas = cands.map((c,i)=>`<tr class="${c.igual ? "igual" : ""}"><td><input type="checkbox" data-lev-i="${i}" ${c.igual ? "disabled" : (c.vazio ? "checked" : "")} aria-label="Usar"></td>
+    <td><span class="lev-mod">${esc(NOME_MOD[c.mod] || c.mod)}<br></span>${esc(c.rot)}</td><td><b>${esc(c.novoTxt)}</b></td>
+    <td>${c.igual ? "igual" : esc(c.atualTxt)}${!c.igual && !c.vazio ? ` <span class="subst">substitui</span>` : ""}</td></tr>`).join("");
+  const stTxt = {ok:"verificado", pend:"pendente", na:"não se aplica", "":"a verificar"};
+  const cons = (LEV.resumo||[]).map(g=>`<h4>${esc(g.sec)}</h4>` + g.itens.map(it=>`<div class="li"><b>${esc(it.nome)}</b><span>${esc(it.txt || "—")}${it.obs ? ` <i>· ${esc(it.obs)}</i>` : ""}</span><i class="st ${it.st||""}">${stTxt[it.st||""]}</i></div>`).join("")).join("");
+  ov.innerHTML = `<div class="vo-box"><div class="vo-cab"><div><h2>Dados do levantamento</h2><p class="fonte">Verificações da obra ${esc(LEV.obra||"")}${quando ? ` · atualizadas em ${quando}` : ""}${LEV.por ? ` por ${esc(LEV.por)}` : ""}. Só preenche campos de entrada — os cálculos e as normas não mudam.</p></div><button type="button" class="btn sec peq" id="lev-fechar">Fechar</button></div>
+    ${cands.length ? `<table class="lev-tab"><thead><tr><th></th><th>Campo</th><th>No levantamento</th><th>Hoje na planilha</th></tr></thead><tbody>${linhas}</tbody></table>
+    <div class="lev-rod"><span class="fonte">Marcados vão para a planilha (edificação aberta). “Substitui” = troca um valor já digitado.</span><button type="button" class="btn" id="lev-aplicar">Usar os marcados</button></div>`
+    : `<p class="fonte">Nada do levantamento corresponde a campos destas planilhas ainda (transformador, impedância medida, concessionária, dimensões da edificação, cisterna/caixa, tipo de gás).</p>`}
+    <details class="lev-cons"${cands.length ? "" : " open"}><summary>Tudo o que foi levantado na obra (para consulta)</summary>${cons || `<p class="fonte">Nada preenchido.</p>`}</details></div>`;
+  ov.hidden = false;
+  $("lev-fechar").onclick = ()=>{ ov.hidden = true; };
+  const ap = $("lev-aplicar");
+  if(ap) ap.onclick = ()=>{
+    const marc = [...ov.querySelectorAll("[data-lev-i]:checked")].map(x=>cands[+x.dataset.levI]);
+    if(!marc.length){ ov.hidden = true; return; }
+    marc.forEach(c=>c.aplicar(c.novo));
+    ov.hidden = true;
+    preencherTudo(); trocarModulo(S.modulo); levFaixas();
+    aviso(`${marc.length} dado${marc.length>1?"s":""} do levantamento aplicado${marc.length>1?"s":""}.`);
+  };
+}
+(function(){
+  const vo = document.querySelector('.nav-it[data-view="obra"]');
+  if(vo){ const b = document.createElement("button"); b.className = "nav-it"; b.type = "button"; b.dataset.view = "lev"; b.hidden = true; b.title = "Dados levantados na obra (Verificações do painel)";
+    b.innerHTML = `<i aria-hidden="true">📋</i>Dados do levantamento`; vo.after(b);
+    b.addEventListener("click", ()=>abrirLevantamento()); }
+  window.addEventListener("message", e=>{ const m = e.data; if(!m || m.tipo!=="levantamento-dados") return;
+    if(m.clienteId && S.obra.clienteIdExterno && m.clienteId !== S.obra.clienteIdExterno) return;
+    LEV = m.dados || null; levFaixas(); });
 })();
 </script>
 </body>

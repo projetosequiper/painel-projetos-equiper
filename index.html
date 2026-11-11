@@ -369,6 +369,125 @@
   .ficha-card h4{margin:0 0 8px; font-size:13px;}
   .ficha-disc{display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--border); font-size:12.5px;}
   .ficha-disc:first-of-type{border-top:0;}
+  /* ===== Levantamentos iniciais (sub-abas) e Verificações ===== */
+  .lev-abas{display:flex; gap:2px; border-bottom:1px solid var(--border); margin:0 0 6px; overflow-x:auto;}
+  .lev-aba{font-family:inherit; background:none; border:none; border-bottom:2px solid transparent; padding:9px 14px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; white-space:nowrap;}
+  .lev-aba.on{color:var(--ink); border-bottom-color:var(--red);}
+  .lev-dica{font-size:12px; color:var(--ink-soft); margin:0 0 14px;}
+  .vf-aviso{background:var(--amber-soft); color:var(--ink); border-radius:var(--r-sm); padding:9px 12px; font-size:12.5px; margin:8px 0;}
+  .vf-linha{display:flex; align-items:center; gap:12px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:6px; cursor:pointer;}
+  .vf-linha:hover{border-color:var(--ink-soft);}
+  .vf-linha .nm{flex:1; min-width:0;}
+  .vf-linha .nm b{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px;}
+  .vf-linha .nm .mut{font-size:12px;}
+  .vf-barra{height:6px; border-radius:3px; background:var(--paper); border:1px solid var(--border); overflow:hidden; width:120px; flex-shrink:0;}
+  .vf-barra i{display:block; height:100%; background:var(--green); transition:width .2s;}
+  .vf-grupo{margin:16px 0 8px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-soft);}
+  .vf-sem > summary{list-style:none;} .vf-sem > summary::-webkit-details-marker{display:none;}
+  .vf-sem > summary::before{content:'▸ ';} .vf-sem[open] > summary::before{content:'▾ ';}
+  .vf-cab{display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+  .vf-cab .vf-tit{flex:1; min-width:180px;}
+  .vf-cab h2{margin:0; font-size:21px; line-height:1.2;}
+  .vf-cab .mut{font-size:12.5px; margin-top:2px;}
+  .vf-acoes{display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end;}
+  .vf-salvo{font-size:11.5px; color:var(--ink-soft); margin-right:4px;}
+  .vf-prog{position:sticky; top:0; z-index:5; background:var(--paper); padding:8px 0 6px;}
+  .vf-prog .vf-barra{width:100%; height:8px;}
+  .vf-prog .tx{font-size:12.5px; margin-top:5px; color:var(--ink-soft);}
+  .vf-prog .tx b{color:var(--ink);}
+  .vf-nav{display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none;}
+  .vf-nav button{flex-shrink:0; font-family:inherit; font-size:12.5px; border:1px solid var(--border); background:var(--sheet); color:var(--ink); border-radius:999px; padding:5px 11px; cursor:pointer; white-space:nowrap;}
+  .vf-nav button b{font-weight:600; color:var(--ink-soft); margin-left:5px;}
+  .vf-nav button.ok b{color:var(--green);}
+  .vf-sec{background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:10px; scroll-margin-top:64px;}
+  .vf-sec > summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 14px; font-weight:700; font-size:15px; user-select:none;}
+  .vf-sec > summary::-webkit-details-marker{display:none;}
+  .vf-sec > summary::after{content:'▾'; margin-left:8px; color:var(--ink-soft); transition:transform .15s;}
+  .vf-sec:not([open]) > summary::after{transform:rotate(-90deg);}
+  .vf-sec-ic{width:30px; height:30px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; background:var(--paper); flex-shrink:0;}
+  .vf-sec-cont{margin-left:auto; font-size:12px; font-weight:700; color:var(--ink-soft); background:var(--paper); border-radius:999px; padding:2px 9px;}
+  .vf-sec-cont.ok{color:var(--green); background:var(--green-soft);}
+  .vf-sec-corpo{padding:0 12px 12px;}
+  .vf-item{border:1px solid var(--border); border-left:4px solid var(--border); border-radius:var(--r-sm); padding:10px 12px; margin-top:8px; background:var(--sheet);}
+  .vf-item.st-ok{border-left-color:var(--green);}
+  .vf-item.st-pend{border-left-color:var(--amber);}
+  .vf-item.st-na{border-left-color:var(--ink-soft);}
+  .vf-item.st-na .vf-campos, .vf-item.st-na .vf-calc{opacity:.55;}
+  .vf-item-cab{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .vf-item-nome{font-size:14px;}
+  .vf-sigla{display:inline-block; font-style:normal; font-size:10.5px; font-weight:800; color:#fff; padding:1px 6px; border-radius:5px; letter-spacing:.3px; line-height:1.5;}
+  .vf-st-txt{margin-left:auto; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--paper); color:var(--ink-soft); white-space:nowrap;}
+  .st-ok .vf-st-txt{background:var(--green-soft); color:var(--green);}
+  .st-pend .vf-st-txt{background:var(--amber-soft); color:var(--amber);}
+  .vf-dica{font-size:12px; color:var(--ink-soft); margin-top:4px;}
+  .vf-campos{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:8px 12px; margin-top:8px;}
+  .vf-campos:empty{display:none;}
+  .vf-campo{display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--ink-soft); min-width:0;}
+  .vf-campo.largo{grid-column:1/-1;}
+  .vf-opc{font-style:normal; font-size:10.5px; opacity:.8;}
+  .vf-campo input, .vf-campo select{font:inherit; font-size:14px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); width:100%; box-sizing:border-box; min-width:0;}
+  .vf-un{display:flex; align-items:center; gap:6px;}
+  .vf-un > span{flex-shrink:0; font-size:12.5px; color:var(--ink-soft);}
+  .vf-seg{display:flex; flex-wrap:wrap; gap:4px;}
+  .vf-seg button{font-family:inherit; font-size:12.5px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); cursor:pointer;}
+  .vf-seg button.on{background:var(--ink); color:var(--sheet); border-color:var(--ink);}
+  .vf-calc{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--ink); background:var(--paper); border-radius:8px; padding:6px 10px;}
+  .vf-obs{display:block; width:100%; box-sizing:border-box; margin-top:8px; font:inherit; font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); resize:vertical;}
+  .vf-obs[hidden]{display:none;}
+  .vf-fotos{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .vf-foto{position:relative; width:72px; height:72px; border-radius:8px; overflow:hidden; background:var(--paper); border:1px solid var(--border);}
+  .vf-foto img{width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in;}
+  .vf-foto img.vf-carregando{opacity:0;}
+  .vf-foto .rm{position:absolute; top:2px; right:2px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:14px; line-height:22px; cursor:pointer; padding:0;}
+  .vf-foto .gps{position:absolute; left:3px; bottom:1px; font-size:11px; font-style:normal;}
+  .vf-item-rod{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .vf-chips{display:flex; gap:4px; flex-wrap:wrap;}
+  .vf-chip{font-family:inherit; font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; border:1px solid var(--border); background:var(--sheet); color:var(--ink-soft); cursor:pointer;}
+  .vf-chip.on.ok{background:var(--green); color:#fff; border-color:var(--green);}
+  .vf-chip.on.pend{background:var(--amber); color:#fff; border-color:var(--amber);}
+  .vf-chip.on.na{background:var(--ink-soft); color:var(--sheet); border-color:var(--ink-soft);}
+  .vf-item-bts{display:flex; gap:4px; flex-wrap:wrap;}
+  .vf-mini{font-family:inherit; font-size:12px; padding:5px 9px; border-radius:8px; border:1px solid var(--border); background:var(--paper); color:var(--ink); cursor:pointer; white-space:nowrap;}
+  .vf-plantas-cab{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;}
+  .vf-planta{border:1px solid var(--border); border-radius:var(--r-sm); padding:10px; margin-top:10px; background:var(--sheet);}
+  .vf-planta-cab{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .vf-planta-nome{flex:1; min-width:0; font:inherit; font-weight:600; font-size:14px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink);}
+  .vf-planta-wrap{position:relative; display:inline-block; cursor:crosshair; vertical-align:top;}
+  .vf-planta-wrap img{display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none;}
+  .vf-planta.marcando .planta-scroll{outline:3px dashed var(--red); outline-offset:-3px;}
+  .vf-pin{position:absolute; transform:translate(-50%,-50%); font-size:11px; font-weight:800; color:#fff; padding:2px 6px; border-radius:6px; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.45); cursor:pointer; white-space:nowrap; line-height:1.25; letter-spacing:.3px;}
+  .vf-planta-vazia{border:2px dashed var(--border); border-radius:var(--r-sm); padding:18px; text-align:center; color:var(--ink-soft); font-size:13px;}
+  .vf-legenda{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:8px; font-size:12px;}
+  .vf-legenda span{display:inline-flex; align-items:center; gap:5px;}
+  .vf-banner-pin{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:6500; background:var(--ink); color:var(--sheet); padding:10px 14px; border-radius:12px; font-size:13px; display:flex; gap:10px; align-items:center; box-shadow:var(--shadow-lg); width:max-content; max-width:92vw;}
+  @media (min-width:901px){ .vf-banner-pin{bottom:24px;} }
+  .vf-pop{position:fixed; left:50%; transform:translateX(-50%); top:max(12px, env(safe-area-inset-top)); width:min(92vw, 380px); z-index:7000; background:var(--sheet); border:1px solid var(--border); border-radius:var(--r-md); box-shadow:var(--shadow-lg); padding:12px; display:flex; flex-direction:column; gap:8px;}
+  .vf-pop select, .vf-pop input{font:inherit; font-size:14px; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); box-sizing:border-box;}
+  .vf-cab .lnk, .vf-rodape .lnk, .vf-planta-cab .lnk{font-family:inherit; background:none; border:none; padding:2px 4px; font-size:12.5px; color:var(--ink-soft); text-decoration:underline; text-underline-offset:2px; cursor:pointer;}
+  .vf-rodape .lnk:hover, .vf-planta-cab .lnk:hover{color:var(--red);}
+  .vf-rodape{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--ink-soft); margin:14px 0 30px;}
+  .vf-rodape label{display:flex; align-items:center; gap:6px;}
+  @media (max-width:900px){
+    .vf-cab h2{font-size:18px;}
+    .vf-acoes{width:100%; justify-content:flex-start;}
+    .vf-acoes .vf-salvo{order:9; width:100%;}
+    .vf-campos{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+    .vf-item-rod{flex-direction:column; align-items:stretch;}
+    .vf-barra{width:70px;}
+    .vf-prog .vf-barra{width:100%;}
+  }
+  @media (max-width:420px){ .vf-campos{grid-template-columns:minmax(0,1fr);} }
+  /* PDF das verificações */
+  .eq-sigla{display:inline-block; font-style:normal; font-size:7pt; font-weight:700; color:#fff; padding:0 4px; margin-left:6px; line-height:1.5; vertical-align:1px;}
+  .eq-st{flex:0 0 auto; font-size:7pt; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:1px 6px; border:1px solid #D9D9D9; color:#6B6B6B; white-space:nowrap;}
+  .eq-st.ok{color:#1F8A4C; border-color:#1F8A4C;}
+  .eq-st.pend{color:#9A6200; border-color:#C77F00;}
+  .eq-st.vazio{color:#B3261E; border-color:#E3B4B0;}
+  .vf-pdf-obs{margin-top:3px; font-size:8.5pt; color:#6B6B6B;}
+  .eq-pin{position:absolute; transform:translate(-50%,-50%); font-size:7pt; font-weight:700; color:#fff; padding:1px 4px; border:1.5px solid #fff; line-height:1.3; white-space:nowrap; box-shadow:0 0 2px rgba(0,0,0,.5);}
+  .vf-leg-pdf{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:8.5pt;}
+  .vf-leg-pdf span{display:inline-flex; align-items:center; gap:4px;}
+  .vf-leg-pdf .eq-sigla{margin-left:0;}
   .ficha-fin{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12.5px;}
   .ficha-fin > div{display:flex; flex-direction:column;}
   .card.card-destaque{box-shadow:0 0 0 3px var(--red) !important;}
@@ -934,7 +1053,13 @@
     <iframe id="iframeDimensionamento" style="display:none; width:100%; height:82vh; border:1px solid var(--border); border-radius:var(--r-md); background:#fff;"></iframe>
   </section>
 
-  <section id="secConsideracoesIniciais" style="display:none;" data-topico="consideracoes">
+  <section id="secLevantamentosAbas" style="display:none;" data-topico="relatorios"><div id="levAbas"></div></section>
+
+  <section id="secVerificacoes" style="display:none;" data-topico="relatorios" data-sub="verificacoes">
+    <div id="verificacoesRaiz"></div>
+  </section>
+
+  <section id="secConsideracoesIniciais" style="display:none;" data-topico="relatorios" data-sub="consideracoes">
     <h2><span id="lblConsideracoesIniciais" style="cursor:pointer; user-select:none;">▾ Considerações iniciais</span> <button class="btn small" id="btnNovaConsideracaoInicial">+ Nova consideração inicial</button></h2>
     <div id="consideracoesIniciaisConteudo" style="margin-top:10px;">
       <input type="text" id="consideracoesIniciaisBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -942,7 +1067,7 @@
     </div>
   </section>
 
-  <section id="secRelatoriosVisita" style="display:none;" data-topico="relatorios">
+  <section id="secRelatoriosVisita" style="display:none;" data-topico="relatorios" data-sub="visitas">
     <h2><span id="lblRelatoriosVisita" style="cursor:pointer; user-select:none;">▾ Relatórios de visita</span> <button class="btn small" id="btnNovoRelatorioVisita">+ Novo relatório</button></h2>
     <div id="relatoriosVisitaConteudo" style="margin-top:10px;">
       <input type="text" id="relatoriosVisitaBusca" placeholder="Buscar por cliente" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); margin-bottom:10px; width:100%; max-width:320px;" />
@@ -2219,7 +2344,7 @@
         '<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-soft);">'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-fechar" data-nome="'+escapeHtml(nome)+'" '+(perm.fecharQuadro?'checked':'')+'> Vê "Fechar quadro" de todos</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-reuniao" data-nome="'+escapeHtml(nome)+'" '+(perm.reunioes?'checked':'')+'> Pode criar reuniões</label>'+
-          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-relatorio" data-nome="'+escapeHtml(nome)+'" '+(perm.relatorioVisita?'checked':'')+'> Pode criar relatório de visita</label>'+
+          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-relatorio" data-nome="'+escapeHtml(nome)+'" '+(perm.relatorioVisita?'checked':'')+'> Pode criar relatório de visita e verificações</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-consideracao" data-nome="'+escapeHtml(nome)+'" '+(perm.consideracaoInicial?'checked':'')+'> Pode criar consideração inicial</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-art" data-nome="'+escapeHtml(nome)+'" '+(perm.art?'checked':'')+'> Pode criar ART</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-comissao" data-nome="'+escapeHtml(nome)+'" '+(perm.verComissao?'checked':'')+'> Pode ver comissão</label>'+
@@ -4449,6 +4574,11 @@
               enderecoCliente: fAtual ? (fAtual.enderecoCompleto || '') : '',
               dados: dadosC
             }, '*');
+            // etapa 4: dados das Verificações (levantamento inicial) desta obra, para preencher campos do cálculo
+            if(fAtual) vfLevantamentoParaCliente(fAtual.cliente).then(function(lev){
+              if(!lev || dimensionamentoClienteAberto !== cidAbrir) return;
+              try{ iframe.contentWindow.postMessage({ tipo: 'levantamento-dados', clienteId: cidAbrir, dados: lev }, '*'); }catch(err){}
+            });
           });
         } else if(msg.tipo === 'dimensionamento-salvo'){
           if(!msg.clienteId) return;
@@ -5067,7 +5197,8 @@
     var visitas = (state.relatoriosVisita||[]).filter(function(r){ return ids.indexOf(r.projetoId) !== -1 || mesmoNome(r.clienteNome); });
     var consid = (state.consideracoesIniciais||[]).filter(function(r){ return ids.indexOf(r.projetoId) !== -1 || mesmoNome(r.clienteNome); });
     var arts = (state.registrosArt||[]).filter(function(a){ return (fin && a.clienteId === fin.id) || mesmoNome(a.clienteNome); });
-    return { pj: pj, pjs: pjs, fin: fin, tarefas: tarefas, visitas: visitas, consid: consid, arts: arts };
+    var verif = ids.filter(function(id){ return verifIndice[id]; }).map(function(id){ return Object.assign({ pid: id }, verifIndice[id]); });
+    return { pj: pj, pjs: pjs, fin: fin, tarefas: tarefas, visitas: visitas, consid: consid, arts: arts, verif: verif };
   }
   function podeVerFinanceiroNaFicha(){ return !modoDesenhista && financeiroCarregado && !financeiroBloqueado; }
   function textoVisita(r){
@@ -5123,7 +5254,7 @@
     if(topicoProjetosAtivo !== 'status'){ ativarTopicoProjetos('status'); }
     renderFichaCliente();
     // carrega o que a pessoa pode ver e redesenha
-    var topicos = ['relatorios','consideracoes','art'].filter(function(id){ var t = TOPICOS_PROJETOS.find(function(x){ return x.id === id; }); return t && podeVerTopicoProjetos(t); });
+    var topicos = ['relatorios','consideracoes','art','verificacoes'].filter(podeCarregarTopico);
     for(var i = 0; i < topicos.length; i++){ try{ await garantirDadosDoTopico(topicos[i]); }catch(e){} }
     if(fichaClienteAtual === pid && topicoProjetosAtivo === 'status') renderFichaCliente();
     try{ window.scrollTo(0,0); }catch(e){}
@@ -5134,7 +5265,7 @@
     var d = dadosDoCliente(fichaClienteAtual);
     if(!d){ fichaClienteAtual = null; renderClientesPagina(); return; }
     var fin = d.fin, verFin = podeVerFinanceiroNaFicha();
-    var permRel = podeVerTopicoProjetos(TOPICOS_PROJETOS.find(function(x){ return x.id === 'relatorios'; }) || {});
+    var permRel = podeUsarRelatorios();
     var info = [];
     if(fin){
       if(fin.enderecoCompleto) info.push(escapeHtml(fin.enderecoCompleto)); else if(fin.localidade) info.push(escapeHtml(fin.localidade));
@@ -5168,6 +5299,7 @@
       '<div class="ficha-topo"><div style="min-width:0;"><h2 style="margin:0; font-size:22px;">'+escapeHtml(d.pj.nome)+'</h2>'+
         (info.length ? '<div class="mut" style="margin-top:3px;">'+info.join(' · ')+'</div>' : '')+'</div>'+
         '<div class="ficha-bts">'+
+          (permRel ? '<button type="button" class="btn small secondary" id="fichaVerif">☑️ Verificações</button>' : '')+
           (permRel ? '<button type="button" class="btn small secondary" id="fichaRel">+ Relatório de visita</button>' : '')+
           (fin ? '<button type="button" class="btn small secondary" id="fichaCalc">🧮 Abrir cálculos</button>' : '')+
           (!modoDesenhista ? '<button type="button" class="btn small" id="fichaNova" style="background:var(--red);border-color:var(--red);">+ Nova tarefa</button>' : '')+
@@ -5180,7 +5312,8 @@
       '</div>';
     document.getElementById('fichaVoltar').onclick = function(){ fichaClienteAtual = null; renderClientesPagina(); };
     if(document.getElementById('fichaNova')) document.getElementById('fichaNova').onclick = function(){ ativarTopicoProjetos('quadro'); openTarefaForm(d.pj.id, null); setTimeout(function(){ var el = document.getElementById('formPanelTarefa'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); };
-    if(document.getElementById('fichaRel')) document.getElementById('fichaRel').onclick = function(){ ativarTopicoProjetos('relatorios'); abrirFormRelatorioVisita(null, d.pj.id); };
+    if(document.getElementById('fichaRel')) document.getElementById('fichaRel').onclick = function(){ ativarTopicoProjetos('visitas'); abrirFormRelatorioVisita(null, d.pj.id); };
+    if(document.getElementById('fichaVerif')) document.getElementById('fichaVerif').onclick = function(){ abrirVerificacao(d.pj.id); };
     if(document.getElementById('fichaCalc')) document.getElementById('fichaCalc').onclick = function(){ ativarTopicoProjetos('dimensionamentos'); setTimeout(function(){ abrirDimensionamentoCliente(fin.id, fin.cliente); }, 50); };
     raiz.querySelectorAll('.ficha-aba').forEach(function(b){ b.onclick = function(){ fichaAba = b.getAttribute('data-aba'); renderFichaCliente(); }; });
     var busca = document.getElementById('fichaBusca');
@@ -5198,6 +5331,14 @@
         return '<div class="ficha-disc"><b>'+escapeHtml(k)+'</b>'+sit+(ult && ult.responsavel ? '<span class="mut" style="margin-left:auto;">'+escapeHtml(ult.responsavel.split(' ')[0])+'</span>' : '')+'</div>';
       }).join('')+'</div>';
     }
+    if(permRel){
+      lado += '<div class="ficha-card"><h4>Verificações do local</h4>'+d.pjs.map(function(p){
+        var ix = verifIndice[p.id], pct = ix && ix.total ? Math.round(100 * ix.feitos / ix.total) : 0;
+        return '<div class="ficha-disc" data-vf-abrir="'+escapeHtml(p.id)+'" style="cursor:pointer;">'+(d.pjs.length > 1 ? '<b style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(p.nome)+'</b>' : '')+
+          (ix ? '<span class="vf-barra" style="width:70px;"><i style="width:'+pct+'%"></i></span><span>'+ix.feitos+'/'+ix.total+'</span>'+(ix.pend ? '<span class="cli-tag a">'+ix.pend+' pend.</span>' : '') : '<span class="mut">não iniciada</span>')+
+          '<span class="mut" style="margin-left:auto;">abrir ›</span></div>';
+      }).join('')+'</div>';
+    }
     if(verFin && fin){
       var rec = recebidoDoCliente(fin), falta = (fin.valorTotal||0) - rec;
       lado += '<div class="ficha-card"><h4>Financeiro <span class="mut" style="font-weight:400;">· só gerente</span></h4>'+
@@ -5206,6 +5347,7 @@
         '<div><span class="mut">Próxima</span><b'+(proxFin && proxFin.data < todayISO() ? ' style="color:var(--red)"' : '')+'>'+(proxFin ? escapeHtml(fmtDate(proxFin.data))+' · '+formatarMoeda(proxFin.valor||0) : '—')+'</b></div></div></div>';
     }
     document.getElementById('fichaLado').innerHTML = lado;
+    document.querySelectorAll('#fichaLado [data-vf-abrir]').forEach(function(el){ el.onclick = function(){ abrirVerificacao(el.getAttribute('data-vf-abrir')); }; });
   }
   function fichaCasa(txt, q){ return !q || normalizarTexto(txt).indexOf(q) !== -1; }
   function fichaMarcar(txt, q){
@@ -5227,7 +5369,11 @@
       });
     }
     if(fichaAba === 'tempo' || fichaAba === 'visitas'){
-      d.visitas.forEach(function(r){ var tx = textoVisita(r); ev.push({ tipo:'visita', data: r.data||'', tag:'Visita', texto: tx || '(sem texto)', busca: tx+' '+(r.autor||''), quem: nomeCanon(r.autor||''), abrir: function(){ ativarTopicoProjetos('relatorios'); abrirFormRelatorioVisita(r.id); } }); });
+      d.visitas.forEach(function(r){ var tx = textoVisita(r); ev.push({ tipo:'visita', data: r.data||'', tag:'Visita', texto: tx || '(sem texto)', busca: tx+' '+(r.autor||''), quem: nomeCanon(r.autor||''), abrir: function(){ ativarTopicoProjetos('visitas'); abrirFormRelatorioVisita(r.id); } }); });
+    }
+    if(fichaAba === 'tempo' && podeUsarRelatorios()){
+      (d.verif||[]).forEach(function(v){ var tx = 'Verificações: '+v.feitos+' de '+v.total+' itens'+(v.pend ? ' · '+v.pend+' pendente'+(v.pend>1?'s':'') : '');
+        ev.push({ tipo:'verif', data: v.atualizadoEm || '', tag:'Verificação', ok: v.total && v.feitos === v.total, texto: tx, busca: tx+' levantamento', quem: nomeCanon(v.por||''), abrir: function(){ abrirVerificacao(v.pid); } }); });
     }
     if(fichaAba === 'tempo' || fichaAba === 'consid'){
       d.consid.forEach(function(r){ var p = r.participantes || {}; var tx = 'Considerações iniciais'+(r.tipoEdificacao?' · '+r.tipoEdificacao:'')+(p.arquitetura?' · arquitetura: '+p.arquitetura:'')+(p.construtora?' · construtora: '+p.construtora:'');
@@ -5367,8 +5513,7 @@
       itens = [];
       var acoes = [];
       if(!modoDesenhista) acoes.push({ grupo:'Ações', html:'＋ Nova tarefa…', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('quadro'); abrirEscolhaClienteTarefa(); } });
-      var tRel = TOPICOS_PROJETOS.find(function(x){ return x.id === 'relatorios'; });
-      if(tRel && podeVerTopicoProjetos(tRel)) acoes.push({ grupo:'Ações', html:'＋ Novo relatório de visita', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('relatorios'); abrirFormRelatorioVisita(); } });
+      if(podeUsarRelatorios()) acoes.push({ grupo:'Ações', html:'＋ Novo relatório de visita', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('visitas'); abrirFormRelatorioVisita(); } });
       if(q.length >= 2){
         var vistos = {};
         state.projetos.forEach(function(p){ var k = chaveNomeCliente(p.cliente||p.nome); if(vistos[k]) return; if(normalizarTexto(p.nome+' '+(p.cliente||'')).indexOf(q) === -1) return; vistos[k] = true;
@@ -5381,9 +5526,12 @@
           itens.push({ grupo:'Tarefas', html:'<span class="cli-tag">'+escapeHtml(t.tipo)+'</span> <b>'+fichaMarcar(t.cliente, q)+'</b> <span class="mut">'+escapeHtml(t.status)+'</span><div class="bg-sub">'+fichaMarcar(trecho, q)+'</div>', ir:function(){ fecharDiaModal(); abrirTarefaDaFicha(t); } });
         });
         (state.relatoriosVisita||[]).forEach(function(r){ var tx = (r.clienteNome||'')+' '+textoVisita(r); if(normalizarTexto(tx).indexOf(q) === -1) return;
-          itens.push({ grupo:'Relatórios de visita', html:'<b>'+fichaMarcar(r.clienteNome||'', q)+'</b> <span class="mut">'+escapeHtml(fmtDate(r.data||''))+'</span><div class="bg-sub">'+fichaMarcar(textoVisita(r).slice(0,160), q)+'</div>', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('relatorios'); abrirFormRelatorioVisita(r.id); } }); });
+          itens.push({ grupo:'Relatórios de visita', html:'<b>'+fichaMarcar(r.clienteNome||'', q)+'</b> <span class="mut">'+escapeHtml(fmtDate(r.data||''))+'</span><div class="bg-sub">'+fichaMarcar(textoVisita(r).slice(0,160), q)+'</div>', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('visitas'); abrirFormRelatorioVisita(r.id); } }); });
         (state.consideracoesIniciais||[]).forEach(function(r){ var tx = (r.clienteNome||'')+' '+JSON.stringify(r.participantes||{})+' '+JSON.stringify(r.dados||{}); if(normalizarTexto(tx).indexOf(q) === -1) return;
           itens.push({ grupo:'Considerações iniciais', html:'<b>'+fichaMarcar(r.clienteNome||'', q)+'</b> <span class="mut">'+escapeHtml(fmtDate(r.dataPreenchimento||''))+'</span>', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('consideracoes'); abrirFormConsideracaoInicial(r.id); } }); });
+        if(podeUsarRelatorios()) Object.keys(verifIndice).forEach(function(pid){ var ix = verifIndice[pid], pj = state.projetos.find(function(p){ return p.id === pid; }); if(!pj) return;
+          if(normalizarTexto((pj.nome||'')+' verificacoes levantamento').indexOf(q) === -1) return;
+          itens.push({ grupo:'Verificações', html:'<b>'+fichaMarcar(pj.nome||'', q)+'</b> <span class="mut">'+ix.feitos+' de '+ix.total+' verificados'+(ix.pend ? ' · '+ix.pend+' pendentes' : '')+'</span>', ir:function(){ fecharDiaModal(); abrirVerificacao(pid); } }); });
         (state.registrosArt||[]).forEach(function(a){ var tx = (a.clienteNome||'')+' ART '+(a.numeroArt||''); if(normalizarTexto(tx).indexOf(q) === -1) return;
           itens.push({ grupo:'ART', html:'<b>'+fichaMarcar(a.clienteNome||'', q)+'</b> <span class="mut">ART '+fichaMarcar(a.numeroArt||'', q)+'</span>', ir:function(){ fecharDiaModal(); ativarTopicoProjetos('art'); abrirFormRegistroArt(a.id); } }); });
       }
@@ -5407,7 +5555,7 @@
       else if(e.key === 'Escape'){ fecharDiaModal(); }
     });
     desenhar();
-    var topicos = ['relatorios','consideracoes','art'].filter(function(id){ var t = TOPICOS_PROJETOS.find(function(x){ return x.id === id; }); return t && podeVerTopicoProjetos(t); });
+    var topicos = ['relatorios','consideracoes','art','verificacoes'].filter(podeCarregarTopico);
     for(var i = 0; i < topicos.length; i++){ try{ await garantirDadosDoTopico(topicos[i]); }catch(e){} }
     if(document.getElementById('bgBusca') === inp) desenhar();
   }
@@ -6040,13 +6188,1119 @@
     else { chatMarcarLido(); }
   }
 
+  // ================= Levantamentos iniciais › Verificações (uma por obra) =================
+  // O que EXISTE no local (energia, gás, água, esgoto…), preenchido aos poucos nas visitas.
+  // Servidor: storage/clm-verificacoes/<obra>/dados (texto JSON) + .../fotos/<id> (uma foto por nó, para não regravar todas)
+  //           storage/clm-verificacoes-indice (resumo de todas as obras, para a lista e a ficha do cliente).
+  // Ao salvar, junta com o que está no servidor item a item (vale a alteração mais recente) — duas pessoas podem preencher juntas.
+  var VF_SECOES = [
+    { id:'geral', nome:'Geral', icone:'🏠', cor:'#475569', itens:[
+      { id:'ident', nome:'Identificação do imóvel', campos:[
+        { k:'endereco', t:'txt', r:'Endereço da obra', ph:'rua, nº, bairro, cidade', opc:true, largo:true },
+        { k:'tipo', t:'sel', r:'Tipo de imóvel', o:['Casa','Apartamento','Outro'] },
+        { k:'tipoQual', t:'txt', r:'Qual?', ph:'loja, galpão, clínica…', se:{tipo:'Outro'}, opc:true },
+        { k:'situacao', t:'sel', r:'Situação', o:['Terreno vazio','Obra em andamento','Imóvel existente (reforma)'] },
+        { k:'pavimentos', t:'num', r:'Nº de pavimentos' },
+        { k:'piscina', t:'sim', r:'Tem piscina?' }
+      ]},
+      { id:'acesso', nome:'Acesso para veículos e entrega de material', sigla:'AC', legenda:'Acesso de veículos', campos:[
+        { k:'acesso', t:'sel', r:'Acesso', o:['Livre','Restrito (horário / portaria)','Só veículo pequeno','Sem acesso de veículo'] }
+      ]},
+      { id:'condominio', nome:'Condomínio — regras e contato', campos:[
+        { k:'tem', t:'sim', r:'Fica em condomínio?', gate:true },
+        { k:'contato', t:'txt', r:'Contato (síndico / administração)' },
+        { k:'regras', t:'txt', r:'Regras de obra', ph:'horários, aprovação de projeto, uso do elevador…', opc:true, largo:true }
+      ]}
+    ]},
+    { id:'energia', nome:'Energia', icone:'⚡', cor:'#EA580C', itens:[
+      { id:'forn', nome:'Concessionária e fornecimento', dica:'Fotografe a conta de luz (nº da instalação e classe de consumo).', campos:[
+        { k:'conc', t:'sel', r:'Concessionária', o:[['light','Light (RJ)'],['enelrj','Enel RJ (ex-Ampla)'],['enelsp','Enel SP'],['neodf','Neoenergia Brasília'],['outra','Outra']] },
+        { k:'concQual', t:'txt', r:'Qual?', se:{conc:'outra'} },
+        { k:'forn', t:'sel', r:'Fornecimento', o:['Monofásico','Bifásico','Trifásico','Média tensão (cabine)'] },
+        { k:'tensao', t:'sel', r:'Tensão nominal', o:['127/220 V','220/380 V','115/230 V','Outra'] }
+      ]},
+      { id:'trafo', nome:'Transformador de alimentação', sigla:'TR', legenda:'Transformador', so:'naoApto', campos:[
+        { k:'pot', t:'num', r:'Potência', u:'kVA' },
+        { k:'uk', t:'num', r:'Impedância Ucc (placa)', u:'%', opc:true },
+        { k:'dist', t:'num', r:'Distância até o padrão de entrada', u:'m' },
+        { k:'uso', t:'sel', r:'Uso', o:['Compartilhado (rede pública)','Exclusivo da obra'], opc:true },
+        { k:'poste', t:'txt', r:'Identificação (nº do poste / placa)', opc:true }
+      ]},
+      { id:'ramal', nome:'Ramal e cabo de entrada', sigla:'PE', legenda:'Padrão de entrada (medidor)', campos:[
+        { k:'alim', t:'sel', r:'Alimentação', o:['Aérea','Subterrânea','Aérea até o poste + subterrânea'], so:'naoApto' },
+        { k:'material', t:'sel', r:'Tipo de cabo', o:['Cobre','Alumínio','Multiplexado (alumínio)','Não identificado'] },
+        { k:'secao', t:'txt', r:'Seção do cabo de entrada', ph:'ex.: 3 × 16 + 16 mm²' },
+        { k:'compr', t:'num', r:'Comprimento até o quadro', u:'m', opc:true }
+      ]},
+      { id:'disj', nome:'Disjuntor de entrada', campos:[
+        { k:'corrente', t:'num', r:'Corrente nominal', u:'A' },
+        { k:'polos', t:'sel', r:'Polos', o:['Monopolar','Bipolar','Tripolar'] },
+        { k:'curva', t:'sel', r:'Curva', o:['B','C','D','Não identificada'], opc:true }
+      ]},
+      { id:'imped', nome:'Impedância de entrada medida', dica:'Na falta dos dados do transformador, ou para complementar.', campos:[
+        { k:'tipoZ', t:'sel', r:'O que foi medido', o:['Laço fase-neutro','Fase-fase'] },
+        { k:'z', t:'num', r:'Impedância medida', u:'Ω' },
+        { k:'onde', t:'txt', r:'Onde foi medida', ph:'ex.: bornes do disjuntor geral', opc:true }
+      ]},
+      { id:'tensoes', nome:'Tensões medidas', campos:[
+        { k:'fn', t:'num', r:'Fase-neutro', u:'V' },
+        { k:'ff', t:'num', r:'Fase-fase', u:'V', opc:true }
+      ]},
+      { id:'aterr', nome:'Aterramento e DPS no padrão', sigla:'AT', legenda:'Aterramento', campos:[
+        { k:'aterr', t:'sel', r:'Aterramento', o:['Existe','Não existe','Não identificado'] },
+        { k:'dps', t:'sel', r:'DPS no padrão', o:['Tem','Não tem'] }
+      ]}
+    ]},
+    { id:'spda', nome:'SPDA', icone:'🌩️', cor:'#B91C1C', so:'naoApto', itens:[
+      { id:'dim', nome:'Dimensões da edificação', campos:[
+        { k:'alt', t:'num', r:'Altura', u:'m' }, { k:'comp', t:'num', r:'Comprimento', u:'m' }, { k:'larg', t:'num', r:'Largura', u:'m' }
+      ]},
+      { id:'linhas', nome:'Linhas que entram na edificação', campos:[
+        { k:'energia', t:'sel', r:'Energia', o:['Aérea','Subterrânea'] },
+        { k:'telecom', t:'sel', r:'Telefone / dados', o:['Aérea','Subterrânea','Não tem'] }
+      ]},
+      { id:'exist', nome:'SPDA existente', campos:[
+        { k:'tem', t:'sim', r:'Tem SPDA?', gate:true },
+        { k:'tipo', t:'sel', r:'Método', o:['Gaiola de Faraday (malha)','Franklin (captor)','Não identificado'] },
+        { k:'estado', t:'txt', r:'Estado / observação', opc:true }
+      ]}
+    ]},
+    { id:'telecom', nome:'Telecom', icone:'📡', cor:'#7C3AED', itens:[
+      { id:'entrada', nome:'Entrada de telefone / dados', sigla:'TL', legenda:'Entrada de telecom', campos:[
+        { k:'tipo', t:'sel', r:'Entrada', o:['Aérea','Subterrânea','Não tem'] },
+        { k:'tubo', t:'txt', r:'Tubulação existente', ph:'ex.: eletroduto 1" até o DG', opc:true },
+        { k:'oper', t:'txt', r:'Operadora / fibra', opc:true }
+      ]}
+    ]},
+    { id:'gas', nome:'Gás', icone:'🔥', cor:'#CA8A04', itens:[
+      { id:'forn', nome:'Tipo de gás e fornecimento', campos:[
+        { k:'tipo', t:'sel', r:'Gás', o:['GN (rede da concessionária)','GLP (botijões / cilindros)','GLP a granel','Não tem'] },
+        { k:'pressao', t:'txt', r:'Pressão de fornecimento', ph:'ex.: baixa pressão / 2,2 kPa', opc:true }
+      ]},
+      { id:'medidor', nome:'Medidor / abrigo de gás', sigla:'MG', legenda:'Medidor de gás', mostrar:function(c){ return c.v('gas.forn','tipo') !== 'Não tem'; }, campos:[
+        { k:'medidor', t:'sel', r:'Medidor', o:['G1,6','G2,5','G4','G6','G10','G16','G25','G40','G65','G100','Não tem medidor'] },
+        { k:'pulso', t:'sel', r:'Leitor de pulso', o:['Com saída para leitor de pulso','Sem saída de pulso'] },
+        { k:'regulador', t:'sel', r:'Regulador', o:['Tem','Não tem'], opc:true },
+        { k:'abrigo', t:'sel', r:'Abrigo', o:['Tem','Não tem'], opc:true }
+      ]},
+      { id:'tubo', nome:'Tubulação de entrada de gás', mostrar:function(c){ return c.v('gas.forn','tipo') !== 'Não tem'; }, campos:[
+        { k:'diam', t:'txt', r:'Diâmetro', ph:'ex.: 22 mm ou 3/4"' },
+        { k:'mat', t:'sel', r:'Material', o:['Cobre','Aço galvanizado','PEAD','Multicamada (PEX-AL-PEX)','Não identificado'], opc:true }
+      ]}
+    ]},
+    { id:'agua', nome:'Água', icone:'💧', cor:'#2563EB', itens:[
+      { id:'hidro', nome:'Hidrômetro e entrada de água', sigla:'HD', legenda:'Hidrômetro', campos:[
+        { k:'diam', t:'sel', r:'Diâmetro do tubo de entrada', o:['20 mm (1/2")','25 mm (3/4")','32 mm (1")','40 mm (1 1/4")','50 mm (1 1/2")','60 mm (2")','Outro'] },
+        { k:'pulso', t:'sel', r:'Leitor de pulso', o:['Com saída para leitor de pulso','Sem saída de pulso'] },
+        { k:'vazao', t:'txt', r:'Vazão do hidrômetro', ph:'ex.: Qn 1,5 m³/h', opc:true },
+        { k:'pressao', t:'num', r:'Pressão medida (manômetro)', u:'mca', opc:true }
+      ]},
+      { id:'cisterna', nome:'Cisterna (reservatório inferior)', sigla:'CT', legenda:'Cisterna', so:'naoApto', calc:'cisterna', campos:[
+        { k:'tem', t:'sim', r:'Tem cisterna?', gate:true },
+        { k:'hu', t:'num', r:'Altura útil', u:'m' },
+        { k:'ht', t:'num', r:'Altura total', u:'m' },
+        { k:'hp', t:'num', r:'Altura do pescoço', u:'m' },
+        { k:'larg', t:'num', r:'Largura', u:'m' },
+        { k:'comp', t:'num', r:'Comprimento', u:'m' },
+        { k:'acesso', t:'txt', r:'Tamanho do acesso (tampa)', ph:'ex.: 60 × 60 cm' }
+      ]},
+      { id:'caixa', nome:'Caixa d’água superior', sigla:'CX', legenda:'Caixa d’água', campos:[
+        { k:'tem', t:'sim', r:'Tem caixa superior?', gate:true },
+        { k:'privativa', t:'sel', r:'A caixa é', o:['Privativa do cliente','Coletiva do prédio'], so:'apto' },
+        { k:'abast', t:'sel', r:'Como é abastecida', o:['Direto da rua (pressão da rede)','Recalque a partir da cisterna','Por gravidade da caixa do prédio','Outro'] },
+        { k:'recExcl', t:'sel', r:'Bomba de recalque exclusiva', o:['Sim','Não'], so:'apto' },
+        { k:'vol', t:'num', r:'Volume', u:'L' },
+        { k:'alt', t:'num', r:'Fundo da caixa acima do último piso', u:'m', opc:true }
+      ]},
+      { id:'bombas', nome:'Bombas existentes', sigla:'BB', legenda:'Bombas', campos:[
+        { k:'tem', t:'sim', r:'Tem bombas (recalque / pressurização)?', gate:true },
+        { k:'desc', t:'txt', r:'Tipo e potência', ph:'ex.: recalque 1 cv + reserva; pressurizador 1/2 cv', largo:true }
+      ]},
+      { id:'poco', nome:'Poço', sigla:'PÇ', legenda:'Poço', so:'naoApto', campos:[
+        { k:'tem', t:'sim', r:'Tem poço?', gate:true },
+        { k:'tipo', t:'sel', r:'Tipo', o:['Artesiano / tubular','Cacimba (raso)'] },
+        { k:'prof', t:'num', r:'Profundidade', u:'m', opc:true },
+        { k:'vazao', t:'num', r:'Vazão', u:'m³/h', opc:true }
+      ]},
+      { id:'mina', nome:'Mina / nascente', sigla:'MN', legenda:'Mina', so:'naoApto', campos:[
+        { k:'tem', t:'sim', r:'Tem mina ou nascente?', gate:true },
+        { k:'onde', t:'txt', r:'Onde / vazão aproximada', opc:true, largo:true }
+      ]},
+      { id:'prumadas', nome:'Prumadas e shafts', sigla:'SH', legenda:'Shaft / prumada', so:'apto', campos:[
+        { k:'desc', t:'txt', r:'Onde passam as prumadas (água, esgoto, gás) e se há shaft acessível', largo:true }
+      ]}
+    ]},
+    { id:'esgoto', nome:'Esgoto e águas pluviais', icone:'🌧️', cor:'#0F766E', so:'naoApto', itens:[
+      { id:'esgRua', nome:'Rede de esgoto na rua', sigla:'ES', legenda:'Esgoto na rua', cor:'#92400E', campos:[
+        { k:'existe', t:'sel', r:'Rede de esgoto', o:['Existe','Não existe'] },
+        { k:'prof', t:'num', r:'Profundidade da rede / caixa', u:'m', opc:true },
+        { k:'dist', t:'num', r:'Distância até o limite do terreno', u:'m', opc:true }
+      ]},
+      { id:'pluvRua', nome:'Ponto pluvial na rua', sigla:'PL', legenda:'Pluvial na rua', campos:[
+        { k:'tipo', t:'sel', r:'Lançamento', o:['Sarjeta (meio-fio)','Galeria / boca de lobo','Não existe'] },
+        { k:'dist', t:'num', r:'Distância até o ponto', u:'m', opc:true }
+      ]},
+      { id:'nivel', nome:'Terreno em relação à rua', campos:[
+        { k:'nivel', t:'sel', r:'O terreno está', o:['Acima da rua','No nível da rua','Abaixo da rua (pode precisar de elevatória)'] }
+      ]},
+      { id:'fossa', nome:'Fossa / sumidouro existente', sigla:'FS', legenda:'Fossa / sumidouro', cor:'#92400E', campos:[
+        { k:'tem', t:'sim', r:'Tem fossa ou sumidouro?', gate:true },
+        { k:'desc', t:'txt', r:'Tipo / situação', opc:true, largo:true }
+      ]}
+    ]},
+    { id:'piscina', nome:'Piscina', icone:'🏊', cor:'#0891B2', mostrar:function(c){ return c.piscina; }, itens:[
+      { id:'cm', nome:'Casa de máquinas da piscina', sigla:'PS', legenda:'Casa de máquinas', calc:'piscina', campos:[
+        { k:'alt', t:'num', r:'Altura (pé-direito)', u:'m' },
+        { k:'larg', t:'num', r:'Largura', u:'m', opc:true },
+        { k:'comp', t:'num', r:'Comprimento', u:'m', opc:true },
+        { k:'pos', t:'sel', r:'Piso em relação ao nível d’água', o:['Abaixo do nível d’água','Acima do nível d’água'] },
+        { k:'desn', t:'num', r:'Desnível', u:'m', opc:true },
+        { k:'dist', t:'num', r:'Distância até a piscina', u:'m' }
+      ]}
+    ]}
+  ];
+  var VF_ST_TXT = { ok:'verificado', pend:'pendente', na:'não se aplica', '':'a verificar' };
+  VF_SECOES.forEach(function(s){ s.itens.forEach(function(it){ it.chave = s.id + '.' + it.id; it.sec = s; it.cor = it.cor || s.cor; }); });
+  function vfDef(chave){ for(var i = 0; i < VF_SECOES.length; i++){ var s = VF_SECOES[i]; for(var j = 0; j < s.itens.length; j++){ if(s.itens[j].chave === chave) return s.itens[j]; } } return null; }
+
+  var verifIndice = {}, verifIndiceCarregado = false, verifIndiceErro = false;
+  var vf = null;             // verificação aberta no editor
+  var vfBuscaTxt = '';
+  var vfTimerRasc = null, vfTimerSalvar = null;
+  var vfGpsLigado = (function(){ try{ return localStorage.getItem('equiper-vf-gps') !== '0'; }catch(e){ return true; } })();
+
+  function vfChave(pid){ return String(pid).replace(/[.#$\[\]\/]/g, '_'); }
+  function vfRef(pid, sub){ return _fbDb.ref('storage/clm-verificacoes/' + vfChave(pid) + (sub ? '/' + sub : '')); }
+  function vfAgora(){ return new Date().toISOString(); }
+  function vfVazio(pid){ return { v:1, projetoId:pid, itens:{}, fotos:{}, plantas:{}, removidos:{}, criadoEm:vfAgora(), criadoPor:nomeLogado() }; }
+  function vfComTempo(pr, ms){ return new Promise(function(res, rej){ var t = setTimeout(function(){ rej(new Error('tempo')); }, ms); Promise.resolve(pr).then(function(v){ clearTimeout(t); res(v); }, function(e){ clearTimeout(t); rej(e); }); }); }
+  function vfNum(x){ var n = parseFloat(String(x == null ? '' : x).replace(/\s/g,'').replace(',', '.')); return isFinite(n) ? n : null; }
+  function vfFmtN(v, dec){ return Number(v).toLocaleString('pt-BR', { maximumFractionDigits: dec, minimumFractionDigits: 0 }); }
+  function vfCheio(v){ return String(v == null ? '' : v).trim() !== ''; }
+
+  // junta duas versões: a = deste aparelho, b = do servidor. Vale a mais recente de cada item / foto / planta / marcação.
+  function vfJuntar(a, b){
+    if(!a) return b; if(!b) return a;
+    function novo(x, y){ if(!x) return y; if(!y) return x; return String(x.em||'') >= String(y.em||'') ? x : y; }
+    var r = Object.assign({}, b, a);
+    r.removidos = Object.assign({}, b.removidos || {}, a.removidos || {});
+    r.itens = {};
+    Object.keys(Object.assign({}, b.itens, a.itens)).forEach(function(k){ r.itens[k] = novo((a.itens||{})[k], (b.itens||{})[k]); });
+    r.fotos = {};
+    Object.keys(Object.assign({}, b.fotos, a.fotos)).forEach(function(k){ if(!r.removidos[k]) r.fotos[k] = novo((a.fotos||{})[k], (b.fotos||{})[k]); });
+    r.plantas = {};
+    Object.keys(Object.assign({}, b.plantas, a.plantas)).forEach(function(k){
+      if(r.removidos[k]) return;
+      var pa = (a.plantas||{})[k], pb = (b.plantas||{})[k], p = Object.assign({}, novo(pa, pb));
+      var pinsA = (pa && pa.pins) || {}, pinsB = (pb && pb.pins) || {};
+      p.pins = {};
+      Object.keys(Object.assign({}, pinsB, pinsA)).forEach(function(q){ if(!r.removidos[q]) p.pins[q] = novo(pinsA[q], pinsB[q]); });
+      r.plantas[k] = p;
+    });
+    if(b.criadoEm && (!a.criadoEm || b.criadoEm < a.criadoEm)){ r.criadoEm = b.criadoEm; r.criadoPor = b.criadoPor; }
+    return r;
+  }
+
+  function vfCtx(d){
+    var id = ((d.itens || {})['geral.ident'] || {}).v || {};
+    return { tipo: id.tipo || '', apto: id.tipo === 'Apartamento', piscina: id.piscina === 'Sim',
+      v: function(item, k){ return (((d.itens || {})[item] || {}).v || {})[k] || ''; } };
+  }
+  function vfVisivel(o, c){
+    if(o.so === 'naoApto' && c.apto) return false;
+    if(o.so === 'apto' && !c.apto) return false;
+    if(o.mostrar && !o.mostrar(c)) return false;
+    return true;
+  }
+  function vfCampoVisivel(f, c, vals){
+    if(!vfVisivel(f, c)) return false;
+    if(f.se){ for(var k in f.se){ if((vals||{})[k] !== f.se[k]) return false; } }
+    return true;
+  }
+  function vfFotosDoItem(d, chave){ return Object.keys(d.fotos || {}).filter(function(f){ return d.fotos[f].item === chave; }).sort(function(x, y){ return String(d.fotos[x].em||'').localeCompare(String(d.fotos[y].em||'')); }); }
+  function vfNaoTem(def, vals){ var g = def.campos.find(function(f){ return f.gate; }); return !!(g && vals[g.k] === 'Não'); }
+  function vfFaltando(def, it, c){
+    var vals = (it && it.v) || {};
+    if(vfNaoTem(def, vals)) return [];
+    return def.campos.filter(function(f){ return !f.opc && vfCampoVisivel(f, c, vals) && !vfCheio(vals[f.k]); });
+  }
+  function vfStatus(def, it, c, d){
+    it = it || {};
+    if(it.stm) return it.stm;                       // escolhido à mão
+    var vals = it.v || {};
+    if(vfNaoTem(def, vals)) return 'ok';            // "não tem" também é verificado
+    var req = def.campos.filter(function(f){ return !f.opc && vfCampoVisivel(f, c, vals); });
+    var faltam = req.filter(function(f){ return !vfCheio(vals[f.k]); }).length;
+    var algo = Object.keys(vals).some(function(k){ return vfCheio(vals[k]); }) || vfCheio(it.obs) || (d && vfFotosDoItem(d, def.chave).length);
+    if(algo && faltam === 0) return 'ok';
+    return algo ? 'pend' : '';
+  }
+  function vfResumo(d){
+    var c = vfCtx(d), t = { total:0, ok:0, na:0, pend:0, vazio:0, sec:{} };
+    VF_SECOES.forEach(function(s){
+      if(!vfVisivel(s, c)) return;
+      var ts = t.sec[s.id] = { total:0, feitos:0 };
+      s.itens.forEach(function(def){
+        if(!vfVisivel(def, c)) return;
+        var st = vfStatus(def, d.itens[def.chave], c, d);
+        t.total++; ts.total++;
+        if(st === 'ok'){ t.ok++; ts.feitos++; } else if(st === 'na'){ t.na++; ts.feitos++; } else if(st === 'pend') t.pend++; else t.vazio++;
+      });
+    });
+    t.feitos = t.ok + t.na;
+    return t;
+  }
+  function vfFmtValor(f, v){
+    if(f.t === 'sel' && Array.isArray(f.o[0])){ var o = f.o.find(function(x){ return x[0] === v; }); return o ? o[1] : v; }
+    return f.u ? v + ' ' + f.u : v;
+  }
+  function vfCalc(def, vals){
+    vals = vals || {};
+    if(def.calc === 'cisterna' && !vfNaoTem(def, vals)){
+      var hu = vfNum(vals.hu), l = vfNum(vals.larg), cp = vfNum(vals.comp), ht = vfNum(vals.ht);
+      var tx = [];
+      if(hu && l && cp) tx.push('Volume útil ≈ ' + vfFmtN(hu*l*cp, 2) + ' m³ (' + vfFmtN(Math.round(hu*l*cp*1000), 0) + ' L)');
+      if(ht && l && cp) tx.push('volume total ≈ ' + vfFmtN(ht*l*cp, 2) + ' m³');
+      return tx.join(' · ');
+    }
+    if(def.calc === 'piscina' && vals.pos){
+      return vals.pos.indexOf('Abaixo') === 0 ? 'Casa de máquinas abaixo do nível d’água → bomba afogada' : 'Casa de máquinas acima do nível d’água → bomba não afogada';
+    }
+    return '';
+  }
+  function vfTextoValores(def, it, c){
+    var vals = (it && it.v) || {};
+    if(vfNaoTem(def, vals)) return 'Não tem';
+    var g = def.campos.find(function(f){ return f.gate; });
+    var partes = def.campos.filter(function(f){ return !f.gate && vfCampoVisivel(f, c, vals) && vfCheio(vals[f.k]); })
+      .map(function(f){ return f.r.replace(/\?$/, '') + ': ' + vfFmtValor(f, String(vals[f.k]).trim()); });
+    if(g && vals[g.k] === 'Sim') partes.unshift('Tem');
+    var calc = vfCalc(def, vals); if(calc) partes.push(calc);
+    return partes.join(' · ');
+  }
+  function vfEnderecoCadastro(pid){ try{ var d = dadosDoCliente(pid); return (d && d.fin && (d.fin.enderecoCompleto || d.fin.localidade)) || ''; }catch(e){ return ''; } }
+  function vfEndereco(ed){ ed = ed || vf; if(!ed || !ed.dados) return ''; var v = (((ed.dados.itens['geral.ident'] || {}).v) || {}).endereco; return vfCheio(v) ? String(v).trim() : vfEnderecoCadastro(ed.pid); }
+  function vfLinkMaps(ed){
+    ed = ed || vf; var q = vfEndereco(ed);
+    if(!q){ var f = Object.keys(ed.dados.fotos || {}).map(function(k){ return ed.dados.fotos[k]; }).find(function(m){ return m.gps; }); if(f) q = f.gps.la + ',' + f.gps.lo; }
+    return q ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) : '';
+  }
+
+  // ---------- pendentes guardados no aparelho (sem internet) ----------
+  function vfPendentesLocais(){ try{ return JSON.parse(localStorage.getItem('equiper-vf-pendentes') || '[]'); }catch(e){ return []; } }
+  function vfMarcarPendenteLocal(pid, sim){
+    try{ var l = vfPendentesLocais().filter(function(x){ return x !== pid; }); if(sim) l.push(pid); localStorage.setItem('equiper-vf-pendentes', JSON.stringify(l)); }catch(e){}
+  }
+  var vfEnviandoGuardados = false;
+  async function vfEnviarPendentesGuardados(){
+    if(vfEnviandoGuardados || !estaOnline()) return;
+    vfEnviandoGuardados = true;
+    try{
+      var l = vfPendentesLocais();
+      for(var i = 0; i < l.length; i++){
+        var pid = l[i];
+        if(vf && vf.pid === pid) continue;
+        var r = await rascunhoLer('vf-' + pid);
+        if(!r || !r.dados){ vfMarcarPendenteLocal(pid, false); continue; }
+        var pj = state.projetos.find(function(p){ return p.id === pid; }) || { id:pid, nome:(verifIndice[pid]||{}).cliente || pid };
+        var pend = {}; (r.pend || []).forEach(function(f){ pend[f] = true; });
+        var ed = { pid:pid, pj:pj, dados:r.dados, fotos:r.fotos || {}, pend:pend, apagar:r.apagar || {}, sujo:true, versaoLocal:1 };
+        await vfSalvar(true, ed);
+      }
+    }catch(e){}
+    vfEnviandoGuardados = false;
+  }
+  window.addEventListener('online', function(){ setTimeout(function(){ if(vf && (vf.sujo || Object.keys(vf.pend).length)) vfSalvar(true); vfEnviarPendentesGuardados(); }, 1500); });
+
+  async function vfCarregarIndice(forcar){
+    if(verifIndiceCarregado && !forcar) return true;
+    var r = await lerChaveSegura('clm-verificacoes-indice', 15000);
+    if(!r.ok){ verifIndiceErro = true; return false; }
+    try{ verifIndice = r.valor ? JSON.parse(r.valor) : {}; }catch(e){ verifIndice = {}; }
+    verifIndiceErro = false; verifIndiceCarregado = true;
+    return true;
+  }
+
+  // ---------- lista de obras ----------
+  function renderVerificacoes(){
+    var raiz = document.getElementById('verificacoesRaiz');
+    if(!raiz) return;
+    if(vf){ vfDesenharEditor(); return; }
+    var pendLoc = vfPendentesLocais();
+    raiz.innerHTML =
+      '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">'+
+        '<input type="search" id="vfBusca" class="hist-busca" style="max-width:360px; margin:0;" placeholder="Buscar obra / cliente" value="'+escapeHtml(vfBuscaTxt)+'">'+
+      '</div>'+
+      (verifIndiceErro ? '<div class="vf-aviso">Não foi possível ler as verificações do servidor. Se o painel acabou de ser atualizado, publique as regras novas do Firebase (passo 5). Sem conexão? Tente de novo em instantes.</div>' : '')+
+      '<div id="vfListaItens"></div>';
+    var desenhar = function(){
+      var q = normalizarTexto(vfBuscaTxt);
+      var lista = state.projetos.slice().filter(function(p){ return !q || normalizarTexto((p.nome||'')+' '+(p.cliente||'')).indexOf(q) !== -1; })
+        .sort(function(a,b){ return (a.nome||'').localeCompare(b.nome||'', 'pt-BR', {sensitivity:'base'}); });
+      var com = lista.filter(function(p){ return verifIndice[p.id] || pendLoc.indexOf(p.id) !== -1; });
+      var sem = lista.filter(function(p){ return com.indexOf(p) === -1; });
+      com.sort(function(a,b){ return String((verifIndice[b.id]||{}).atualizadoEm||'').localeCompare(String((verifIndice[a.id]||{}).atualizadoEm||'')); });
+      var linha = function(p){
+        var ix = verifIndice[p.id], naoEnv = pendLoc.indexOf(p.id) !== -1;
+        var pct = ix && ix.total ? Math.round(100 * ix.feitos / ix.total) : 0;
+        var det = ix ? (ix.feitos + ' de ' + ix.total + ' verificados' + (ix.pend ? ' · <span style="color:var(--amber);font-weight:600;">' + ix.pend + ' pendente' + (ix.pend>1?'s':'') + '</span>' : '') + (ix.atualizadoEm ? ' · ' + escapeHtml(fmtDate(String(ix.atualizadoEm).slice(0,10))) + (ix.por ? ' por ' + escapeHtml(String(ix.por).split(' ')[0]) : '') : '')) : 'não iniciada';
+        return '<div class="vf-linha" data-vf-pid="'+escapeHtml(p.id)+'"><div class="nm"><b>'+escapeHtml(p.nome)+'</b><span class="mut">'+det+(naoEnv ? ' · <span class="cli-tag a">⏳ não enviado</span>' : '')+'</span></div>'+
+          (ix ? '<div class="vf-barra" title="'+pct+'%"><i style="width:'+pct+'%"></i></div>' : '<span class="mut" style="font-size:12px;">iniciar ›</span>')+'</div>';
+      };
+      var html = '';
+      if(com.length) html += '<div class="vf-grupo">Em andamento · '+com.length+'</div>' + com.map(linha).join('');
+      if(sem.length){
+        var abrir = q || !com.length;
+        html += '<details class="vf-sem"'+(abrir?' open':'')+'><summary class="vf-grupo" style="cursor:pointer;">Sem verificação · '+sem.length+'</summary>' + sem.map(linha).join('') + '</details>';
+      }
+      if(!lista.length) html = '<div class="empty-hint">Nenhuma obra encontrada'+(q?' com esse nome':'')+'. As obras vêm do cadastro de clientes do quadro.</div>';
+      document.getElementById('vfListaItens').innerHTML = html;
+      document.querySelectorAll('#vfListaItens [data-vf-pid]').forEach(function(el){ el.onclick = function(){ abrirVerificacao(el.getAttribute('data-vf-pid')); }; });
+    };
+    document.getElementById('vfBusca').addEventListener('input', function(e){ vfBuscaTxt = e.target.value; desenhar(); });
+    desenhar();
+  }
+
+  async function abrirVerificacao(pid){
+    if(!podeUsarRelatorios()) return;
+    var pj = state.projetos.find(function(p){ return p.id === pid; });
+    if(!pj) return;
+    if(vf && vf.pid !== pid) vfFecharEditor(true);
+    if(topicoProjetosAtivo !== 'relatorios' || levSubAtivo !== 'verificacoes') ativarTopicoProjetos('verificacoes');
+    if(vf && vf.pid === pid){ renderVerificacoes(); return; }
+    var ed = vf = { pid:pid, pj:pj, dados:null, fotos:{}, pend:{}, apagar:{}, sujo:false, versaoLocal:0, carregando:true, zoom:{}, abertas:null };
+    renderVerificacoes();
+    try{ window.scrollTo(0, 0); }catch(e){}
+    var local = await rascunhoLer('vf-' + pid);
+    var serv = null, ok = true;
+    try{
+      var snap = await vfComTempo(vfRef(pid, 'dados').once('value'), 20000);
+      serv = snap.exists() ? JSON.parse(snap.val()) : null;
+    }catch(e){ ok = false; }
+    if(vf !== ed) return;
+    ed.carregando = false;
+    if(!ok && !(local && local.dados)){
+      ed.erro = 'Não foi possível abrir a verificação (sem conexão, ou as regras novas do Firebase ainda não foram publicadas).';
+      renderVerificacoes(); return;
+    }
+    ed.dados = vfJuntar(local && local.dados, serv) || vfVazio(pid);
+    ['itens','fotos','plantas','removidos'].forEach(function(k){ if(!ed.dados[k]) ed.dados[k] = {}; });
+    if(local){
+      ed.fotos = Object.assign({}, local.fotos || {});
+      (local.pend || []).forEach(function(f){ if(ed.fotos[f]) ed.pend[f] = true; });
+      ed.apagar = Object.assign({}, local.apagar || {});
+      ed.sujo = !!local.sujo; if(ed.sujo) ed.versaoLocal = 1;
+    }
+    ed.semServidor = !ok;
+    renderVerificacoes();
+    vfCarregarFotos(ed);
+    if(ed.sujo || Object.keys(ed.pend).length) vfAgendarSalvar(1500);
+  }
+  function vfCarregarFotos(ed){
+    if(!ed || !ed.dados || !estaOnline()) return;
+    var ids = Object.keys(ed.dados.fotos || {}).concat(Object.keys(ed.dados.plantas || {}).map(function(k){ return ed.dados.plantas[k].img; }).filter(Boolean));
+    ids.forEach(function(fid){
+      if(ed.fotos[fid] || ed.baixando && ed.baixando[fid]) return;
+      (ed.baixando = ed.baixando || {})[fid] = true;
+      vfRef(ed.pid, 'fotos/' + fid).once('value').then(function(s){
+        if(s.exists()){ ed.fotos[fid] = s.val(); if(vf === ed) vfAtualizarFotoNaTela(fid); }
+      }, function(){ delete ed.baixando[fid]; });
+    });
+  }
+  function vfAtualizarFotoNaTela(fid){
+    document.querySelectorAll('[data-vf-img="'+fid+'"]').forEach(function(img){ img.src = vf.fotos[fid]; img.classList.remove('vf-carregando'); });
+    var pl = Object.keys(vf.dados.plantas).find(function(k){ return vf.dados.plantas[k].img === fid; });
+    if(pl) vfRedesenharPlanta(pl);
+  }
+
+  function vfFecharEditor(semRender){
+    if(!vf) return;
+    var ed = vf;
+    clearTimeout(vfTimerSalvar); clearTimeout(vfTimerRasc);
+    vfCancelarPin();
+    document.querySelectorAll('.vf-pop').forEach(function(el){ el.remove(); });
+    if(ed.dados && (ed.sujo || Object.keys(ed.pend).length || Object.keys(ed.apagar).length)){ vfGuardarRascunhoAgora(ed); vfSalvar(true, ed); }
+    vf = null;
+    if(!semRender) renderVerificacoes();
+  }
+
+  // ---------- rascunho e gravação ----------
+  function vfGuardarRascunhoAgora(ed){
+    var fotosPend = {}; Object.keys(ed.pend).forEach(function(f){ if(ed.fotos[f]) fotosPend[f] = ed.fotos[f]; });
+    var sujo = ed.sujo || Object.keys(ed.pend).length > 0 || Object.keys(ed.apagar).length > 0;
+    vfMarcarPendenteLocal(ed.pid, sujo);
+    return rascunhoSalvar('vf-' + ed.pid, { dados: ed.dados, fotos: fotosPend, pend: Object.keys(ed.pend), apagar: ed.apagar, sujo: sujo, em: vfAgora() });
+  }
+  function vfMudou(){
+    if(!vf) return;
+    vf.sujo = true; vf.versaoLocal++;
+    var ed = vf;
+    clearTimeout(vfTimerRasc); vfTimerRasc = setTimeout(function(){ vfGuardarRascunhoAgora(ed); }, 500);
+    vfAgendarSalvar(4000);
+    vfMostrarSalvo();
+    vfAtualizarResumoUI();
+  }
+  function vfAgendarSalvar(ms){ clearTimeout(vfTimerSalvar); var ed = vf; vfTimerSalvar = setTimeout(function(){ if(vf === ed) vfSalvar(true, ed); }, ms || 4000); }
+  function vfMostrarSalvo(txt){
+    var el = document.getElementById('vfSalvo'); if(!el || !vf) return;
+    if(txt){ el.textContent = txt; return; }
+    var temPend = vf.sujo || Object.keys(vf.pend).length;
+    if(vf.salvando) el.textContent = '⏳ salvando…';
+    else if(temPend && !estaOnline()) el.innerHTML = '<span style="color:var(--amber);font-weight:600;">⚠️ sem internet — guardado neste aparelho</span>';
+    else if(temPend && vf.erroSalvar) el.innerHTML = '<span style="color:var(--red);font-weight:600;">não salvou — tente “Salvar”</span>';
+    else if(temPend) el.textContent = 'alterações a salvar…';
+    else if(vf.ultimoSalvo) el.textContent = '✓ salvo às ' + vf.ultimoSalvo.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    else el.textContent = '';
+  }
+  async function vfSalvar(auto, ed){
+    ed = ed || vf;
+    if(!ed || !ed.dados) return false;
+    if(ed.salvando){ ed.salvarDeNovo = true; return false; }
+    var temAlgo = ed.sujo || Object.keys(ed.pend).length || Object.keys(ed.apagar).length;
+    if(!temAlgo){ if(!auto && vf === ed){ ed.ultimoSalvo = ed.ultimoSalvo || new Date(); vfMostrarSalvo(); } return true; }
+    if(!estaOnline()){
+      vfGuardarRascunhoAgora(ed);
+      if(vf === ed) vfMostrarSalvo();
+      if(!auto) caixaAviso('Sem internet agora. As alterações e as fotos ficaram guardadas neste aparelho e serão enviadas quando a conexão voltar (com o painel aberto).');
+      return false;
+    }
+    ed.salvando = true; ed.erroSalvar = false;
+    if(vf === ed) vfMostrarSalvo();
+    var versao = ed.versaoLocal, ok = false;
+    try{
+      var pend = Object.keys(ed.pend);
+      for(var i = 0; i < pend.length; i++){
+        var fid = pend[i];
+        if(ed.fotos[fid]) await vfComTempo(vfRef(ed.pid, 'fotos/' + fid).set(ed.fotos[fid]), 90000);
+        delete ed.pend[fid];
+      }
+      var local = ed.dados;
+      local.atualizadoEm = vfAgora(); local.atualizadoPor = nomeLogado(); local.cliente = ed.pj.nome || '';
+      var res = await vfComTempo(vfRef(ed.pid, 'dados').transaction(function(atual){
+        var s = null; try{ s = atual ? JSON.parse(atual) : null; }catch(e){ s = null; }
+        return JSON.stringify(vfJuntar(local, s));
+      }), 30000);
+      var junto = null; try{ junto = JSON.parse(res && res.snapshot ? res.snapshot.val() : 'null'); }catch(e){}
+      if(junto){ var antes = ed.dados; ed.dados = vfJuntar(antes, junto); if(vf === ed) vfMostrarDoServidor(antes, ed.dados); }
+      var apg = Object.keys(ed.apagar);
+      for(var j = 0; j < apg.length; j++){ try{ await vfComTempo(vfRef(ed.pid, 'fotos/' + apg[j]).remove(), 20000); }catch(e){} delete ed.apagar[apg[j]]; }
+      var rs = vfResumo(ed.dados);
+      var entrada = { cliente: ed.pj.nome || '', total: rs.total, feitos: rs.feitos, pend: rs.pend, vazio: rs.vazio, fotos: Object.keys(ed.dados.fotos || {}).length, atualizadoEm: ed.dados.atualizadoEm, por: nomeLogado() };
+      await vfComTempo(_fbDb.ref('storage/clm-verificacoes-indice').transaction(function(atual){
+        var m = {}; try{ m = atual ? JSON.parse(atual) : {}; }catch(e){ m = {}; }
+        m[ed.pid] = entrada; return JSON.stringify(m);
+      }), 20000);
+      verifIndice[ed.pid] = entrada;
+      if(ed.versaoLocal === versao) ed.sujo = false;
+      ed.ultimoSalvo = new Date();
+      ok = true;
+    }catch(e){
+      ed.erroSalvar = true;
+      if(!auto) mostrarErroSalvamento('salvar as verificações (as alterações continuam guardadas neste aparelho)', function(){ vfSalvar(false, ed); });
+    }
+    ed.salvando = false;
+    var resta = ed.sujo || Object.keys(ed.pend).length || Object.keys(ed.apagar).length;
+    if(ok && !resta){ rascunhoApagar('vf-' + ed.pid); vfMarcarPendenteLocal(ed.pid, false); }
+    else vfGuardarRascunhoAgora(ed);
+    if(vf === ed){ vfMostrarSalvo(); vfAtualizarResumoUI(); }
+    if(ed.salvarDeNovo){ ed.salvarDeNovo = false; if(vf === ed) vfAgendarSalvar(800); else vfSalvar(true, ed); }
+    if(vf !== ed && topicoProjetosAtivo === 'relatorios' && levSubAtivo === 'verificacoes' && !vf) renderVerificacoes();
+    return ok;
+  }
+  // depois de salvar: mostra na tela o que outra pessoa preencheu nesse meio-tempo (sem mexer no campo em que se está digitando)
+  function vfMostrarDoServidor(a, b){
+    try{
+      var foco = document.activeElement, emFoco = foco && foco.closest ? foco.closest('.vf-item') : null;
+      var estrutura = ['geral.ident','gas.forn'].some(function(k){ return a.itens[k] !== b.itens[k]; });
+      if(estrutura && !emFoco){ var y = window.scrollY; vfDesenharEditor(); try{ window.scrollTo(0, y); }catch(e){} vfCarregarFotos(vf); return; }
+      var mudou = {};
+      Object.keys(b.itens).forEach(function(k){ if(a.itens[k] !== b.itens[k]) mudou[k] = 1; });
+      Object.keys(b.fotos).forEach(function(f){ if(!a.fotos[f]) mudou[b.fotos[f].item] = 1; });
+      Object.keys(a.fotos).forEach(function(f){ if(!b.fotos[f]) mudou[a.fotos[f].item] = 1; });
+      Object.keys(mudou).forEach(function(k){ var el = document.querySelector('.vf-item[data-item="'+k+'"]'); if(el && el !== emFoco) vfRedesenharItem(k); });
+      if(JSON.stringify(a.plantas) !== JSON.stringify(b.plantas) && !vf.pinItem && !(emFoco === null && foco && foco.classList && foco.classList.contains('vf-planta-nome'))) vfDesenharPlantas();
+      vfCarregarFotos(vf);
+      vfAtualizarResumoUI();
+    }catch(e){}
+  }
+  window.addEventListener('beforeunload', function(e){ if(vf && vf.salvando){ e.preventDefault(); e.returnValue = ''; } });
+
+  // ---------- editor ----------
+  function vfItemDados(chave){ var it = vf.dados.itens[chave]; if(!it){ it = vf.dados.itens[chave] = { v:{} }; } if(!it.v) it.v = {}; return it; }
+  function vfTocar(it){ it.em = vfAgora(); it.por = nomeLogado(); }
+  function vfCampoHtml(def, f, vals){
+    var v = vals[f.k] == null ? '' : String(vals[f.k]);
+    var ph = f.ph || '';
+    if(f.k === 'endereco' && def.chave === 'geral.ident' && !vfCheio(v)){ var cad = vfEnderecoCadastro(vf.pid); if(cad) ph = cad + ' (do cadastro)'; }
+    if(f.k === 'pavimentos' && def.chave === 'geral.ident' && !vfCheio(v)){ try{ var dc = dadosDoCliente(vf.pid); if(dc && dc.fin && dc.fin.qtdPavimentos) ph = dc.fin.qtdPavimentos + ' no cadastro — confirme'; }catch(e){} }
+    var ops = f.t === 'sim' ? ['Sim','Não'] : (f.o || []);
+    var txtOp = function(o){ return String(Array.isArray(o) ? o[1] : o); };
+    var curtas = (f.t === 'sel' || f.t === 'sim') && ops.length <= 4 && ops.every(function(o){ return txtOp(o).length <= 34; });
+    var segLargo = curtas && ops.reduce(function(n, o){ return n + txtOp(o).length + 4; }, 0) > 30;
+    var cls = 'vf-campo' + ((f.largo || segLargo || f.t === 'txt' && f.largo !== false && (f.ph||'').length > 30) ? ' largo' : '');
+    var h = '<label class="'+cls+'"><span>'+escapeHtml(f.r)+(f.opc ? ' <i class="vf-opc">opcional</i>' : '')+'</span>';
+    if(f.t === 'sel' || f.t === 'sim'){
+      if(curtas){
+        h += '<span class="vf-seg" data-k="'+f.k+'">' + ops.map(function(o){ var val = Array.isArray(o) ? o[0] : o, tx = Array.isArray(o) ? o[1] : o;
+          return '<button type="button" data-v="'+escapeHtml(val)+'"'+(val === v ? ' class="on"' : '')+'>'+escapeHtml(tx)+'</button>'; }).join('') + '</span>';
+      } else {
+        h += '<select data-k="'+f.k+'"><option value="">—</option>' + ops.map(function(o){ var val = Array.isArray(o) ? o[0] : o, tx = Array.isArray(o) ? o[1] : o;
+          return '<option value="'+escapeHtml(val)+'"'+(val === v ? ' selected' : '')+'>'+escapeHtml(tx)+'</option>'; }).join('') + '</select>';
+      }
+    } else if(f.t === 'num'){
+      h += '<span class="vf-un"><input type="text" inputmode="decimal" data-k="'+f.k+'" value="'+escapeHtml(v)+'" placeholder="'+escapeHtml(ph)+'">'+(f.u ? '<span>'+escapeHtml(f.u)+'</span>' : '')+'</span>';
+    } else {
+      h += '<input type="text" data-k="'+f.k+'" value="'+escapeHtml(v)+'" placeholder="'+escapeHtml(ph)+'">';
+    }
+    return h + '</label>';
+  }
+  function vfItemHtml(def, c){
+    var it = vf.dados.itens[def.chave] || { v:{} }, vals = it.v || {};
+    var st = vfStatus(def, it, c, vf.dados);
+    var gate = def.campos.find(function(f){ return f.gate; });
+    var naoTem = vfNaoTem(def, vals);
+    var campos = def.campos.filter(function(f){ return vfCampoVisivel(f, c, vals) && (!naoTem || f.gate); });
+    var fotos = vfFotosDoItem(vf.dados, def.chave);
+    var calc = vfCalc(def, vals);
+    var marcas = 0; Object.keys(vf.dados.plantas).forEach(function(k){ var p = vf.dados.plantas[k]; Object.keys(p.pins || {}).forEach(function(q){ if(p.pins[q].item === def.chave) marcas++; }); });
+    var abrirObs = vfCheio(it.obs) || (vf.obsAbertas && vf.obsAbertas[def.chave]);
+    return '<div class="vf-item st-'+(st||'vazio')+'" data-item="'+def.chave+'">'+
+      '<div class="vf-item-cab"><b class="vf-item-nome">'+escapeHtml(def.nome)+'</b>'+
+        (def.sigla ? '<span class="vf-sigla" style="background:'+def.cor+'" title="Sigla na planta">'+escapeHtml(def.sigla)+'</span>' : '')+
+        '<span class="vf-st-txt">'+(naoTem ? 'verificado · não tem' : VF_ST_TXT[st||''])+'</span></div>'+
+      (def.dica ? '<div class="vf-dica">'+escapeHtml(def.dica)+'</div>' : '')+
+      '<div class="vf-campos">'+campos.map(function(f){ return vfCampoHtml(def, f, vals); }).join('')+'</div>'+
+      (calc ? '<div class="vf-calc">'+escapeHtml(calc)+'</div>' : '')+
+      '<textarea class="vf-obs" data-obs="1" rows="2" placeholder="Observação (o que falta, onde fica, quem informou…)"'+(abrirObs ? '' : ' hidden')+'>'+escapeHtml(it.obs || '')+'</textarea>'+
+      (fotos.length ? '<div class="vf-fotos">'+fotos.map(function(fid){ var m = vf.dados.fotos[fid] || {}; var src = vf.fotos[fid];
+        return '<span class="vf-foto"><img data-vf-img="'+fid+'" data-vf-ver="'+fid+'"'+(src ? ' src="'+src+'"' : ' class="vf-carregando" alt="carregando"')+'>'+(m.gps ? '<i class="gps" title="'+m.gps.la+', '+m.gps.lo+'">📍</i>' : '')+'<button type="button" class="rm" data-vf-rmfoto="'+fid+'" title="Remover foto">×</button></span>'; }).join('')+'</div>' : '')+
+      '<div class="vf-item-rod">'+
+        '<div class="vf-chips">'+
+          ['ok','pend','na'].map(function(s){ return '<button type="button" class="vf-chip '+s+(it.stm === s ? ' on' : '')+'" data-st="'+s+'" title="'+(it.stm === s ? 'Toque de novo para voltar ao automático' : 'Marcar à mão')+'">'+{ok:'✓ Verificado', pend:'⏳ Pendente', na:'— Não se aplica'}[s]+'</button>'; }).join('')+
+        '</div>'+
+        '<div class="vf-item-bts">'+
+          '<button type="button" class="vf-mini" data-acao="foto">📷 Foto'+(fotos.length ? ' · '+fotos.length : '')+'</button>'+
+          '<button type="button" class="vf-mini" data-acao="obs">📝 Obs.</button>'+
+          (def.sigla ? '<button type="button" class="vf-mini" data-acao="pin">📍 Planta'+(marcas ? ' · '+marcas : '')+'</button>' : '')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+  function vfSecaoHtml(s, c, rs){
+    var tsec = rs.sec[s.id] || { total:0, feitos:0 };
+    var aberta = vf.abertas[s.id] !== undefined ? vf.abertas[s.id] : true;
+    return '<details class="vf-sec" id="vfSec_'+s.id+'" data-sec="'+s.id+'"'+(aberta ? ' open' : '')+'>'+
+      '<summary><span class="vf-sec-ic" style="box-shadow:inset 3px 0 0 '+s.cor+'">'+s.icone+'</span>'+escapeHtml(s.nome)+'<span class="vf-sec-cont'+(tsec.feitos === tsec.total ? ' ok' : '')+'" data-sec-cont="'+s.id+'">'+tsec.feitos+'/'+tsec.total+'</span></summary>'+
+      '<div class="vf-sec-corpo">'+s.itens.filter(function(def){ return vfVisivel(def, c); }).map(function(def){ return vfItemHtml(def, c); }).join('')+'</div>'+
+    '</details>';
+  }
+  function vfDesenharEditor(){
+    var raiz = document.getElementById('verificacoesRaiz');
+    if(!raiz || !vf) return;
+    var cab = '<div class="vf-cab"><button type="button" class="btn small secondary" id="vfVoltar">‹ Obras</button>'+
+      '<div class="vf-tit"><h2>'+escapeHtml(vf.pj.nome)+'</h2><div class="mut" id="vfEndTxt"></div></div>';
+    if(vf.carregando){ raiz.innerHTML = cab + '</div><div class="empty-hint">Carregando a verificação…</div>'; document.getElementById('vfVoltar').onclick = function(){ vf = null; renderVerificacoes(); }; return; }
+    if(vf.erro){ raiz.innerHTML = cab + '</div><div class="vf-aviso">'+escapeHtml(vf.erro)+'</div><button type="button" class="btn small" id="vfTentar">Tentar de novo</button>';
+      document.getElementById('vfVoltar').onclick = function(){ vf = null; renderVerificacoes(); };
+      document.getElementById('vfTentar').onclick = function(){ var p = vf.pid; vf = null; abrirVerificacao(p); }; return; }
+    var d = vf.dados, c = vfCtx(d), rs = vfResumo(d);
+    if(!vf.abertas){ vf.abertas = {}; VF_SECOES.forEach(function(s){ var t = rs.sec[s.id]; if(t && t.total && t.feitos === t.total && d.atualizadoEm) vf.abertas[s.id] = false; }); }
+    var secs = VF_SECOES.filter(function(s){ return vfVisivel(s, c); });
+    raiz.innerHTML = cab +
+        '<div class="vf-acoes"><span class="vf-salvo" id="vfSalvo"></span>'+
+          '<button type="button" class="btn small secondary" id="vfPend">📲 Pendências</button>'+
+          '<button type="button" class="btn small secondary" id="vfPdf">📄 PDF</button>'+
+          '<button type="button" class="btn small" id="vfSalvar">Salvar</button></div>'+
+      '</div>'+
+      (vf.semServidor ? '<div class="vf-aviso">Aberta com o que estava guardado neste aparelho (o servidor não respondeu). Ao salvar, junta com o que estiver lá.</div>' : '')+
+      '<div class="vf-prog" id="vfProg"></div>'+
+      '<div class="vf-nav" id="vfNav">'+secs.map(function(s){ return '<button type="button" data-ir="vfSec_'+s.id+'">'+s.icone+' '+escapeHtml(s.nome)+'<b data-nav-cont="'+s.id+'"></b></button>'; }).join('')+'<button type="button" data-ir="vfPlantas">🗺️ Plantas<b data-nav-cont="plantas"></b></button></div>'+
+      '<div id="vfSecoes">'+secs.map(function(s){ return vfSecaoHtml(s, c, rs); }).join('')+'</div>'+
+      '<div class="vf-sec" id="vfPlantas" style="padding:12px 14px;"></div>'+
+      '<div class="vf-rodape">'+
+        '<label><input type="checkbox" id="vfGps"'+(vfGpsLigado ? ' checked' : '')+'> 📍 guardar a localização (GPS) nas fotos tiradas</label>'+
+        (!modoDesenhista ? '<button type="button" class="lnk" id="vfExcluir">Excluir esta verificação…</button>' : '')+
+      '</div>'+
+      '<input type="file" id="vfFotoInput" accept="image/*" multiple style="display:none">'+
+      '<input type="file" id="vfPlantaInput" accept="image/*" style="display:none">';
+    var endEl = document.getElementById('vfEndTxt'); var end = vfEndereco(); endEl.textContent = end || '';
+    document.getElementById('vfVoltar').onclick = function(){ vfFecharEditor(); try{ window.scrollTo(0,0); }catch(e){} };
+    document.getElementById('vfSalvar').onclick = function(){ clearTimeout(vfTimerSalvar); vfSalvar(false); };
+    document.getElementById('vfPdf').onclick = function(){ vfMostrarPdf(); };
+    document.getElementById('vfPend').onclick = function(){ vfMostrarPendencias(); };
+    document.getElementById('vfGps').onchange = function(e){ vfGpsLigado = e.target.checked; try{ localStorage.setItem('equiper-vf-gps', vfGpsLigado ? '1' : '0'); }catch(er){} };
+    if(document.getElementById('vfExcluir')) document.getElementById('vfExcluir').onclick = vfExcluir;
+    document.querySelectorAll('#vfNav [data-ir]').forEach(function(b){ b.onclick = function(){ var el = document.getElementById(b.getAttribute('data-ir')); if(!el) return; if(el.tagName === 'DETAILS'){ el.open = true; vf.abertas[el.getAttribute('data-sec')] = true; } el.scrollIntoView({behavior:'smooth', block:'start'}); }; });
+    document.querySelectorAll('#vfSecoes details.vf-sec').forEach(function(det){ det.addEventListener('toggle', function(){ if(vf) vf.abertas[det.getAttribute('data-sec')] = det.open; }); });
+    document.getElementById('vfFotoInput').onchange = function(e){ var alvo = vf && vf.alvoFoto; if(alvo && e.target.files && e.target.files.length) vfAdicionarFotos(alvo, e.target.files); e.target.value = ''; };
+    document.getElementById('vfPlantaInput').onchange = function(e){ var alvo = vf && vf.alvoPlanta; var f = e.target.files && e.target.files[0]; if(alvo && f) redimensionarImagem(f, 1800, 0.8, function(url){ vfDefinirImagemPlanta(alvo, url); }); e.target.value = ''; };
+    vfLigarItens(document.getElementById('vfSecoes'));
+    vfDesenharPlantas();
+    vfAtualizarResumoUI();
+    vfMostrarSalvo();
+  }
+  function vfAtualizarResumoUI(){
+    if(!vf || !vf.dados) return;
+    var rs = vfResumo(vf.dados);
+    var pr = document.getElementById('vfProg');
+    if(pr){
+      var pct = rs.total ? Math.round(100 * rs.feitos / rs.total) : 0;
+      pr.innerHTML = '<div class="vf-barra"><i style="width:'+pct+'%"></i></div><div class="tx"><b>'+rs.feitos+' de '+rs.total+'</b> verificados'+(rs.na ? ' (incl. '+rs.na+' não se aplica)' : '')+
+        (rs.pend ? ' · <span style="color:var(--amber);font-weight:600;">'+rs.pend+' pendente'+(rs.pend>1?'s':'')+'</span>' : '')+(rs.vazio ? ' · '+rs.vazio+' a verificar' : '')+'</div>';
+    }
+    Object.keys(rs.sec).forEach(function(s){
+      var t = rs.sec[s], txt = t.feitos + '/' + t.total;
+      document.querySelectorAll('[data-sec-cont="'+s+'"]').forEach(function(el){ el.textContent = txt; el.classList.toggle('ok', t.feitos === t.total); });
+      document.querySelectorAll('[data-nav-cont="'+s+'"]').forEach(function(el){ el.textContent = txt; el.parentNode.classList.toggle('ok', t.feitos === t.total); });
+    });
+    var np = Object.keys(vf.dados.plantas).length;
+    document.querySelectorAll('[data-nav-cont="plantas"]').forEach(function(el){ el.textContent = np ? String(np) : ''; });
+  }
+  function vfRedesenharItem(chave){
+    var el = document.querySelector('.vf-item[data-item="'+chave+'"]');
+    var def = vfDef(chave);
+    if(!el || !def) return;
+    var tmp = document.createElement('div'); tmp.innerHTML = vfItemHtml(def, vfCtx(vf.dados));
+    var novo = tmp.firstChild; el.parentNode.replaceChild(novo, el);
+    vfLigarItens(novo.parentNode, novo);
+  }
+  function vfAtualizarStatusItem(chave){
+    var el = document.querySelector('.vf-item[data-item="'+chave+'"]'); var def = vfDef(chave);
+    if(!el || !def) return;
+    var it = vf.dados.itens[chave] || {}, st = vfStatus(def, it, vfCtx(vf.dados), vf.dados);
+    el.className = 'vf-item st-' + (st || 'vazio');
+    var t = el.querySelector('.vf-st-txt'); if(t) t.textContent = vfNaoTem(def, it.v || {}) ? 'verificado · não tem' : VF_ST_TXT[st || ''];
+    var calcTxt = vfCalc(def, it.v || {}), ce = el.querySelector('.vf-calc');
+    if(calcTxt && !ce){ ce = document.createElement('div'); ce.className = 'vf-calc'; el.querySelector('.vf-campos').after(ce); }
+    if(ce){ if(calcTxt) ce.textContent = calcTxt; else ce.remove(); }
+  }
+  function vfLigarItens(cont, unico){
+    var itens = unico ? [unico] : cont.querySelectorAll('.vf-item');
+    Array.prototype.forEach.call(itens, function(el){
+      var chave = el.getAttribute('data-item'), def = vfDef(chave);
+      el.addEventListener('focusin', function(){ vf.alvoCola = { item: chave }; });
+      el.addEventListener('pointerdown', function(){ vf.alvoCola = { item: chave }; });
+      el.querySelectorAll('input[data-k]').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var it = vfItemDados(chave); it.v[inp.getAttribute('data-k')] = inp.value; vfTocar(it);
+          vfAtualizarStatusItem(chave); vfMudou();
+          if(chave === 'geral.ident' && inp.getAttribute('data-k') === 'endereco'){ var e = document.getElementById('vfEndTxt'); if(e) e.textContent = vfEndereco(); }
+        });
+      });
+      el.querySelectorAll('select[data-k]').forEach(function(sel){
+        sel.addEventListener('change', function(){ vfDefinirValor(chave, sel.getAttribute('data-k'), sel.value); });
+      });
+      el.querySelectorAll('.vf-seg').forEach(function(seg){
+        seg.querySelectorAll('button').forEach(function(b){ b.onclick = function(){
+          var k = seg.getAttribute('data-k'), atual = ((vf.dados.itens[chave] || {}).v || {})[k];
+          vfDefinirValor(chave, k, atual === b.getAttribute('data-v') ? '' : b.getAttribute('data-v'));
+        }; });
+      });
+      var obs = el.querySelector('.vf-obs');
+      obs.addEventListener('input', function(){ var it = vfItemDados(chave); it.obs = obs.value; vfTocar(it); vfAtualizarStatusItem(chave); vfMudou(); });
+      el.querySelectorAll('.vf-chip').forEach(function(b){ b.onclick = function(){
+        var it = vfItemDados(chave), s = b.getAttribute('data-st');
+        it.stm = it.stm === s ? '' : s; if(!it.stm) delete it.stm; vfTocar(it);
+        vfRedesenharItem(chave); vfMudou();
+      }; });
+      el.querySelector('[data-acao="foto"]').onclick = function(){ vf.alvoFoto = chave; document.getElementById('vfFotoInput').click(); };
+      el.querySelector('[data-acao="obs"]').onclick = function(){ (vf.obsAbertas = vf.obsAbertas || {})[chave] = true; obs.hidden = false; obs.focus(); };
+      var bp = el.querySelector('[data-acao="pin"]'); if(bp) bp.onclick = function(){ vfIniciarPin(chave); };
+      el.querySelectorAll('[data-vf-ver]').forEach(function(img){ img.onclick = function(){
+        var lista = vfFotosDoItem(vf.dados, chave).filter(function(f){ return vf.fotos[f]; });
+        var i = lista.indexOf(img.getAttribute('data-vf-ver')); if(i < 0) return;
+        abrirVisualizadorImagens(lista.map(function(f){ return vf.fotos[f]; }), i);
+      }; });
+      el.querySelectorAll('[data-vf-rmfoto]').forEach(function(b){ b.onclick = async function(e){
+        e.stopPropagation();
+        if(!(await caixaConfirmar('Remover esta foto?', { perigo:true, ok:'Remover' }))) return;
+        vfRemoverFoto(b.getAttribute('data-vf-rmfoto')); vfRedesenharItem(chave); vfMudou();
+      }; });
+    });
+  }
+  function vfDefinirValor(chave, k, valor){
+    var it = vfItemDados(chave); it.v[k] = valor; vfTocar(it);
+    if(chave === 'geral.ident' && (k === 'tipo' || k === 'piscina')){ vfMudou(); var y = window.scrollY; vfDesenharEditor(); try{ window.scrollTo(0, y); }catch(e){} return; }
+    if(chave === 'gas.forn' && k === 'tipo'){ vfMudou(); var y2 = window.scrollY; vfDesenharEditor(); try{ window.scrollTo(0, y2); }catch(e){} return; }
+    vfRedesenharItem(chave); vfMudou();
+  }
+  function vfRemoverFoto(fid){
+    delete vf.dados.fotos[fid]; vf.dados.removidos[fid] = vfAgora();
+    if(vf.pend[fid]) delete vf.pend[fid]; else vf.apagar[fid] = true;
+    delete vf.fotos[fid];
+  }
+
+  // ---------- fotos (com GPS) ----------
+  function vfPegarGps(){
+    return new Promise(function(res){
+      if(!vfGpsLigado || !navigator.geolocation) return res(null);
+      var feito = false, t = setTimeout(function(){ if(!feito){ feito = true; res(null); } }, 12000);
+      try{
+        navigator.geolocation.getCurrentPosition(function(p){ if(feito) return; feito = true; clearTimeout(t);
+          res({ la: +p.coords.latitude.toFixed(6), lo: +p.coords.longitude.toFixed(6), pr: Math.round(p.coords.accuracy || 0) }); },
+          function(){ if(feito) return; feito = true; clearTimeout(t); res(null); }, { enableHighAccuracy:true, timeout:10000, maximumAge:120000 });
+      }catch(e){ feito = true; clearTimeout(t); res(null); }
+    });
+  }
+  function vfAdicionarFotos(chave, files){
+    var gps = vfPegarGps();
+    Array.prototype.forEach.call(files, function(file){
+      if(file.type && file.type.indexOf('image') !== 0) return;
+      redimensionarImagem(file, 1280, 0.72, function(url){ vfNovaFoto(chave, url, gps); });
+    });
+  }
+  function vfNovaFoto(chave, url, gpsPromessa){
+    var ed = vf; if(!ed) return;
+    var fid = uid('vff');
+    ed.fotos[fid] = url; ed.pend[fid] = true;
+    ed.dados.fotos[fid] = { item: chave, em: vfAgora(), por: nomeLogado() };
+    if(vf === ed){ vfRedesenharItem(chave); vfMudou(); }
+    if(gpsPromessa) gpsPromessa.then(function(g){
+      if(!g || !ed.dados.fotos[fid]) return;
+      ed.dados.fotos[fid].gps = g; ed.dados.fotos[fid].em = vfAgora();
+      if(vf === ed){ vfRedesenharItem(chave); vfMudou(); }
+    });
+  }
+  document.addEventListener('paste', function(e){
+    if(!vf || !vf.dados || topicoProjetosAtivo !== 'relatorios' || levSubAtivo !== 'verificacoes') return;
+    var ov = document.getElementById('diaModalOverlay'); if(ov && ov.style.display === 'flex') return;
+    var alvo = vf.alvoCola; if(!alvo) return;
+    var items = (e.clipboardData || {}).items; if(!items) return;
+    for(var i = 0; i < items.length; i++){
+      if(items[i].type && items[i].type.indexOf('image') === 0){
+        var blob = items[i].getAsFile(); if(!blob) break;
+        e.preventDefault();
+        if(alvo.planta) redimensionarImagem(blob, 1800, 0.8, function(url){ vfDefinirImagemPlanta(alvo.planta, url); });
+        else redimensionarImagem(blob, 1280, 0.72, function(url){ vfNovaFoto(alvo.item, url, null); });
+        break;
+      }
+    }
+  });
+
+  // ---------- plantas com siglas ----------
+  function vfPlantasOrdenadas(){ var p = vf.dados.plantas; return Object.keys(p).map(function(k){ return p[k]; }).sort(function(a,b){ return (a.ordem||0) - (b.ordem||0); }); }
+  function vfCorPin(pin){ var def = pin.item ? vfDef(pin.item) : null; return def ? def.cor : '#475569'; }
+  function vfRotuloPin(pin){ var def = pin.item ? vfDef(pin.item) : null; return def ? def.legenda || def.nome : (pin.txt || 'Ponto'); }
+  function vfLegendaHtml(p, pdf){
+    var vistos = {}, l = [];
+    Object.keys(p.pins || {}).forEach(function(k){ var pin = p.pins[k], ch = (pin.sigla||'') + '|' + vfRotuloPin(pin); if(vistos[ch]) return; vistos[ch] = 1; l.push(pin); });
+    l.sort(function(a,b){ return String(a.sigla).localeCompare(String(b.sigla)); });
+    if(!l.length) return '';
+    if(pdf) return '<div class="eq-legenda vf-leg-pdf">' + l.map(function(pin){ return '<span><i class="eq-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(pin.sigla||'')+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
+    return '<div class="vf-legenda">' + l.map(function(pin){ return '<span><i class="vf-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(pin.sigla||'')+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
+  }
+  function vfPinsHtml(p, pdf){
+    return Object.keys(p.pins || {}).map(function(k){ var pin = p.pins[k];
+      return '<span class="'+(pdf ? 'eq-pin' : 'vf-pin')+'" data-pin="'+k+'" style="left:'+pin.x+'%; top:'+pin.y+'%; background:'+vfCorPin(pin)+';" title="'+escapeHtml(vfRotuloPin(pin))+'">'+escapeHtml(pin.sigla||'•')+'</span>'; }).join('');
+  }
+  function vfDesenharPlantas(){
+    var box = document.getElementById('vfPlantas'); if(!box) return;
+    var lista = vfPlantasOrdenadas(), maps = vfLinkMaps();
+    box.innerHTML = '<div class="vf-plantas-cab"><b style="font-size:15px;">🗺️ Plantas e marcações</b>'+
+        '<div style="display:flex; gap:6px; flex-wrap:wrap;">'+
+          '<button type="button" class="btn small secondary" data-nova-planta="situacao">+ Planta de situação</button>'+
+          '<button type="button" class="btn small secondary" data-nova-planta="pavimento">+ Planta de pavimento</button>'+
+          (maps ? '<a class="btn small secondary" href="'+maps+'" target="_blank" rel="noopener">🗺️ Abrir no Google Maps</a>' : '')+
+        '</div></div>'+
+      '<div class="vf-dica">Marque nas plantas onde ficam o transformador, o padrão, o hidrômetro, a cisterna, a rede de esgoto… Use o botão “📍 Planta” de cada item, ou toque direto na planta. Sem planta? Abra o endereço no Google Maps (vista satélite), tire um print e cole aqui.</div>'+
+      (lista.length ? lista.map(function(p){ return '<div class="vf-planta" data-planta="'+p.id+'"></div>'; }).join('') : '<div class="vf-planta-vazia" style="margin-top:10px;">Nenhuma planta ainda.</div>');
+    box.querySelectorAll('[data-nova-planta]').forEach(function(b){ b.onclick = function(){ vfNovaPlanta(b.getAttribute('data-nova-planta')); }; });
+    lista.forEach(function(p){ vfRedesenharPlanta(p.id); });
+    vfAtualizarResumoUI();
+  }
+  function vfNovaPlanta(tipo){
+    var n = vfPlantasOrdenadas().filter(function(p){ return p.tipo === tipo; }).length;
+    var id = uid('vfp');
+    vf.dados.plantas[id] = { id:id, tipo:tipo, nome: tipo === 'situacao' ? 'Situação' + (n ? ' ' + (n+1) : '') : 'Pavimento ' + (n+1), img:'', ordem: Date.now(), pins:{}, em: vfAgora(), por: nomeLogado() };
+    vfMudou(); vfDesenharPlantas();
+    vf.alvoCola = { planta: id };
+    var el = document.querySelector('.vf-planta[data-planta="'+id+'"]'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  function vfDefinirImagemPlanta(id, url){
+    var p = vf && vf.dados.plantas[id]; if(!p) return;
+    if(p.img){ if(vf.pend[p.img]) delete vf.pend[p.img]; else vf.apagar[p.img] = true; delete vf.fotos[p.img]; }
+    var fid = uid('vfi'); vf.fotos[fid] = url; vf.pend[fid] = true;
+    p.img = fid; p.em = vfAgora(); p.por = nomeLogado();
+    vfMudou(); vfRedesenharPlanta(id);
+  }
+  function vfRedesenharPlanta(id){
+    var el = document.querySelector('.vf-planta[data-planta="'+id+'"]'); var p = vf.dados.plantas[id];
+    if(!el || !p) return;
+    var z = vf.zoom[id] || 1, src = p.img ? vf.fotos[p.img] : '';
+    var maps = vfLinkMaps();
+    var imgHtml;
+    if(!p.img){
+      imgHtml = '<div class="vf-planta-vazia">Cole aqui o print da planta (Ctrl+V) ou <button type="button" class="vf-mini" data-pl="anexar">📎 anexar imagem</button>'+
+        (p.tipo === 'situacao' && maps ? '<div style="margin-top:8px;">Sem planta de situação? <a href="'+maps+'" target="_blank" rel="noopener">Abra o endereço no Google Maps</a>, use a vista de satélite, tire um print e cole aqui.</div>' : '')+'</div>';
+    } else if(!src){
+      imgHtml = '<div class="vf-planta-vazia">Carregando a imagem…</div>';
+    } else {
+      imgHtml = '<div class="planta-scroll"><div class="vf-planta-wrap" style="width:'+(z*100)+'%;"><img src="'+src+'" alt="">'+vfPinsHtml(p)+'</div></div>'+
+        '<div class="planta-zoom-controles"><button type="button" class="btn small secondary" data-pl="zmenos">− Zoom</button><span class="hint">'+Math.round(z*100)+'%</span><button type="button" class="btn small secondary" data-pl="zmais">+ Zoom</button>'+
+        '<span class="hint">toque na planta para marcar · toque numa sigla para remover</span><button type="button" class="vf-mini" data-pl="anexar" style="margin-left:auto;">trocar imagem</button></div>';
+    }
+    el.classList.toggle('marcando', !!(vf.pinItem && p.img && src));
+    el.innerHTML = '<div class="vf-planta-cab"><input type="text" class="vf-planta-nome" value="'+escapeHtml(p.nome||'')+'" placeholder="Nome (ex.: Térreo)"><span class="cli-tag">'+(p.tipo === 'situacao' ? 'situação' : 'pavimento')+'</span><button type="button" class="lnk" data-pl="remover">remover</button></div>'+
+      imgHtml + vfLegendaHtml(p);
+    el.onpointerdown = function(){ vf.alvoCola = { planta: id }; };
+    el.querySelector('.vf-planta-nome').addEventListener('input', function(e){ p.nome = e.target.value; p.em = vfAgora(); vfMudou(); });
+    el.querySelectorAll('[data-pl="anexar"]').forEach(function(b){ b.onclick = function(){ vf.alvoPlanta = id; document.getElementById('vfPlantaInput').click(); }; });
+    var bz1 = el.querySelector('[data-pl="zmenos"]'), bz2 = el.querySelector('[data-pl="zmais"]');
+    if(bz1) bz1.onclick = function(){ vf.zoom[id] = Math.max(1, z - 0.5); vfRedesenharPlanta(id); };
+    if(bz2) bz2.onclick = function(){ vf.zoom[id] = Math.min(4, z + 0.5); vfRedesenharPlanta(id); };
+    el.querySelector('[data-pl="remover"]').onclick = async function(){
+      var n = Object.keys(p.pins || {}).length;
+      if(!(await caixaConfirmar('Remover a planta “'+(p.nome||'sem nome')+'”'+(n ? ' e as '+n+' marcações dela' : '')+'?', { perigo:true, ok:'Remover' }))) return;
+      if(p.img){ if(vf.pend[p.img]) delete vf.pend[p.img]; else vf.apagar[p.img] = true; delete vf.fotos[p.img]; }
+      delete vf.dados.plantas[id]; vf.dados.removidos[id] = vfAgora();
+      vfMudou(); vfDesenharPlantas(); vfAtualizarBotoesPin();
+    };
+    var wrap = el.querySelector('.vf-planta-wrap');
+    if(wrap){
+      wrap.addEventListener('click', function(e){
+        var pinEl = e.target.closest('.vf-pin');
+        if(pinEl){ e.stopPropagation(); vfPerguntarRemoverPin(id, pinEl.getAttribute('data-pin')); return; }
+        var r = wrap.getBoundingClientRect();
+        var x = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100)), y = Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100));
+        x = Math.round(x * 100) / 100; y = Math.round(y * 100) / 100;
+        if(vf.pinItem){ var def = vfDef(vf.pinItem); vfCriarPin(id, x, y, def.chave, def.sigla, ''); vfCancelarPin(); return; }
+        vfPopupPin(id, x, y);
+      });
+    }
+  }
+  function vfCriarPin(plantaId, x, y, item, sigla, txt){
+    var p = vf.dados.plantas[plantaId]; if(!p) return;
+    var k = uid('vpin'); (p.pins = p.pins || {})[k] = { id:k, x:x, y:y, item:item || '', sigla:sigla || '', txt:txt || '', em:vfAgora(), por:nomeLogado() };
+    vfMudou(); vfRedesenharPlanta(plantaId); vfAtualizarBotoesPin();
+  }
+  function vfAtualizarBotoesPin(){ document.querySelectorAll('.vf-item').forEach(function(el){ var ch = el.getAttribute('data-item'), b = el.querySelector('[data-acao="pin"]'); if(!b) return;
+    var n = 0; Object.keys(vf.dados.plantas).forEach(function(k){ var p = vf.dados.plantas[k]; Object.keys(p.pins||{}).forEach(function(q){ if(p.pins[q].item === ch) n++; }); });
+    b.textContent = '📍 Planta' + (n ? ' · ' + n : ''); }); }
+  async function vfPerguntarRemoverPin(plantaId, k){
+    var p = vf.dados.plantas[plantaId], pin = p && p.pins[k]; if(!pin) return;
+    if(!(await caixaConfirmar('Remover a marcação '+(pin.sigla ? pin.sigla+' — ' : '')+vfRotuloPin(pin)+'?', { ok:'Remover', perigo:true }))) return;
+    delete p.pins[k]; vf.dados.removidos[k] = vfAgora(); p.em = vfAgora();
+    vfMudou(); vfRedesenharPlanta(plantaId); vfAtualizarBotoesPin();
+  }
+  function vfPopupPin(plantaId, x, y){
+    document.querySelectorAll('.vf-pop').forEach(function(el){ el.remove(); });
+    var c = vfCtx(vf.dados), ops = [];
+    VF_SECOES.forEach(function(s){ if(!vfVisivel(s, c)) return; s.itens.forEach(function(def){ if(def.sigla && vfVisivel(def, c)) ops.push(def); }); });
+    var pop = document.createElement('div'); pop.className = 'vf-pop';
+    pop.innerHTML = '<b style="font-size:13px;">O que fica aqui?</b>'+
+      '<select id="vfPopSel"><option value="">— escolha —</option>'+ops.map(function(def){ return '<option value="'+def.chave+'">'+escapeHtml(def.sigla+' — '+(def.legenda||def.nome))+'</option>'; }).join('')+'<option value="__outro">Outro ponto…</option></select>'+
+      '<div id="vfPopOutro" hidden style="display:flex; gap:6px;"><input type="text" id="vfPopSigla" maxlength="3" placeholder="Sigla" style="width:64px;"><input type="text" id="vfPopTxt" placeholder="O que é (ex.: registro geral)" style="flex:1;"></div>'+
+      '<div style="display:flex; gap:6px;"><button type="button" class="btn small" id="vfPopOk" style="flex:1;">Marcar</button><button type="button" class="btn small secondary" id="vfPopNao">Cancelar</button></div>';
+    document.body.appendChild(pop);
+    var sel = pop.querySelector('#vfPopSel'), outro = pop.querySelector('#vfPopOutro');
+    sel.onchange = function(){ outro.hidden = sel.value !== '__outro'; outro.style.display = outro.hidden ? 'none' : 'flex'; };
+    outro.style.display = 'none';
+    try{ sel.focus({preventScroll:true}); }catch(e){}
+    pop.querySelector('#vfPopNao').onclick = function(){ pop.remove(); };
+    pop.querySelector('#vfPopOk').onclick = function(){
+      if(!sel.value) return;
+      if(sel.value === '__outro'){ var sg = pop.querySelector('#vfPopSigla').value.trim().toUpperCase(), tx = pop.querySelector('#vfPopTxt').value.trim(); if(!sg && !tx) return; vfCriarPin(plantaId, x, y, '', sg || '•', tx); }
+      else { var def = vfDef(sel.value); vfCriarPin(plantaId, x, y, def.chave, def.sigla, ''); }
+      pop.remove();
+    };
+  }
+  function vfIniciarPin(chave){
+    var def = vfDef(chave);
+    var plantas = vfPlantasOrdenadas().filter(function(p){ return p.img; });
+    if(!plantas.length){
+      caixaAviso('Adicione primeiro uma planta (de situação ou do pavimento) em “Plantas e marcações”, no fim da página. Sem planta, abra o endereço no Google Maps, tire um print e cole lá.');
+      var b = document.getElementById('vfPlantas'); if(b) b.scrollIntoView({behavior:'smooth', block:'start'});
+      return;
+    }
+    vfCancelarPin();
+    vf.pinItem = chave;
+    var ban = document.createElement('div'); ban.className = 'vf-banner-pin'; ban.id = 'vfBannerPin';
+    ban.innerHTML = '<span>Toque na planta onde fica: <b>'+escapeHtml(def.sigla+' — '+(def.legenda||def.nome))+'</b></span><button type="button" class="btn small secondary" id="vfPinCancelar">Cancelar</button>';
+    document.body.appendChild(ban);
+    document.getElementById('vfPinCancelar').onclick = vfCancelarPin;
+    plantas.forEach(function(p){ var el = document.querySelector('.vf-planta[data-planta="'+p.id+'"]'); if(el) el.classList.add('marcando'); });
+    var alvo = document.querySelector('.vf-planta[data-planta="'+plantas[0].id+'"]'); if(alvo) alvo.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  function vfCancelarPin(){
+    if(vf) vf.pinItem = null;
+    var b = document.getElementById('vfBannerPin'); if(b) b.remove();
+    document.querySelectorAll('.vf-planta.marcando').forEach(function(el){ el.classList.remove('marcando'); });
+  }
+
+  // ---------- pendências (texto para WhatsApp) ----------
+  function vfListaPendencias(ed){
+    ed = ed || vf;
+    var d = ed.dados, c = vfCtx(d), grupos = [];
+    VF_SECOES.forEach(function(s){
+      if(!vfVisivel(s, c)) return;
+      var linhas = [], nunca = [];
+      s.itens.forEach(function(def){
+        if(!vfVisivel(def, c)) return;
+        var it = d.itens[def.chave], st = vfStatus(def, it, c, d);
+        if(st === 'ok' || st === 'na') return;
+        if(st === ''){ nunca.push(def.nome); return; }
+        var falta = vfFaltando(def, it, c), obs = it && vfCheio(it.obs) ? String(it.obs).trim().replace(/\s+/g, ' ') : '';
+        var t = def.nome;
+        if(falta.length) t += ' — falta: ' + falta.map(function(f){ return f.r.charAt(0).toLowerCase() + f.r.slice(1); }).join(', ');
+        if(obs) t += ' (' + obs + ')';
+        linhas.push(t);
+      });
+      if(nunca.length) linhas.push((linhas.length ? 'Ainda não verificado: ' : 'Não verificado: ') + nunca.join(', '));
+      if(linhas.length) grupos.push({ sec:s, linhas:linhas });
+    });
+    return grupos;
+  }
+  function vfTextoPendencias(ed){
+    ed = ed || vf;
+    var rs = vfResumo(ed.dados), l = [];
+    l.push('*Levantamento inicial — ' + (ed.pj.nome || '') + '*');
+    var end = vfEndereco(ed); if(end) l.push(end);
+    l.push(rs.feitos + ' de ' + rs.total + ' itens verificados');
+    l.push('');
+    var g = vfListaPendencias(ed);
+    g.forEach(function(x){ l.push(x.sec.icone + ' *' + x.sec.nome + '*'); x.linhas.forEach(function(t){ l.push('• ' + t); }); l.push(''); });
+    if(!g.length) l.push('✅ Nada pendente — tudo verificado.');
+    return l.join('\n').trim();
+  }
+  function vfMostrarPendencias(){
+    var txt = vfTextoPendencias();
+    var overlay = document.getElementById('diaModalOverlay'), box = document.getElementById('diaModalBox');
+    box.classList.remove('dia-modal-grande');
+    box.innerHTML = '<div class="hist-cab"><h3>📲 Pendências</h3><button type="button" class="btn small secondary" id="btnFecharDiaModal">Fechar</button></div>'+
+      '<div class="hint" style="margin-bottom:6px;">Texto pronto para mandar ao cliente, ao arquiteto ou a quem vai voltar na obra.</div>'+
+      '<textarea id="vfPendTxt" rows="14" style="width:100%; box-sizing:border-box; font:inherit; font-size:13px; padding:9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--paper); color:var(--ink);">'+escapeHtml(txt)+'</textarea>'+
+      '<div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;"><button type="button" class="btn small" id="vfPendZap">Abrir no WhatsApp</button><button type="button" class="btn small secondary" id="vfPendCopiar">📋 Copiar</button><span class="hint" id="vfPendOk"></span></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
+    document.getElementById('vfPendZap').onclick = function(){ window.open('https://wa.me/?text=' + encodeURIComponent(document.getElementById('vfPendTxt').value), '_blank', 'noopener'); };
+    document.getElementById('vfPendCopiar').onclick = function(){
+      var ta = document.getElementById('vfPendTxt'), v = ta.value, ok = function(){ document.getElementById('vfPendOk').textContent = '✓ copiado'; };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, function(){ ta.select(); try{ document.execCommand('copy'); ok(); }catch(e){} });
+      else { ta.select(); try{ document.execCommand('copy'); ok(); }catch(e){} }
+    };
+  }
+
+  // ---------- PDF (padrão Equiper) ----------
+  function vfMostrarPdf(){
+    var d = vf.dados, c = vfCtx(d), rs = vfResumo(d);
+    function cel(rot, val, dest){ return '<div class="cel'+(dest?' destaque':'')+'"><span class="rot">'+rot+'</span><span class="val">'+escapeHtml(val||'—')+'</span></div>'; }
+    function quando(iso){ if(!iso) return ''; var dt = new Date(iso); return isNaN(dt) ? '' : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+    var tipo = c.tipo ? (c.tipo === 'Outro' && vfCheio(c.v('geral.ident','tipoQual')) ? c.v('geral.ident','tipoQual') : c.tipo) : '';
+    var corpo = VF_SECOES.filter(function(s){ return vfVisivel(s, c); }).map(function(s){
+      var defs = s.itens.filter(function(def){ return vfVisivel(def, c); });
+      var linhas = defs.map(function(def){
+        var it = d.itens[def.chave], st = vfStatus(def, it, c, d), tx = vfTextoValores(def, it, c);
+        var obs = it && vfCheio(it.obs) ? '<div class="vf-pdf-obs">Obs.: '+escapeHtml(String(it.obs).trim())+'</div>' : '';
+        return '<div class="eq-campo item"><span class="rot"><b style="color:#111;">'+escapeHtml(def.nome)+'</b>'+(def.sigla ? '<i class="eq-sigla" style="background:'+def.cor+'">'+escapeHtml(def.sigla)+'</i>' : '')+'</span>'+
+          '<span class="txt">'+(tx ? escapeHtml(tx) : '<span style="color:#9a9a9a;">—</span>')+obs+'</span><span class="eq-st '+(st||'vazio')+'">'+(VF_ST_TXT[st||''])+'</span></div>';
+      }).join('');
+      var fotos = [];
+      defs.forEach(function(def){ vfFotosDoItem(d, def.chave).forEach(function(fid){ if(vf.fotos[fid]) fotos.push({ fid:fid, def:def }); }); });
+      var fotosHtml = fotos.length ? '<div class="eq-fotos">'+fotos.map(function(f){ var m = d.fotos[f.fid] || {};
+        return '<figure class="eq-foto"><div class="quadro"><img src="'+vf.fotos[f.fid]+'"></div><figcaption>'+escapeHtml(f.def.nome)+(m.em ? ' · '+escapeHtml(quando(m.em)) : '')+(m.gps ? ' · GPS '+m.gps.la+', '+m.gps.lo+(m.gps.pr ? ' (±'+m.gps.pr+' m)' : '') : '')+'</figcaption></figure>'; }).join('')+'</div>' : '';
+      return '<div class="eq-secao"><h2>'+escapeHtml(s.nome)+'</h2>'+linhas+fotosHtml+'</div>';
+    }).join('');
+    var plantas = vfPlantasOrdenadas().filter(function(p){ return p.img && vf.fotos[p.img]; }).map(function(p){
+      return '<div class="eq-secao"><h2>Planta — '+escapeHtml(p.nome || (p.tipo === 'situacao' ? 'Situação' : 'Pavimento'))+'</h2><div style="break-inside:avoid; page-break-inside:avoid;"><div class="eq-planta"><img src="'+vf.fotos[p.img]+'">'+vfPinsHtml(p, true)+'</div>'+vfLegendaHtml(p, true)+'</div></div>';
+    }).join('');
+    var gp = vfListaPendencias();
+    var pendHtml = gp.length ? '<div class="eq-secao"><h2>Pendências</h2>'+gp.map(function(x){
+      return '<div class="eq-sub">'+escapeHtml(x.sec.nome)+'</div>'+x.linhas.map(function(t){ return '<div class="eq-campo item"><span class="eq-marca"></span><span class="txt">'+escapeHtml(t)+'</span></div>'; }).join('');
+    }).join('')+'</div>' : '';
+    var html = '<div class="eq-doc">'+
+      '<div class="eq-cabecalho"><img src="'+LOGO_EQUIPER_PDF+'" alt="Equiper"><div class="titulos"><h1>Verificações</h1><p>Levantamento inicial da obra</p><p>Emissão: '+new Date().toLocaleDateString('pt-BR')+'</p></div></div>'+
+      '<div class="eq-dados">'+cel('Cliente', vf.pj.nome, true)+cel('Endereço', vfEndereco())+cel('Tipo de imóvel', tipo)+'</div>'+
+      '<div class="eq-dados eq-quatro">'+cel('Verificados', rs.feitos+' de '+rs.total)+cel('Pendentes', String(rs.pend + rs.vazio))+cel('Atualizado em', quando(d.atualizadoEm) || quando(vfAgora()))+cel('Responsável', nomeCanon(d.atualizadoPor || nomeLogado()))+'</div>'+
+      corpo + plantas + pendHtml +
+      '<div class="eq-rodape"><b>EQUIPER</b>Projetos de Instalações Prediais · projetos@equiper.com.br</div>'+
+    '</div>';
+    var faltamFotos = Object.keys(d.fotos).filter(function(f){ return !vf.fotos[f]; }).length;
+    var overlay = document.getElementById('diaModalOverlay'), box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
+    box.innerHTML = '<div class="sem-impressao" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; gap:8px; flex-wrap:wrap;">'+
+        '<span class="hint">'+(faltamFotos ? '⏳ '+faltamFotos+' foto(s) ainda carregando — feche e abra de novo em instantes para incluí-las. ' : '')+'Toque em “🖨️ Imprimir / PDF” — no celular abre a opção de salvar/compartilhar como PDF.</span>'+
+        '<div style="display:flex; gap:6px;"><button class="btn small" id="btnImprimirVF">🖨️ Imprimir / PDF</button><button class="btn small secondary" id="btnFecharPdfVF">Fechar</button></div>'+
+      '</div>' + html;
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharPdfVF').onclick = fecharDiaModal;
+    document.getElementById('btnImprimirVF').onclick = function(){ imprimirComNomeArquivo('Verificações_' + (vf ? vf.pj.nome : '')); };
+  }
+
+  async function vfExcluir(){
+    if(!vf || modoDesenhista) return;
+    var nome = vf.pj.nome;
+    if(!(await caixaConfirmar('Excluir a verificação de ' + nome + '? Todos os itens, fotos e plantas serão apagados.', { perigo:true, ok:'Excluir' }))) return;
+    if(!(await caixaConfirmar('Tem certeza? Não dá para desfazer.', { titulo:'Confirmar exclusão', perigo:true, ok:'Excluir de vez' }))) return;
+    var pid = vf.pid;
+    try{
+      await vfComTempo(vfRef(pid).remove(), 30000);
+      await vfComTempo(_fbDb.ref('storage/clm-verificacoes-indice').transaction(function(atual){ var m = {}; try{ m = atual ? JSON.parse(atual) : {}; }catch(e){} delete m[pid]; return JSON.stringify(m); }), 20000);
+    }catch(e){ mostrarErroSalvamento('excluir a verificação', null); return; }
+    delete verifIndice[pid];
+    clearTimeout(vfTimerSalvar); clearTimeout(vfTimerRasc);
+    rascunhoApagar('vf-' + pid); vfMarcarPendenteLocal(pid, false);
+    vfCancelarPin(); vf = null; renderVerificacoes();
+  }
+
+  // ---------- sub-abas de Levantamentos iniciais ----------
+  var LEV_SUBS = [
+    { id:'verificacoes', label:'Verificações', icone:'☑️', pode:function(){ return podeUsarRelatorios(); }, dica:'O que existe no local — uma por obra, completada nas visitas.' },
+    { id:'visitas', label:'Relatórios de visita', icone:'📝', pode:function(){ return podeUsarRelatorios(); }, dica:'O registro de cada visita, com fotos e planta.' },
+    { id:'consideracoes', label:'Considerações iniciais', icone:'📋', pode:function(){ return podeUsarConsideracoes(); }, dica:'O que o cliente deseja para o projeto.' }
+  ];
+  var levSubAtivo = (function(){ try{ return localStorage.getItem('equiper-lev-sub') || 'verificacoes'; }catch(e){ return 'verificacoes'; } })();
+  function levSubsVisiveis(){ return LEV_SUBS.filter(function(s){ return s.pode(); }); }
+  function levGarantirSub(){ var v = levSubsVisiveis(); if(v.length && !v.some(function(s){ return s.id === levSubAtivo; })) levSubAtivo = v[0].id; }
+  function levDadosDoSub(sub){ return sub === 'visitas' ? 'relatorios' : sub; }
+  function renderLevAbas(){
+    var el = document.getElementById('levAbas'); if(!el) return;
+    levGarantirSub();
+    var v = levSubsVisiveis(), atual = LEV_SUBS.find(function(s){ return s.id === levSubAtivo; });
+    el.innerHTML = '<div class="lev-abas">'+v.map(function(s){ return '<button type="button" class="lev-aba'+(s.id === levSubAtivo ? ' on' : '')+'" data-lev="'+s.id+'">'+s.icone+' '+escapeHtml(s.label)+'</button>'; }).join('')+'</div>'+
+      (atual ? '<div class="lev-dica">'+escapeHtml(atual.dica)+'</div>' : '');
+    el.querySelectorAll('[data-lev]').forEach(function(b){ b.onclick = function(){ ativarTopicoProjetos(b.getAttribute('data-lev')); }; });
+  }
+  function podeCarregarTopico(id){
+    if(id === 'relatorios' || id === 'verificacoes') return podeUsarRelatorios();
+    if(id === 'consideracoes') return podeUsarConsideracoes();
+    var t = TOPICOS_PROJETOS.find(function(x){ return x.id === id; });
+    return !!(t && podeVerTopicoProjetos(t));
+  }
+  // ---------- etapa 4: dados do levantamento para o Dimensionamento ----------
+  // Acha a obra do cliente que tem verificação (a mais recente) e manda os valores (sem fotos) para a moldura do dimensionamento.
+  async function vfLevantamentoParaCliente(clienteNome){
+    try{
+      var chave = chaveNomeCliente(clienteNome); if(!chave) return null;
+      var pjs = state.projetos.filter(function(p){ return chaveNomeCliente(p.cliente || p.nome) === chave; });
+      if(!pjs.length) return null;
+      if(!verifIndiceCarregado){ try{ await vfComTempo(vfCarregarIndice(), 8000); }catch(e){} }
+      var com = pjs.filter(function(p){ return verifIndice[p.id]; }).sort(function(a,b){ return String(verifIndice[b.id].atualizadoEm||'').localeCompare(String(verifIndice[a.id].atualizadoEm||'')); });
+      if(!com.length) return null;
+      var pid = com[0].id, d;
+      if(vf && vf.pid === pid && vf.dados) d = vf.dados;
+      else { var snap = await vfComTempo(vfRef(pid, 'dados').once('value'), 10000); if(!snap.exists()) return null; d = JSON.parse(snap.val()); }
+      var c = vfCtx(d), itens = {}, resumo = [];
+      Object.keys(d.itens || {}).forEach(function(k){ var it = d.itens[k]; if(it && it.v) itens[k] = { v: it.v, obs: it.obs || '' }; });
+      VF_SECOES.forEach(function(sec){
+        if(!vfVisivel(sec, c)) return;
+        var l = sec.itens.filter(function(def){ return vfVisivel(def, c); }).map(function(def){
+          var it = d.itens[def.chave], st = vfStatus(def, it, c, d);
+          return { nome: def.nome, txt: vfTextoValores(def, it, c), obs: it && it.obs ? String(it.obs) : '', st: st };
+        });
+        resumo.push({ sec: sec.nome, itens: l });
+      });
+      return { pid: pid, obra: com[0].nome, atualizadoEm: d.atualizadoEm || '', por: d.atualizadoPor || '', itens: itens, resumo: resumo };
+    }catch(e){ return null; }
+  }
+  function topicosProjetosMenu(){ return TOPICOS_PROJETOS.filter(function(t){ return !t.oculto && podeVerTopicoProjetos(t); }); }
+
   var TOPICOS_PROJETOS = [
     { id:'hoje', label:'Hoje', icone:'☀️' },
     { id:'quadro', label:'Quadro de tarefas', icone:'🗂️' },
     { id:'status', label:'Clientes', icone:'👥' },
     { id:'calendario', label:'Calendário', icone:'📅' },
-    { id:'consideracoes', label:'Considerações iniciais', icone:'📋', permissao:'consideracaoInicial', grupo:'Registros' },
-    { id:'relatorios', label:'Relatórios de visita', icone:'📝', permissao:'relatorioVisita', grupo:'Registros' },
+    { id:'relatorios', label:'Levantamentos iniciais', icone:'🔎', permissoes:['relatorioVisita','consideracaoInicial'], grupo:'Registros' },   // sub-abas: Verificações · Relatórios de visita · Considerações iniciais
+    { id:'consideracoes', label:'Considerações iniciais', icone:'📋', permissao:'consideracaoInicial', grupo:'Registros', oculto:true },          // fica dentro de Levantamentos iniciais
     { id:'art', label:'ART', icone:'📐', permissao:'art', grupo:'Registros' },
     { id:'dimensionamentos', label:'Dimensionamentos', icone:'🧮', grupo:'Registros' },
     { id:'comissao', label:'Comissão', icone:'💰', permissao:'verComissao', grupo:'Equipe' },
@@ -6058,13 +7312,17 @@
   function podeVerTopicoProjetos(t){
     if(t.gerente) return !modoDesenhista;
     if(t.permissao) return !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{})[t.permissao];
+    if(t.permissoes){ var pp = (state.permissoesProjetista||{})[nomeProjetistaAtual]||{}; return !modoDesenhista || t.permissoes.some(function(k){ return !!pp[k]; }); }
     return true;
   }
 
   function aplicarTopicoProjetos(){
+    if(topicoProjetosAtivo === 'relatorios') renderLevAbas();
     document.querySelectorAll('#projetosConteudo [data-topico]').forEach(function(el){
-      el.style.display = (el.getAttribute('data-topico') === topicoProjetosAtivo) ? '' : 'none';
+      var sub = el.getAttribute('data-sub');
+      el.style.display = (el.getAttribute('data-topico') === topicoProjetosAtivo && (!sub || sub === levSubAtivo)) ? '' : 'none';
     });
+    if(!(topicoProjetosAtivo === 'relatorios' && levSubAtivo === 'verificacoes')){ try{ vfCancelarPin(); document.querySelectorAll('.vf-pop').forEach(function(el){ el.remove(); }); }catch(e){} }
     document.body.classList.toggle('dim-aberto', topicoProjetosAtivo === 'dimensionamentos' && !!dimensionamentoClienteAberto);
     var tAtual = TOPICOS_PROJETOS.find(function(t){ return t.id === topicoProjetosAtivo; });
     var tit = document.getElementById('tituloPagina');
@@ -6111,6 +7369,11 @@
       await garantirClientes();
       renderDimensionamentosLista();
     }
+    if(id === 'verificacoes'){
+      if(!verifIndiceCarregado) await vfCarregarIndice();
+      if(topicoProjetosAtivo === 'relatorios' && levSubAtivo === 'verificacoes' && !vf) renderVerificacoes();
+      vfEnviarPendentesGuardados();
+    }
     if(id === 'chat'){ chatAoAbrirTopico(); }
     if(id === 'status'){ try{ renderClientesPagina(); }catch(e){} }
     if(id === 'hoje'){ try{ renderHoje(); }catch(e){} }
@@ -6120,17 +7383,20 @@
   }
 
   function ativarTopicoProjetos(id){
+    // Considerações, Verificações e Relatórios de visita ficam dentro de "Levantamentos iniciais" (tópico 'relatorios')
+    if(id === 'consideracoes' || id === 'verificacoes' || id === 'visitas'){ levSubAtivo = id; id = 'relatorios'; try{ localStorage.setItem('equiper-lev-sub', levSubAtivo); }catch(e){} }
     topicoProjetosAtivo = id;
+    if(id === 'relatorios') levGarantirSub();
     var wrap = document.getElementById('topicoNavWrapProjetos');
     if(wrap) wrap.classList.add('mostrando-conteudo');
     renderNavProjetos();
-    garantirDadosDoTopico(id);
+    garantirDadosDoTopico(id === 'relatorios' ? levDadosDoSub(levSubAtivo) : id);
   }
 
   function renderNavProjetos(){
     var nav = document.getElementById('topicoNavProjetos');
     if(!nav) return;
-    var visiveis = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos);
+    var visiveis = topicosProjetosMenu();
     if(!visiveis.some(function(t){ return t.id === topicoProjetosAtivo; })){
       topicoProjetosAtivo = visiveis[0] ? visiveis[0].id : 'quadro';
     }
@@ -9307,7 +10573,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
 
     var topicos, ativo;
     if(ehFinanceiro){ topicos = TOPICOS_FINANCEIRO; ativo = topicoFinanceiroAtivo; }
-    else { topicos = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos); ativo = topicoProjetosAtivo; }
+    else { topicos = topicosProjetosMenu(); ativo = topicoProjetosAtivo; }
 
     var grupoAnt = '';
     var htmlTopicos = topicos.map(function(t){
@@ -9361,14 +10627,14 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       topicos = TOPICOS_FINANCEIRO;
       ativo = topicoFinanceiroAtivo;
     } else {
-      topicos = TOPICOS_PROJETOS.filter(podeVerTopicoProjetos);
+      topicos = topicosProjetosMenu();
       ativo = topicoProjetosAtivo;
     }
     var preferidos = ehFinanceiro ? ['clientes','art','resumo','chat'] : (modoDesenhista ? ['quadro','calendario','dimensionamentos','chat'] : ['hoje','quadro','status','chat']);
     var principais = preferidos.map(function(id){ return topicos.find(function(t){ return t.id === id; }); }).filter(Boolean);
     topicos.forEach(function(t){ if(principais.length < 4 && principais.indexOf(t) === -1) principais.push(t); });
     var resto = topicos.filter(function(t){ return principais.indexOf(t) === -1; });
-    var CURTOS = { hoje:'Hoje', quadro:'Tarefas', calendario:'Agenda', status:'Clientes', dimensionamentos:'Cálculos', chat:'Chat', clientes:'Clientes', art:'ART', resumo:'Resumo', relatorios:'Visitas', consideracoes:'Consider.', comissao:'Comissão', config:'Config.' };
+    var CURTOS = { hoje:'Hoje', quadro:'Tarefas', calendario:'Agenda', status:'Clientes', dimensionamentos:'Cálculos', chat:'Chat', clientes:'Clientes', art:'ART', resumo:'Resumo', relatorios:'Levant.', consideracoes:'Consider.', comissao:'Comissão', config:'Config.' };
     var htmlPrincipais = principais.map(function(t){
       return '<div class="barra-item'+(t.id===ativo?' active':'')+'" data-barra-topico="'+t.id+'"><span class="barra-icone">'+t.icone+'</span><span class="barra-label">'+escapeHtml(CURTOS[t.id] || t.label)+chatBadgeHtml(t.id)+'</span></div>';
     }).join('');
