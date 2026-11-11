@@ -1308,7 +1308,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="chave"><input type="checkbox" id="rs-cist"> Cisterna</label>
       </div>
       <p class="fonte" style="margin-top:8px">Com caixa superior e cisterna, a caixa fica com 2/5 e a cisterna com 3/5 do volume total.</p>
-      <datalist id="rs-por-dl"><option value="pessoa"><option value="aluno"><option value="funcionário"><option value="hóspede"><option value="leito"><option value="lugar"><option value="refeição"><option value="banhista"><option value="vaga"><option value="m² de área"><option value="kg de roupa"></datalist>
+      <datalist id="rs-por-dl"></datalist>
     </section>
     <section class="bloco-dados" id="rs-soma-bloco">
       <h2>Reservatório único do terreno</h2>
@@ -6748,7 +6748,7 @@ const RES_CONS_CHAVE = "eqp-res-consumos";
 function resConsumosSalvos(){ try{ const l = JSON.parse(localStorage.getItem(RES_CONS_CHAVE) || "[]"); return Array.isArray(l) ? l.filter(c=>c && c.nome && num(c.lpu) > 0) : []; }catch(e){ return []; } }
 function resGuardarConsumo(l){
   if(!l || l.tipo!=="outro" || !String(l.nome||"").trim() || !(num(l.lpu) > 0)) return;
-  const nome = String(l.nome).trim(), por = String(l.por||"").trim() || "pessoa";
+  const nome = String(l.nome).trim(), por = String(l.por||"").trim() || "unidade";
   let lista = resConsumosSalvos().filter(c=>c.nome.toLowerCase()!==nome.toLowerCase());
   lista.unshift({nome, lpu:String(l.lpu), por, fonte:String(l.fonte||"").trim()});
   try{ localStorage.setItem(RES_CONS_CHAVE, JSON.stringify(lista.slice(0, 40))); }catch(e){}
@@ -6761,7 +6761,7 @@ function resPlural(t){
   p[0] = w; return p.join(" ");
 }
 function edifLinha(l){
-  if(l && l.tipo==="outro"){ const por = String(l.por||"").trim() || "pessoa", fonte = String(l.fonte||"").trim();
+  if(l && l.tipo==="outro"){ const por = String(l.por||"").trim() || "unidade", fonte = String(l.fonte||"").trim();
     return ["outro", String(l.nome||"").trim() || "Outro uso", num(l.lpu), resPlural(por), "por " + por, fonte ? "Fonte do valor: " + fonte : "Valor de consumo informado pelo projetista", true]; }
   return edif(l && l.tipo);
 }
@@ -6787,8 +6787,21 @@ function calcRes(){
   return res;
 }
 const litros = v => `${fmt(Math.round(v),0)} L`;
+const RES_POR_BASE = ["pessoa","m²","m² de área","m² de piscina","m² de jardim","refeição","aluno","funcionário","hóspede","leito","lugar","banhista","vaga","kg de roupa","unidade"];
+function resUnidadesSugeridas(){
+  const vistas = new Map(), add = u => { u = String(u||"").trim(); if(u && !vistas.has(u.toLowerCase())) vistas.set(u.toLowerCase(), u); };
+  resConsumosSalvos().forEach(c=>add(c.por)); (S.res.linhas||[]).forEach(l=>{ if(l.tipo==="outro") add(l.por); }); RES_POR_BASE.forEach(add);
+  return [...vistas.values()];
+}
+// "10 L/m²" ou "10 l por m²" digitado no consumo: separa o número (L) e a unidade (por)
+function resSepararConsumo(L){
+  const m = String(L.lpu||"").trim().match(/^([\d.,]+)\s*(?:l|litros?)?\s*(?:\/|por\b)\s*(.+)$/i);
+  if(!m) return false;
+  L.lpu = m[1]; L.por = m[2].trim(); return true;
+}
 function renderResLista(){
   const salvos = resConsumosSalvos();
+  const dl = $("rs-por-dl"); if(dl) dl.innerHTML = resUnidadesSugeridas().map(u=>`<option value="${esc(u)}">`).join("");
   $("rs-lista").innerHTML = S.res.linhas.map((l,i)=>{ const e = edifLinha(l), outro = l.tipo==="outro";
     const jSalvo = outro ? salvos.findIndex(c=>c.nome.toLowerCase()===String(l.nome||"").trim().toLowerCase() && num(c.lpu)===num(l.lpu) && String(c.por||"").trim()===String(l.por||"").trim()) : -1;
     const ops = `<optgroup label="Tabela de consumo por tipo de edificação">${CONSUMO_ED.map(x=>`<option value="${x[0]}" ${x[0]===l.tipo?"selected":""}>${x[1]} · ${fmt(x[2])} L ${x[4]}</option>`).join("")}</optgroup>`
@@ -6802,8 +6815,8 @@ function renderResLista(){
     </div>
     ${outro ? `<div class="rs-outro">
       <label class="campo">Tipo de consumo<input data-rf="nome" value="${esc(l.nome||"")}" placeholder="Ex.: Academia" autocomplete="off"></label>
-      <label class="campo">Consumo<span class="unid"><input data-rf="lpu" type="text" inputmode="decimal" value="${esc(l.lpu||"")}" placeholder="Ex.: 150"><b>L</b></span></label>
-      <label class="campo">por<input data-rf="por" list="rs-por-dl" value="${esc(l.por||"")}" placeholder="pessoa" autocomplete="off"></label>
+      <label class="campo">Consumo<span class="unid"><input data-rf="lpu" type="text" inputmode="decimal" value="${esc(l.lpu||"")}" placeholder="Ex.: 150 ou 10 L/m²"><b>L</b></span></label>
+      <label class="campo">por (unidade)<input data-rf="por" list="rs-por-dl" value="${esc(l.por||"")}" placeholder="digite: pessoa, m², refeição…" title="Digite qualquer unidade (ex.: m², m² de piscina, vaga). As que você usar ficam na lista." autocomplete="off"></label>
       <label class="campo rs-outro-fonte">De onde vem o valor (opcional, sai no memorial)<input data-rf="fonte" value="${esc(l.fonte||"")}" placeholder="Ex.: informado pelo cliente; tabela do fabricante; critério do projetista" autocomplete="off"></label>
     </div>` : ""}
     <p class="fonte rs-dica" style="margin:0 12px 10px">Como determinar: ${esc(e[5])}</p></div>`; }).join("");
@@ -6858,14 +6871,17 @@ function ligarRes(){
   $("rs-lista").addEventListener("input", e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; const L = R().linhas[i];
     if(f==="tipo"){
       const v = e.target.value;
-      if(v==="outro"){ if(L.tipo!=="outro"){ L.tipo = "outro"; L.nome = ""; L.lpu = ""; L.por = "pessoa"; L.fonte = ""; } }
+      if(v==="outro"){ if(L.tipo!=="outro"){ L.tipo = "outro"; L.nome = ""; L.lpu = ""; L.por = ""; L.fonte = ""; } }
       else if(/^c\d+$/.test(v)){ const c = resConsumosSalvos()[+v.slice(1)]; if(c){ L.tipo = "outro"; L.nome = c.nome; L.lpu = c.lpu; L.por = c.por; L.fonte = c.fonte || ""; } }
       else { L.tipo = v; delete L.nome; delete L.lpu; delete L.por; delete L.fonte; }
       renderResLista(); resumo(); salvar();
       if(L.tipo==="outro" && !L.nome){ const n = document.querySelector(`#rs-lista .rs-lin[data-i="${i}"] [data-rf="nome"]`); if(n) n.focus(); }
       return; }
     L[f] = e.target.value; alt(); });
-  $("rs-lista").addEventListener("change", e=>{ const f = e.target.dataset.rf; if(!["nome","lpu","por","fonte"].includes(f)) return; const i = +e.target.closest(".rs-lin").dataset.i; resGuardarConsumo(R().linhas[i]); });
+  $("rs-lista").addEventListener("change", e=>{ const f = e.target.dataset.rf; if(!["nome","lpu","por","fonte"].includes(f)) return; const i = +e.target.closest(".rs-lin").dataset.i, L = R().linhas[i];
+    if(f==="lpu" && resSepararConsumo(L)){ renderResLista(); resumo(); salvar(); }
+    resGuardarConsumo(L);
+    if(f==="por"){ const dl = $("rs-por-dl"); if(dl) dl.innerHTML = resUnidadesSugeridas().map(u=>`<option value="${esc(u)}">`).join(""); } });
   $("rs-soma").addEventListener("change", e=>{
     const A = R();
     if(e.target.id==="rs-soma-on"){
