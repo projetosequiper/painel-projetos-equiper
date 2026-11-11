@@ -661,6 +661,7 @@
   .viz-nav.ant{ left:8px; } .viz-nav.prox{ right:8px; }
 
 
+  body.sem-areas .nav-tabs{display:none !important;}
   .nav-tabs{display:flex; gap:4px; margin-bottom:20px; background:var(--sheet); border-radius:var(--r-md); padding:5px; box-shadow:var(--shadow-sm); border:1px solid var(--border);}
   .nav-tab{background:none; border:none; padding:11px 14px; font-size:13.5px; font-weight:600; font-family:'Inter',sans-serif; color:var(--ink-soft); cursor:pointer; border-radius:var(--r-sm); flex:1; transition:background .15s ease, color .15s ease, transform .1s ease;}
   .nav-tab.active{color:#fff; background:var(--red); box-shadow:var(--shadow-sm);}
@@ -2392,6 +2393,25 @@
     if(state.equipe.length === 0){ el.innerHTML = '<span class="hint">nenhum desenhista cadastrado ainda</span>'; }
   }
 
+  // Áreas Projetos / Projetista / Financeiro: o gerente sempre vê; projetista e usuário do financeiro só com permissão (clm-config-painel.verAreas)
+  function ehGerenteLogado(){
+    if(projetosDesbloqueado && !modoDesenhista) return true;
+    try{ var u = _fbAuth.currentUser; return !!(u && u.email && state.emailGerente && u.email.toLowerCase() === String(state.emailGerente).toLowerCase()); }catch(e){ return false; }
+  }
+  function podeVerAreas(){
+    if(ehGerenteLogado()) return true;
+    var va = (configPainel && configPainel.verAreas) || {};
+    if(modoDesenhista && nomeProjetistaAtual) return !!va['proj:' + nomeProjetistaAtual];
+    if(nomeFinanceiroAtual) return !!va['fin:' + nomeFinanceiroAtual];
+    return true;
+  }
+  async function salvarVerAreas(chave, valor){
+    try{ var r = await window.storage.get('clm-config-painel', true); if(r && r.value) configPainel = JSON.parse(r.value); }catch(e){}
+    var nova = Object.assign({}, configPainel || {}); nova.verAreas = Object.assign({}, nova.verAreas || {});
+    if(valor) nova.verAreas[chave] = true; else delete nova.verAreas[chave];
+    try{ await window.storage.set('clm-config-painel', JSON.stringify(nova), true); configPainel = nova; }
+    catch(e){ mostrarErroSalvamento('a permissão de áreas', null); }
+  }
   function renderProjetistasContas(){
     var lista = document.getElementById('projetistasContasLista');
     if(!lista) return;
@@ -2418,9 +2438,17 @@
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-art" data-nome="'+escapeHtml(nome)+'" '+(perm.art?'checked':'')+'> Pode criar ART</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-comissao" data-nome="'+escapeHtml(nome)+'" '+(perm.verComissao?'checked':'')+'> Pode ver comissão</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-cliente" data-nome="'+escapeHtml(nome)+'" '+(perm.criarCliente?'checked':'')+'> Pode criar clientes (sem projeto e “Fechou projeto”)</label>'+
+          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-areas" data-chave="proj:'+escapeHtml(nome)+'" '+(((configPainel||{}).verAreas||{})['proj:'+nome]?'checked':'')+'> Vê os ícones Projetos / Projetista / Financeiro</label>'+
         '</div>'+
       '</div>';
-    }).join('');
+    }).join('') +
+    ((state.usuariosFinanceiro||[]).length ? '<div class="hint" style="margin:12px 0 6px;">Usuários do Financeiro</div>' + state.usuariosFinanceiro.map(function(nome){
+      return '<div class="projeto-row" style="padding:8px 10px;"><div class="info"><b>'+escapeHtml(nome)+'</b></div>'+
+        '<label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; color:var(--ink-soft);"><input type="checkbox" class="chk-perm-areas" data-chave="fin:'+escapeHtml(nome)+'" '+(((configPainel||{}).verAreas||{})['fin:'+nome]?'checked':'')+'> Vê os ícones Projetos / Projetista / Financeiro</label></div>';
+    }).join('') : '');
+    lista.querySelectorAll('.chk-perm-areas').forEach(function(chk){
+      chk.onchange = function(){ salvarVerAreas(chk.getAttribute('data-chave'), chk.checked); };
+    });
     lista.querySelectorAll('.chk-perm-fechar').forEach(function(chk){
       chk.onchange = function(){
         var nome = chk.getAttribute('data-nome');
@@ -5594,6 +5622,7 @@
           (permRel ? '<button type="button" class="btn small secondary" id="fichaRel">+ Relatório de visita</button>' : '')+
           '<button type="button" class="btn small secondary" id="fichaCalc">🧮 Abrir cálculos</button>'+
           (sitFicha === 'sem' && podeCriarCliente() ? '<button type="button" class="btn small secondary" id="fichaCadastro">✏️ Cadastro</button><button type="button" class="btn small" id="fichaFechou">✅ Fechou projeto</button>' : '')+
+          (sitFicha === 'sem' && !modoDesenhista ? '<button type="button" class="btn small secondary" id="fichaExcluirSem" style="color:var(--red);">🗑️ Excluir</button>' : '')+
           (!modoDesenhista ? '<button type="button" class="btn small" id="fichaNova" style="background:var(--red);border-color:var(--red);">+ Nova tarefa</button>' : '')+
         '</div></div>'+
       (chips ? '<div style="display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 2px;">'+chips+'</div>' : '')+
@@ -5609,6 +5638,17 @@
     if(document.getElementById('fichaCalc')) document.getElementById('fichaCalc').onclick = function(){ var cid = fin ? fin.id : (d.pj.finIdPendente || d.pj.id), cn = fin ? fin.cliente : d.pj.nome; ativarTopicoProjetos('dimensionamentos'); setTimeout(function(){ abrirDimensionamentoCliente(cid, cn); }, 50); };
     if(document.getElementById('fichaCadastro')) document.getElementById('fichaCadastro').onclick = function(){ abrirFormClienteSemProjeto(d.pj.id); };
     if(document.getElementById('fichaFechou')) document.getElementById('fichaFechou').onclick = function(){ abrirFechamentoCliente(d.pj.id); };
+    if(document.getElementById('fichaExcluirSem')) document.getElementById('fichaExcluirSem').onclick = async function(){
+      var idEx = d.pj.id, nT = state.tarefas.filter(function(t){ return t.projetoId === idEx; }).length;
+      if(!(await caixaConfirmar('Excluir o cliente sem projeto “' + d.pj.nome + '”' + (nT ? ' e as ' + nT + ' tarefa(s) dele' : '') + '?', { perigo:true, ok:'Excluir' }))) return;
+      if(!(await caixaConfirmar('Tem certeza? Não dá para desfazer.', { perigo:true, ok:'Excluir de vez' }))) return;
+      var snapEx = JSON.parse(JSON.stringify(state.tarefas));
+      state.projetos = state.projetos.filter(function(x){ return x.id !== idEx; });
+      state.tarefas = state.tarefas.filter(function(t){ return t.projetoId !== idEx; });
+      await saveProjetos();
+      if(nT) alterarListaTarefas(function(lista){ return lista.filter(function(t){ return t.projetoId !== idEx; }); }, snapEx);
+      fichaClienteAtual = null; render(); renderClientesPagina();
+    };
     raiz.querySelectorAll('.ficha-aba').forEach(function(b){ b.onclick = function(){ fichaAba = b.getAttribute('data-aba'); renderFichaCliente(); }; });
     var busca = document.getElementById('fichaBusca');
     busca.addEventListener('input', function(){ fichaBusca = busca.value; desenharFichaConteudo(d); });
@@ -10925,7 +10965,9 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     var ehFinanceiro = navFinEl && navFinEl.classList.contains('active');
     var ehProjetista = !ehFinanceiro && modoDesenhista;
 
-    var htmlAreas =
+    var verAreas = podeVerAreas();
+    document.body.classList.toggle('sem-areas', !verAreas);
+    var htmlAreas = !verAreas ? '' :
       '<div class="sidebar-desktop-item'+((!ehFinanceiro && !ehProjetista)?' area-atual':'')+'" data-area="projetos"><span class="sidebar-desktop-icone">📋</span><span>Projetos</span></div>'+
       '<div class="sidebar-desktop-item'+(ehProjetista?' area-atual':'')+'" data-area="projetista"><span class="sidebar-desktop-icone">👷</span><span>Projetista</span></div>'+
       '<div class="sidebar-desktop-item'+(ehFinanceiro?' area-atual':'')+'" data-area="financeiro"><span class="sidebar-desktop-icone">💰</span><span>Financeiro</span></div>';
@@ -10942,8 +10984,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     }).join('');
 
     document.getElementById('sidebarDesktopNav').innerHTML =
-      htmlAreas +
-      '<div class="sidebar-desktop-separador"></div>'+
+      (htmlAreas ? htmlAreas + '<div class="sidebar-desktop-separador"></div>' : '')+
       htmlTopicos;
 
     sidebar.querySelectorAll('[data-area]').forEach(function(el){
@@ -11333,9 +11374,8 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     box.innerHTML =
       '<h3 style="margin:0 0 10px;">Mais opções</h3>'+
       (resto.length ? '<div>'+htmlResto+'</div><div style="border-top:1px solid var(--border); margin:12px 0;"></div>' : '')+
-      '<div class="menu-mais-item" data-calc="1">🧮 Calculadora</div><div style="border-top:1px solid var(--border); margin:12px 0;"></div>'+
-      '<div class="hint" style="margin-bottom:6px;">Trocar de área</div>'+
-      htmlAreas;
+      '<div class="menu-mais-item" data-calc="1">🧮 Calculadora</div>'+
+      (podeVerAreas() ? '<div style="border-top:1px solid var(--border); margin:12px 0;"></div><div class="hint" style="margin-bottom:6px;">Trocar de área</div>' + htmlAreas : '');
     overlay.style.display = 'flex';
     box.querySelectorAll('.menu-mais-item[data-id]').forEach(function(el){
       el.onclick = function(){
@@ -11403,6 +11443,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   }
 
   async function entrarEmFinanceiro(){
+    try{ var rCfgF = await window.storage.get('clm-config-painel', true); if(rCfgF && rCfgF.value){ configPainel = JSON.parse(rCfgF.value); } }catch(e){}
     mostrarShell();
     ativarAbaFinanceiro();
     financeiroDesbloqueado = true;
