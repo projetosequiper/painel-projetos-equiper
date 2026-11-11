@@ -985,6 +985,7 @@
         <select id="fResp"><option value="">Todos os responsáveis</option></select>
         <select id="fTipo"><option value="">Todas as disciplinas</option></select>
         <select id="fProjeto"><option value="">Todos os projetos</option></select>
+        <select id="fEnvio" title="Mostrar só os concluídos conforme o envio ao cliente"><option value="">Envio: todos</option><option value="nao">Concluídos não enviados</option><option value="sim">Concluídos já enviados</option></select>
         <button class="btn secondary small" id="btnClearFilters">Limpar filtros</button>
       </div>
     </div>
@@ -1405,7 +1406,7 @@
   var colapsadosFinLetra = {};
   var colapsadosFinCliente = {};
   var form = { mode:null, projetoId:null, tarefaId:null };
-  var filters = { search:"", resp:"", tipo:"", projeto:"", atalho:"" };
+  var filters = { search:"", resp:"", tipo:"", projeto:"", atalho:"", envio:"" };
   var abaQuadro = 'A fazer';
   var ABAS_QUADRO = ["A fazer","Em andamento","Em espera","Concluído","Fechar quadro"];
   function ehMovel(){ try{ return window.matchMedia('(max-width:720px)').matches; }catch(e){ return false; } }
@@ -2574,6 +2575,20 @@
       return true;
     });
   }
+  // filtro "Envio": só concluídos não enviados / já enviados (campo t.enviado = "✓ Enviado ao cliente")
+  function casaFiltroEnvio(t){
+    if(!filters.envio) return true;
+    if(t.status !== 'Concluído') return false;
+    return filters.envio === 'nao' ? !t.enviado : !!t.enviado;
+  }
+  function atualizarContagemEnvio(){
+    var sel = document.getElementById('fEnvio'); if(!sel) return;
+    var conc = tarefasComProjeto(true).filter(function(t){ return t.status === 'Concluído'; });
+    var nao = conc.filter(function(t){ return !t.enviado; }).length;
+    sel.options[1].textContent = 'Concluídos não enviados (' + nao + ')';
+    sel.options[2].textContent = 'Concluídos já enviados (' + (conc.length - nao) + ')';
+    sel.value = filters.envio || '';
+  }
   function tarefaEmAberto(t){ return t.status === 'A fazer' || t.status === 'Em espera' || t.status === 'Em andamento'; }
   function atalhoCasa(t, a){
     if(!tarefaEmAberto(t) || t.status === 'Em espera' || !t.prazo) return false;
@@ -2592,7 +2607,7 @@
       return '<button type="button" class="chip-prazo '+d[0]+(filters.atalho===d[0]?' ativo':'')+'" data-atalho="'+d[0]+'">'+d[1]+'<b>'+n+'</b></button>';
     }).join('');
     el.querySelectorAll('[data-atalho]').forEach(function(b){
-      b.onclick = function(){ var a = b.getAttribute('data-atalho'); filters.atalho = (filters.atalho === a) ? '' : a; renderBoard(); };
+      b.onclick = function(){ var a = b.getAttribute('data-atalho'); filters.atalho = (filters.atalho === a) ? '' : a; if(filters.atalho) filters.envio = ''; renderBoard(); };
     });
   }
   function renderAbasQuadro(list){
@@ -2660,6 +2675,15 @@
 
   function renderColunaConcluidos(items){
     var wrap = document.createElement('div');
+    if(filters.envio){
+      var tot = items.slice().sort(function(a,b){ return (a.dataConclusao||'').localeCompare(b.dataConclusao||''); });
+      var dica = document.createElement('div'); dica.className = 'hint'; dica.style.cssText = 'margin:0 0 8px; font-size:12px;';
+      dica.textContent = tot.length ? (filters.envio === 'nao' ? tot.length + ' concluído(s) ainda não enviado(s) ao cliente — do mais antigo para o mais novo.' : tot.length + ' concluído(s) já enviado(s) — do mais antigo para o mais novo.') : '';
+      if(tot.length) wrap.appendChild(dica);
+      if(!tot.length){ var vz = document.createElement('div'); vz.className = 'empty-hint'; vz.textContent = filters.envio === 'nao' ? 'Nenhum concluído pendente de envio. 👍' : 'Nenhum concluído marcado como enviado.'; wrap.appendChild(vz); return wrap; }
+      wrap.appendChild(renderColunaAgrupadaPorPessoa(tot, 'Concluído'));
+      return wrap;
+    }
     var grupos = {}; // ano -> { mes -> [items] }
     items.forEach(function(t){
       var k = chaveAnoMes(t.dataConclusao);
@@ -2789,8 +2813,9 @@
   function renderBoard(){
     var board = document.getElementById('board');
     board.innerHTML = '';
-    var list = tarefasComProjeto();
+    var list = tarefasComProjeto().filter(casaFiltroEnvio);
     var movel = ehMovel();
+    atualizarContagemEnvio();
     renderPrazosBar(); renderAbasQuadro(list);
     STATUSES.forEach(function(status){
       var col = document.createElement('div');
@@ -9546,9 +9571,14 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   document.getElementById('fResp').addEventListener('change', function(e){ filters.resp = e.target.value; renderBoard(); });
   document.getElementById('fTipo').addEventListener('change', function(e){ filters.tipo = e.target.value; renderBoard(); });
   document.getElementById('fProjeto').addEventListener('change', function(e){ filters.projeto = e.target.value; renderBoard(); });
+  document.getElementById('fEnvio').addEventListener('change', function(e){
+    filters.envio = e.target.value;
+    if(filters.envio){ filters.atalho = ''; colapsados['Concluído'] = false; abaQuadro = 'Concluído'; }
+    renderBoard();
+  });
   document.getElementById('btnClearFilters').onclick = function(){
-    filters = { search:'', resp:'', tipo:'', projeto:'', atalho:'' };
-    document.getElementById('fSearch').value=''; document.getElementById('fResp').value=''; document.getElementById('fTipo').value=''; document.getElementById('fProjeto').value='';
+    filters = { search:'', resp:'', tipo:'', projeto:'', atalho:'', envio:'' };
+    document.getElementById('fSearch').value=''; document.getElementById('fResp').value=''; document.getElementById('fTipo').value=''; document.getElementById('fProjeto').value=''; document.getElementById('fEnvio').value='';
     renderBoard();
   };
 
