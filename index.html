@@ -6358,7 +6358,7 @@
         { k:'tipo', t:'sel', r:'Gás', o:['GN (rede da concessionária)','GLP (botijões / cilindros)','GLP a granel','Não tem'] },
         { k:'pressao', t:'txt', r:'Pressão de fornecimento', ph:'ex.: baixa pressão / 2,2 kPa', opc:true }
       ]},
-      { id:'medidor', nome:'Medidor / abrigo de gás', sigla:'MG', legenda:'Medidor de gás', mostrar:function(c){ return c.v('gas.forn','tipo') !== 'Não tem'; }, campos:[
+      { id:'medidor', nome:'Medidor / abrigo de gás', sigla:'PI', legenda:'Medidor de gás', mostrar:function(c){ return c.v('gas.forn','tipo') !== 'Não tem'; }, campos:[
         { k:'medidor', t:'sel', r:'Medidor', o:['G1,6','G2,5','G4','G6','G10','G16','G25','G40','G65','G100','Não tem medidor'] },
         { k:'pulso', t:'sel', r:'Leitor de pulso', o:['Com saída para leitor de pulso','Sem saída de pulso'] },
         { k:'regulador', t:'sel', r:'Regulador', o:['Tem','Não tem'], opc:true },
@@ -7061,18 +7061,19 @@
   // ---------- plantas com siglas ----------
   function vfPlantasOrdenadas(){ var p = vf.dados.plantas; return Object.keys(p).map(function(k){ return p[k]; }).sort(function(a,b){ return (a.ordem||0) - (b.ordem||0); }); }
   function vfCorPin(pin){ var def = pin.item ? vfDef(pin.item) : null; return def ? def.cor : '#475569'; }
+  function vfSiglaPin(pin){ var def = pin.item ? vfDef(pin.item) : null; return def && def.sigla ? def.sigla : (pin.sigla || ''); }
   function vfRotuloPin(pin){ var def = pin.item ? vfDef(pin.item) : null; return def ? def.legenda || def.nome : (pin.txt || 'Ponto'); }
   function vfLegendaHtml(p, pdf){
     var vistos = {}, l = [];
-    Object.keys(p.pins || {}).forEach(function(k){ var pin = p.pins[k], ch = (pin.sigla||'') + '|' + vfRotuloPin(pin); if(vistos[ch]) return; vistos[ch] = 1; l.push(pin); });
-    l.sort(function(a,b){ return String(a.sigla).localeCompare(String(b.sigla)); });
+    Object.keys(p.pins || {}).forEach(function(k){ var pin = p.pins[k], ch = vfSiglaPin(pin) + '|' + vfRotuloPin(pin); if(vistos[ch]) return; vistos[ch] = 1; l.push(pin); });
+    l.sort(function(a,b){ return vfSiglaPin(a).localeCompare(vfSiglaPin(b)); });
     if(!l.length) return '';
-    if(pdf) return '<div class="eq-legenda vf-leg-pdf">' + l.map(function(pin){ return '<span><i class="eq-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(pin.sigla||'')+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
-    return '<div class="vf-legenda">' + l.map(function(pin){ return '<span><i class="vf-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(pin.sigla||'')+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
+    if(pdf) return '<div class="eq-legenda vf-leg-pdf">' + l.map(function(pin){ return '<span><i class="eq-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(vfSiglaPin(pin))+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
+    return '<div class="vf-legenda">' + l.map(function(pin){ return '<span><i class="vf-sigla" style="background:'+vfCorPin(pin)+'">'+escapeHtml(vfSiglaPin(pin))+'</i>'+escapeHtml(vfRotuloPin(pin))+'</span>'; }).join('') + '</div>';
   }
   function vfPinsHtml(p, pdf){
     return Object.keys(p.pins || {}).map(function(k){ var pin = p.pins[k];
-      return '<span class="'+(pdf ? 'eq-pin' : 'vf-pin')+'" data-pin="'+k+'" style="left:'+pin.x+'%; top:'+pin.y+'%; background:'+vfCorPin(pin)+';" title="'+escapeHtml(vfRotuloPin(pin))+'">'+escapeHtml(pin.sigla||'•')+'</span>'; }).join('');
+      return '<span class="'+(pdf ? 'eq-pin' : 'vf-pin')+'" data-pin="'+k+'" style="left:'+pin.x+'%; top:'+pin.y+'%; background:'+vfCorPin(pin)+';" title="'+escapeHtml(vfRotuloPin(pin))+'">'+escapeHtml(vfSiglaPin(pin)||'•')+'</span>'; }).join('');
   }
   function vfDesenharPlantas(){
     var box = document.getElementById('vfPlantas'); if(!box) return;
@@ -7159,7 +7160,7 @@
     b.textContent = '📍 Planta' + (n ? ' · ' + n : ''); }); }
   async function vfPerguntarRemoverPin(plantaId, k){
     var p = vf.dados.plantas[plantaId], pin = p && p.pins[k]; if(!pin) return;
-    if(!(await caixaConfirmar('Remover a marcação '+(pin.sigla ? pin.sigla+' — ' : '')+vfRotuloPin(pin)+'?', { ok:'Remover', perigo:true }))) return;
+    if(!(await caixaConfirmar('Remover a marcação '+(vfSiglaPin(pin) ? vfSiglaPin(pin)+' — ' : '')+vfRotuloPin(pin)+'?', { ok:'Remover', perigo:true }))) return;
     delete p.pins[k]; vf.dados.removidos[k] = vfAgora(); p.em = vfAgora();
     vfMudou(); vfRedesenharPlanta(plantaId); vfAtualizarBotoesPin();
   }
@@ -10269,8 +10270,34 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       if(err && err.code === 'auth/email-already-in-use' && _fbAuth.currentUser && _fbAuth.currentUser.email === email){
         return { ok:true, vinculado:true };
       }
+      // conta já criada antes (ex.: primeiro acesso que parou no meio): entra com a mesma senha em vez de dar erro
+      if(err && err.code === 'auth/email-already-in-use'){
+        try{ await _fbAuth.signInWithEmailAndPassword(email, senha); return { ok:true, vinculado:true }; }
+        catch(e2){ return { ok:false, erro: 'Esse email já tem conta. Digite a senha que você criou para ele (ou use "Esqueci minha senha").' }; }
+      }
       return { ok:false, erro: traduzErroFirebaseAuth(err) };
     }
+  }
+  // Depois de entrar: confere se a conta já foi liberada (UID nos índices idx-*, feitos à mão no console).
+  function testarAcessoConta(chave){
+    return new Promise(function(res){
+      var t = setTimeout(function(){ res('rede'); }, 12000);
+      _fbDb.ref('storage/' + chave).once('value').then(function(){ clearTimeout(t); res('ok'); }, function(e){ clearTimeout(t); res(/permission/i.test(String((e && (e.code || e.message)) || '')) ? 'negado' : 'rede'); });
+    });
+  }
+  function avisarContaSemAcesso(erroEl, papel){
+    var uid = (_fbAuth.currentUser && _fbAuth.currentUser.uid) || '';
+    var email = (_fbAuth.currentUser && _fbAuth.currentUser.email) || '';
+    erroEl.style.color = 'var(--ink)';
+    erroEl.innerHTML = '<div style="text-align:left; background:var(--amber-soft); border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.45;">'+
+      '<b>Sua conta foi criada, mas o acesso ainda não foi liberado.</b><br>Peça ao gerente para liberar ' + escapeHtml(papel) + ' no Firebase com este código:'+
+      '<div style="display:flex; gap:6px; align-items:center; margin:6px 0;"><code style="flex:1; word-break:break-all; background:var(--sheet); padding:5px 7px; border-radius:6px; font-size:11.5px;">' + escapeHtml(uid) + '</code>'+
+      '<button type="button" class="btn small secondary" id="btnCopiarUid">Copiar</button></div>'+
+      '<span style="color:var(--ink-soft);">' + escapeHtml(email) + '</span><br>Depois de liberado, entre de novo com o mesmo email e senha.</div>';
+    var b = document.getElementById('btnCopiarUid');
+    if(b) b.onclick = function(){ try{ navigator.clipboard.writeText(uid).then(function(){ b.textContent = '✓ Copiado'; }); }catch(e){} };
+    // volta ao modo anônimo para não ficar "meio logado"
+    _fbAuth.signOut().then(function(){ return _fbAuth.signInAnonymously(); }).catch(function(){});
   }
 
   function traduzErroFirebaseAuth(err){
@@ -10503,6 +10530,9 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
         var resultadoFn2 = await criarOuVincularConta(email, senha);
         if(!resultadoFn2.ok){ erroEl.textContent = resultadoFn2.erro; return; }
+        erroEl.style.color = 'var(--ink-soft)'; erroEl.textContent = 'Conferindo acesso…';
+        if(await testarAcessoConta('clm-financeiro') === 'negado'){ avisarContaSemAcesso(erroEl, 'o acesso ao financeiro'); return; }
+        erroEl.textContent = '';
         state.emailsFinanceiroInd[nome] = email;
         await saveEmailsFinanceiroInd();
         nomeFinanceiroAtual = nome;
@@ -10510,6 +10540,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       } else {
         try{
           await _fbAuth.signInWithEmailAndPassword(state.emailsFinanceiroInd[nome], senha);
+          if(await testarAcessoConta('clm-financeiro') === 'negado'){ avisarContaSemAcesso(erroEl, 'o acesso ao financeiro'); return; }
           nomeFinanceiroAtual = nome;
           entrarEmFinanceiro();
         }catch(err){
@@ -10611,6 +10642,10 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         if(senha !== senhaConfirma){ erroEl.textContent = 'As senhas não coincidem.'; return; }
         var resultadoPj = await criarOuVincularConta(email, senha);
         if(!resultadoPj.ok){ erroEl.textContent = resultadoPj.erro; return; }
+        erroEl.style.color = 'var(--ink-soft)'; erroEl.textContent = 'Conferindo acesso…';
+        var acPj = await testarAcessoConta('clm-tipos');
+        if(acPj === 'negado'){ avisarContaSemAcesso(erroEl, 'o acesso de projetista'); return; }
+        erroEl.textContent = '';
         state.emailsProjetistas[nome] = email;
         await saveEmailsProjetistas();
         nomeProjetistaAtual = nome;
@@ -10618,6 +10653,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       } else {
         try{
           await _fbAuth.signInWithEmailAndPassword(state.emailsProjetistas[nome], senha);
+          if(await testarAcessoConta('clm-tipos') === 'negado'){ avisarContaSemAcesso(erroEl, 'o acesso de projetista'); return; }
           nomeProjetistaAtual = nome;
           entrarEmProjetos(true);
         }catch(err){
