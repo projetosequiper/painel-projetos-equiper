@@ -7389,7 +7389,7 @@ async function rvAcao(a){
   criados = D.quadros.filter(q=>!antes.has(q.id)).length;
   // Comprimento de circuitos recebe só os alimentadores dos quadros (o Revit já verifica os circuitos terminais)
   const Rq = R.filter(r=>r.papel==="quadro"), ids = new Set(Rq.map(r=>achar(r.q.nome).id)), novos = [], alCalc0 = {};
-  try{ alItens().forEach(it=>{ if(!it.semCond && it.res?.p && alNum(it.res.p.S)) alCalc0[it.q.id] = {S: it.res.p.S, PE: alNum(it.res.PE) ? it.res.PE : "", In: alNum(it.p.In) ? it.p.In : ""}; }); }catch(e){}
+  try{ alItens().forEach(it=>{ if(!it.semCond && it.res?.p && alNum(it.res.p.S)) alCalc0[it.q.id] = {S: it.res.p.S, PE: alNum(it.res.PE) ? it.res.PE : "", In: it.p.jus?.InMont > 0 ? it.p.jus.InMont : alNum(it.p.In) ? it.p.In : ""}; }); }catch(e){}
   let doCalc = 0;
   const comCabo = (x, nomeQ) => { if(num(x.caboProj) > 0) return x; const a = alCalc0[achar(nomeQ)?.id]; if(!a) return x; doCalc++;   // sem cabo no Revit: o calculado em Alimentadores
     return {...x, caboProj: a.S, caboN: a.S, caboT: a.PE, disj: a.In || x.disj, caboDoCalc: true}; };
@@ -7419,7 +7419,7 @@ function alExportarRevit(){
     return {nome: it.q.nome || "", alimentadoPor: pai?.nome || "", correnteDemanda: n2(Idem), ok: !!it.ok,
       avisos: (it.avisos || []).slice(0, 6),
       alimentador: ok ? {fase: x.p.S, neutro: x.p.S, terra: alNum(x.PE) ? x.PE : null, paralelos: p.npar || 1, polos: it.nF || 3,
-        disjuntor: alNum(p.In) && p.In > 0 ? p.In : (alNum(x.In) ? x.In : null), eletroduto: it.duto?.res?.txt ? `${it.duto.res.txt} ${dutoNome(it.duto.tipo).toLowerCase()}` : "",
+        disjuntor: p.jus?.InMont > 0 ? p.jus.InMont : alNum(p.In) && p.In > 0 ? p.In : (alNum(x.In) ? x.In : null), ...(p.jus ? {disjuntorJusante: alNum(p.In) && p.In > 0 ? p.In : null} : {}), eletroduto: it.duto?.res?.txt ? `${it.duto.res.txt} ${dutoNome(it.duto.tipo).toLowerCase()}` : "",
         texto: it.cond, comprimento: n2(p.L), quedaTrecho: it.dvTrecho==null ? null : n2(it.dvTrecho*100), quedaAcumulada: it.dvAcum==null ? null : n2(it.dvAcum*100), autotrafo: at} : null}; });
   const dados = {formato:"equiper-dimensionamento", versao:1, cliente:(S.obra.cliente||"").trim(), revisao: st ? apvPad(st.n) : (S.dem.rev||""), aprovado: aprov,
     aprovadoPor: aprov ? u.por : "", dataAprovacao: aprov ? u.data : "", gerado: new Date().toISOString(), quadros};
@@ -8498,7 +8498,27 @@ function alParam(q, r, T){
     dv: num(g("dv"))/100, icc: num(g("icc")) > 0 && num(g("t")) > 0 ? num(g("icc")) : 0, t: num(g("icc")) > 0 && num(g("t")) > 0 ? num(g("t")) : 0, ta: +g("ta"), ncirc: Math.max(1, Math.round(num(g("ncirc"))) || 1), dist: +g("dist") || 1, rho: +g("rho") || 2.5,
     pe: +g("pe") || 1, peCond: +g("peCond") || 2, npar: Math.max(1, Math.round(num(a.npar)) || 1), arrF, arr: alArr(arrF, sis, tipo), smin: num(g("smin")) || 2.5, secMan: num(a.sec) || 0};
   if(P.In > 0 && P.Ib > P.In){ P.IbDem = P.Ib; P.Ib = P.In; }      // disjuntor menor que a corrente: o circuito não passa da corrente do disjuntor
+  if(a.jusOn){ const mg = num(a.jusMag); P.jus = {InMont: num(a.inMont) > 0 ? num(a.inMont) : 0, mag: mg > 0 ? mg : AL_JUS_MAG, magPad: !(mg > 0)}; }   // proteção à jusante: P.In = disjuntor do quadro alimentado
   return P;
+}
+// ---- Proteção à jusante (NBR 5410:2004, 5.3.4.2.2, 5.3.5.2.2 e 5.3.5.5.3) ----
+// O disjuntor do quadro alimentado (jusante) protege o cabo contra sobrecarga (Ib ≤ In jusante ≤ Iz); o de montante, no quadro de origem,
+// protege contra curto-circuito e pode ser maior que Iz (5.3.5.5.3). Por isso o I²t (k²S² ≥ Icc²·t) usa a duração do curto do montante
+// e a Icc mínima no fim do trecho (fase-neutro e fase-PE) tem que chegar ao disparo magnético do montante (Ia = m × In; caixa moldada com
+// magnético fixo ≈ 10 × In), senão ele atua pelo térmico e o cabo se danifica antes (Fergütz, UDESC, Estudo de proteção contra sobrecorrentes).
+const AL_JUS_MAG = 10;
+function alJusVer(x, p, mont){
+  const J = p.jus; if(!J || !x) return x;
+  x.jusIk = null; delete x.ver.ikmin;
+  if(J.InMont > 0 && mont?.jusO && mont?.jusZp && p.L > 0 && alNum(x.R0) && alNum(x.Xl) && !(p.at && !p.at.erro)){
+    const n = p.npar || 1, L = p.L, Rt = x.R0*L/1000/n, Xt = x.Xl*L/1000/n, kq = icKth(x.th), zp = mont.jusZp;   // mesmas impedâncias da aba Icc presumida
+    const rpe = ALT.t18.find(r=>r[0]===x.PE)?.[(p.mat===1 ? 4 : 3) - 1], Rpe = alNum(rpe) ? rpe*L/1000 : Rt*n, Xpe = x.Xl*L/1000;
+    const pt = icPonto(mont.jusO, {R: zp.R + Rt, X: zp.X + Xt, nR: zp.nR + 2*Rt*kq, nX: zp.nX + 2*Xt, pR: zp.pR + (Rt + Rpe)*kq, pX: zp.pX + Xt + Xpe});
+    const Ia = J.mag*J.InMont, Ik = Math.min(pt.Ik1n, pt.Ik1p)*1000;
+    x.jusIk = {Ik1n: pt.Ik1n, Ik1p: pt.Ik1p, Ik, Ia}; x.ver.ikmin = Ik >= Ia - 1e-9 ? "ATENDE" : "NÃO ATENDE";
+  }
+  x.ok = Object.values(x.ver).every(v=>v==="ATENDE");
+  return x;
 }
 // dimensionamento econômico (aba "dimensionamento econômico" da planilha R4) — só indicativo
 const AL_PRECO = [[10,7910],[16,11990],[25,22490],[35,33030],[50,45890],[70,66590],[95,88170],[120,110960],[150,112490],[185,120990],[240,227690*0.7],[300,232190]];   // R$/km
@@ -8679,13 +8699,17 @@ function alItem(q, r, T, mont){
       for(const Sn of AL_AT_KVA.filter(v=>v >= Math.max(t0.Sn, t0.SnSug) - 1e-9)){ p.at = alAtParam(q, p, Sn); alAtSel(it, p, base, mont); if(!it.semSecao && (it.semAt==null || it.res.p.S < it.semAt)){ p.at.SnAuto = true; achou = true; break; } }
       if(!achou){ p.at = alAtParam(q, p, Math.max(t0.Sn, t0.SnSug)); alAtSel(it, p, base, mont); } }
     else alAtSel(it, p, base, mont); }
-  else if(p.secMan){ it.res = alMotVer(alCalc({...base, S:p.secMan}), p, mont); it.auto = false; }
+  else if(p.secMan){ it.res = alJusVer(alMotVer(alCalc({...base, S:p.secMan}), p, mont), p, mont); it.auto = false; }
   else {
     const secs = ALT.cat[p.modelo].map(x=>x[0]).filter(s=>s >= p.smin - 1e-9);
     let ant = null;
-    for(const s of secs){ const x = alMotVer(alCalc({...base, S:s}), p, mont); if(x.ok){ it.res = x; break; } ant = x; it.res = x; }
-    it.auto = true; it.semSecao = !it.res?.ok;
-    if(it.res?.ok){ const NOMES = {iz:"capacidade de condução", dv:"queda de tensão", cc:"curto-circuito da fase", pe:"curto-circuito do PE", smin:"seção mínima", coord:"disjuntor (In ≤ Iz)", part:"queda na partida do motor"};
+    let semIk = null, antIk = null;                                   // proteção à jusante: a menor seção que só falha na Icc mínima (limitada pela impedância a montante)
+    for(const s of secs){ const x = alJusVer(alMotVer(alCalc({...base, S:s}), p, mont), p, mont); if(x.ok){ it.res = x; break; }
+      if(!semIk && x.ver.ikmin==="NÃO ATENDE" && Object.entries(x.ver).every(([k,v])=>k==="ikmin" || v==="ATENDE")) semIk = x; else if(!semIk) antIk = x;
+      ant = x; it.res = x; }
+    if(!it.res?.ok && semIk){ it.res = semIk; ant = antIk; it.jusIkLim = true; }
+    it.auto = true; it.semSecao = !it.res?.ok && !it.jusIkLim;
+    if(it.res?.ok){ const NOMES = {iz:"capacidade de condução", dv:"queda de tensão", cc:"curto-circuito da fase", pe:"curto-circuito do PE", smin:"seção mínima", coord:"disjuntor (In ≤ Iz)", part:"queda na partida do motor", ikmin:"Icc mínima × magnético do disjuntor a montante"};
       it.criterio = ant ? Object.entries(ant.ver).filter(([,v])=>v!=="ATENDE").map(([k])=>NOMES[k]).join(" e ") || "—" : "menor seção do catálogo"; }
   }
   const x = it.res;
@@ -8717,7 +8741,16 @@ function alItem(q, r, T, mont){
   if(it.auto && it.semSecao && !(p.at && !p.at.erro) && x.metOk && !x.aviso && alNum(x.fc)) it.avisos.push(`Nenhuma seção do catálogo do ${AL_MOD[p.modelo-1].n} atende com ${p.npar} cabo${p.npar>1?"s":""} por fase: aumente os cabos em paralelo.`);
   if(p.IbDem) it.avisos.push(`Ressalva: o disjuntor de ${fmt(p.In)} A é menor que a corrente ${num(it.q.al?.ib) > 0 ? "informada" : "de demanda"} (${fmt(p.IbDem,1)} A). O cabo foi calculado com a corrente máxima do disjuntor (${fmt(p.In)} A); com a demanda prevista o disjuntor pode desarmar.`);
   if(!p.In) it.avisos.push(`Sem disjuntor no cálculo de demanda: usado o disjuntor padronizado logo acima da corrente (${alNum(x.In) ? x.In + " A" : x.In}).`);
-  it.ok = !!x.ok && p.L > 0 && !it.avisos.some(a=>/não permitido|Não dá|Nenhuma seção|Disposição/.test(a));
+  if(p.jus){ const J = p.jus;
+    if(!(J.InMont > 0)) it.avisos.push("Proteção à jusante: informe o disjuntor a montante (o do quadro de origem que alimenta este cabo).");
+    else if(alNum(x.In) && x.In >= J.InMont) it.avisos.push(`Proteção à jusante: o disjuntor a jusante (${fmt(x.In)} A) não é menor que o de montante (${fmt(J.InMont)} A); assim não há ganho no cabo. Confira os disjuntores.`);
+    if(J.InMont > 0){
+      if(p.at && !p.at.erro) it.avisos.push("Proteção à jusante com autotransformador: a Icc mínima no fim do trecho não é verificada aqui; confira à parte.");
+      else if(!x.jusIk) it.avisos.push(`Proteção à jusante: a Icc mínima no fim do trecho não foi verificada (${!(p.L > 0) ? "falta o comprimento" : !mont.jusO ? "preencha a aba Icc presumida" : !mont.jusZp ? "falta o comprimento ou o cabo de algum alimentador a montante" : "cabo sem resistência na tabela"}). Ela tem que ser de pelo menos ${fmt(J.mag*J.InMont)} A (${fmt(J.mag)} × ${fmt(J.InMont)} A, disparo magnético do montante); abaixo disso o montante só atua pelo térmico e o cabo se danifica.`);
+      else if(x.ver.ikmin==="NÃO ATENDE") it.avisos.push(`Proteção à jusante: Icc mínima no fim do trecho ${fmt(x.jusIk.Ik/1000,2)} kA, menor que o disparo magnético do montante (${fmt(J.mag)} × ${fmt(J.InMont)} A = ${fmt(x.jusIk.Ia/1000,2)} kA): numa falta no fim do cabo o montante só atuaria pelo térmico. ${it.jusIkLim ? "Nem a maior seção do catálogo resolve (a Icc mínima fica limitada pela impedância a montante): baixe o ajuste do magnético (Ii), use um disjuntor a montante menor ou não use a proteção à jusante." : "Baixe o ajuste do magnético (Ii), aumente a seção ou use um disjuntor a montante menor."}`); }
+    if(J.magPad && J.InMont > 0 && x.jusIk) it.avisos.push(`Proteção à jusante: disparo magnético do montante adotado em ${fmt(AL_JUS_MAG)} × In (caixa moldada com magnético fixo). Se for ajustável, informe o Ii ajustado (limite superior da faixa).`);
+  }
+  it.ok = !!x.ok && p.L > 0 && !it.avisos.some(a=>/não permitido|Não dá|Nenhuma seção|Disposição/.test(a)) && !(p.jus && !(p.jus.InMont > 0));
   const nF = p.sis===1 ? 3 : p.bi ? 2 : 1, S2 = x.p.S;
   const fCond = y => `${p.npar>1 ? `${p.npar}×(` : ""}${nF}#${alS(y.p.S)} + N${alS(y.p.S)}${p.npar>1 ? ")" : ""} + PE${alNum(y.PE) ? alS(y.PE) : "—"}`;
   it.cond = fCond(x);
@@ -8744,6 +8777,7 @@ function alItens(){
   let o = null; if(icAtivo()){ const x = icOrigem(); if(x && !x.erro) o = x; }
   const its = dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m0 = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
     const zp = o ? (pai ? acc[pai.id]?.z || null : {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}) : null, m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null, zs: pai ? (acc[pai.id]?.zs || 0) : 0};
+    if(q.al?.jusOn && o && zp){ m.jusO = o; m.jusZp = zp; }
     const it = alItem(q, R[q.id], T, m); it.nivel = nivel;
     let z = null;
     if(zp){ const x = it.res, L = it.p.L, n = it.p.npar || 1;
@@ -8801,7 +8835,7 @@ function renderAliLista(){
   $("al-lista").innerHTML = its.length ? its.map(it=>{ const q = it.q, a = q.al || {}, p = it.p, r = it.r, v750 = p.modelo<=2;
     const padMod = AL_MOD[(+alPad("modelo"))-1].n, padMet = alMetTxt(+alPad("met"));
     return `<div class="trecho al-c" data-alq="${q.id}">
-      <div class="al-tit"><b>${esc(it.nome)}</b><b class="al-dj">${r?.disj?`disjuntor ${r.polos} ${r.disj} A`:"sem disjuntor"}</b>${dmIguais(q)>1?` <span class="pilula">×${dmIguais(q)}</span>`:""}<span>${q.local?esc(q.local)+" · ":""}${({tri:"trifásico",bi:"bifásico",mono:"monofásico"})[p.fases]} ${esc(p.tensTxt)} · demanda ${r?.Dt>0?fmt(r.Dt,2):"—"} kVA · I = ${r?.I>0?fmt(r.I,1):"—"} A</span></div>
+      <div class="al-tit"><b>${esc(it.nome)}</b><b class="al-dj">${r?.disj?`disjuntor ${r.polos} ${r.disj} A`:"sem disjuntor"}${p.jus ? ` · a montante ${p.jus.InMont > 0 ? fmt(p.jus.InMont) + " A" : "—"}` : ""}</b>${dmIguais(q)>1?` <span class="pilula">×${dmIguais(q)}</span>`:""}<span>${q.local?esc(q.local)+" · ":""}${({tri:"trifásico",bi:"bifásico",mono:"monofásico"})[p.fases]} ${esc(p.tensTxt)} · demanda ${r?.Dt>0?fmt(r.Dt,2):"—"} kVA · I = ${r?.I>0?fmt(r.I,1):"—"} A</span></div>
       <div class="al-cab">
         <label class="campo">Comprimento<span class="unid"><input data-af="L" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.atOn ? String(num(a.atLbt) + num(a.atLat)) : (a.L ?? ""))}" placeholder="0" ${a.atOn ? 'disabled title="Com autotransformador, informe os dois comprimentos abaixo"' : ""}><b>m</b></span></label>
         <label class="campo al-w2">Método de instalação${alSel("met", a.met ?? "", alOpsMet(), `Padrão · ${padMet}`)}</label>
@@ -8813,9 +8847,9 @@ function renderAliLista(){
         <label class="campo">Queda máx. neste trecho<span class="unid"><input data-af="dv" type="number" min="0.1" step="0.1" inputmode="decimal" value="${esc(a.dv ?? "")}" placeholder="${dmPai(q) ? `auto ${fmt(p.dvAuto*100,2)}` : fmt(p.dvTot*100,1)}" title="Em branco: segue o limite geral (o que sobra do limite acumulado). Preenchido: limite só deste trecho."><b>%</b></span></label>
         <label class="campo">Cabos em paralelo por fase<input data-af="npar" type="number" min="1" step="1" inputmode="numeric" value="${esc(a.npar ?? "")}" placeholder="1"></label>
         <label class="campo">Corrente de projeto<span class="unid"><input data-af="ib" type="number" min="0" step="any" inputmode="decimal" value="${esc(a.ib ?? "")}" placeholder="${r?.I>0?fmt(r.I,1):"0"}"><b>A</b></span></label>
-        <label class="campo">Disjuntor<span class="unid"><input data-af="in" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.in ?? "")}" placeholder="${r?.disj||""}"><b>A</b></span></label>
+        <label class="campo">${a.jusOn ? "Disjuntor a jusante" : "Disjuntor"}<span class="unid"><input data-af="in" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.in ?? "")}" placeholder="${r?.disj||""}" ${a.jusOn ? 'title="Disjuntor geral do quadro alimentado: protege o cabo contra sobrecarga"' : ""}><b>A</b></span></label>
         <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${p.iccCalc!=null ? `auto ${esc(fmt(p.iccCalc,2))}` : num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}" title="Em branco: usa a Icc presumida calculada (aba Icc presumida) ou a geral."><b>kA</b></span></label>
-        <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}"><b>s</b></span></label>
+        <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}" ${a.jusOn ? 'title="Com proteção à jusante: tempo de atuação do disjuntor a montante"' : ""}><b>s</b></span></label>
         <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
         <label class="campo">Diâmetro externo do cabo<span class="unid"><input data-af="dext" data-sec="${esc(String(it.res?.p?.S ?? ""))}" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(p.dextMan > 0 && p.dextS===it.res?.p?.S ? a.dext : "")}" placeholder="${it.duto?.dCaboCat ? `${fmt(it.duto.dCaboCat,1)} (catálogo)` : "mm"}" title="Em branco: diâmetro do catálogo para a seção calculada. Preenchido: vale para a seção atual e entra na reatância (queda de tensão) e no eletroduto."><b>mm</b></span></label>
         <label class="campo">Eletroduto${alSel("dutoTipo", a.dutoTipo ?? "", [["rigido","Rígido roscável"],["kanaflex","PEAD corrugado (Kanaflex)"]], `Padrão · ${(it.duto?.tipo || (it.res?.solo ? "kanaflex" : "rigido"))==="kanaflex" ? "Kanaflex" : "rígido"}`)}</label>
@@ -8824,6 +8858,8 @@ function renderAliLista(){
         ${a.motOn ? alMotCampos(q, a, p) : ""}
         <label class="chave al-w2" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-af="atOn" ${a.atOn?"checked":""}> Usar autotransformador (elevador/abaixador)</label>
         ${a.atOn ? alAtCampos(q, a, p) : ""}
+        <label class="chave al-w2" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-af="jusOn" ${a.jusOn?"checked":""}> Proteção à jusante</label>
+        ${a.jusOn ? alJusCampos(q, a, p) : ""}
       </div>
       <div class="tr-res" data-res></div><div class="al-av" data-av></div></div>`; }).join("")
     : `<p class="vazio">Nenhum quadro no cálculo de demanda.</p>`;
@@ -8844,6 +8880,13 @@ function alAtCampos(q, a, p){
     ${n("atEta", ["Rendimento", String(AL_AT_ETA)], "%")}
     <label class="campo">Enrolamento${alSel("atEnr", a.atEnr ?? "", [["cu","Cobre"],["al","Alumínio"]], "Não informado")}</label>
     ${n("atPk", ["Perdas em carga (Pk)", t.ur && t.urPad && t.Sn ? `${fmt(t.ur/100*t.Sn*1000,0)} (adotada)` : "W"], "W", "1")}
+  </div></div>`;
+}
+function alJusCampos(q, a, p){
+  const n = (k, ph, u, st) => `<label class="campo">${ph[0]}<span class="unid"><input data-af="${k}" type="number" min="0" step="${st||"any"}" inputmode="decimal" value="${esc(a[k] ?? "")}" placeholder="${esc(ph[1])}">${u ? `<b>${u}</b>` : ""}</span></label>`;
+  return `<div class="al-mot al-w2" style="grid-column:1/-1"><small>Proteção à jusante · sobrecarga pelo disjuntor do quadro alimentado (${p.In > 0 ? fmt(p.In) + " A" : "sem disjuntor"}); curto-circuito pelo disjuntor a montante, no quadro de origem (NBR 5410, 5.3.4.2.2 e 5.3.5.5.3). Sem nenhuma derivação ou tomada entre os dois disjuntores; não vale em esquema IT. A duração do curto é o tempo de atuação do montante.</small><div class="al-cab">
+    ${n("inMont", ["Disjuntor a montante", "informe"], "A", "1")}
+    ${n("jusMag", ["Magnético do montante", `${fmt(AL_JUS_MAG)} (fixo)`], "× In", "0.5")}
   </div></div>`;
 }
 function alMotCampos(q, a, p){
@@ -8869,14 +8912,15 @@ function atualizarAli(its){
     { const inEl = el.querySelector('[data-af="motIn"]'); if(inEl && p.mot) inEl.placeholder = p.mot.InEst ? `${fmt(p.mot.InEst,1)} (estimada)` : "da placa"; }
     el.querySelector("[data-res]").innerHTML = it.erro ? `<p class="vazio" style="margin:0;grid-column:1/-1">${esc(it.erro)}</p>` : `
       <div><small>Condutores${it.auto ? " (automático)" : " (escolhido)"}</small><strong class="al-cond">${esc(it.cond)}</strong><em>${it.semCond ? "sem dimensionamento · " : "mm² · "}${esc(AL_MOD[p.modelo-1].cur)}${it.criterio ? ` · seção definida por: <b>${esc(it.criterio)}</b>` : ""}</em></div>
-      <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${alNum(x.In) ? fmt(x.In) : "—"} A · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
+      <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${p.jus ? "jusante " : ""}${alNum(x.In) ? fmt(x.In) : "—"} A${p.jus ? ` · montante ${p.jus.InMont > 0 ? fmt(p.jus.InMont) : "—"} A` : ""} · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
       <div><small>Queda de tensão</small><strong>${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) : "—"}</strong><em>% no trecho${it.p.dvMont > 0 || dmPai(it.q) ? ` · acumulada <b>${it.dvAcum!=null ? fmt(it.dvAcum*100,2) + "%" : "—"}</b>${it.montOk ? "" : " (incompleta)"} (a montante ${fmt(p.dvMont*100,2)}%)` : ""} · ${p.dvCustom ? `limite do trecho <b>${fmt(p.dv*100,2)}%</b> (personalizado) · geral ${fmt(p.dvTot*100,1)}%` : `limite ${fmt(p.dvTot*100,1)}%`}</em></div>
-      <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²</em>`}</div>
+      <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²${p.jus ? " · disjuntor a montante" : ""}</em>`}</div>
+      ${p.jus ? `<div><small>Icc mín. no fim × magnético</small><strong class="${x.ver?.ikmin==="NÃO ATENDE" ? "falha" : ""}">${x.jusIk ? fmt(x.jusIk.Ik/1000,2) : "—"}</strong><em>kA${x.jusIk ? ` · Ia do montante ${fmt(x.jusIk.Ia/1000,2)} kA (${fmt(p.jus.mag)} × ${fmt(p.jus.InMont)} A)` : " · não verificada"}</em></div>` : ""}
       ${it.duto && !it.duto.erro ? (D=>`<div><small>Eletroduto${D.man ? " (escolhido)" : " (calculado)"}</small><strong class="${D.man && (D.man.multi || D.man.erro) ? "falha" : ""}">${D.res?.txt || "—"}</strong><em>${D.tipo==="kanaflex" ? "Kanaflex" : "rígido"} · ${D.n} cabos · Ø ${fmt(D.dCabo,1)} mm${p.dextMan > 0 && p.dextS===x.p.S ? " (informado)" : ""} · ocupação ${D.res?.ocupTxt || "—"} (máx. ${fmt(D.taxa*100,0)} %)${D.man ? ` · calculado: ${D.auto?.txt || "—"}` : ""}</em></div>`)(it.duto) : ""}
       <div><small>Seção econômica</small><strong>${it.econ ? fmt(it.econ.Se,0) : "—"}</strong><em>mm²${it.econ ? ` por cabo · catálogo ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}` : ""}</em></div>
       ${p.at && !p.at.erro ? `<div><small>Autotransformador</small><strong>${fmt(p.at.Vb)} → ${fmt(p.at.Va)} V</strong><em>${p.at.tipo==="dois" ? "elevador e abaixador" : "só elevador"} · ${fmt(p.at.Sn,1)} kVA · ${fmt(p.at.IbA,1)} A no cabo elevado · queda nos autotrafos ${fmt(p.at.dvT*100,2)} %${it.semAt ? ` · sem autotrafo: ${alS(it.semAt)} mm²` : ""}</em></div>` : ""}
       ${p.mot && !p.mot.erro ? `<div><small>Partida do motor</small><strong class="${x.ver?.part==="NÃO ATENDE" ? "falha" : ""}">${x.motPart ? fmt(x.motPart.dv*100,2) : "—"}</strong><em>% na partida (limite 10 %) · ${fmt(p.mot.Ipart,0)} A na partida${it.motOutros ? ` · outros quadros: até ${fmt(it.motOutros.dv*100,2)} % (${esc(it.motOutros.nome)})` : ""}</em></div>` : ""}
-      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor"}).filter(([k])=>x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
+      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor", ikmin:"Icc mín. × magnético"}).filter(([k])=>x.ver[k]!==undefined && x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
     el.querySelector("[data-av]").innerHTML = it.avisos.length ? `<ul>${it.avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` : "";
   });
   const ok = its.filter(it=>it.ok).length, comL = its.filter(it=>it.p.L > 0).length;
@@ -8896,7 +8940,7 @@ function alRotulosDe(its){ const out = {}; its.forEach(it=>{ if(!it.res || it.er
   out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond}${it.p.at && !it.p.at.erro ? "" : " mm²"}`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${it.p.L > 0 ? fmt(it.p.L) + " m · ΔV " + (it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) + "%" + (dmPai(it.q) && it.dvAcum!=null ? ` (acum. ${fmt(it.dvAcum*100,2)}%)` : "") : "—") : "sem comprimento"}`, ok: it.ok}; }); return out; }
 function alTabela(its, cls){
   return `<table class="${cls}"><thead><tr><th>Alimentador</th><th>Sistema</th><th class="n">Ib (A)</th><th class="n">In (A)</th><th class="n">L (m)</th><th>Método</th><th>Cabo</th><th>Condutores (mm²)</th><th class="n">Iz (A)</th><th class="n">ΔV trecho (%)</th><th class="n">ΔV acumulada (%)</th><th>Situação</th></tr></thead><tbody>
-    ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}${p.IbDem?` <small>(disj.; demanda ${fmt(p.IbDem,1)})</small>`:""}</td><td class="n">${p.at && !p.at.erro ? fmt(p.In) : x&&alNum(x.In)?fmt(x.In):"—"}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
+    ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}${p.IbDem?` <small>(disj.; demanda ${fmt(p.IbDem,1)})</small>`:""}</td><td class="n">${p.at && !p.at.erro ? fmt(p.In) : x&&alNum(x.In)?fmt(x.In):"—"}${p.jus ? `<br><small>mont. ${p.jus.InMont > 0 ? fmt(p.jus.InMont) : "—"}</small>` : ""}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
       <td>${esc(it.metRef||"—")} <small>(${esc(alCod(ALT.t5[p.met-1][1]))})</small></td><td>${esc(AL_MOD[p.modelo-1].cur)}${p.mat===2?" Al":""}</td><td>${x&&!it.erro?esc(it.cond):"—"}${it.duto?.res?.txt ? `<br><small>eletroduto ${esc(it.duto.res.txt)}${it.duto.man ? " (escolhido)" : ""}</small>` : ""}</td><td class="n">${x&&alNum(x.Iz)?fmt(x.Iz,0):"—"}</td><td class="n">${it.dvTrecho!=null?fmt(it.dvTrecho*100,2):"—"}</td><td class="n">${it.dvAcum!=null?fmt(it.dvAcum*100,2)+(it.montOk?"":"*"):"—"}</td><td>${it.erro ? esc(it.erro) : it.ok ? (p.IbDem ? "atende, com ressalva (disjuntor menor que a demanda)" : "atende") : esc(it.avisos[0] || "rever")}</td></tr>`; }).join("")}</tbody></table>`;
 }
 function alMemorial(it, cls){
@@ -8913,7 +8957,7 @@ function alMemorial(it, cls){
     ${L("Corrente de projeto (Ib)", v(p.Ib,1), "A", p.IbDem ? `corrente do disjuntor: menor que a ${num(it.q.al?.ib) > 0 ? "informada" : "de demanda"} (${fmt(p.IbDem,1)} A) · ver ressalva` : num(it.q.al?.ib) > 0 ? "informada" : "cálculo de demanda")}
     ${L("Comprimento", v(p.L,1), "m", "")}
     ${L("Cabos em paralelo por fase", v(p.npar,0), "un", `corrente por cabo ${v(p.Ib/p.npar,1)} A`)}
-    ${L("Seção de cada cabo", alS(x.p.S), "mm²", it.auto ? `menor seção do catálogo que atende a todos os critérios${it.criterio ? ` · definida por: ${esc(it.criterio)}` : ""}` : "escolhida")}
+    ${L("Seção de cada cabo", alS(x.p.S), "mm²", it.auto ? it.jusIkLim ? "menor seção do catálogo que atende aos outros critérios (a Icc mínima × magnético do montante não fecha com nenhuma seção)" : `menor seção do catálogo que atende a todos os critérios${it.criterio ? ` · definida por: ${esc(it.criterio)}` : ""}` : "escolhida")}
     ${H("Queda de tensão – cálculo completo (IEC 60287)")}
     ${L("Resistência CC a 20 ºC (R₀)", v(x.R0,4), "Ω/km", "tabela 18 (classe 5)")}
     ${L("Resistência CC a θ (R')", v(x.Rl,4), "Ω/km", `R' = R₀·[1 + α·(θ − 20)], α = ${p.mat===1?"0,00393":"0,00403"}`)}
@@ -8932,7 +8976,7 @@ function alMemorial(it, cls){
     ${L("Capacidade da tabela (Itab)", v(x.Itab,0), "A", `tabela ${x.th===90?"8 (EPR/XLPE)":"7 (PVC/LSHF)"} · método ${esc(it.metRef)} · ${x.carreg} carregados`)}
     ${L("Fatores de correção", alNum(x.fc) ? fmt(x.fc,3) : esc(String(x.fc)), "–", `temperatura ${v(x.fct,2)} (tab. 11) × agrupamento ${v(x.fca,2)} (${x.nAgr} circuito${x.nAgr>1?"s":""}) × solo ${v(x.fsolo,2)}`)}
     ${L("Capacidade corrigida (Iz)", v(x.Iz,0), "A", `Iz = n × Itab × fatores · ${alSit(x.ver.iz)}`)}
-    ${L("Disjuntor (In)", v(x.In,0), "A", `${p.InDem ? "cálculo de demanda" : num(it.q.al?.in) > 0 ? "informado" : "padronizado logo acima de Ib"} · Ib ≤ In ≤ Iz: ${alSit(x.ver.coord)}`)}
+    ${L(p.jus ? "Disjuntor a jusante (In)" : "Disjuntor (In)", v(x.In,0), "A", `${p.InDem ? "cálculo de demanda" : num(it.q.al?.in) > 0 ? "informado" : "padronizado logo acima de Ib"}${p.jus ? " · disjuntor geral do quadro alimentado: protege o cabo contra sobrecarga (NBR 5410, 5.3.4.2.2: dispositivo deslocado para o fim da linha, sem derivação no trecho)" : ""} · Ib ≤ In ≤ Iz: ${alSit(x.ver.coord)}`)}
     ${p.at && !p.at.erro ? `${H("Autotransformador")}
     ${L("Tensões", `${fmt(p.at.Vb)} → ${fmt(p.at.Va)}`, "V", `${p.at.tipo==="dois" ? "elevador no início e abaixador no fim do trecho" : "só elevador: carga na tensão elevada"} · relação Vb/Va = ${fmt(p.at.r,4)}`)}
     ${L("Potência / impedância / rendimento", `${fmt(p.at.Sn,1)} kVA · ${fmt(p.at.ucc,1)} % · ${fmt(p.at.eta*100,1)} %`, "", `${p.at.SnPad ? "potência padronizada logo acima da carga" : "informada"} · carga ${fmt(p.at.Sload,1)} kVA${p.at.uccPad || p.at.etaPad ? " · valores adotados: confirme com o fabricante" : ""}`)}
@@ -8951,11 +8995,13 @@ function alMemorial(it, cls){
     ${x.motPart ? L("Queda na partida no quadro", fmt(x.motPart.dv*100,2), "%", `queda permanente acumulada ${fmt(x.motPart.base*100,2)} % + ${p.mot.fases==="tri" ? "√3" : "2"} × Σ(R·0,3 + X·0,954)·L/n × Ipartida / V = ${fmt(x.motPart.extra*100,2)} % (cos φ na partida 0,3, nota 2 de 6.5.1.3.3; alimentadores desde a origem) · limite 10 % (6.5.1.3.3) · ${alSit(x.ver.part)}`) : ""}
     ${it.motOutros ? L("Maior queda em outro quadro durante a partida", fmt(it.motOutros.dv*100,2), "%", `${esc(it.motOutros.nome)}: queda permanente + parcela da partida nos alimentadores comuns · limite ${fmt(p.dvTot*100,1)} % (6.5.1.2.1 b e 6.2.7.1)`) : ""}` : ""}
     ${H("Curto-circuito e condutor de proteção")}
+    ${p.jus ? L("Disjuntor a montante", p.jus.InMont > 0 ? fmt(p.jus.InMont) : "—", "A", `proteção à jusante: no quadro de origem, protege o trecho contra curto-circuito e pode ser maior que Iz (NBR 5410, 5.3.5.5.3) · jusante < montante: ${p.jus.InMont > 0 && alNum(x.In) ? (x.In < p.jus.InMont ? alSit("ATENDE") : `<span class="falha">não</span>`) : "—"} · não vale em esquema IT`) : ""}
+    ${p.jus ? L("Icc mínima no fim do trecho", x.jusIk ? fmt(x.jusIk.Ik/1000,2) : "—", "kA", x.jusIk ? `menor entre fase-neutro (${fmt(x.jusIk.Ik1n,2)} kA) e fase-PE (${fmt(x.jusIk.Ik1p,2)} kA), aba Icc presumida, nos bornes do disjuntor a jusante · tem que ser ≥ Ia do montante = ${fmt(p.jus.mag)} × ${fmt(p.jus.InMont)} A = ${fmt(x.jusIk.Ia/1000,2)} kA${p.jus.magPad ? " (magnético fixo adotado)" : ""} · ${alSit(x.ver.ikmin)}` : "não verificada: precisa da aba Icc presumida, do comprimento e do disjuntor a montante") : ""}
     ${it.semCurto ? L("Curto-circuito", "—", "–", "não verificado: informe a corrente de curto-circuito e o tempo") : ""}
     ${it.semCurto ? "" : L("Fator k (fase/neutro)", v(x.k,0), "–", "tabela 37")}
-    ${it.semCurto ? "" : L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,p.iccAuto?2:1)} kA${p.iccAuto ? " (Icc presumida calculada no início do alimentador)" : ""} · ${fmt(p.t,2)} s · ${alSit(x.ver.cc)}`)}
+    ${it.semCurto ? "" : L("Seção mínima pelo curto-circuito", v(x.Scc,1), "mm²", `S ≥ Icc·√t / k = ${fmt(p.icc,p.iccAuto?2:1)} kA${p.iccAuto ? " (Icc presumida calculada no início do alimentador)" : ""} · ${fmt(p.t,2)} s${p.jus ? " (atuação do disjuntor a montante)" : ""} · ${alSit(x.ver.cc)}`)}
     ${L("Condutor de proteção (PE)", alNum(x.PE) ? alS(x.PE) : "—", "mm²", "NBR 5410, tabela 58")}
-    ${it.semCurto ? "" : L("Fator k do PE / seção mínima", `${v(x.kPE,0)} / ${v(x.SccPE,1)}`, "mm²", `${esc(AL_PE[p.pe-1])} · ${alSit(x.ver.pe)}`)}
+    ${it.semCurto ? "" : L("Fator k do PE / seção mínima", `${v(x.kPE,0)} / ${v(x.SccPE,1)}`, "mm²", `${esc(AL_PE[p.pe-1])}${p.jus ? " · falta fase-PE no trecho eliminada pelo disjuntor a montante" : ""} · ${alSit(x.ver.pe)}`)}
     ${it.econ ? `${H("Dimensionamento econômico (indicativo, não entra na escolha da seção)")}
     ${L("Seção econômica (Se)", fmt(it.econ.Se,1), "mm²", `Se = (Ib/n) / (Ch·Cn) · √(e / G') · catálogo: ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}`)}
     ${L("Ch · Cn · G'", `${fmt(it.econ.Ch,4)} · ${fmt(it.econ.Cn,4)} · ${fmt(it.econ.G,1)}`, "–", `Ch = 2,66/√${fmt(it.econ.h)} h · Cn = 0,69/√(1 − 0,937^${it.econ.n}) · G' = média do custo por mm²·km (tabela de preços da planilha) · e = R$ ${fmt(it.econ.e,2)}/kWh`)}` : ""}
