@@ -9981,7 +9981,26 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   })();
   document.getElementById('btnBloquear').onclick = function(){ bloquearProjetos(); };
 
+  // Gerente já logado troca de área sem senha (a conta dele tem acesso a tudo)
+  function gerenteEscolherProjetista(){
+    var gate = document.getElementById('projetosGate');
+    gate.innerHTML = '<div class="gate-box" style="margin:30px auto; max-width:340px;">'+
+      '<img src="'+LOGO_EQUIPER+'" alt="Equiper" class="gate-logo"><h2>Ver como projetista</h2>'+
+      '<p style="font-size:12.5px;">Você continua logado como gerente; escolha de quem é a tela.</p>'+
+      '<select id="gpSelectNome" style="width:100%; font-size:15px; padding:11px 12px; border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:10px; background:var(--paper); color:var(--ink);">'+
+        (state.equipe||[]).map(function(n){ return '<option value="'+escapeHtml(n)+'">'+escapeHtml(n)+'</option>'; }).join('')+
+      '</select><button class="btn" id="gpEntrar" style="width:100%;">Entrar</button></div>';
+    document.getElementById('gpEntrar').onclick = function(){
+      var nome = document.getElementById('gpSelectNome').value; if(!nome) return;
+      nomeProjetistaAtual = nome; if(!financeiroCarregado) state.financeiro = [];
+      entrarEmProjetos(true);
+    };
+  }
   document.getElementById('navProjetos').onclick = function(){
+    if(ehGerenteLogado() && (modoDesenhista || !projetosDesbloqueado)){
+      if(modoDesenhista && !financeiroCarregado) state.financeiro = [];
+      entrarEmProjetos(false); return;
+    }
     ativarAba('projetos');
     if(!projetosDesbloqueado || modoDesenhista){
       projetosDesbloqueado = false;
@@ -9996,6 +10015,13 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   };
   document.getElementById('navProjetista').onclick = function(){
     ativarAba('projetista');
+    if(ehGerenteLogado() && (!projetosDesbloqueado || !modoDesenhista)){
+      projetosDesbloqueado = false;
+      document.getElementById('projetosGate').style.display = 'block';
+      document.getElementById('projetosConteudo').style.display = 'none';
+      if((state.equipe||[]).length) gerenteEscolherProjetista(); else mostrarGateProjetistaIndividual('projetosGate');
+      return;
+    }
     if(!projetosDesbloqueado || !modoDesenhista){
       projetosDesbloqueado = false;
       document.getElementById('projetosGate').style.display = 'block';
@@ -10008,6 +10034,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     }
   };
   document.getElementById('navFinanceiro').onclick = async function(){
+    if(!financeiroDesbloqueado && ehGerenteLogado()){ nomeFinanceiroAtual = null; await entrarEmFinanceiro(); return; }
     ativarAba('financeiro');
     if(!financeiroDesbloqueado){
       document.getElementById('financeiroGate').style.display = 'block';
