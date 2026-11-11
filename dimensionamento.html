@@ -6788,16 +6788,20 @@ function calcRes(){
 }
 const litros = v => `${fmt(Math.round(v),0)} L`;
 const RES_POR_BASE = ["pessoa","m²","m² de área","m² de piscina","m² de jardim","refeição","aluno","funcionário","hóspede","leito","lugar","banhista","vaga","kg de roupa","unidade"];
+const RES_UNID_CHAVE = "eqp-res-unidades";
+function resUnidNorm(u){ return String(u||"").trim().replace(/\s+/g," ").replace(/\bm2\b/gi,"m²").replace(/\bm3\b/gi,"m³").replace(/^(l|litros?)\s*(\/|por)\s*/i,""); }
+function resUnidadesCadastradas(){ try{ const l = JSON.parse(localStorage.getItem(RES_UNID_CHAVE) || "[]"); return Array.isArray(l) ? l.filter(Boolean) : []; }catch(e){ return []; } }
+function resCadastrarUnidade(u){ u = resUnidNorm(u); if(!u) return ""; const l = resUnidadesCadastradas().filter(x=>x.toLowerCase()!==u.toLowerCase()); l.unshift(u); try{ localStorage.setItem(RES_UNID_CHAVE, JSON.stringify(l.slice(0,60))); }catch(e){} return u; }
 function resUnidadesSugeridas(){
   const vistas = new Map(), add = u => { u = String(u||"").trim(); if(u && !vistas.has(u.toLowerCase())) vistas.set(u.toLowerCase(), u); };
-  resConsumosSalvos().forEach(c=>add(c.por)); (S.res.linhas||[]).forEach(l=>{ if(l.tipo==="outro") add(l.por); }); RES_POR_BASE.forEach(add);
+  resUnidadesCadastradas().forEach(add); resConsumosSalvos().forEach(c=>add(c.por)); (S.res.linhas||[]).forEach(l=>{ if(l.tipo==="outro") add(l.por); }); RES_POR_BASE.forEach(add);
   return [...vistas.values()];
 }
 // "10 L/m²" ou "10 l por m²" digitado no consumo: separa o número (L) e a unidade (por)
 function resSepararConsumo(L){
   const m = String(L.lpu||"").trim().match(/^([\d.,]+)\s*(?:l|litros?)?\s*(?:\/|por\b)\s*(.+)$/i);
   if(!m) return false;
-  L.lpu = m[1]; L.por = m[2].trim(); return true;
+  L.lpu = m[1]; L.por = resCadastrarUnidade(m[2]); return true;
 }
 function renderResLista(){
   const salvos = resConsumosSalvos();
@@ -6816,7 +6820,7 @@ function renderResLista(){
     ${outro ? `<div class="rs-outro">
       <label class="campo">Tipo de consumo<input data-rf="nome" value="${esc(l.nome||"")}" placeholder="Ex.: Academia" autocomplete="off"></label>
       <label class="campo">Consumo<span class="unid"><input data-rf="lpu" type="text" inputmode="decimal" value="${esc(l.lpu||"")}" placeholder="Ex.: 150 ou 10 L/m²"><b>L</b></span></label>
-      <label class="campo">por (unidade)<input data-rf="por" list="rs-por-dl" value="${esc(l.por||"")}" placeholder="digite: pessoa, m², refeição…" title="Digite qualquer unidade (ex.: m², m² de piscina, vaga). As que você usar ficam na lista." autocomplete="off"></label>
+      <label class="campo">por (unidade)<select data-rf="por">${!String(l.por||"").trim() ? `<option value="" selected>— escolha a unidade —</option>` : ""}${resUnidadesSugeridas().map(u=>`<option value="${esc(u)}" ${u===String(l.por||"").trim()?"selected":""}>${esc(u)}</option>`).join("")}<option value="__nova">+ Adicionar unidade…</option></select></label>
       <label class="campo rs-outro-fonte">De onde vem o valor (opcional, sai no memorial)<input data-rf="fonte" value="${esc(l.fonte||"")}" placeholder="Ex.: informado pelo cliente; tabela do fabricante; critério do projetista" autocomplete="off"></label>
     </div>` : ""}
     <p class="fonte rs-dica" style="margin:0 12px 10px">Como determinar: ${esc(e[5])}</p></div>`; }).join("");
@@ -6868,7 +6872,14 @@ function ligarRes(){
   $("rs-cist").addEventListener("change", e=>{ R().cisterna = e.target.checked; alt(); });
   $("rs-sup").addEventListener("change", e=>{ R().superior = e.target.checked; alt(); });
   for(const k of ["doc","rev","obs"]) $("r-"+k).addEventListener("input", e=>{ R()[k] = e.target.value; salvar(); });
-  $("rs-lista").addEventListener("input", e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; const L = R().linhas[i];
+  $("rs-lista").addEventListener("input", async e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; const L = R().linhas[i];
+    if(f==="por"){
+      if(e.target.value==="__nova"){
+        const u = await caixaPerguntar("Digite a unidade nova. Ela fica na lista para as próximas vezes.", {titulo:"Adicionar unidade", ok:"Adicionar", valor:""});
+        const nova = u == null ? "" : resCadastrarUnidade(u);
+        if(nova){ L.por = nova; resGuardarConsumo(L); }
+        renderResLista(); resumo(); salvar(); return; }
+      L.por = e.target.value; resGuardarConsumo(L); renderRes(); resumo(); salvar(); return; }
     if(f==="tipo"){
       const v = e.target.value;
       if(v==="outro"){ if(L.tipo!=="outro"){ L.tipo = "outro"; L.nome = ""; L.lpu = ""; L.por = ""; L.fonte = ""; } }
