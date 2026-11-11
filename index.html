@@ -720,6 +720,51 @@
   body.tema-escuro{ color-scheme: dark; }
   /* Tema escuro: todo texto herda a cor do tema (antes as janelas herdavam preto do body) */
   body{ color:var(--ink); }
+  /* ===== Calculadora ===== */
+  .sidebar-desktop-rodape .sidebar-calc-btn{margin-bottom:8px; text-align:left;}
+  .sidebar-desktop-rodape .sidebar-calc-btn.on{background:var(--ink); color:var(--sheet); border-color:var(--ink);}
+  .calc-jan{position:fixed; z-index:6800; width:300px; background:var(--sheet); color:var(--ink); border:1px solid var(--border); border-radius:var(--r-md); box-shadow:var(--shadow-lg); padding:10px; outline:none; font-family:'Inter',sans-serif;}
+  .calc-jan.sci{width:340px;}
+  .calc-jan[hidden]{display:none;}
+  .calc-jan:focus-visible{box-shadow:var(--shadow-lg), 0 0 0 2px var(--ink-soft);}
+  .calc-cab{display:flex; align-items:center; gap:6px; cursor:move; user-select:none; padding:0 2px 8px; touch-action:none;}
+  .calc-cab b{flex:1; font-size:13.5px;}
+  .calc-ic{font-family:inherit; background:none; border:1px solid var(--border); border-radius:8px; width:30px; height:28px; cursor:pointer; color:var(--ink); font-size:14px; line-height:1; padding:0;}
+  .calc-opc{display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .calc-seg{display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden;}
+  .calc-seg button{font-family:inherit; font-size:12px; font-weight:600; padding:5px 10px; border:none; background:var(--sheet); color:var(--ink-soft); cursor:pointer;}
+  .calc-seg button.on{background:var(--ink); color:var(--sheet);}
+  .calc-rpn{display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; cursor:pointer;}
+  .calc-ind{margin-left:auto; font-size:11px; font-weight:700; color:var(--ink-soft); letter-spacing:.4px;}
+  .calc-tela{background:var(--paper); border:1px solid var(--border); border-radius:10px; padding:8px 10px; min-height:62px; text-align:right; font-variant-numeric:tabular-nums; overflow:hidden;}
+  .calc-expr{font-size:13px; color:var(--ink-soft); min-height:18px; word-break:break-all;}
+  .calc-res{font-size:24px; font-weight:700; min-height:30px; word-break:break-all;}
+  .calc-res:not(.final){font-size:18px; color:var(--ink-soft); font-weight:600;}
+  .calc-pl, .calc-x{display:flex; justify-content:space-between; gap:10px; align-items:baseline;}
+  .calc-pl{font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+  .calc-pl span, .calc-x span{font-size:10.5px; font-weight:700; color:var(--ink-soft);}
+  .calc-x{font-size:24px; font-weight:700; border-top:1px dashed var(--border); margin-top:3px; padding-top:3px;}
+  .calc-x b, .calc-pl b{word-break:break-all;}
+  .calc-cur{display:inline-block; width:2px; height:1em; background:var(--ink-soft); margin-left:2px; vertical-align:-2px; animation:calcPisca 1s steps(1) infinite;}
+  @keyframes calcPisca{50%{opacity:0;}}
+  .calc-erro{font-size:11.5px; color:var(--red); margin-top:4px; text-align:right;}
+  .calc-g{display:grid; gap:6px; margin-top:8px;}
+  .calc-g.c4{grid-template-columns:repeat(4, minmax(0,1fr));}
+  .calc-g.c5{grid-template-columns:repeat(5, minmax(0,1fr));}
+  .calc-k{font-family:inherit; font-size:16px; font-weight:600; height:42px; border-radius:10px; border:1px solid var(--border); background:var(--sheet); color:var(--ink); cursor:pointer; padding:0; min-width:0;}
+  .calc-k:active{transform:translateY(1px);}
+  .calc-k.num{background:var(--paper);}
+  .calc-k.op{background:var(--paper); color:var(--red); font-size:19px;}
+  .calc-k.lim{color:var(--ink-soft); font-size:14px;}
+  .calc-k.ig{background:var(--ink); color:var(--sheet); border-color:var(--ink); font-size:15px;}
+  .calc-k.fx{font-size:12.5px; height:34px; background:var(--sheet);}
+  .calc-k.fx.on{background:var(--ink); color:var(--sheet);}
+  @media (max-width:900px){
+    .calc-jan, .calc-jan.sci{left:0 !important; right:0; top:auto !important; bottom:calc(60px + env(safe-area-inset-bottom,0px)); width:auto; border-radius:16px 16px 0 0; max-height:calc(100dvh - 80px); overflow-y:auto;}
+    .calc-cab{cursor:default;}
+    .calc-k{height:46px;}
+    .calc-k.fx{height:36px;}
+  }
   .rel-item-remover, .rel-planta-remover{background:none; border:1px solid var(--border); border-radius:6px; padding:3px 8px; cursor:pointer;}
   body.tema-escuro .sidebar-desktop-logo, body.tema-escuro .ci-form-cabecalho img{
     filter: drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 3px rgba(255,255,255,0.5));
@@ -10650,13 +10695,323 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     var inicial = (nomeAtual||'?').trim().charAt(0).toUpperCase();
 
     document.getElementById('sidebarDesktopRodape').innerHTML =
+      '<button class="btn secondary small sidebar-calc-btn" id="sidebarDesktopCalc" title="Calculadora comum ou científica, com ou sem RPN">🧮 Calculadora</button>'+
       '<div class="sidebar-desktop-usuario">'+
         '<div class="sidebar-desktop-avatar">'+escapeHtml(inicial)+'</div>'+
         '<div class="sidebar-desktop-usuario-info"><div class="sidebar-desktop-usuario-nome">'+escapeHtml(nomeAtual)+'</div><div class="sidebar-desktop-usuario-papel">'+escapeHtml(papelAtual)+'</div></div>'+
       '</div>'+
       '<button class="btn secondary small" id="sidebarDesktopBloquear">🔒 Bloquear</button>';
     document.getElementById('sidebarDesktopBloquear').onclick = funcaoBloquear;
+    document.getElementById('sidebarDesktopCalc').onclick = abrirCalculadora;
+    calcMarcarBotao();
   }
+
+  // ================= Calculadora (comum / científica, com ou sem RPN) =================
+  // Janela flutuante aberta pelo botão acima do nome na lateral (no celular: menu "Mais").
+  // Algébrica: digita a expressão inteira, respeita a precedência (2 + 3 × 4 = 14), "200 + 10 %" = 220.
+  // RPN: pilha de 4 níveis (X, Y, Z, T) como nas HP — ENTER, x↔y, R↓, LASTx.
+  var calcCfg = { modo:'comum', rpn:false, ang:'deg', x:null, y:null };
+  try{ Object.assign(calcCfg, JSON.parse(localStorage.getItem('equiper-calc') || '{}')); }catch(e){}
+  function calcGuardarCfg(){ try{ localStorage.setItem('equiper-calc', JSON.stringify(calcCfg)); }catch(e){} }
+  var calcAlg = { toks:[], ans:0, feito:false, exprFeita:'' };
+  var calcPilha = { st:[0,0,0,0], buf:null, lift:true, lastX:0 };
+  var calcSeg = false, calcErro = '';
+
+  function calcFmt(n, copia){
+    if(typeof n !== 'number' || isNaN(n)) return 'Erro';
+    if(!isFinite(n)) return n > 0 ? '∞' : '−∞';
+    if(n === 0) return '0';
+    var a = Math.abs(n);
+    if(a >= 1e12 || a < 1e-9){
+      var p = n.toExponential(9).split('e'), m = p[0].replace(/\.?0+$/, '');
+      return m.replace('.', ',').replace('-', '−') + 'E' + (+p[1]);
+    }
+    var r = parseFloat(n.toPrecision(12));
+    if(copia) return String(r).replace('.', ',');
+    return r.toLocaleString('pt-BR', { maximumFractionDigits: 10 }).replace('-', '−');
+  }
+  function calcNumTxt(t){ return parseFloat(String(t).replace(/\./g, '').replace(',', '.').replace('E', 'e').replace(/−/g, '-')); }
+  function calcRad(v){ return calcCfg.ang === 'deg' ? v * Math.PI / 180 : v; }
+  function calcGrau(v){ return calcCfg.ang === 'deg' ? v * 180 / Math.PI : v; }
+  function calcLimpa(v){ return Math.abs(v) < 1e-14 ? 0 : v; }
+  function calcFat(n){ if(n < 0 || n !== Math.floor(n) || n > 170) return NaN; var r = 1; for(var i = 2; i <= n; i++) r *= i; return r; }
+  var CALC_FUN = {
+    'sin': function(v){ return calcLimpa(Math.sin(calcRad(v))); }, 'cos': function(v){ return calcLimpa(Math.cos(calcRad(v))); },
+    'tan': function(v){ var c = Math.cos(calcRad(v)); return Math.abs(c) < 1e-15 ? NaN : calcLimpa(Math.tan(calcRad(v))); },
+    'sin⁻¹': function(v){ return calcGrau(Math.asin(v)); }, 'cos⁻¹': function(v){ return calcGrau(Math.acos(v)); }, 'tan⁻¹': function(v){ return calcGrau(Math.atan(v)); },
+    'ln': function(v){ return Math.log(v); }, 'log': function(v){ return Math.log10(v); },
+    '√': function(v){ return Math.sqrt(v); }, '∛': function(v){ return Math.cbrt(v); }, 'abs': function(v){ return Math.abs(v); }
+  };
+
+  // ---------- modo algébrico: avalia a lista de "peças" (sem eval) ----------
+  function calcAvaliar(toks){
+    var i = 0, abertos = 0;
+    function ve(){ return toks[i]; }
+    function ehNum(t){ return t != null && /^[0-9,]+$/.test(t); }
+    function iniciaPrimario(t){ return t != null && (ehNum(t) || t === 'π' || t === 'e' || t === 'Ans' || t === '(' || /\($/.test(t)); }
+    function primario(){
+      var t = ve();
+      if(t == null) throw 0;
+      if(ehNum(t)){ i++; if(t === ',') throw 0; return calcNumTxt(t); }
+      if(t === 'π'){ i++; return Math.PI; }
+      if(t === 'e'){ i++; return Math.E; }
+      if(t === 'Ans'){ i++; return calcAlg.ans; }
+      if(t === '('){ i++; var v = soma().v; if(ve() === ')') i++; return v; }
+      if(/\($/.test(t)){ var f = CALC_FUN[t.slice(0, -1)]; i++; var a = soma().v; if(ve() === ')') i++; return f(a); }
+      throw 0;
+    }
+    function posfixo(){
+      var v = primario(), pct = false;
+      while(true){
+        var t = ve();
+        if(t === '!'){ i++; v = calcFat(v); }
+        else if(t === '²'){ i++; v = v * v; }
+        else if(t === '³'){ i++; v = v * v * v; }
+        else if(t === '%'){ i++; v = v / 100; pct = true; }
+        else break;
+      }
+      return { v:v, pct:pct };
+    }
+    function potencia(){
+      var p = posfixo(), v = p.v;
+      if(ve() === 'E'){ i++; var ex = unario().v; v = v * Math.pow(10, ex); p.pct = false; }
+      if(ve() === '^'){ i++; v = Math.pow(v, unario().v); p.pct = false; }
+      else if(ve() === 'ʸ√'){ i++; var idx = unario().v; v = Math.pow(v, 1 / idx); p.pct = false; }
+      return { v:v, pct:p.pct };
+    }
+    function unario(){
+      var t = ve();
+      if(t === '−'){ i++; var r = unario(); return { v:-r.v, pct:r.pct }; }
+      if(t === '+'){ i++; return unario(); }
+      return potencia();
+    }
+    function produto(){
+      var r = unario(), v = r.v, pct = r.pct, n = 1;
+      while(true){
+        var t = ve();
+        if(t === '×'){ i++; v *= unario().v; n++; }
+        else if(t === '÷'){ i++; v /= unario().v; n++; }
+        else if(iniciaPrimario(t)){ v *= unario().v; n++; }
+        else break;
+      }
+      return { v:v, pct: n === 1 && pct };
+    }
+    function soma(){
+      var r = produto(), v = r.v;
+      while(true){
+        var t = ve();
+        if(t === '+' || t === '−'){ i++; var d = produto(); var dv = d.pct ? v * d.v : d.v; v = t === '+' ? v + dv : v - dv; }
+        else break;
+      }
+      return { v:v };
+    }
+    if(!toks.length) return 0;
+    var res = soma().v;
+    while(ve() === ')') i++;
+    if(i < toks.length) throw 0;
+    return res;
+  }
+  function calcTentar(){ try{ var v = calcAvaliar(calcAlg.toks); return typeof v === 'number' ? v : NaN; }catch(e){ return null; } }
+  function calcExprTxt(toks){
+    return toks.map(function(t, i){
+      var ant = toks[i - 1];
+      if(/^[0-9,]+$/.test(t)) return t;
+      if(t === 'Ans') return calcFmt(calcAlg.ans);
+      if(t === '−' && (ant == null || ['+','−','×','÷','^','E','ʸ√','('].indexOf(ant) !== -1 || /\($/.test(ant))) return '−';
+      if(['+','−','×','÷'].indexOf(t) !== -1) return ' ' + t + ' ';
+      return t;
+    }).join('').replace(/\s+/g, ' ').trim();
+  }
+  function calcAlgTecla(k){
+    var T = calcAlg.toks, ult = T[T.length - 1];
+    var ehNum = function(t){ return t != null && /^[0-9,]+$/.test(t); };
+    var operador = function(t){ return ['+','−','×','÷','^','E','ʸ√'].indexOf(t) !== -1; };
+    if(calcAlg.feito){
+      // depois do "=": número novo começa outra conta; operador continua com o resultado
+      if(/^[0-9,]$/.test(k) || k === 'π' || k === 'e' || k === '(' || /\($/.test(k)){ T.length = 0; }
+      else if(operador(k) || ['²','³','!','%','1/x','±'].indexOf(k) !== -1){ T.length = 0; T.push('Ans'); }
+      calcAlg.feito = false; ult = T[T.length - 1];
+    }
+    if(/^[0-9]$/.test(k)){ if(ehNum(ult)) T[T.length - 1] = (ult === '0' ? '' : ult) + k; else T.push(k); }
+    else if(k === ','){ if(ehNum(ult)){ if(ult.indexOf(',') === -1) T[T.length - 1] = ult + ','; } else T.push('0,'); }
+    else if(k === 'AC'){ T.length = 0; calcAlg.exprFeita = ''; }
+    else if(k === '⌫'){ if(ehNum(ult) && ult.length > 1) T[T.length - 1] = ult.slice(0, -1); else T.pop(); }
+    else if(k === '±'){
+      // troca o sinal do último número (ou da expressão inteira, se terminar em ")")
+      var j = T.length - 1; while(j >= 0 && !ehNum(T[j]) && T[j] !== 'π' && T[j] !== 'e' && T[j] !== 'Ans' && T[j] !== ')') j--;
+      if(j < 0) T.push('−');
+      else if(T[j - 1] === '−' && (j - 1 === 0 || operador(T[j - 2]) || T[j - 2] === '(' || /\($/.test(T[j - 2] || ''))) T.splice(j - 1, 1);
+      else T.splice(j, 0, '−');
+    }
+    else if(['+','−','×','÷','^','E','ʸ√'].indexOf(k) !== -1){
+      if(!T.length && k !== '−'){ T.push('Ans'); }
+      if(operador(ult) && !(k === '−' && ult !== '−')) T[T.length - 1] = k; else T.push(k);
+    }
+    else if(k === '1/x'){ T.unshift('1', '÷', '('); T.push(')'); }
+    else if(k === '=' ){
+      var v = calcTentar();
+      if(v == null || isNaN(v)){ calcErro = 'Expressão incompleta ou inválida'; return; }
+      calcAlg.exprFeita = calcExprTxt(T) + ' ='; calcAlg.ans = v; T.length = 0; calcAlg.feito = true;
+    }
+    else T.push(k);
+  }
+
+  // ---------- modo RPN (pilha X Y Z T) ----------
+  function calcRpnX(){ var P = calcPilha; return P.buf != null ? calcNumTxt(P.buf.replace(/E$/, '').replace(/E−?$/, '')) || 0 : P.st[0]; }
+  function calcRpnFecha(){ var P = calcPilha; if(P.buf != null){ var v = calcRpnX(); P.st[0] = isNaN(v) ? 0 : v; P.buf = null; } }
+  function calcRpnSobe(){ var s = calcPilha.st; s[3] = s[2]; s[2] = s[1]; s[1] = s[0]; }
+  function calcRpnDesce(){ var s = calcPilha.st; s[1] = s[2]; s[2] = s[3]; }
+  function calcRpnTecla(k){
+    var P = calcPilha, s = P.st;
+    var bin = { '+':function(y,x){ return y + x; }, '−':function(y,x){ return y - x; }, '×':function(y,x){ return y * x; }, '÷':function(y,x){ return y / x; }, '^':function(y,x){ return Math.pow(y, x); }, 'ʸ√':function(y,x){ return Math.pow(y, 1 / x); } };
+    var un = { '²':function(x){ return x * x; }, '³':function(x){ return x * x * x; }, '!':calcFat, '1/x':function(x){ return 1 / x; }, '10ˣ':function(x){ return Math.pow(10, x); }, 'eˣ':function(x){ return Math.exp(x); } };
+    if(/^[0-9]$/.test(k) || k === ','){
+      if(P.buf == null){ if(P.lift) calcRpnSobe(); P.buf = k === ',' ? '0,' : k; }
+      else if(k === ','){ if(P.buf.indexOf(',') === -1 && P.buf.indexOf('E') === -1) P.buf += ','; }
+      else P.buf = (P.buf === '0' ? '' : P.buf) + k;
+      return;
+    }
+    if(k === 'E'){ if(P.buf == null){ if(P.lift) calcRpnSobe(); P.buf = '1E'; } else if(P.buf.indexOf('E') === -1) P.buf += 'E'; return; }
+    if(k === '±'){
+      if(P.buf != null){ if(P.buf.indexOf('E') !== -1){ P.buf = P.buf.replace(/E(−?)/, function(m, g){ return g ? 'E' : 'E−'; }); } else P.buf = P.buf.charAt(0) === '−' ? P.buf.slice(1) : '−' + P.buf; }
+      else { s[0] = -s[0]; }
+      return;
+    }
+    if(k === '⌫'){ if(P.buf != null){ P.buf = P.buf.slice(0, -1); if(!P.buf || P.buf === '−'){ P.buf = null; s[0] = 0; P.lift = false; } } else { s[0] = 0; P.lift = false; } return; }
+    if(k === 'CLx'){ P.buf = null; s[0] = 0; P.lift = false; return; }
+    if(k === 'AC'){ P.buf = null; P.st = [0,0,0,0]; P.lift = false; return; }
+    calcRpnFecha();
+    if(k === 'ENTER'){ calcRpnSobe(); P.lift = false; return; }
+    if(k === 'x↔y'){ var t = s[0]; s[0] = s[1]; s[1] = t; P.lift = true; return; }
+    if(k === 'R↓'){ var x = s[0]; s[0] = s[1]; s[1] = s[2]; s[2] = s[3]; s[3] = x; P.lift = true; return; }
+    if(k === 'LASTx'){ if(P.lift) calcRpnSobe(); s[0] = P.lastX; P.lift = true; return; }
+    if(k === 'π' || k === 'e'){ if(P.lift) calcRpnSobe(); s[0] = k === 'π' ? Math.PI : Math.E; P.lift = true; return; }
+    if(k === '%'){ P.lastX = s[0]; s[0] = s[1] * s[0] / 100; P.lift = true; return; }
+    if(bin[k]){ P.lastX = s[0]; var r = bin[k](s[1], s[0]); calcRpnDesce(); s[0] = r; P.lift = true; return; }
+    var fn = un[k] || (/\($/.test(k) ? CALC_FUN[k.slice(0, -1)] : null);
+    if(fn){ P.lastX = s[0]; s[0] = fn(s[0]); P.lift = true; return; }
+  }
+
+  // ---------- tela e teclas ----------
+  function calcTeclas(){
+    var sci = calcCfg.modo === 'cientifica', R = calcCfg.rpn, g = calcSeg;
+    var c = [];
+    if(sci){
+      c.push(['2ª','fx' + (g ? ' on' : '')], [calcCfg.ang === 'deg' ? 'DEG' : 'RAD','fx'], ['π','fx'], ['e','fx'], R ? ['x↔y','fx'] : ['Ans','fx']);
+      c.push([g ? 'sin⁻¹(' : 'sin(','fx'], [g ? 'cos⁻¹(' : 'cos(','fx'], [g ? 'tan⁻¹(' : 'tan(','fx'], [g ? 'eˣ' : 'ln(','fx'], [g ? '10ˣ' : 'log(','fx']);
+      c.push([g ? '³' : '²','fx'], [g ? 'ʸ√' : '^','fx'], [g ? '∛(' : '√(','fx'], ['1/x','fx'], ['!','fx']);
+      if(R) c.push(['R↓','fx'], ['LASTx','fx'], ['abs(','fx'], ['E','fx'], ['AC','fx']);
+      else c.push(['(','fx'], [')','fx'], ['abs(','fx'], ['E','fx'], ['10ˣ','fx']);
+    } else if(R){
+      c.push(['x↔y','fx'], ['R↓','fx'], ['LASTx','fx'], ['AC','fx']);
+    }
+    var base = R
+      ? [['CLx','lim'],['⌫','lim'],['%','op'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['±'],['0'],[','],['ENTER','ig']]
+      : [['AC','lim'],['⌫','lim'],['%','op'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['±'],['0'],[','],['=','ig']];
+    return { sci: c, base: base };
+  }
+  var CALC_ROT = { '^':'xʸ', 'ʸ√':'ʸ√x', '²':'x²', '³':'x³', '!':'x!', 'E':'EXP', '√(':'√x', '∛(':'∛x', 'abs(':'|x|', 'sin(':'sin', 'cos(':'cos', 'tan(':'tan', 'sin⁻¹(':'sin⁻¹', 'cos⁻¹(':'cos⁻¹', 'tan⁻¹(':'tan⁻¹', 'ln(':'ln', 'log(':'log', '÷':'÷', '×':'×', '−':'−' };
+  function calcDesenharTela(){
+    var tela = document.getElementById('calcTela'); if(!tela) return;
+    if(calcCfg.rpn){
+      var P = calcPilha, s = P.st;
+      tela.innerHTML = ['T','Z','Y'].map(function(r, i){ return '<div class="calc-pl"><span>' + r + '</span><b>' + calcFmt(s[3 - i]) + '</b></div>'; }).join('') +
+        '<div class="calc-x"><span>X</span><b>' + (P.buf != null ? escapeHtml(P.buf) + '<i class="calc-cur"></i>' : calcFmt(s[0])) + '</b></div>';
+    } else {
+      var expr = calcExprTxt(calcAlg.toks), v = calcTentar();
+      var cima = calcAlg.feito ? calcAlg.exprFeita : (expr || '&nbsp;');
+      var baixo = calcAlg.feito ? calcFmt(calcAlg.ans) : (v != null && calcAlg.toks.length && !isNaN(v) ? calcFmt(v) : (calcAlg.toks.length ? '' : '0'));
+      tela.innerHTML = '<div class="calc-expr">' + (calcAlg.feito ? escapeHtml(cima) : (expr ? escapeHtml(expr) + '<i class="calc-cur"></i>' : '&nbsp;')) + '</div>' +
+        '<div class="calc-res' + (calcAlg.feito ? ' final' : '') + '">' + (calcAlg.feito ? '' : (baixo && expr ? '= ' : '')) + baixo + '</div>';
+    }
+    var er = document.getElementById('calcErro'); if(er){ er.textContent = calcErro; er.hidden = !calcErro; }
+    var ind = document.getElementById('calcInd'); if(ind) ind.textContent = (calcCfg.modo === 'cientifica' ? (calcCfg.ang === 'deg' ? 'DEG' : 'RAD') : '') + (calcSeg ? ' · 2ª' : '');
+  }
+  function calcDesenharTeclas(){
+    var box = document.getElementById('calcTeclas'); if(!box) return;
+    var t = calcTeclas();
+    var b = function(k){ var rot = CALC_ROT[k[0]] || k[0]; return '<button type="button" class="calc-k ' + (k[1] || 'num') + '" data-k="' + escapeHtml(k[0]) + '">' + escapeHtml(rot) + '</button>'; };
+    box.innerHTML = (t.sci.length ? '<div class="calc-g ' + (t.sci.length % 5 === 0 ? 'c5' : 'c4') + '">' + t.sci.map(b).join('') + '</div>' : '') + '<div class="calc-g c4">' + t.base.map(b).join('') + '</div>';
+    document.getElementById('calcJanela').classList.toggle('sci', calcCfg.modo === 'cientifica');
+  }
+  function calcTecla(k){
+    calcErro = '';
+    if(k === '2ª'){ calcSeg = !calcSeg; calcDesenharTeclas(); calcDesenharTela(); return; }
+    if(k === 'DEG' || k === 'RAD'){ calcCfg.ang = calcCfg.ang === 'deg' ? 'rad' : 'deg'; calcGuardarCfg(); calcDesenharTeclas(); calcDesenharTela(); return; }
+    if(calcCfg.rpn) calcRpnTecla(k);
+    else {
+      if(k === 'eˣ'){ calcAlgTecla('e'); calcAlgTecla('^'); }
+      else if(k === '10ˣ'){ calcAlgTecla('1'); calcAlgTecla('0'); calcAlgTecla('^'); }
+      else calcAlgTecla(k);
+    }
+    if(calcSeg && k !== '2ª'){ calcSeg = false; calcDesenharTeclas(); }
+    calcDesenharTela();
+  }
+  function calcValorAtual(){
+    if(calcCfg.rpn) return calcRpnX();
+    if(calcAlg.feito) return calcAlg.ans;
+    var v = calcTentar(); return v == null ? calcAlg.ans : v;
+  }
+  function calcCopiar(){
+    var v = calcValorAtual(), txt = calcFmt(v, true);
+    var ok = function(){ var b = document.getElementById('calcCopiar'); if(b){ b.textContent = '✓'; setTimeout(function(){ if(b) b.textContent = '📋'; }, 1200); } };
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function(){});
+  }
+  function calcPosicionar(){
+    var j = document.getElementById('calcJanela'); if(!j) return;
+    if(window.innerWidth <= 900){ j.style.left = ''; j.style.top = ''; return; }
+    var w = j.offsetWidth, h = j.offsetHeight;
+    var x = calcCfg.x, y = calcCfg.y;
+    if(x == null || y == null){ var lat = document.getElementById('sidebarDesktop'); x = (lat && lat.offsetWidth ? lat.offsetWidth : 240) + 12; y = window.innerHeight - h - 16; }
+    x = Math.max(8, Math.min(window.innerWidth - w - 8, x)); y = Math.max(8, Math.min(window.innerHeight - h - 8, y));
+    j.style.left = x + 'px'; j.style.top = y + 'px';
+  }
+  function abrirCalculadora(){
+    var j = document.getElementById('calcJanela');
+    if(j){ var abrir = j.hidden; j.hidden = !abrir; if(abrir){ calcDesenharTeclas(); calcDesenharTela(); calcPosicionar(); try{ j.focus({preventScroll:true}); }catch(e){} } calcMarcarBotao(); return; }
+    j = document.createElement('div'); j.id = 'calcJanela'; j.className = 'calc-jan'; j.tabIndex = 0; j.setAttribute('role', 'dialog'); j.setAttribute('aria-label', 'Calculadora');
+    j.innerHTML = '<div class="calc-cab" id="calcCab"><b>🧮 Calculadora</b><button type="button" class="calc-ic" id="calcCopiar" title="Copiar o resultado">📋</button><button type="button" class="calc-ic" id="calcFechar" title="Fechar">×</button></div>' +
+      '<div class="calc-opc"><div class="calc-seg"><button type="button" data-modo="comum">Comum</button><button type="button" data-modo="cientifica">Científica</button></div>' +
+      '<label class="calc-rpn"><input type="checkbox" id="calcRpn"> RPN</label><span class="calc-ind" id="calcInd"></span></div>' +
+      '<div class="calc-tela" id="calcTela"></div><div class="calc-erro" id="calcErro" hidden></div><div id="calcTeclas"></div>';
+    document.body.appendChild(j);
+    var marcarOpc = function(){ j.querySelectorAll('[data-modo]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-modo') === calcCfg.modo); }); document.getElementById('calcRpn').checked = !!calcCfg.rpn; };
+    marcarOpc();
+    j.querySelectorAll('[data-modo]').forEach(function(b){ b.onclick = function(){ calcCfg.modo = b.getAttribute('data-modo'); calcSeg = false; calcGuardarCfg(); marcarOpc(); calcDesenharTeclas(); calcDesenharTela(); calcPosicionar(); j.focus({preventScroll:true}); }; });
+    document.getElementById('calcRpn').onchange = function(e){
+      // leva o valor atual de um modo para o outro
+      var v = calcValorAtual(); calcCfg.rpn = e.target.checked; calcGuardarCfg();
+      if(calcCfg.rpn){ calcPilha.buf = null; if(v && !isNaN(v)){ calcRpnSobe(); calcPilha.st[0] = v; } calcPilha.lift = true; }
+      else { calcAlg.toks = []; if(v && !isNaN(v)){ calcAlg.ans = v; calcAlg.exprFeita = ''; calcAlg.toks = ['Ans']; calcAlg.feito = true; } }
+      calcDesenharTeclas(); calcDesenharTela(); calcPosicionar(); j.focus({preventScroll:true});
+    };
+    document.getElementById('calcFechar').onclick = function(){ j.hidden = true; calcMarcarBotao(); };
+    document.getElementById('calcCopiar').onclick = calcCopiar;
+    document.getElementById('calcTeclas').addEventListener('click', function(e){ var b = e.target.closest('[data-k]'); if(!b) return; calcTecla(b.getAttribute('data-k')); j.focus({preventScroll:true}); });
+    j.addEventListener('keydown', function(e){
+      if(e.target.tagName === 'INPUT') return;
+      var k = e.key, m = null;
+      if(/^[0-9]$/.test(k)) m = k;
+      else if(k === ',' || k === '.') m = ',';
+      else if(k === '+') m = '+'; else if(k === '-') m = '−'; else if(k === '*' || k === 'x') m = '×'; else if(k === '/') m = '÷';
+      else if(k === '^') m = '^'; else if(k === '%') m = '%'; else if(k === '(' || k === ')') m = calcCfg.rpn ? null : k; else if(k === '!') m = '!';
+      else if(k === 'Enter' || k === '='){ m = calcCfg.rpn ? 'ENTER' : '='; }
+      else if(k === 'Backspace') m = '⌫';
+      else if(k === 'Escape' || k === 'Delete') m = calcCfg.rpn ? (k === 'Delete' ? 'AC' : 'CLx') : 'AC';
+      else if((e.ctrlKey || e.metaKey) && (k === 'c' || k === 'C') && !String(window.getSelection())){ e.preventDefault(); calcCopiar(); return; }
+      if(m){ e.preventDefault(); calcTecla(m); }
+    });
+    // arrastar pela barra de título (computador)
+    var cab = document.getElementById('calcCab'), arr = null;
+    cab.addEventListener('pointerdown', function(e){ if(e.target.closest('button') || window.innerWidth <= 900) return; arr = { dx: e.clientX - j.offsetLeft, dy: e.clientY - j.offsetTop }; cab.setPointerCapture(e.pointerId); });
+    cab.addEventListener('pointermove', function(e){ if(!arr) return; calcCfg.x = e.clientX - arr.dx; calcCfg.y = e.clientY - arr.dy; calcPosicionar(); });
+    cab.addEventListener('pointerup', function(){ if(arr){ arr = null; calcGuardarCfg(); } });
+    window.addEventListener('resize', calcPosicionar);
+    calcDesenharTeclas(); calcDesenharTela(); calcPosicionar();
+    try{ j.focus({preventScroll:true}); }catch(e){}
+    calcMarcarBotao();
+  }
+  function calcMarcarBotao(){ var j = document.getElementById('calcJanela'), b = document.getElementById('sidebarDesktopCalc'); if(b) b.classList.toggle('on', !!(j && !j.hidden)); }
 
   function renderBarraInferiorMobile(){
     var barra = document.getElementById('barraInferiorMobile');
@@ -10705,6 +11060,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     box.innerHTML =
       '<h3 style="margin:0 0 10px;">Mais opções</h3>'+
       (resto.length ? '<div>'+htmlResto+'</div><div style="border-top:1px solid var(--border); margin:12px 0;"></div>' : '')+
+      '<div class="menu-mais-item" data-calc="1">🧮 Calculadora</div><div style="border-top:1px solid var(--border); margin:12px 0;"></div>'+
       '<div class="hint" style="margin-bottom:6px;">Trocar de área</div>'+
       htmlAreas;
     overlay.style.display = 'flex';
@@ -10715,6 +11071,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         if(ehFinanceiro){ ativarTopicoFinanceiro(id); } else { ativarTopicoProjetos(id); }
       };
     });
+    var calcIt = box.querySelector('[data-calc]'); if(calcIt) calcIt.onclick = function(){ fecharDiaModal(); var j = document.getElementById('calcJanela'); if(!j || j.hidden) abrirCalculadora(); };
     box.querySelectorAll('.menu-mais-item[data-area]').forEach(function(el){
       el.onclick = function(){
         fecharDiaModal();
