@@ -488,6 +488,11 @@
   .vf-leg-pdf{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:8.5pt;}
   .vf-leg-pdf span{display:inline-flex; align-items:center; gap:4px;}
   .vf-leg-pdf .eq-sigla{margin-left:0;}
+  .cli-tag.sp{background:var(--blue-soft, #e8f0fe); color:#1d4ed8;}
+  body.tema-escuro .cli-tag.sp{background:rgba(96,165,250,.18); color:#93c5fd;}
+  .cli-abas{display:flex; gap:2px; border-bottom:1px solid var(--border); margin:0 0 10px; overflow-x:auto;}
+  .cli-aba{font-family:inherit; background:none; border:none; border-bottom:2px solid transparent; padding:9px 14px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; white-space:nowrap;}
+  .cli-aba.on{color:var(--ink); border-bottom-color:var(--red);}
   .ficha-fin{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12.5px;}
   .ficha-fin > div{display:flex; flex-direction:column;}
   .card.card-destaque{box-shadow:0 0 0 3px var(--red) !important;}
@@ -1594,6 +1599,12 @@
       var chaveNorm = normalizarTexto(finRec.cliente);
       var projetoExistente = state.projetos.find(function(p){ return normalizarTexto(p.nome) === chaveNorm; });
       if(!projetoExistente){
+        var base = normalizarTexto(String(finRec.cliente||'').replace(/\s*\([^)]*\)\s*$/, ''));
+        var semProj = state.projetos.find(function(p){ return (p.semProjeto || p.finIdPendente === finRec.id) && (p.finIdPendente === finRec.id || normalizarTexto(p.nome) === base); });
+        if(semProj){ var pidAnt = semProj.id; semProj.nome = finRec.cliente; semProj.cliente = finRec.cliente; delete semProj.semProjeto; delete semProj.finIdPendente; mudouProjetos = true; migrarDimensionamentoDoCliente(pidAnt, finRec.id); return; }
+      }
+      if(projetoExistente && (projetoExistente.semProjeto || projetoExistente.finIdPendente)){ delete projetoExistente.semProjeto; delete projetoExistente.finIdPendente; mudouProjetos = true; }
+      if(!projetoExistente){
         state.projetos.push({ id: uid('pj'), nome: finRec.cliente, cliente: finRec.cliente });
         mudouProjetos = true;
       }
@@ -2354,6 +2365,7 @@
     });
     await saveFinanceiro();
     salvarClientesEquipe();
+    setTimeout(processarFechamentosPendentes, 1500);
     if(projetosCarregado){
       if(sincronizarProjetosComFinanceiro()){ render(); }
     }
@@ -2405,6 +2417,7 @@
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-consideracao" data-nome="'+escapeHtml(nome)+'" '+(perm.consideracaoInicial?'checked':'')+'> Pode criar consideração inicial</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-art" data-nome="'+escapeHtml(nome)+'" '+(perm.art?'checked':'')+'> Pode criar ART</label>'+
           '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-comissao" data-nome="'+escapeHtml(nome)+'" '+(perm.verComissao?'checked':'')+'> Pode ver comissão</label>'+
+          '<label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" class="chk-perm-cliente" data-nome="'+escapeHtml(nome)+'" '+(perm.criarCliente?'checked':'')+'> Pode criar clientes (sem projeto e “Fechou projeto”)</label>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -2445,6 +2458,14 @@
         var nome = chk.getAttribute('data-nome');
         if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
         state.permissoesProjetista[nome].art = chk.checked;
+        savePermissoesProjetista();
+      };
+    });
+    lista.querySelectorAll('.chk-perm-cliente').forEach(function(chk){
+      chk.onchange = function(){
+        var nome = chk.getAttribute('data-nome');
+        if(!state.permissoesProjetista[nome]) state.permissoesProjetista[nome] = {};
+        state.permissoesProjetista[nome].criarCliente = chk.checked;
         savePermissoesProjetista();
       };
     });
@@ -2574,7 +2595,7 @@
       var row = document.createElement('div');
       row.className = 'projeto-row';
       var nTarefas = state.tarefas.filter(function(t){ return t.projetoId === pj.id; }).length;
-      row.innerHTML = '<div class="info"><b>'+escapeHtml(pj.nome)+'</b>'+(pj.avulso ? ' <span style="font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--border);">avulso</span>' : '')+'<span>'+nTarefas+' disciplina(s)</span></div>';
+      row.innerHTML = '<div class="info"><b>'+escapeHtml(pj.nome)+'</b>'+tagSituacaoCliente(pj)+(pj.avulso ? ' <span style="font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--border);">avulso</span>' : '')+'<span>'+nTarefas+' disciplina(s)</span></div>';
       var acts = document.createElement('div');
       acts.className = 'acts';
       var addT = document.createElement('button'); addT.textContent = '+ Disciplina';
@@ -4556,17 +4577,25 @@
     if(!wrap) return;
     var busca = (document.getElementById('dimensionamentosBusca').value || '').toLowerCase();
     var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
-    if(lista.length === 0){
+    var semProj = (state.projetos || []).filter(function(p){ var s = situacaoCliente(p); return (s === 'sem' || s === 'aguardando') && (!busca || (p.nome||'').toLowerCase().indexOf(busca) !== -1); });
+    if(lista.length === 0 && semProj.length === 0){
       wrap.innerHTML = '<div class="empty-hint">Nenhum cliente encontrado.</div>';
       return;
     }
-    wrap.innerHTML = lista.map(function(f){
+    var htmlSem = semProj.length ? '<div class="sidebar-desktop-titulo-grupo" style="margin:14px 0 6px;">Sem projeto · '+semProj.length+'</div>' + semProj.map(function(p){
+      var cid = p.finIdPendente || p.id, temSalvo = !!state.dimensionamentos[cid];
+      return '<div class="projeto-row" data-abrir-dim-pj="'+escapeHtml(p.id)+'" style="cursor:pointer;"><div class="info"><b>'+escapeHtml(p.nome)+'</b>'+tagSituacaoCliente(p)+'</div><span class="hint">'+(temSalvo ? '📐 já tem dimensionamento' : 'ainda não iniciado')+'</span></div>';
+    }).join('') : '';
+    wrap.innerHTML = (semProj.length && lista.length ? '<div class="sidebar-desktop-titulo-grupo" style="margin:0 0 6px;">Com projeto fechado · '+lista.length+'</div>' : '') + lista.map(function(f){
       var temSalvo = !!state.dimensionamentos[f.id];
       return '<div class="projeto-row" data-abrir-dimensionamento="'+f.id+'" style="cursor:pointer;">'+
         '<div class="info"><b>'+escapeHtml(f.cliente)+'</b>'+(f.localidade?' <span style="color:var(--ink-soft); font-weight:400; font-size:11px;">('+escapeHtml(f.localidade)+')</span>':'')+'</div>'+
         '<span class="hint">'+(temSalvo ? '📐 já tem dimensionamento' : 'ainda não iniciado')+'</span>'+
       '</div>';
-    }).join('');
+    }).join('') + htmlSem;
+    wrap.querySelectorAll('[data-abrir-dim-pj]').forEach(function(el){
+      el.onclick = function(){ var p = state.projetos.find(function(x){ return x.id === el.getAttribute('data-abrir-dim-pj'); }); if(p) abrirDimensionamentoCliente(p.finIdPendente || p.id, p.nome); };
+    });
     wrap.querySelectorAll('[data-abrir-dimensionamento]').forEach(function(el){
       el.onclick = function(){
         var clienteId = el.getAttribute('data-abrir-dimensionamento');
@@ -4648,6 +4677,7 @@
             var dadosC = state.dimensionamentos[cidAbrir] || null;
             dimBase[cidAbrir] = dadosC ? JSON.stringify(dadosC) : null; dimMeus[cidAbrir] = []; dimConflito[cidAbrir] = false;
             var fAtual = state.financeiro.find(function(x){ return x.id === cidAbrir; });
+            if(!fAtual){ var pjDim = state.projetos.find(function(x){ return x.id === cidAbrir || x.finIdPendente === cidAbrir; }); if(pjDim) fAtual = { id: cidAbrir, cliente: pjDim.nome, enderecoCompleto: pjDim.endereco || '' }; }
             iframe.contentWindow.postMessage({
               tipo: 'carregar-dimensionamento',
               clienteId: cidAbrir,
@@ -5286,6 +5316,163 @@
     if(r.modo === 'itens' && r.itens) return r.itens.map(function(it){ return [it.titulo, it.texto].filter(Boolean).join(': '); }).join(' · ');
     return r.texto || '';
   }
+  // ================= Clientes: com projeto fechado × sem projeto =================
+  // "Sem projeto" = cliente criado no app só para visita técnica, dimensionamento, orçamento de equipamento etc.
+  // Fica em clm-projetos com semProjeto:true (não entra no Financeiro). Tem tudo o que os outros têm (tarefas, visitas, verificações, cálculos).
+  // "Fechou projeto": abre o cadastro do Financeiro já preenchido; ao salvar o cliente vai para o Financeiro e o histórico vem junto.
+  //   gerente → grava direto em clm-financeiro; projetista → manda para storage/clm-fechamentos-pendentes, que o gerente/financeiro
+  //   incorpora sozinho ao abrir o painel (projetista não lê o financeiro completo).
+  var MOTIVOS_SEM_PROJETO = ['Visita técnica','Dimensionamento','Orçamento de equipamento','Outro'];
+  function podeCriarCliente(){ return !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{}).criarCliente; }
+  function finDoProjeto(p){ var k = chaveNomeCliente(p.cliente || p.nome); return (state.financeiro||[]).find(function(f){ return chaveNomeCliente(f.cliente) === k; }) || null; }
+  function situacaoCliente(p){
+    if(!p) return 'fechado';
+    if(finDoProjeto(p)) return 'fechado';
+    if(p.finIdPendente) return 'aguardando';
+    if(p.semProjeto) return 'sem';
+    return 'fechado';
+  }
+  function tagSituacaoCliente(p){
+    var s = situacaoCliente(p);
+    if(s === 'sem') return ' <span class="cli-tag sp">sem projeto</span>';
+    if(s === 'aguardando') return ' <span class="cli-tag a">⏳ aguardando financeiro</span>';
+    return '';
+  }
+
+  function abrirFormClienteSemProjeto(pid, aoCriar){
+    var p = pid ? state.projetos.find(function(x){ return x.id === pid; }) : null;
+    var v = function(k){ return p && p[k] ? escapeHtml(p[k]) : ''; };
+    var overlay = document.getElementById('diaModalOverlay'), box = document.getElementById('diaModalBox');
+    box.classList.remove('dia-modal-grande');
+    box.innerHTML = '<div class="hist-cab"><div><h3>'+(p ? 'Cadastro do cliente' : 'Novo cliente sem projeto')+'</h3><div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">Só o nome é obrigatório. Se fechar projeto, o resto é preenchido no cadastro do Financeiro.</div></div><button class="btn small secondary" id="btnFecharDiaModal">Fechar</button></div>'+
+      '<div class="form-grid">'+
+        '<div class="full"><label>Nome do cliente *</label><input type="text" id="csNome" value="'+v('nome')+'" placeholder="Nome do cliente"></div>'+
+        '<div><label>Motivo</label><select id="csMotivo"><option value="">—</option>'+MOTIVOS_SEM_PROJETO.map(function(m){ return '<option'+(p && p.motivo === m ? ' selected' : '')+'>'+m+'</option>'; }).join('')+'</select></div>'+
+        '<div><label>Contato (pessoa)</label><input type="text" id="csContato" value="'+v('contato')+'"></div>'+
+        '<div><label>Telefone / WhatsApp</label><input type="tel" id="csTelefone" value="'+v('telefone')+'"></div>'+
+        '<div><label>Email</label><input type="email" id="csEmail" value="'+v('email')+'"></div>'+
+        '<div class="full"><label>Endereço da obra</label><input type="text" id="csEndereco" value="'+v('endereco')+'" placeholder="Rua, número, bairro, cidade"></div>'+
+        '<div><label>Localidade</label><input type="text" id="csLocalidade" value="'+v('localidade')+'" placeholder="Ex.: Leblon, Petrópolis…"></div>'+
+        '<div><label>Origem / quem indicou</label><input type="text" id="csOrigem" value="'+v('origem')+'"></div>'+
+        '<div class="full"><label>Observações</label><textarea id="csObs" rows="3">'+(p && p.obsCliente ? escapeHtml(p.obsCliente) : '')+'</textarea></div>'+
+        '<div class="full error" id="csErro" style="display:none"></div>'+
+        '<div class="form-actions"><button class="btn" id="csSalvar">'+(p ? 'Salvar' : 'Criar cliente')+'</button></div>'+
+      '</div>';
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
+    setTimeout(function(){ var n = document.getElementById('csNome'); if(n && !p) n.focus(); }, 30);
+    document.getElementById('csSalvar').onclick = async function(){
+      var nome = document.getElementById('csNome').value.trim(), erro = document.getElementById('csErro');
+      if(!nome){ erro.textContent = 'Informe o nome do cliente.'; erro.style.display = 'block'; return; }
+      var k = chaveNomeCliente(nome);
+      var igual = state.projetos.find(function(x){ return x !== p && chaveNomeCliente(x.cliente || x.nome) === k; });
+      if(igual){ erro.textContent = 'Já existe um cliente com esse nome (' + igual.nome + ').'; erro.style.display = 'block'; return; }
+      var campos = { motivo:'csMotivo', contato:'csContato', telefone:'csTelefone', email:'csEmail', endereco:'csEndereco', localidade:'csLocalidade', origem:'csOrigem', obsCliente:'csObs' };
+      var alvo = p;
+      if(!alvo){ alvo = { id: uid('pj'), semProjeto: true, criadoPor: nomeLogado(), criadoEm: todayISO() }; state.projetos.push(alvo); }
+      alvo.nome = nome; alvo.cliente = nome;
+      Object.keys(campos).forEach(function(c){ var val = document.getElementById(campos[c]).value.trim(); if(val) alvo[c] = val; else delete alvo[c]; });
+      await saveProjetos();
+      fecharDiaModal(); render();
+      if(aoCriar) aoCriar(alvo);
+      else if(topicoProjetosAtivo === 'status'){ if(fichaClienteAtual === alvo.id) renderFichaCliente(); else renderClientesPagina(); }
+    };
+  }
+
+  // "Fechou projeto": cadastro completo do Financeiro já preenchido com o que se sabe do cliente
+  function abrirFechamentoCliente(pid){
+    var p = state.projetos.find(function(x){ return x.id === pid; });
+    if(!p || !podeCriarCliente()) return;
+    var overlay = document.getElementById('diaModalOverlay'), box = document.getElementById('diaModalBox');
+    box.classList.add('dia-modal-grande');
+    box.innerHTML = '<div class="hist-cab"><div><h3>✅ Fechou projeto — '+escapeHtml(p.nome)+'</h3><div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">Informe os projetos fechados, valores, sinal e prazo, igual a um cadastro novo. Tarefas, visitas, verificações e cálculos deste cliente continuam com ele.'+(modoDesenhista ? ' O cliente entra no Financeiro assim que o gerente ou o financeiro abrirem o painel.' : '')+'</div></div><button class="btn small secondary" id="btnFecharDiaModal">Fechar</button></div><div id="fechPainel"></div>';
+    overlay.style.display = 'flex';
+    document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
+    abrirFormNovoClienteFin({
+      painel: document.getElementById('fechPainel'),
+      titulo: 'Cadastro do cliente fechado',
+      prefill: { cliente: p.nome, endereco: p.endereco || '', contato: [p.contato, p.telefone].filter(Boolean).join(' · '), localidade: p.localidade || '' },
+      aoSalvar: function(novo){ return concluirFechamentoCliente(pid, novo); },
+      aoFim: function(){ fecharDiaModal(); render(); if(topicoProjetosAtivo === 'status'){ fichaClienteAtual = pid; renderFichaCliente(); } },
+      aoCancelar: fecharDiaModal
+    });
+  }
+  async function concluirFechamentoCliente(pid, novo){
+    var p = state.projetos.find(function(x){ return x.id === pid; });
+    if(!p) return false;
+    if(!modoDesenhista){
+      var r = await lerChaveSegura('clm-financeiro', 20000);
+      if(!r.ok){ caixaAviso('Não foi possível ler o Financeiro agora (conexão?). Nada foi gravado; tente de novo.'); return false; }
+      var lista = [];
+      try{ lista = r.valor ? JSON.parse(r.valor) : []; }catch(e){ caixaAviso('O Financeiro não pôde ser lido. Nada foi gravado.'); return false; }
+      lista.push(novo);
+      try{ await window.storage.set('clm-financeiro', JSON.stringify(lista), true); }catch(e){ mostrarErroSalvamento('o cliente no Financeiro', null); return false; }
+      state.financeiro = lista; try{ salvarClientesEquipe(); }catch(e){}
+    } else {
+      try{
+        await vfComTempo(_fbDb.ref('storage/clm-fechamentos-pendentes/' + novo.id).set(JSON.stringify({ fin: novo, pid: pid, por: nomeLogado(), em: new Date().toISOString() })), 20000);
+      }catch(e){
+        caixaAviso('Não foi possível enviar o fechamento. Se o painel acabou de ser atualizado, peça ao gerente para publicar as regras novas do Firebase (passo 6). Nada foi gravado.');
+        return false;
+      }
+      p.finIdPendente = novo.id;
+      var o = {}; CAMPOS_CLIENTE_EQUIPE.forEach(function(c){ if(novo[c] !== undefined) o[c] = novo[c]; });
+      state.financeiro = (state.financeiro || []).concat([o]);
+    }
+    p.nome = novo.cliente; p.cliente = novo.cliente;
+    delete p.semProjeto; p.fechadoEm = todayISO(); p.fechadoPor = nomeLogado();
+    await saveProjetos();
+    migrarDimensionamentoDoCliente(pid, novo.id);
+    return true;
+  }
+  // cálculos feitos enquanto o cliente não tinha projeto (chave = id do cliente no quadro) passam para a chave do Financeiro
+  async function migrarDimensionamentoDoCliente(pid, finId){
+    try{
+      await _fbDb.ref('storage/clm-dimensionamentos').transaction(function(atual){
+        if(atual === null || atual === undefined) return null;   // cache vazio: o SDK confere com o servidor e repete
+        if(atual === '') return;
+        var m; try{ m = JSON.parse(atual) || {}; }catch(e){ return; }
+        if(!m[pid] || m[finId]) return;
+        m[finId] = m[pid]; delete m[pid];
+        return JSON.stringify(m);
+      });
+      if(state.dimensionamentos && state.dimensionamentos[pid] && !state.dimensionamentos[finId]){ state.dimensionamentos[finId] = state.dimensionamentos[pid]; delete state.dimensionamentos[pid]; }
+    }catch(e){}
+  }
+  // gerente / financeiro: incorpora os fechamentos enviados pelos projetistas
+  var processandoFechamentos = false;
+  async function processarFechamentosPendentes(){
+    if(modoDesenhista || processandoFechamentos) return;
+    processandoFechamentos = true;
+    try{
+      var snap = await vfComTempo(_fbDb.ref('storage/clm-fechamentos-pendentes').once('value'), 15000);
+      var v = snap && snap.exists() ? snap.val() : null;
+      if(v && typeof v === 'object' && Object.keys(v).length){
+        var r = await lerChaveSegura('clm-financeiro', 20000);
+        if(r.ok){
+          var lista = []; var okLer = true;
+          try{ lista = r.valor ? JSON.parse(r.valor) : []; }catch(e){ okLer = false; }
+          if(okLer){
+            var novos = [], ids = Object.keys(v);
+            ids.forEach(function(k){ try{ var o = JSON.parse(v[k]); if(o && o.fin && !lista.some(function(f){ return f.id === o.fin.id; })){ lista.push(o.fin); novos.push(o.fin.cliente); } }catch(e){} });
+            var gravou = true;
+            if(novos.length){ try{ await window.storage.set('clm-financeiro', JSON.stringify(lista), true); }catch(e){ gravou = false; } }
+            if(gravou){
+              state.financeiro = lista; try{ salvarClientesEquipe(); }catch(e){}
+              for(var i = 0; i < ids.length; i++){ try{ await _fbDb.ref('storage/clm-fechamentos-pendentes/' + ids[i]).remove(); }catch(e){} }
+              if(novos.length){
+                if(projetosCarregado && sincronizarProjetosComFinanceiro()) render();
+                try{ if(typeof renderFinanceiro === 'function' && document.getElementById('navFinanceiro') && document.getElementById('navFinanceiro').classList.contains('active')) renderFinanceiro(); }catch(e){}
+                caixaAviso('Projeto fechado pela equipe — entrou no Financeiro: ' + novos.join(', ') + '. Confira valores e parcelas.');
+              }
+            }
+          }
+        }
+      }
+    }catch(e){}
+    processandoFechamentos = false;
+  }
+
   async function renderClientesPagina(){
     var raiz = document.getElementById('clientesFicha');
     if(!raiz) return;
@@ -5293,18 +5480,29 @@
     if(fichaClienteAtual && state.projetos.some(function(p){ return p.id === fichaClienteAtual; })){ renderFichaCliente(); return; }
     fichaClienteAtual = null;
     var buscaAnt = document.getElementById('cliListaBusca'), valor = buscaAnt ? buscaAnt.value : '';
+    if(!modoDesenhista) processarFechamentosPendentes();
+    var abaCli = window._cliAba === 'sem' ? 'sem' : 'fechado';
     raiz.innerHTML =
+      '<div class="cli-abas"><button type="button" class="cli-aba'+(abaCli==='fechado'?' on':'')+'" data-cli-aba="fechado">✅ Com projeto fechado <span id="cliNFech"></span></button><button type="button" class="cli-aba'+(abaCli==='sem'?' on':'')+'" data-cli-aba="sem">🗂️ Sem projeto <span id="cliNSem"></span></button></div>'+
       '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">'+
         '<input type="search" id="cliListaBusca" class="hist-busca" style="max-width:360px; margin:0;" placeholder="Buscar cliente" value="'+escapeHtml(valor)+'">'+
         '<label style="font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:5px;"><input type="checkbox" id="cliSoAbertos"'+(window._cliSoAbertos?' checked':'')+'> só com tarefas em aberto</label>'+
-      '</div><div id="cliListaItens"></div>';
+        (podeCriarCliente() ? '<button type="button" class="btn small" id="cliNovoSem" style="margin-left:auto;">+ Novo cliente sem projeto</button>' : '')+
+      '</div>'+
+      (abaCli === 'sem' ? '<div class="hint" style="margin:-2px 0 10px;">Clientes que só pediram visita técnica, dimensionamento ou orçamento de equipamento. Quando fecharem projeto, use “✅ Fechou projeto”: eles vão para o Financeiro com todo o histórico.</div>' : '')+
+      '<div id="cliListaItens"></div>';
+    raiz.querySelectorAll('[data-cli-aba]').forEach(function(b){ b.onclick = function(){ window._cliAba = b.getAttribute('data-cli-aba'); renderClientesPagina(); }; });
+    if(document.getElementById('cliNovoSem')) document.getElementById('cliNovoSem').onclick = function(){ window._cliAba = 'sem'; abrirFormClienteSemProjeto(null); };
     var desenhar = function(){
       var q = normalizarTexto(document.getElementById('cliListaBusca').value);
       var soAb = document.getElementById('cliSoAbertos').checked; window._cliSoAbertos = soAb;
-      var vistos = {};
+      var vistos = {}, nFech = 0, nSem = 0;
       var linhas = state.projetos.slice().sort(function(a,b){ return (a.nome||'').localeCompare(b.nome||'', 'pt-BR', {sensitivity:'base'}); }).filter(function(p){
+        if(p.avulso) return false;
         var k = chaveNomeCliente(p.cliente || p.nome); if(vistos[k]) return false; vistos[k] = true;
-        if(q && normalizarTexto((p.nome||'')+' '+(p.cliente||'')).indexOf(q) === -1) return false;
+        var ehSem = situacaoCliente(p) === 'sem'; if(ehSem) nSem++; else nFech++;
+        if(ehSem !== (abaCli === 'sem')) return false;
+        if(q && normalizarTexto((p.nome||'')+' '+(p.cliente||'')+' '+(p.contato||'')+' '+(p.telefone||'')).indexOf(q) === -1) return false;
         return true;
       }).map(function(p){
         var d = dadosDoCliente(p.id);
@@ -5315,15 +5513,20 @@
         var st = d.fin && d.fin.disciplinasStatus ? DISCIPLINAS_FINANCEIRO.filter(function(x){ var s = d.fin.disciplinasStatus[x]; return s && s !== 'Não tem'; }).map(function(x){
           var s = d.fin.disciplinasStatus[x]; return '<span class="'+classeStatusDisciplina(s)+'" style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10.5px;margin:2px 4px 0 0;">'+escapeHtml(x)+': '+escapeHtml(s)+'</span>';
         }).join('') : '';
+        var sit = situacaoCliente(p);
+        var extraSem = sit === 'sem' ? '<div class="mut" style="font-size:12px;">'+[p.motivo, p.contato, p.telefone, p.localidade].filter(Boolean).map(escapeHtml).concat(p.criadoEm ? ['criado em '+fmtDate(p.criadoEm)] : []).join(' · ')+'</div>' : '';
         return '<div class="cli-linha" data-pid="'+escapeHtml(p.id)+'">'+
-          '<div style="min-width:0;"><b>'+escapeHtml(p.nome)+'</b>'+(d.fin && d.fin.localidade ? ' <span class="mut">· '+escapeHtml(d.fin.localidade)+'</span>' : '')+(st ? '<div>'+st+'</div>' : '')+'</div>'+
+          '<div style="min-width:0;"><b>'+escapeHtml(p.nome)+'</b>'+tagSituacaoCliente(p)+(d.fin && d.fin.localidade ? ' <span class="mut">· '+escapeHtml(d.fin.localidade)+'</span>' : '')+(st ? '<div>'+st+'</div>' : '')+extraSem+'</div>'+
           '<div class="cli-num">'+
+            (sit === 'sem' && podeCriarCliente() ? '<button type="button" class="btn small secondary" data-fechou="'+escapeHtml(p.id)+'">✅ Fechou projeto</button>' : '')+
             (atras ? '<span class="cli-tag r">'+atras+' atrasada'+(atras>1?'s':'')+'</span>' : '')+
             (esp ? '<span class="cli-tag a">'+esp+' aguardando</span>' : '')+
             '<span class="cli-tag">'+abertas.length+' em aberto</span><span class="mut">›</span></div>'+
         '</div>';
       }).join('');
-      document.getElementById('cliListaItens').innerHTML = linhas || '<div class="empty-hint">Nenhum cliente encontrado.</div>';
+      document.getElementById('cliListaItens').innerHTML = linhas || '<div class="empty-hint">'+(abaCli === 'sem' ? 'Nenhum cliente sem projeto'+(q ? ' com esse nome' : '')+'.'+(podeCriarCliente() ? ' Use “+ Novo cliente sem projeto”.' : '') : 'Nenhum cliente encontrado.')+'</div>';
+      var nf = document.getElementById('cliNFech'), ns = document.getElementById('cliNSem'); if(nf) nf.textContent = '(' + nFech + ')'; if(ns) ns.textContent = '(' + nSem + ')';
+      document.querySelectorAll('#cliListaItens [data-fechou]').forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); abrirFechamentoCliente(b.getAttribute('data-fechou')); }; });
       document.querySelectorAll('#cliListaItens .cli-linha').forEach(function(el){ el.onclick = function(){ abrirFichaCliente(el.getAttribute('data-pid')); }; });
     };
     document.getElementById('cliListaBusca').addEventListener('input', desenhar);
@@ -5356,7 +5559,14 @@
       if(fin.contato && !modoDesenhista) info.push(escapeHtml(fin.contato));
     }
     if(d.pjs.length > 1) info.push(d.pjs.length+' obras');
-    var chips = '';
+    var sitFicha = situacaoCliente(d.pj);
+    if(!fin){
+      if(d.pj.endereco) info.push(escapeHtml(d.pj.endereco)); else if(d.pj.localidade) info.push(escapeHtml(d.pj.localidade));
+      if(d.pj.contato) info.push(escapeHtml(d.pj.contato));
+      if(d.pj.telefone) info.push(escapeHtml(d.pj.telefone));
+      if(d.pj.email) info.push(escapeHtml(d.pj.email));
+    }
+    var chips = sitFicha !== 'fechado' ? tagSituacaoCliente(d.pj) + (d.pj.motivo ? ' <span class="cli-tag">'+escapeHtml(d.pj.motivo)+'</span>' : '') : '';
     if(fin && fin.disciplinasStatus){
       chips += DISCIPLINAS_FINANCEIRO.filter(function(x){ var s = fin.disciplinasStatus[x]; return s && s !== 'Não tem'; }).map(function(x){
         var s = fin.disciplinasStatus[x]; return '<span class="'+classeStatusDisciplina(s)+'" style="display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;">'+escapeHtml(x)+' · '+escapeHtml(s)+'</span>';
@@ -5382,7 +5592,8 @@
         '<div class="ficha-bts">'+
           (permRel ? '<button type="button" class="btn small secondary" id="fichaVerif">☑️ Verificações</button>' : '')+
           (permRel ? '<button type="button" class="btn small secondary" id="fichaRel">+ Relatório de visita</button>' : '')+
-          (fin ? '<button type="button" class="btn small secondary" id="fichaCalc">🧮 Abrir cálculos</button>' : '')+
+          '<button type="button" class="btn small secondary" id="fichaCalc">🧮 Abrir cálculos</button>'+
+          (sitFicha === 'sem' && podeCriarCliente() ? '<button type="button" class="btn small secondary" id="fichaCadastro">✏️ Cadastro</button><button type="button" class="btn small" id="fichaFechou">✅ Fechou projeto</button>' : '')+
           (!modoDesenhista ? '<button type="button" class="btn small" id="fichaNova" style="background:var(--red);border-color:var(--red);">+ Nova tarefa</button>' : '')+
         '</div></div>'+
       (chips ? '<div style="display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 2px;">'+chips+'</div>' : '')+
@@ -5395,7 +5606,9 @@
     if(document.getElementById('fichaNova')) document.getElementById('fichaNova').onclick = function(){ ativarTopicoProjetos('quadro'); openTarefaForm(d.pj.id, null); setTimeout(function(){ var el = document.getElementById('formPanelTarefa'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); };
     if(document.getElementById('fichaRel')) document.getElementById('fichaRel').onclick = function(){ ativarTopicoProjetos('visitas'); abrirFormRelatorioVisita(null, d.pj.id); };
     if(document.getElementById('fichaVerif')) document.getElementById('fichaVerif').onclick = function(){ abrirVerificacao(d.pj.id); };
-    if(document.getElementById('fichaCalc')) document.getElementById('fichaCalc').onclick = function(){ ativarTopicoProjetos('dimensionamentos'); setTimeout(function(){ abrirDimensionamentoCliente(fin.id, fin.cliente); }, 50); };
+    if(document.getElementById('fichaCalc')) document.getElementById('fichaCalc').onclick = function(){ var cid = fin ? fin.id : (d.pj.finIdPendente || d.pj.id), cn = fin ? fin.cliente : d.pj.nome; ativarTopicoProjetos('dimensionamentos'); setTimeout(function(){ abrirDimensionamentoCliente(cid, cn); }, 50); };
+    if(document.getElementById('fichaCadastro')) document.getElementById('fichaCadastro').onclick = function(){ abrirFormClienteSemProjeto(d.pj.id); };
+    if(document.getElementById('fichaFechou')) document.getElementById('fichaFechou').onclick = function(){ abrirFechamentoCliente(d.pj.id); };
     raiz.querySelectorAll('.ficha-aba').forEach(function(b){ b.onclick = function(){ fichaAba = b.getAttribute('data-aba'); renderFichaCliente(); }; });
     var busca = document.getElementById('fichaBusca');
     busca.addEventListener('input', function(){ fichaBusca = busca.value; desenharFichaConteudo(d); });
@@ -8663,8 +8876,9 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     ]);
   }
 
-  function abrirFormNovoClienteFin(){
-    var painel = document.getElementById('finFormPanel');
+  function abrirFormNovoClienteFin(opts){
+    opts = opts || null;
+    var painel = (opts && opts.painel) || document.getElementById('finFormPanel');
     var camposValor = DISCIPLINAS_ORCAMENTO.map(function(d){
       return '<div class="fin-disc-item"><label>'+d+'</label>'+
         '<input type="number" step="0.01" class="fnvd" data-disc="'+d+'" placeholder="0,00">'+
@@ -8672,7 +8886,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       '</div>';
     }).join('');
     painel.innerHTML =
-      '<div class="panel"><h3>Novo cliente fechado</h3>'+
+      '<div class="panel"><h3>'+escapeHtml((opts && opts.titulo) || 'Novo cliente fechado')+'</h3>'+
       '<div class="form-grid">'+
         '<div class="full"><label>Cliente</label><input type="text" id="fnCliente" placeholder="Nome do cliente"></div>'+
         '<div><label>Número da proposta</label><input type="text" id="fnNumeroProposta" placeholder="Ex: 010571"></div>'+
@@ -8735,6 +8949,13 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         '<div class="form-actions"><button class="btn" id="fnBtnSalvar">Criar cliente</button><button class="btn secondary" id="fnBtnCancelar">Cancelar</button></div>'+
       '</div></div>';
 
+    if(opts && opts.prefill){
+      var pf = opts.prefill;
+      if(pf.cliente) document.getElementById('fnCliente').value = pf.cliente;
+      if(pf.endereco) document.getElementById('fnEnderecoCompleto').value = pf.endereco;
+      if(pf.contato) document.getElementById('fnContato').value = pf.contato;
+      if(pf.localidade) document.getElementById('fnLocalidade').value = pf.localidade;
+    }
     var fnDescTipo = 'percentual';
     function atualizarBotoesDesconto(){
       document.getElementById('fnDescTipoPct').className = 'btn small' + (fnDescTipo==='percentual' ? '' : ' secondary');
@@ -8836,8 +9057,8 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     document.getElementById('fnDataSinal').addEventListener('change', recalcularDataEntrega);
     document.getElementById('fnPrazo').addEventListener('input', recalcularDataEntrega);
 
-    document.getElementById('fnBtnCancelar').onclick = function(){ painel.innerHTML = ''; };
-    document.getElementById('fnBtnSalvar').onclick = function(){
+    document.getElementById('fnBtnCancelar').onclick = function(){ painel.innerHTML = ''; if(opts && opts.aoCancelar) opts.aoCancelar(); };
+    document.getElementById('fnBtnSalvar').onclick = async function(){
       var nome = document.getElementById('fnCliente').value.trim();
       var erro = document.getElementById('fnErro');
       if(!nome){ erro.textContent = 'Informe o nome do cliente.'; erro.style.display = 'block'; return; }
@@ -8890,9 +9111,15 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         { nome:'Saldo', valor: valorSaldo, data:'', status:'Aguardar' }
       ];
       avaliarAutoCobranca(novo);
-      state.financeiro.push(novo);
-      saveFinanceiro();
-      if(projetosCarregado){ sincronizarProjetosComFinanceiro(); }
+      if(opts && opts.aoSalvar){
+        var btnS = document.getElementById('fnBtnSalvar'); btnS.disabled = true; btnS.textContent = 'Salvando…';
+        var okS = await opts.aoSalvar(novo);
+        if(!okS){ btnS.disabled = false; btnS.textContent = 'Criar cliente'; return; }
+      } else {
+        state.financeiro.push(novo);
+        saveFinanceiro();
+        if(projetosCarregado){ sincronizarProjetosComFinanceiro(); }
+      }
       var pessoaContato = (novo.contato || '').trim();
       var mensagemWhats = '\u{1F514} *NOVO CLIENTE \u2014 SINAL RECEBIDO* \u{1F4B0}\n\n'+
         '\u{1F464} Cliente: *' + novo.cliente + '*\n\n'+
@@ -8900,9 +9127,15 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
           ? '\u{1F4C5} Fazer reunião inicial com *' + pessoaContato + '*'
           : '\u{26A0}\u{FE0F} Confirmar quem é a pessoa responsável antes da reunião inicial')+
         '\n\n' + '\u25AC'.repeat(10);
-      window.open('https://wa.me/?text='+encodeURIComponent(mensagemWhats), '_blank');
+      var urlWhats = 'https://wa.me/?text='+encodeURIComponent(mensagemWhats);
       painel.innerHTML = '';
-      renderFinanceiro();
+      if(opts && opts.aoSalvar){
+        if(opts.aoFim) opts.aoFim();
+        if(await caixaConfirmar('“' + novo.cliente + '” foi para o Financeiro' + (modoDesenhista ? ' (entra assim que o gerente ou o financeiro abrirem o painel)' : '') + '. Avisar a equipe no WhatsApp?', { titulo:'Projeto fechado', ok:'Abrir WhatsApp', cancelar:'Agora não' })) window.open(urlWhats, '_blank');
+        return;
+      }
+      window.open(urlWhats, '_blank');
+      if(opts && opts.aoFim) opts.aoFim(); else renderFinanceiro();
     };
   }
 
@@ -9572,17 +9805,20 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       '<button class="btn small secondary" id="btnFecharDiaModal">Fechar</button></div>'+
       '<input type="search" class="hist-busca" id="ntBusca" placeholder="Nome do cliente" autocomplete="off">'+
       '<div id="ntLista" style="max-height:52vh; overflow:auto;"></div>'+
-      '<div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">Cliente que ainda não está na lista? <a href="#" id="ntAvulso">Criar tarefa avulsa</a></div>';
+      '<div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">Cliente que ainda não está na lista? '+(podeCriarCliente() ? '<a href="#" id="ntNovoSem">Criar cliente sem projeto</a> · ' : '')+'<a href="#" id="ntAvulso">Criar tarefa avulsa</a></div>';
     var sel = 0, atuais = [];
     function escolher(pj){ fecharDiaModal(); openTarefaForm(pj.id, null); setTimeout(function(){ var el = document.getElementById('formPanelTarefa'); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 30); }
     function desenhar(){
       var q = normalizarTexto(document.getElementById('ntBusca').value);
       atuais = state.projetos.filter(function(p){ return !q || normalizarTexto((p.nome||'')+' '+(p.cliente||'')).indexOf(q) !== -1; })
-        .sort(function(a,b){ return (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity:'base' }); }).slice(0, 60);
+        .sort(function(a,b){ var sa = situacaoCliente(a) === 'sem' ? 1 : 0, sb = situacaoCliente(b) === 'sem' ? 1 : 0; return sa - sb || (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity:'base' }); }).slice(0, 60);
       if(sel >= atuais.length) sel = 0;
+      var grupoAnt = null;
       document.getElementById('ntLista').innerHTML = atuais.length ? atuais.map(function(p, i){
         var n = state.tarefas.filter(function(t){ return t.projetoId === p.id && t.status !== 'Concluído'; }).length;
-        return '<div class="nt-item'+(i===sel?' sel':'')+'" data-i="'+i+'"><b>'+escapeHtml(p.nome)+'</b>'+(n?'<span style="margin-left:auto;font-size:11px;color:var(--ink-soft);">'+n+' em aberto</span>':'')+'</div>';
+        var g = situacaoCliente(p) === 'sem' ? 'Sem projeto' : 'Com projeto fechado', cab = '';
+        if(g !== grupoAnt){ grupoAnt = g; cab = '<div class="sidebar-desktop-titulo-grupo" style="margin:8px 0 4px;">'+g+'</div>'; }
+        return cab + '<div class="nt-item'+(i===sel?' sel':'')+'" data-i="'+i+'"><b>'+escapeHtml(p.nome)+'</b>'+tagSituacaoCliente(p)+(n?'<span style="margin-left:auto;font-size:11px;color:var(--ink-soft);">'+n+' em aberto</span>':'')+'</div>';
       }).join('') : '<div class="empty-hint">Nenhum cliente com esse nome.</div>';
       document.querySelectorAll('#ntLista .nt-item').forEach(function(el){ el.onclick = function(){ escolher(atuais[+el.getAttribute('data-i')]); }; });
     }
@@ -9594,6 +9830,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       else if(e.key === 'Enter' && atuais[sel]){ e.preventDefault(); escolher(atuais[sel]); }
     });
     document.getElementById('ntAvulso').onclick = function(e){ e.preventDefault(); fecharDiaModal(); openProjetoForm(null); };
+    if(document.getElementById('ntNovoSem')) document.getElementById('ntNovoSem').onclick = function(e){ e.preventDefault(); var nomeDig = document.getElementById('ntBusca').value.trim(); abrirFormClienteSemProjeto(null, function(pj){ escolher(pj); }); var n = document.getElementById('csNome'); if(n && nomeDig) n.value = nomeDig; };
     document.getElementById('btnFecharDiaModal').onclick = fecharDiaModal;
     desenhar();
     overlay.style.display = 'flex';
@@ -11161,6 +11398,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     if(!modoDesenhista){ criarBackupAutomaticoSeNecessario(); }
     if(!modoDesenhista && !window._hojeAbertoUmaVez){ window._hojeAbertoUmaVez = true; topicoProjetosAtivo = 'hoje'; }
     if(!projetosCarregado){ loadAll(); projetosCarregado = true; } else { render(); }
+    if(!modoDesenhista) setTimeout(processarFechamentosPendentes, 4000);
     try{ chatIniciar(); }catch(e){}
   }
 
