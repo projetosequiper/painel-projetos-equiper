@@ -420,6 +420,18 @@ details, details *{box-sizing:border-box}
 .g-pavs > b{font-size:13px;color:var(--cinza-4);align-self:center}
 
 .rs-ops{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.rs-outro{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:0 12px 8px}
+.rs-outro .rs-outro-fonte{grid-column:1/-1}
+.rs-soma-lista{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.rs-soma-it{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--cinza-2);border-radius:4px;background:var(--branco);cursor:pointer}
+.rs-soma-it input{width:18px;height:18px;flex-shrink:0}
+.rs-soma-it .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.rs-soma-it .nm small{color:var(--cinza-4);font-size:13px}
+.rs-soma-it .lt{font-weight:700;white-space:nowrap}
+.rs-soma-bts{margin-top:8px;font-size:14px}
+.rs-soma-tot{margin:12px 0 0;font-size:15px}
+.rs-somada{margin:0 0 12px;padding:10px 14px;border-left:4px solid #2563EB;background:#eef4ff;font-size:14px}
+@media(max-width:700px){.rs-outro{grid-template-columns:1fr 1fr}.rs-outro label:first-child{grid-column:1/-1}}
 .rs-op{text-align:left;background:var(--cinza-1);border:2px solid transparent;border-radius:4px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
 .rs-op:hover{border-color:var(--cinza-3)}
 .rs-op.on{border-color:var(--preto);background:var(--branco)}
@@ -1296,6 +1308,11 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
         <label class="chave"><input type="checkbox" id="rs-cist"> Cisterna</label>
       </div>
       <p class="fonte" style="margin-top:8px">Com caixa superior e cisterna, a caixa fica com 2/5 e a cisterna com 3/5 do volume total.</p>
+      <datalist id="rs-por-dl"><option value="pessoa"><option value="aluno"><option value="funcionário"><option value="hóspede"><option value="leito"><option value="lugar"><option value="refeição"><option value="banhista"><option value="vaga"><option value="m² de área"><option value="kg de roupa"></datalist>
+    </section>
+    <section class="bloco-dados" id="rs-soma-bloco">
+      <h2>Reservatório único do terreno</h2>
+      <div id="rs-soma"></div>
     </section>
     <div class="params p4" id="rs-params"></div>
     <section class="etapas">
@@ -2216,7 +2233,7 @@ function htmlObraInteira(){
     const k = HIST_CHAVE[r.mod], bak = S;
     try{
       const S2 = migrar(clone(S));
-      if(r.inst && S2.inst?.[k] && r.inst!==S2.inst[k].ativo){ const it = S2.inst[k].lista.find(x=>x.id===r.inst); if(it){ S2[k] = instNormalizar(k, it.dados || estadoNovo()[k]); S2.inst[k].ativo = r.inst; } }
+      if(r.inst && S2.inst?.[k] && r.inst!==S2.inst[k].ativo){ const it = S2.inst[k].lista.find(x=>x.id===r.inst); if(it){ const at = S2.inst[k].lista.find(x=>x.id===S2.inst[k].ativo); if(at && !at.dados) at.dados = clone(S2[k]); S2[k] = instNormalizar(k, it.dados || estadoNovo()[k]); S2.inst[k].ativo = r.inst; } }
       S2.modulo = r.mod; S = S2;
       pags.push(`<div class="r-pag">${relDe(r.mod)}</div>`);
       sumario.push(`<tr><td>${esc(NOME_MOD[r.mod]||r.mod)}${r.instNome?` · ${esc(r.instNome)}`:""}</td><td>${r.mod==="pls" ? "lista de equipamentos" : esc(r.det||"")}</td></tr>`);
@@ -3516,7 +3533,7 @@ function resumoObra(dados){
   const out = base.filter(r=>!ks.includes(HIST_CHAVE[r.mod]));
   ks.forEach(k=>{ const I = dados.inst[k];
     I.lista.forEach(it=>{
-      const d = it.id===I.ativo ? dados : {...dados, [k]: it.dados || estadoNovo()[k]};
+      const d = it.id===I.ativo ? dados : {...dados, [k]: it.dados || estadoNovo()[k], inst: {...dados.inst, [k]: {...I, ativo: it.id, lista: I.lista.map(x=>x.id===I.ativo && !x.dados ? {...x, dados: dados[k]} : x)}}};
       resumoObraBase(d).filter(r=>HIST_CHAVE[r.mod]===k).forEach(r=>out.push({...r, inst:it.id, instNome:it.nome}));
     });
   });
@@ -6725,27 +6742,78 @@ const CONSUMO_ED = [
 ];
 const edif = id => CONSUMO_ED.find(e=>e[0]===id) || CONSUMO_ED[1];
 const DIAS_RES = [3,5,7];
+/* Tipos de consumo próprios (ex.: Academia · 150 L por pessoa): a linha guarda tipo "outro", nome, lpu (L por unidade), por (unidade) e fonte.
+   O valor é informado pelo projetista e aparece assim no memorial. A lista dos já usados fica guardada neste aparelho. */
+const RES_CONS_CHAVE = "eqp-res-consumos";
+function resConsumosSalvos(){ try{ const l = JSON.parse(localStorage.getItem(RES_CONS_CHAVE) || "[]"); return Array.isArray(l) ? l.filter(c=>c && c.nome && num(c.lpu) > 0) : []; }catch(e){ return []; } }
+function resGuardarConsumo(l){
+  if(!l || l.tipo!=="outro" || !String(l.nome||"").trim() || !(num(l.lpu) > 0)) return;
+  const nome = String(l.nome).trim(), por = String(l.por||"").trim() || "pessoa";
+  let lista = resConsumosSalvos().filter(c=>c.nome.toLowerCase()!==nome.toLowerCase());
+  lista.unshift({nome, lpu:String(l.lpu), por, fonte:String(l.fonte||"").trim()});
+  try{ localStorage.setItem(RES_CONS_CHAVE, JSON.stringify(lista.slice(0, 40))); }catch(e){}
+}
+function resPlural(t){
+  const p = String(t||"").trim().split(/\s+/); let w = p[0] || ""; if(!w) return "unidades";
+  if(!/^(m²|m2|m³|kg|l|m)$/i.test(w)){
+    if(/ão$/i.test(w)) w = w.replace(/ão$/i, "ões"); else if(/[aeiouáéíóúâêôã]$/i.test(w)) w += "s"; else if(/[rz]$/i.test(w)) w += "es"; else if(/l$/i.test(w)) w = w.replace(/l$/i, "is"); else if(/m$/i.test(w)) w = w.replace(/m$/i, "ns");
+  }
+  p[0] = w; return p.join(" ");
+}
+function edifLinha(l){
+  if(l && l.tipo==="outro"){ const por = String(l.por||"").trim() || "pessoa", fonte = String(l.fonte||"").trim();
+    return ["outro", String(l.nome||"").trim() || "Outro uso", num(l.lpu), resPlural(por), "por " + por, fonte ? "Fonte do valor: " + fonte : "Valor de consumo informado pelo projetista", true]; }
+  return edif(l && l.tipo);
+}
+function resLinhasCalc(R){ return (R && Array.isArray(R.linhas) ? R.linhas : []).map(l=>{ const e = edifLinha(l), q = Math.max(0, num(l.qtd)); return {l, e, q, c: q*e[2]}; }); }
+/* Reservatório único do terreno: soma o consumo PRÓPRIO de outras edificações deste cliente (S.res.soma = {on, ids}).
+   Só o consumo de cada uma entra (não o que elas mesmas somam), então nada é contado duas vezes. O método não muda: V = consumo diário total × dias. */
+function resInstInfo(){ const I = S.inst && S.inst.res; return I && Array.isArray(I.lista) && I.lista.length > 1 ? I : null; }
+function resSomaOutras(){
+  const R = S.res, I = resInstInfo(); if(!I || !R.soma || !R.soma.on) return [];
+  const ids = Array.isArray(R.soma.ids) ? R.soma.ids : [];
+  return I.lista.filter(x=>x.id!==I.ativo && ids.includes(x.id)).map(x=>{ const linhas = resLinhasCalc(x.dados || {}); return {id:x.id, nome:x.nome || "—", linhas, diario: linhas.reduce((t,y)=>t+y.c, 0)}; });
+}
+function resSomadaEm(){
+  const I = resInstInfo(); if(!I) return [];
+  return I.lista.filter(x=>x.id!==I.ativo && x.dados && x.dados.soma && x.dados.soma.on && Array.isArray(x.dados.soma.ids) && x.dados.soma.ids.includes(I.ativo)).map(x=>({id:x.id, nome:x.nome || "—"}));
+}
 function calcRes(){
-  const R = S.res, linhas = R.linhas.map(l=>{ const e = edif(l.tipo), q = Math.max(0, num(l.qtd)); return {l, e, q, c: q*e[2]}; });
-  const diario = linhas.reduce((s,x)=>s+x.c, 0), cist = !!R.cisterna, sup = !!R.superior;
+  const R = S.res, linhas = resLinhasCalc(R), outras = resSomaOutras();
+  const proprio = linhas.reduce((s,x)=>s+x.c, 0), diario = proprio + outras.reduce((s,o)=>s+o.diario, 0), cist = !!R.cisterna, sup = !!R.superior;
   const opcoes = DIAS_RES.map(d=>{ const V = diario*d; return {d, V, sup: cist&&sup ? V*2/5 : sup ? V : 0, cist: cist&&sup ? V*3/5 : cist ? V : 0}; });
-  return {linhas, diario, opcoes, cist, sup, erro: !diario ? "Informe a quantidade de usuários" : !cist && !sup ? "Marque cisterna e/ou caixa d'água superior" : null};
+  const res = {linhas, diario, opcoes, cist, sup, erro: !diario ? "Informe a quantidade de usuários" : !cist && !sup ? "Marque cisterna e/ou caixa d'água superior" : null};
+  if(outras.length){ res.outras = outras; res.proprio = proprio; }      // só com edificações somadas (sem soma o resultado fica idêntico ao de antes — conferência)
+  return res;
 }
 const litros = v => `${fmt(Math.round(v),0)} L`;
 function renderResLista(){
-  $("rs-lista").innerHTML = S.res.linhas.map((l,i)=>{ const e = edif(l.tipo); return `<div class="trecho rs-lin" data-i="${i}">
+  const salvos = resConsumosSalvos();
+  $("rs-lista").innerHTML = S.res.linhas.map((l,i)=>{ const e = edifLinha(l), outro = l.tipo==="outro";
+    const jSalvo = outro ? salvos.findIndex(c=>c.nome.toLowerCase()===String(l.nome||"").trim().toLowerCase() && num(c.lpu)===num(l.lpu) && String(c.por||"").trim()===String(l.por||"").trim()) : -1;
+    const ops = `<optgroup label="Tabela de consumo por tipo de edificação">${CONSUMO_ED.map(x=>`<option value="${x[0]}" ${x[0]===l.tipo?"selected":""}>${x[1]} · ${fmt(x[2])} L ${x[4]}</option>`).join("")}</optgroup>`
+      + (salvos.length ? `<optgroup label="Tipos de consumo próprios">${salvos.map((c,j)=>`<option value="c${j}" ${j===jSalvo?"selected":""}>${esc(c.nome)} · ${fmt(num(c.lpu))} L por ${esc(c.por)}</option>`).join("")}</optgroup>` : "")
+      + `<option value="outro" ${outro && jSalvo<0 ? "selected" : ""}>+ Outro tipo de consumo (digitar)…</option>`;
+    return `<div class="trecho rs-lin" data-i="${i}">
     <div class="el-cab" style="grid-template-columns:2fr 1fr 40px">
-      <label class="campo">Edificação<select data-rf="tipo">${CONSUMO_ED.map(x=>`<option value="${x[0]}" ${x[0]===l.tipo?"selected":""}>${x[1]} · ${fmt(x[2])} L ${x[4]}</option>`).join("")}</select></label>
-      <label class="campo">Quantidade de ${e[3]}<input data-rf="qtd" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.qtd)}" placeholder="0"></label>
+      <label class="campo">Edificação / tipo de consumo<select data-rf="tipo">${ops}</select></label>
+      <label class="campo"><span class="rs-qtd-rot">Quantidade de ${esc(e[3])}</span><input data-rf="qtd" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.qtd)}" placeholder="0"></label>
       ${S.res.linhas.length>1?`<button class="x" type="button" data-rm aria-label="Remover">×</button>`:"<span></span>"}
     </div>
+    ${outro ? `<div class="rs-outro">
+      <label class="campo">Tipo de consumo<input data-rf="nome" value="${esc(l.nome||"")}" placeholder="Ex.: Academia" autocomplete="off"></label>
+      <label class="campo">Consumo<span class="unid"><input data-rf="lpu" type="text" inputmode="decimal" value="${esc(l.lpu||"")}" placeholder="Ex.: 150"><b>L</b></span></label>
+      <label class="campo">por<input data-rf="por" list="rs-por-dl" value="${esc(l.por||"")}" placeholder="pessoa" autocomplete="off"></label>
+      <label class="campo rs-outro-fonte">De onde vem o valor (opcional, sai no memorial)<input data-rf="fonte" value="${esc(l.fonte||"")}" placeholder="Ex.: informado pelo cliente; tabela do fabricante; critério do projetista" autocomplete="off"></label>
+    </div>` : ""}
     <p class="fonte rs-dica" style="margin:0 12px 10px">Como determinar: ${esc(e[5])}</p></div>`; }).join("");
   renderRes();
 }
 function renderRes(){
   const R = calcRes(), A = S.res;
-  document.querySelectorAll("#rs-lista .rs-lin").forEach((el,i)=>{ const x = R.linhas[i]; if(!x) return; el.querySelector(".rs-dica").textContent = `Como determinar: ${x.e[5]} · consumo ${fmt(x.c,0)} L/dia`; });
-  $("rs-params").innerHTML = [["Consumo diário", fmt(R.diario,0), "L/dia"], ["Cisterna", R.cist?"sim":"não", ""], ["Caixa d'água superior", R.sup?"sim":"não", ""], ["Divisão", R.cist&&R.sup?"2/5 · 3/5":"—", ""]]
+  document.querySelectorAll("#rs-lista .rs-lin").forEach((el,i)=>{ const x = R.linhas[i]; if(!x) return; el.querySelector(".rs-dica").textContent = `${x.e[6] ? "" : "Como determinar: "}${x.e[5]} · consumo ${fmt(x.c,0)} L/dia`; const q = el.querySelector(".rs-qtd-rot"); if(q) q.textContent = `Quantidade de ${x.e[3]}`; });
+  renderResSoma(R);
+  $("rs-params").innerHTML = [[(R.outras||[]).length ? `Consumo diário (${(R.outras||[]).length + 1} edificações)` : "Consumo diário", fmt(R.diario,0), "L/dia"], ["Cisterna", R.cist?"sim":"não", ""], ["Caixa d'água superior", R.sup?"sim":"não", ""], ["Divisão", R.cist&&R.sup?"2/5 · 3/5":"—", ""]]
     .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
   $("rs-res").innerHTML = R.erro ? `<p class="vazio">${R.erro}.</p>` : `<div class="rs-ops">${R.opcoes.map(o=>`
     <button type="button" class="rs-op ${num(A.adotado)===o.d?"on":""}" data-dias="${o.d}">
@@ -6755,10 +6823,30 @@ function renderRes(){
       <em>${num(A.adotado)===o.d?"adotado":"clique para adotar"}</em></button>`).join("")}</div>`;
   $("rs-memorial").innerHTML = memorialRes(R);
 }
+function resLinhaTxt(x){ return `${esc(x.e[1])}: ${fmt(x.q)} ${esc(x.e[3])} × ${fmt(x.e[2])} L ${esc(x.e[4])}${x.e[6] ? ` <i>(${esc(String(x.l.fonte||"").trim() || "valor informado pelo projetista")})</i>` : ""} = <b>${fmt(x.c,0)} L/dia</b>`; }
+function renderResSoma(R){
+  const el = $("rs-soma"); if(!el) return;
+  const I = resInstInfo(), A = S.res, em = resSomadaEm();
+  const aviso = em.length ? `<p class="rs-somada">Esta edificação já está somada no reservatório único de ${em.map(x=>`<button type="button" class="lnk" data-rs-abrir="${x.id}">${esc(x.nome)}</button>`).join(", ")}. O volume abaixo só vale se ela tiver reservatório próprio.</p>` : "";
+  if(!I){ el.innerHTML = aviso + `<p class="fonte">Várias edificações no mesmo terreno com um reservatório só? Crie cada edificação em “+ Outra edificação” (no topo), informe o consumo de cada uma e depois, na edificação onde fica o reservatório (ou numa chamada “Reservatório geral”), marque aqui as que ela atende.</p>`; return; }
+  const on = !!(A.soma && A.soma.on), ids = on && Array.isArray(A.soma.ids) ? A.soma.ids : [];
+  const outras = I.lista.filter(x=>x.id!==I.ativo).map(x=>{ const ls = resLinhasCalc(x.dados || {}), c = ls.reduce((t,y)=>t+y.c, 0);
+    return {x, c, det: ls.filter(y=>y.q>0).map(y=>`${y.e[1]}: ${fmt(y.q)} ${y.e[3]}`).join(" · "), soma: !!(x.dados && x.dados.soma && x.dados.soma.on)}; });
+  el.innerHTML = aviso + `<label class="chave"><input type="checkbox" id="rs-soma-on" ${on?"checked":""}> Este reservatório atende outras edificações do terreno (somar o consumo delas)</label>
+    ${on ? `<div class="rs-soma-lista">${outras.map(o=>`<label class="rs-soma-it"><input type="checkbox" data-soma-id="${o.x.id}" ${ids.includes(o.x.id)?"checked":""}>
+        <span class="nm"><b>${esc(o.x.nome||"—")}</b><small>${o.det ? esc(o.det) : "sem consumo informado — abra essa edificação e preencha"}${o.soma ? " · ela também soma outras (aqui entra só o consumo próprio dela)" : ""}</small></span>
+        <span class="lt">${fmt(o.c,0)} L/dia</span></label>`).join("")}</div>
+      <div class="rs-soma-bts"><button type="button" class="lnk" data-soma-todas>marcar todas</button> · <button type="button" class="lnk" data-soma-nenhuma>desmarcar todas</button></div>
+      <p class="rs-soma-tot">Consumo desta edificação <b>${fmt((R.proprio ?? R.diario),0)} L/dia</b> + edificações somadas <b>${fmt(R.diario - (R.proprio ?? R.diario),0)} L/dia</b> = <b>${fmt(R.diario,0)} L/dia</b></p>` : ""}
+    <p class="fonte" style="margin-top:8px">O cálculo é o mesmo (consumo diário × dias de reserva), com o consumo somado de todas as edificações marcadas. Dica: para um reservatório separado, crie uma edificação “Reservatório geral” sem usuários próprios e marque todas aqui.</p>`;
+}
 function memorialRes(R){
   if(R.erro) return "";
-  return `<div class="mc-bloco"><h4>Consumo diário</h4>${R.linhas.filter(x=>x.q>0).map(x=>`<p class="mc-l">${esc(x.e[1])}: ${fmt(x.q)} ${x.e[3]} × ${fmt(x.e[2])} L ${x.e[4]} = <b>${fmt(x.c,0)} L/dia</b></p>`).join("")}
-    ${R.linhas.filter(x=>x.q>0).length>1?`<p class="mc-l">Total = <b>${fmt(R.diario,0)} L/dia</b></p>`:""}</div>
+  const proprias = R.linhas.filter(x=>x.q>0), nItens = proprias.length + (R.outras||[]).reduce((t,o)=>t + o.linhas.filter(x=>x.q>0).length, 0);
+  const somado = (R.outras||[]).length ? `<p class="mc-l"><b>${resInstInfo() ? esc(instNomeAtivo("res")) : "Esta edificação"}</b>${proprias.length ? "" : ": sem consumo próprio"}</p>` : "";
+  return `<div class="mc-bloco"><h4>Consumo diário</h4>${somado}${proprias.map(x=>`<p class="mc-l">${resLinhaTxt(x)}</p>`).join("")}
+    ${(R.outras||[]).map(o=>`<p class="mc-l"><b>${esc(o.nome)}</b>: ${o.linhas.filter(x=>x.q>0).length ? "" : "sem consumo informado"}</p>${o.linhas.filter(x=>x.q>0).map(x=>`<p class="mc-l">${resLinhaTxt(x)}</p>`).join("")}`).join("")}
+    ${nItens>1?`<p class="mc-l">Total${(R.outras||[]).length ? ` (${(R.outras||[]).length + 1} edificações)` : ""} = <b>${fmt(R.diario,0)} L/dia</b></p>`:""}</div>
     <div class="mc-bloco"><h4>Volume de reservação</h4>${R.opcoes.map(o=>`<p class="mc-l">${o.d} dias: V = ${fmt(R.diario,0)} × ${o.d} = <b>${fmt(o.V,0)} L</b>${R.cist&&R.sup?` → caixa superior 2/5 = ${fmt(o.sup,0)} L · cisterna 3/5 = ${fmt(o.cist,0)} L`:R.sup?" (todo na caixa superior)":" (todo na cisterna)"}</p>`).join("")}</div>`;
 }
 function preencherRes(){ const R = S.res; $("rs-cist").checked = !!R.cisterna; $("rs-sup").checked = !!R.superior; $("r-doc").value = R.doc; $("r-rev").value = R.rev; $("r-obs").value = R.obs; renderResLista(); }
@@ -6767,19 +6855,46 @@ function ligarRes(){
   $("rs-cist").addEventListener("change", e=>{ R().cisterna = e.target.checked; alt(); });
   $("rs-sup").addEventListener("change", e=>{ R().superior = e.target.checked; alt(); });
   for(const k of ["doc","rev","obs"]) $("r-"+k).addEventListener("input", e=>{ R()[k] = e.target.value; salvar(); });
-  $("rs-lista").addEventListener("input", e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; R().linhas[i][f] = e.target.value;
-    if(f==="tipo"){ renderResLista(); resumo(); salvar(); return; } alt(); });
+  $("rs-lista").addEventListener("input", e=>{ const i = +e.target.closest(".rs-lin").dataset.i, f = e.target.dataset.rf; if(!f) return; const L = R().linhas[i];
+    if(f==="tipo"){
+      const v = e.target.value;
+      if(v==="outro"){ if(L.tipo!=="outro"){ L.tipo = "outro"; L.nome = ""; L.lpu = ""; L.por = "pessoa"; L.fonte = ""; } }
+      else if(/^c\d+$/.test(v)){ const c = resConsumosSalvos()[+v.slice(1)]; if(c){ L.tipo = "outro"; L.nome = c.nome; L.lpu = c.lpu; L.por = c.por; L.fonte = c.fonte || ""; } }
+      else { L.tipo = v; delete L.nome; delete L.lpu; delete L.por; delete L.fonte; }
+      renderResLista(); resumo(); salvar();
+      if(L.tipo==="outro" && !L.nome){ const n = document.querySelector(`#rs-lista .rs-lin[data-i="${i}"] [data-rf="nome"]`); if(n) n.focus(); }
+      return; }
+    L[f] = e.target.value; alt(); });
+  $("rs-lista").addEventListener("change", e=>{ const f = e.target.dataset.rf; if(!["nome","lpu","por","fonte"].includes(f)) return; const i = +e.target.closest(".rs-lin").dataset.i; resGuardarConsumo(R().linhas[i]); });
+  $("rs-soma").addEventListener("change", e=>{
+    const A = R();
+    if(e.target.id==="rs-soma-on"){
+      const I = resInstInfo();
+      A.soma = {on: e.target.checked, ids: Array.isArray(A.soma?.ids) && A.soma.ids.length ? A.soma.ids : (I ? I.lista.filter(x=>x.id!==I.ativo).map(x=>x.id) : [])};
+      renderRes(); resumo(); salvar(); return; }
+    const id = e.target.dataset.somaId; if(!id) return;
+    const ids = new Set(Array.isArray(A.soma?.ids) ? A.soma.ids : []); if(e.target.checked) ids.add(id); else ids.delete(id);
+    A.soma = {on:true, ids:[...ids]}; renderRes(); resumo(); salvar(); });
+  $("rs-soma").addEventListener("click", e=>{
+    const ab = e.target.closest("[data-rs-abrir]"); if(ab){ instTrocar("res", ab.dataset.rsAbrir); return; }
+    const I = resInstInfo(), A = R(); if(!I) return;
+    if(e.target.closest("[data-soma-todas]")){ A.soma = {on:true, ids: I.lista.filter(x=>x.id!==I.ativo).map(x=>x.id)}; renderRes(); resumo(); salvar(); }
+    else if(e.target.closest("[data-soma-nenhuma]")){ A.soma = {on:true, ids:[]}; renderRes(); resumo(); salvar(); }
+  });
   $("rs-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; R().linhas.splice(+e.target.closest(".rs-lin").dataset.i,1); renderResLista(); resumo(); salvar(); });
   $("rs-add").addEventListener("click", ()=>{ R().linhas.push({tipo:"res50m", qtd:""}); renderResLista(); resumo(); salvar(); });
   $("rs-res").addEventListener("click", e=>{ const b = e.target.closest("[data-dias]"); if(!b) return; R().adotado = +b.dataset.dias; alt(); });
 }
 function resumoResParte(){ const R = calcRes(); if(!R.diario) return null; const o = R.opcoes.find(x=>x.d===num(S.res.adotado)) || R.opcoes[0];
-  return {det:`${fmt(R.diario,0)} L/dia · ${o.d} dias: ${litros(o.V)}${R.cist&&R.sup?` (superior ${litros(o.sup)} + cisterna ${litros(o.cist)})`:""}`, ok: !R.erro}; }
+  return {det:`${fmt(R.diario,0)} L/dia${(R.outras||[]).length ? ` (${(R.outras||[]).length + 1} edificações)` : ""} · ${o.d} dias: ${litros(o.V)}${R.cist&&R.sup?` (superior ${litros(o.sup)} + cisterna ${litros(o.cist)})`:""}`, ok: !R.erro}; }
 function relRes(){
   const MREL = S.res, R = calcRes(), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec, ad = num(S.res.adotado);
   return `<div class="r">${relCarimbo("Dimensionamento de reservatórios d'água", S.res.doc, S.res.rev, "Instalações hidráulicas")}
     ${sec("Identificação", relIdent(MREL))}
-    ${sec("Dados de projeto", `<table class="r-t"><tbody>${R.linhas.filter(x=>x.q>0).map(x=>td(x.e[1], `${fmt(x.q)} ${x.e[3]} × ${fmt(x.e[2])} L ${x.e[4]} = ${fmt(x.c,0)} L/dia`)).join("")}
+    ${sec("Dados de projeto", `<table class="r-t"><tbody>${R.linhas.filter(x=>x.q>0).map(x=>td(((R.outras||[]).length && resInstInfo() ? esc(instNomeAtivo("res")) + " · " : "") + esc(x.e[1]), `${fmt(x.q)} ${esc(x.e[3])} × ${fmt(x.e[2])} L ${esc(x.e[4])}${x.e[6] ? ` (${esc(String(x.l.fonte||"").trim() || "valor informado pelo projetista")})` : ""} = ${fmt(x.c,0)} L/dia`)).join("")}
+      ${(R.outras||[]).map(o=>o.linhas.filter(x=>x.q>0).map(x=>td(esc(o.nome) + " · " + esc(x.e[1]), `${fmt(x.q)} ${esc(x.e[3])} × ${fmt(x.e[2])} L ${esc(x.e[4])}${x.e[6] ? ` (${esc(String(x.l.fonte||"").trim() || "valor informado pelo projetista")})` : ""} = ${fmt(x.c,0)} L/dia`)).join("") || td(esc(o.nome), "sem consumo informado")).join("")}
+      ${(R.outras||[]).length ? td("Edificações atendidas", esc([resInstInfo() ? instNomeAtivo("res") : "", ...(R.outras||[]).map(o=>o.nome)].filter(Boolean).join(", "))) : ""}
+      ${resSomadaEm().length ? td("Observação", "Esta edificação também está somada no reservatório único de " + esc(resSomadaEm().map(x=>x.nome).join(", ")) + ".") : ""}
       ${td("Consumo diário total", `<b>${fmt(R.diario,0)} L/dia</b>`)}${td("Reservatórios", [R.sup?"caixa d'água superior":null, R.cist?"cisterna":null].filter(Boolean).join(" e ")+(R.cist&&R.sup?" (2/5 e 3/5 do volume)":""))}</tbody></table>`)}
     ${sec("Volumes de reservação", `<div class="r-resumo"><table class="r-t"><thead><tr><th>Reserva</th><th class="n">Volume total</th>${R.sup?`<th class="n">Caixa superior</th>`:""}${R.cist?`<th class="n">Cisterna</th>`:""}<th class="c">Adotado</th></tr></thead><tbody>
       ${R.opcoes.map(o=>`<tr ${o.d===ad?'style="font-weight:700"':""}><td>${o.d} dias${o.d===3?" (norma)":""}</td><td class="n">${fmt(o.V,0)} L</td>${R.sup?`<td class="n">${fmt(o.sup,0)} L</td>`:""}${R.cist?`<td class="n">${fmt(o.cist,0)} L</td>`:""}<td class="c">${o.d===ad?"✓":""}</td></tr>`).join("")}</tbody></table></div>`)}
