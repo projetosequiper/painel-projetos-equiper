@@ -133,6 +133,10 @@
   .cal-cell.dia-feriado{background:rgba(156,51,39,0.10);}
   .cal-feriado-label{font-size:9px; color:var(--red); font-weight:600; margin-bottom:2px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .cal-ferias-label{font-size:9px; color:#fff; font-weight:700; margin-bottom:2px; padding:1px 4px; border-radius:3px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cal-reuniao-label.feita{background:#9CA3AF; text-decoration:line-through; text-decoration-thickness:1px;}
+  body.tema-escuro .cal-reuniao-label.feita{background:#4B5563; color:#D1D5DB;}
+  .reu-cx-bts{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+  .reu-cx-bts .btn{width:100%;}
   .cal-reuniao-label{font-size:9.5px; color:#fff; font-weight:600; margin-bottom:2px; padding:1px 4px; border-radius:3px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#6B4FA0; cursor:pointer;}
   .cal-cell.drag-nao-permitido{outline:2px dashed var(--red); background:rgba(156,51,39,0.15);}
   .column .count{color:var(--ink-soft); font-weight:400;}
@@ -2084,6 +2088,35 @@
   async function saveEquipe(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-equipe', JSON.stringify(state.equipe), true); }catch(e){ mostrarErroSalvamento('equipe', saveEquipe); } }
   async function saveTipos(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-tipos', JSON.stringify(state.tipos), true); }catch(e){ mostrarErroSalvamento('disciplinas', saveTipos); } }
   async function saveFerias(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-ferias', JSON.stringify(state.ferias), true); }catch(e){ mostrarErroSalvamento('férias', saveFerias); } }
+  // Reunião no calendário: marcar como realizada (fica riscada) / voltar / remover
+  function abrirOpcoesReuniao(id){
+    var r = (state.reunioes||[]).find(function(x){ return x.id === id; }); if(!r) return;
+    var f = document.createElement('div'); f.className = 'cx-fundo';
+    f.innerHTML = '<div class="cx" role="dialog" aria-modal="true"><h3>📅 Reunião</h3>'+
+      '<p><b>'+escapeHtml(fmtDate(r.data))+(r.horario ? ' às '+escapeHtml(r.horario) : '')+'</b><br>'+escapeHtml(r.descricao||'')+
+        (r.feita ? '<br><span style="color:var(--ink-soft); font-size:12.5px;">✓ Realizada'+(r.feitaPor ? ' · marcada por '+escapeHtml(r.feitaPor) : '')+(r.feitaEm ? ' em '+escapeHtml(fmtDate(String(r.feitaEm).slice(0,10))) : '')+'</span>' : '')+'</p>'+
+      '<div class="reu-cx-bts">'+
+        (r.feita ? '<button type="button" class="btn secondary" data-reu="desfazer">↩️ Voltar para não realizada</button>' : '<button type="button" class="btn" data-reu="feita">✅ Reunião realizada</button>')+
+        '<button type="button" class="btn secondary" data-reu="remover" style="color:var(--red);">🗑️ Remover reunião</button>'+
+        '<button type="button" class="btn secondary" data-reu="fechar">Fechar</button>'+
+      '</div></div>';
+    function fechar(){ document.removeEventListener('keydown', tecla, true); f.remove(); }
+    function tecla(e){ if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); fechar(); } }
+    f.addEventListener('click', async function(e){
+      if(e.target === f){ fechar(); return; }
+      var b = e.target.closest('[data-reu]'); if(!b) return; var acao = b.getAttribute('data-reu');
+      if(acao === 'fechar'){ fechar(); return; }
+      if(acao === 'feita'){ r.feita = true; r.feitaEm = new Date().toISOString(); r.feitaPor = nomeProjetistaAtual || 'gerente'; }
+      else if(acao === 'desfazer'){ delete r.feita; delete r.feitaEm; delete r.feitaPor; }
+      else if(acao === 'remover'){ fechar(); if(!(await caixaConfirmar('Remover a reunião “'+(r.descricao||'')+'” de '+fmtDate(r.data)+'?', { perigo:true, ok:'Remover' }))) return;
+        state.reunioes = state.reunioes.filter(function(x){ return x.id !== r.id; }); }
+      if(acao !== 'remover') fechar();
+      saveReunioes(); renderCalendario();
+    });
+    document.addEventListener('keydown', tecla, true);
+    document.body.appendChild(f);
+    var foco = f.querySelector('[data-reu]'); if(foco) foco.focus();
+  }
   async function saveReunioes(){ if(cargaBloqueada){ avisarSalvamentoBloqueado(); return; } try{ await window.storage.set('clm-reunioes', JSON.stringify(state.reunioes), true); }catch(e){ mostrarErroSalvamento('reuniões', saveReunioes); } }
   async function saveEmailsProjetistas(){ try{ await window.storage.set('clm-emails-projetistas', JSON.stringify(state.emailsProjetistas), true); }catch(e){ mostrarErroSalvamento('cadastro do projetista', saveEmailsProjetistas); } }
   async function saveEmailGerente(){ try{ await window.storage.set('clm-email-gerente', state.emailGerente, true); }catch(e){ mostrarErroSalvamento('email do gerente', saveEmailGerente); } }
@@ -5805,7 +5838,7 @@
         '<div class="ficha-card"><h4>📅 Vencem em 7 dias <span class="mut">'+semana.length+'</span></h4>'+(semana.length ? semana.slice(0,12).map(function(t){ return linhaT(t, '<span class="cli-tag'+(t.prazo===hoje?' a':'')+'">'+(t.prazo===hoje?'hoje':escapeHtml(fmtDate(t.prazo).slice(0,5)))+'</span>'); }).join('') : '<div class="empty-hint">Nenhum prazo nos próximos 7 dias.</div>')+'</div>'+
         '<div class="ficha-card"><h4>⏳ Aguardando o cliente <span class="mut">'+espera.length+'</span></h4>'+(espera.length ? espera.slice(0,12).map(function(x){ return linhaT(x.t, '<span class="mut">'+(x.dias===null?'':(x.dias===0?'desde hoje':'há '+x.dias+' dia'+(x.dias>1?'s':'')))+'</span>'); }).join('') : '<div class="empty-hint">Nada aguardando.</div>')+'</div>'+
         '<div class="ficha-card"><h4>🗓️ Agenda (7 dias)</h4>'+
-          (reunioes.length ? reunioes.map(function(r){ return '<div class="hoje-li"><span class="cli-tag">'+escapeHtml(fmtDate(r.data).slice(0,5))+(r.horario?' · '+escapeHtml(r.horario):'')+'</span><span>'+escapeHtml(r.descricao||'')+'</span></div>'; }).join('') : '')+
+          (reunioes.length ? reunioes.map(function(r){ return '<div class="hoje-li"'+(r.feita?' style="opacity:.6;"':'')+'><span class="cli-tag">'+escapeHtml(fmtDate(r.data).slice(0,5))+(r.horario?' · '+escapeHtml(r.horario):'')+'</span><span'+(r.feita?' style="text-decoration:line-through;"':'')+'>'+(r.feita?'✓ ':'')+escapeHtml(r.descricao||'')+'</span></div>'; }).join('') : '')+
           (ferias.length ? ferias.map(function(f){ return '<div class="hoje-li">'+dotHtml(f.responsavel)+'<span>'+escapeHtml(f.responsavel)+' de férias</span><span class="mut" style="margin-left:auto;">'+escapeHtml(fmtDate(f.inicio).slice(0,5))+' a '+escapeHtml(fmtDate(f.fim).slice(0,5))+'</span></div>'; }).join('') : '')+
           (fq.length ? fq.map(function(t){ return linhaT(t, '<span class="cli-tag a">fechar quadro</span>'); }).join('') : '')+
           (!reunioes.length && !ferias.length && !fq.length ? '<div class="empty-hint">Nada marcado.</div>' : '')+
@@ -6053,7 +6086,7 @@
     var hojeStr = todayISO();
     var podeReuniao = !modoDesenhista || !!((state.permissoesProjetista||{})[nomeProjetistaAtual]||{}).reunioes;
     var doDia = !podeReuniao ? [] : (state.reunioes||[]).filter(function(r){
-      if(r.data !== hojeStr) return false;
+      if(r.data !== hojeStr || r.feita) return false;
       if(modoDesenhista && r.criador !== nomeProjetistaAtual) return false;
       return true;
     }).sort(function(a,b){ return (a.horario||'').localeCompare(b.horario||''); });
@@ -9762,20 +9795,16 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         : (podeReuniao ? (state.reunioes||[]).filter(function(r){ return r.data === dataStr && r.criador === nomeProjetistaAtual; }).sort(function(a,b){ return (a.horario||'').localeCompare(b.horario||''); }) : []);
       reunioesDoDia.forEach(function(r){
         var lblReuniao = document.createElement('div');
-        lblReuniao.className = 'cal-reuniao-label';
-        lblReuniao.textContent = '📅 ' + (r.horario||'') + ' ' + r.descricao;
+        lblReuniao.className = 'cal-reuniao-label' + (r.feita ? ' feita' : '');
+        lblReuniao.textContent = (r.feita ? '✓ ' : '📅 ') + (r.horario||'') + ' ' + r.descricao;
         var podeExcluirEsta = !modoDesenhista || (podeReuniao && r.criador === nomeProjetistaAtual);
+        var txtFeita = r.feita ? ' · realizada' + (r.feitaPor ? ' (marcada por ' + r.feitaPor + ')' : '') : '';
         if(!podeExcluirEsta){
-          lblReuniao.title = 'Reunião às ' + (r.horario||'') + ' — ' + r.descricao;
+          lblReuniao.title = 'Reunião às ' + (r.horario||'') + ' — ' + r.descricao + txtFeita;
           lblReuniao.style.cursor = 'default';
         } else {
-          lblReuniao.title = 'Reunião às ' + (r.horario||'') + ' — ' + r.descricao + ' (clique pra remover)';
-          lblReuniao.addEventListener('click', function(e){ e.stopPropagation(); });
-          armConfirm(lblReuniao, 'Remover?', function(){
-            state.reunioes = state.reunioes.filter(function(x){ return x.id !== r.id; });
-            saveReunioes();
-            renderCalendario();
-          });
+          lblReuniao.title = 'Reunião às ' + (r.horario||'') + ' — ' + r.descricao + txtFeita + ' (clique para marcar como realizada ou remover)';
+          lblReuniao.addEventListener('click', function(e){ e.stopPropagation(); abrirOpcoesReuniao(r.id); });
         }
         cell.appendChild(lblReuniao);
       });
