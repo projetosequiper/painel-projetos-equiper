@@ -9010,7 +9010,10 @@ function alTabConc(q, r, p){
   let txt, fonte, m, npar, Sf, Sn = null;
   if(A.light){ txt = p.emDuto ? row[2] : row[3]; fonte = `RECON BT (Light), tabela 18 · ${p.emDuto ? "em eletroduto" : "em bandeja"} · ${fmt(A.DR,2)} kVA`;
     m = /^(\d+)\s*x\s*(\d+(?:[.,]\d+)?)/.exec(txt || ""); if(m){ npar = +m[1]; Sf = num(m[2]); } }
-  else { const sub = enelRede()==="sub"; txt = sub ? row[7] : (row[5] || row[3]); fonte = `IT 263 (Enel RJ), tabela 16 · ${sub ? "ramal subterrâneo" : row[5] ? "ramal de entrada" : "ramal aéreo"} · ${fmt(A.DR,2)} kVA`;
+  else { const enterrado = alMetRef(p.met, p.modelo, p.tipo)==="D", semAereo = !(row[5] || row[3]);
+    const sub = enelRede()==="sub" || enterrado || semAereo;          // rede subterrânea, cabo enterrado ou faixa só com ramal subterrâneo (acima de 150 kVA)
+    txt = sub ? row[7] : (row[5] || row[3]);
+    fonte = `IT 263 (Enel RJ), tabela 16 · ${sub ? `ramal subterrâneo${enelRede()==="sub" ? "" : enterrado ? " (instalação enterrada)" : " (a faixa só tem ramal subterrâneo)"}` : row[5] ? "ramal de entrada" : "ramal aéreo"} · ${fmt(A.DR,2)} kVA`;
     m = /^(?:(\d+)\s*x\s*)?3\s*x\s*(\d+(?:[.,]\d+)?)(?:\s*\+\s*(\d+)|\s*\((?:\d+\s*x\s*)?(\d+)\))?/.exec(txt || "");
     if(m){ npar = +(m[1] || 1); Sf = num(m[2]); Sn = num(m[3] || m[4]) || null; } }
   if(!txt) return {erro:"a tabela da concessionária não traz cabo para esta faixa de demanda", fonte};
