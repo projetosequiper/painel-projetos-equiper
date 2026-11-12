@@ -8705,6 +8705,8 @@ function alItem(q, r, T, mont){
   it.metRef = alMetRef(p.met, p.modelo, p.tipo);
   if(!(p.Ib > 0)){ it.erro = "Quadro sem demanda calculada: confira as cargas no cálculo de demanda."; return it; }
   if(!(p.V > 0)){ it.erro = "Tensão do quadro não definida no cálculo de demanda."; return it; }
+  if(q.al?.cabConc==="tab" && alTabConcPode(q, r)){ const tc = alTabConc(q, r, p); p.tabConc = tc || {erro:"sem dados"};
+    if(tc && !tc.erro){ p.secMan = tc.S; p.npar = tc.npar; } }
   const base = {...p, L: p.L > 0 ? p.L : 0};
   if(p.at && !p.at.erro){
     if(p.at.SnPad){                                                    // potência não informada: a menor padronizada que deixa a queda nos autotrafos em até metade da disponível e fecha a queda e a partida
@@ -8733,7 +8735,9 @@ function alItem(q, r, T, mont){
   if(!alNum(x.fca)) it.avisos.push("Agrupamento fora da tabela de fatores: confira o número de circuitos.");
   if(!alNum(x.fsolo)) it.avisos.push("Resistividade do solo fora da tabela 12.");
   if(x.metOk && alNum(x.fc) && !alNum(x.Iz)) it.avisos.push(`Seção ${alS(x.p.S)} mm² sem capacidade de condução na tabela${p.mat===2 ? " (alumínio só a partir de 16 mm²)" : ""}.`);
-  if(!(p.L > 0)) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
+  const tcOk = p.tabConc && !p.tabConc.erro;
+  if(p.tabConc?.erro) it.avisos.push(`Tabela da concessionária: ${p.tabConc.erro}${p.tabConc.fonte ? ` (${p.tabConc.fonte})` : ""}. O cabo foi calculado.`);
+  if(!(p.L > 0) && !tcOk) it.avisos.push("Informe o comprimento para verificar a queda de tensão.");
   if(p.mot?.erro) it.avisos.push(`Partida do motor: ${p.mot.erro}`);
   if(p.dextMan > 0 && x?.p && p.dextS!==x.p.S) it.avisos.push(`O diâmetro externo informado (${fmt(p.dextMan,1)} mm) vale para o cabo de ${alS(p.dextS)} mm²; a seção agora é ${alS(x.p.S)} mm², então foi usado o do catálogo. Informe de novo se quiser.`);
   if(p.at?.erro) it.avisos.push(`Autotransformador: ${p.at.erro}`);
@@ -8764,8 +8768,11 @@ function alItem(q, r, T, mont){
     if(J.magPad && J.InMont > 0 && x.jusIk) it.avisos.push(`Proteção à jusante: disparo magnético do montante adotado em ${fmt(AL_JUS_MAG)} × In (caixa moldada com magnético fixo). Se for ajustável, informe o Ii ajustado (limite superior da faixa).`);
   }
   it.ok = !!x.ok && p.L > 0 && !it.avisos.some(a=>/não permitido|Não dá|Nenhuma seção|Disposição/.test(a)) && !(p.jus && !(p.jus.InMont > 0));
+  if(tcOk){ it.ok = true; it.tabConc = p.tabConc; it.auto = false;                // cabo da concessionária: o cálculo fica só como conferência
+    const nao = Object.entries(x.ver || {}).filter(([,v])=>v!=="ATENDE").map(([k])=>({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz"})[k] || k);
+    if(nao.length && p.L > 0) it.avisos.push(`Cabo da concessionária (${p.tabConc.txt}): pela NBR 5410 não fecharia em ${nao.join(", ")}. Vale o que a concessionária exige; confira se ela aceita.`); }
   const nF = p.sis===1 ? 3 : p.bi ? 2 : 1, S2 = x.p.S;
-  const fCond = y => `${p.npar>1 ? `${p.npar}×(` : ""}${nF}#${alS(y.p.S)} + N${alS(y.p.S)}${p.npar>1 ? ")" : ""} + PE${alNum(y.PE) ? alS(y.PE) : "—"}`;
+  const fCond = y => `${p.npar>1 ? `${p.npar}×(` : ""}${nF}#${alS(y.p.S)} + N${alS(tcOk && p.tabConc.Sn ? p.tabConc.Sn : y.p.S)}${p.npar>1 ? ")" : ""} + PE${alNum(y.PE) ? alS(y.PE) : "—"}`;
   it.cond = fCond(x);
   it.duto = alDuto(p, x, q);
   if(it.duto?.man){ const D = it.duto, m = D.man;
@@ -8776,6 +8783,7 @@ function alItem(q, r, T, mont){
   it.nF = nF;
   it.econ = alEcon(p.Ib/p.npar, p.modelo);
   it.dvTrecho = p.L > 0 && alNum(x.dVp) && !(!x.metOk || !!x.aviso || !alNum(x.fc)) ? (p.at && !p.at.erro ? it.atDv : x.dVp) : null;
+  if(tcOk && !(p.L > 0)) it.dvTrecho = 0;                            // ramal até o padrão não representado: sem queda neste trecho
   it.dvAcum = it.dvTrecho!=null ? p.dvMont + it.dvTrecho : null; it.montOk = mont.ok;
   if(p.dvCustom && it.dvAcum!=null && it.dvAcum > p.dvTot + 1e-12) it.avisos.push(`Queda personalizada neste alimentador (${fmt(p.dv*100,2)}% no trecho): a acumulada desde a origem ficou em ${fmt(it.dvAcum*100,2)}%, acima do limite geral de ${fmt(p.dvTot*100,1)}%. Confira o limite da NBR 5410 (6.2.7) até o ponto de utilização.`);
   it.semCurto = !(p.icc > 0);
@@ -8801,6 +8809,7 @@ function alItens(){
         const rpe = ALT.t18.find(r=>r[0]===x.PE)?.[(it.p.mat===1 ? 4 : 3) - 1], Rpe = alNum(rpe) ? rpe*L/1000 : Rt*n, Xpe = x.Xl*L/1000;   // PE: um condutor (seção da tabela 58)
         z = {R: zp.R + Rt, X: zp.X + Xt, nR: zp.nR + 2*Rt*kq, nX: zp.nX + 2*Xt, pR: zp.pR + (Rt + Rpe)*kq, pX: zp.pX + Xt + Xpe};
         it.icTrecho = {R:Rt, X:Xt, txt:`${it.cond || alS(x.p.S)} · ${fmt(L)} m · R'20 ${fmt(x.R0,3)} · X' ${fmt(x.Xl,3)} Ω/km · θe ${x.th===70 ? 160 : 250} °C`}; }
+      else if(it.tabConc && !(L > 0)){ z = {...zp}; it.icTrecho = {R:0, X:0, txt:"ramal da concessionária não representado (sem comprimento)"}; }
       else it.icFalta = !(L > 0) ? "sem comprimento" : "cabo sem resistência na tabela"; }
     else if(o) it.icFalta = "falta o quadro a montante";
     it.icZPai = zp; it.icZ = z;
@@ -8851,6 +8860,7 @@ function renderAliLista(){
     return `<div class="trecho al-c" data-alq="${q.id}">
       <div class="al-tit"><b>${esc(it.nome)}</b><b class="al-dj">${r?.disj?`disjuntor ${r.polos} ${r.disj} A`:"sem disjuntor"}${p.jus ? ` · a montante ${p.jus.InMont > 0 ? fmt(p.jus.InMont) + " A" : "—"}` : ""}</b>${dmIguais(q)>1?` <span class="pilula">×${dmIguais(q)}</span>`:""}<span>${q.local?esc(q.local)+" · ":""}${({tri:"trifásico",bi:"bifásico",mono:"monofásico"})[p.fases]} ${esc(p.tensTxt)} · demanda ${r?.Dt>0?fmt(r.Dt,2):"—"} kVA · I = ${r?.I>0?fmt(r.I,1):"—"} A</span></div>
       <div class="al-cab">
+        ${alTabConcPode(q, r) ? `<label class="campo al-w2">Cabo do ramal de entrada${alSel("cabConc", a.cabConc==="tab" ? "tab" : "", [["tab", `Tabela da concessionária${(()=>{ const t = alTabConc(q, r, p); return t && !t.erro ? ` · ${t.txt}` : ""; })()}`]], "Calcular")}</label>` : ""}
         <label class="campo">Comprimento<span class="unid"><input data-af="L" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.atOn ? String(num(a.atLbt) + num(a.atLat)) : (a.L ?? ""))}" placeholder="0" ${a.atOn ? 'disabled title="Com autotransformador, informe os dois comprimentos abaixo"' : ""}><b>m</b></span></label>
         <label class="campo al-w2">Método de instalação${alSel("met", a.met ?? "", alOpsMet(), `Padrão · ${padMet}`)}</label>
         <label class="campo al-w2">Cabo${alSel("modelo", a.modelo ?? "", AL_MOD.map((m,i)=>[i+1, m.n]), `Padrão · ${padMod}`)}</label>
@@ -8864,7 +8874,7 @@ function renderAliLista(){
         <label class="campo">${a.jusOn ? "Disjuntor a jusante" : "Disjuntor"}<span class="unid"><input data-af="in" type="number" min="0" step="1" inputmode="numeric" value="${esc(a.in ?? "")}" placeholder="${r?.disj||""}" ${a.jusOn ? 'title="Disjuntor geral do quadro alimentado: protege o cabo contra sobrecarga"' : ""}><b>A</b></span></label>
         <label class="campo">Curto-circuito<span class="unid"><input data-af="icc" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(a.icc ?? "")}" placeholder="${p.iccCalc!=null ? `auto ${esc(fmt(p.iccCalc,2))}` : num(alPad("icc")) > 0 ? esc(fmt(num(alPad("icc")),1)) : "—"}" title="Em branco: usa a Icc presumida calculada (aba Icc presumida) ou a geral."><b>kA</b></span></label>
         <label class="campo">Duração do curto<span class="unid"><input data-af="t" type="number" min="0" step="0.05" inputmode="decimal" value="${esc(a.t ?? "")}" placeholder="${num(alPad("t")) > 0 ? esc(fmt(num(alPad("t")),2)) : "—"}" ${a.jusOn ? 'title="Com proteção à jusante: tempo de atuação do disjuntor a montante"' : ""}><b>s</b></span></label>
-        <label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>
+        ${p.tabConc && !p.tabConc.erro ? `<label class="campo">Seção<select disabled title="Definida pela tabela da concessionária"><option>${p.npar > 1 ? p.npar + " × " : ""}${alS(p.tabConc.S)} mm² (tabela)</option></select></label>` : `<label class="campo">Seção${alSel("sec", a.sec ?? "", ALT.cat[p.modelo].map(x=>[x[0], `${alS(x[0])} mm²`]), "Automática")}</label>`}
         <label class="campo">Diâmetro externo do cabo<span class="unid"><input data-af="dext" data-sec="${esc(String(it.res?.p?.S ?? ""))}" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(p.dextMan > 0 && p.dextS===it.res?.p?.S ? a.dext : "")}" placeholder="${it.duto?.dCaboCat ? `${fmt(it.duto.dCaboCat,1)} (catálogo)` : "mm"}" title="Em branco: diâmetro do catálogo para a seção calculada. Preenchido: vale para a seção atual e entra na reatância (queda de tensão) e no eletroduto."><b>mm</b></span></label>
         <label class="campo">Eletroduto${alSel("dutoTipo", a.dutoTipo ?? "", [["rigido","Rígido roscável"],["kanaflex","PEAD corrugado (Kanaflex)"]], `Padrão · ${(it.duto?.tipo || (it.res?.solo ? "kanaflex" : "rigido"))==="kanaflex" ? "Kanaflex" : "rígido"}`)}</label>
         <label class="campo">Diâmetro do eletroduto${alSel("dutoD", a.dutoD ?? "", DUTOS[it.duto?.tipo || "rigido"].l.map(([pp])=>[pp, POL[pp]]), `Calculado · ${it.duto?.auto?.txt || "—"}`)}</label>
@@ -8927,7 +8937,7 @@ function alRevDetalhe(it){
   return out;
 }
 function alRevSugestoes(it){
-  const x = it.res; if(!x || !it._sim || !(it.p.L > 0)) return {mesmo:[], maior:[], dicas:[]};
+  const x = it.res; if(!x || !it._sim || !(it.p.L > 0)) return {mesmo:[], maior:[], dicas:[], parcial:[]};
   const p = x.p, v = x.ver || {}, S = p.S, n = p.npar || 1, ruim = k => v[k]==="NÃO ATENDE";
   const fixa = it.auto ? {} : {sec: String(S)}, mesmo = [], maior = [], dicas = [], parcial = [], vistos = new Set();
   const NOMES = {iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor", ikmin:"Icc mín. × magnético"};
@@ -8991,6 +9001,23 @@ function alRevHtml(it){
     ${!sug.mesmo.length && !sug.maior.length && !sug.dicas.length ? `<small>Nenhuma alteração simples resolve; veja os avisos abaixo.</small>` : ""}
   </div>`;
 }
+// ---- Ramal de entrada pela tabela da concessionária (só no primeiro alimentador de uma medição agrupada) ----
+// Light: RECON BT, tabela 18 (condutores por fase: eletroduto ou bandeja). Enel RJ: IT 263, tabela 16 (ramal de entrada; rede subterrânea: ramal subterrâneo).
+function alTabConcPode(q, r){ return !dmPai(q) && !!r?.agr; }
+function alTabConc(q, r, p){
+  if(!alTabConcPode(q, r)) return null; const A = r.agr, row = A.rowR;
+  if(!row) return {erro:"demanda fora da tabela da concessionária"};
+  let txt, fonte, m, npar, Sf, Sn = null;
+  if(A.light){ txt = p.emDuto ? row[2] : row[3]; fonte = `RECON BT (Light), tabela 18 · ${p.emDuto ? "em eletroduto" : "em bandeja"} · ${fmt(A.DR,2)} kVA`;
+    m = /^(\d+)\s*x\s*(\d+(?:[.,]\d+)?)/.exec(txt || ""); if(m){ npar = +m[1]; Sf = num(m[2]); } }
+  else { const sub = enelRede()==="sub"; txt = sub ? row[7] : (row[5] || row[3]); fonte = `IT 263 (Enel RJ), tabela 16 · ${sub ? "ramal subterrâneo" : row[5] ? "ramal de entrada" : "ramal aéreo"} · ${fmt(A.DR,2)} kVA`;
+    m = /^(?:(\d+)\s*x\s*)?3\s*x\s*(\d+(?:[.,]\d+)?)(?:\s*\+\s*(\d+)|\s*\((?:\d+\s*x\s*)?(\d+)\))?/.exec(txt || "");
+    if(m){ npar = +(m[1] || 1); Sf = num(m[2]); Sn = num(m[3] || m[4]) || null; } }
+  if(!txt) return {erro:"a tabela da concessionária não traz cabo para esta faixa de demanda", fonte};
+  if(!(Sf > 0)) return {erro:`não deu para ler o cabo da tabela ("${txt}")`, fonte};
+  if(!ALT.cat[p.modelo].some(x=>x[0]===Sf)) return {erro:`${alS(Sf)} mm² não existe no catálogo do ${AL_MOD[p.modelo-1].n}`, fonte, txt};
+  return {txt, fonte, npar, S: Sf, Sn};
+}
 function alJusCampos(q, a, p){
   const n = (k, ph, u, st) => `<label class="campo">${ph[0]}<span class="unid"><input data-af="${k}" type="number" min="0" step="${st||"any"}" inputmode="decimal" value="${esc(a[k] ?? "")}" placeholder="${esc(ph[1])}">${u ? `<b>${u}</b>` : ""}</span></label>`;
   return `<div class="al-mot al-w2" style="grid-column:1/-1"><small>Proteção à jusante · sobrecarga pelo disjuntor do quadro alimentado (${p.In > 0 ? fmt(p.In) + " A" : "sem disjuntor"}); curto-circuito pelo disjuntor a montante, no quadro de origem (NBR 5410, 5.3.4.2.2 e 5.3.5.5.3). Sem nenhuma derivação ou tomada entre os dois disjuntores; não vale em esquema IT. A duração do curto é o tempo de atuação do montante.</small><div class="al-cab">
@@ -9020,7 +9047,7 @@ function atualizarAli(its){
     { const dvIn = el.querySelector('[data-af="dv"]'); if(dvIn) dvIn.placeholder = dmPai(it.q) ? `auto ${fmt(p.dvAuto*100,2)}` : fmt(p.dvTot*100,1); }
     { const inEl = el.querySelector('[data-af="motIn"]'); if(inEl && p.mot) inEl.placeholder = p.mot.InEst ? `${fmt(p.mot.InEst,1)} (estimada)` : "da placa"; }
     el.querySelector("[data-res]").innerHTML = it.erro ? `<p class="vazio" style="margin:0;grid-column:1/-1">${esc(it.erro)}</p>` : `
-      <div><small>Condutores${it.auto ? " (automático)" : " (escolhido)"}</small><strong class="al-cond">${esc(it.cond)}</strong><em>${it.semCond ? "sem dimensionamento · " : "mm² · "}${esc(AL_MOD[p.modelo-1].cur)}${it.criterio ? ` · seção definida por: <b>${esc(it.criterio)}</b>` : ""}</em></div>
+      <div><small>Condutores${it.tabConc ? " (concessionária)" : it.auto ? " (automático)" : " (escolhido)"}</small><strong class="al-cond">${esc(it.cond)}</strong><em>${it.semCond ? "sem dimensionamento · " : "mm² · "}${esc(AL_MOD[p.modelo-1].cur)}${it.criterio ? ` · seção definida por: <b>${esc(it.criterio)}</b>` : ""}</em></div>
       <div><small>Capacidade (Iz)</small><strong>${alNum(x.Iz) ? fmt(x.Iz,0) : "—"}</strong><em>A · In ${p.jus ? "jusante " : ""}${alNum(x.In) ? fmt(x.In) : "—"} A${p.jus ? ` · montante ${p.jus.InMont > 0 ? fmt(p.jus.InMont) : "—"} A` : ""} · Ib ${fmt(p.Ib,1)} A${p.IbDem ? ` (limitada ao disjuntor; demanda ${fmt(p.IbDem,1)} A)` : ""}</em></div>
       <div><small>Queda de tensão</small><strong>${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) : "—"}</strong><em>% no trecho${it.p.dvMont > 0 || dmPai(it.q) ? ` · acumulada <b>${it.dvAcum!=null ? fmt(it.dvAcum*100,2) + "%" : "—"}</b>${it.montOk ? "" : " (incompleta)"} (a montante ${fmt(p.dvMont*100,2)}%)` : ""} · ${p.dvCustom ? `limite do trecho <b>${fmt(p.dv*100,2)}%</b> (personalizado) · geral ${fmt(p.dvTot*100,1)}%` : `limite ${fmt(p.dvTot*100,1)}%`}</em></div>
       <div><small>Curto-circuito</small>${it.semCurto ? `<strong>—</strong><em>não verificado (informe Icc e tempo)</em>` : `<strong>${alNum(x.Scc) ? fmt(x.Scc,1) : "—"}</strong><em>mm² mín. fase · PE ${alNum(x.SccPE) ? fmt(x.SccPE,1) : "—"} mm²${p.jus ? " · disjuntor a montante" : ""}</em>`}</div>
@@ -9029,7 +9056,7 @@ function atualizarAli(its){
       <div><small>Seção econômica</small><strong>${it.econ ? fmt(it.econ.Se,0) : "—"}</strong><em>mm²${it.econ ? ` por cabo · catálogo ${it.econ.sec ? alS(it.econ.sec) + " mm²" : "acima do maior"}` : ""}</em></div>
       ${p.at && !p.at.erro ? `<div><small>Autotransformador</small><strong>${fmt(p.at.Vb)} → ${fmt(p.at.Va)} V</strong><em>${p.at.tipo==="dois" ? "elevador e abaixador" : "só elevador"} · ${fmt(p.at.Sn,1)} kVA · ${fmt(p.at.IbA,1)} A no cabo elevado · queda nos autotrafos ${fmt(p.at.dvT*100,2)} %${it.semAt ? ` · sem autotrafo: ${alS(it.semAt)} mm²` : ""}</em></div>` : ""}
       ${p.mot && !p.mot.erro ? `<div><small>Partida do motor</small><strong class="${x.ver?.part==="NÃO ATENDE" ? "falha" : ""}">${x.motPart ? fmt(x.motPart.dv*100,2) : "—"}</strong><em>% na partida (limite 10 %) · ${fmt(p.mot.Ipart,0)} A na partida${it.motOutros ? ` · outros quadros: até ${fmt(it.motOutros.dv*100,2)} % (${esc(it.motOutros.nome)})` : ""}</em></div>` : ""}
-      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor", ikmin:"Icc mín. × magnético"}).filter(([k])=>x.ver[k]!==undefined && x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`}</em></div>`;
+      <div><small>Situação</small><strong class="${it.ok?"ok":"falha"}">${it.tabConc ? "Concessionária" : it.ok ? (p.IbDem ? "Atende*" : "Atende") : "Rever"}</strong><em>${it.tabConc ? esc(it.tabConc.fonte) + (p.L > 0 ? " · cálculo abaixo só para conferência" : " · ramal até o padrão não representado") : ""}${it.tabConc ? "" : (Object.entries({iz:"Iz ≥ Ib", dv:"ΔV", cc:"curto fase", pe:"curto PE", smin:"seção mín.", coord:"Ib ≤ In ≤ Iz", part:"partida do motor", ikmin:"Icc mín. × magnético"}).filter(([k])=>x.ver[k]!==undefined && x.ver[k]!=="ATENDE").map(([,t])=>t).join(" · ") || `método ${it.metRef}`)}</em></div>`;
     el.querySelector("[data-rev]").innerHTML = it.ok ? "" : alRevHtml(it);
     el.querySelector("[data-av]").innerHTML = it.avisos.length ? `<ul>${it.avisos.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>` : "";
   });
@@ -9069,7 +9096,7 @@ function alMemorial(it, cls){
     ${L("Corrente de projeto (Ib)", v(p.Ib,1), "A", p.IbDem ? `corrente do disjuntor: menor que a ${num(it.q.al?.ib) > 0 ? "informada" : "de demanda"} (${fmt(p.IbDem,1)} A) · ver ressalva` : num(it.q.al?.ib) > 0 ? "informada" : "cálculo de demanda")}
     ${L("Comprimento", v(p.L,1), "m", "")}
     ${L("Cabos em paralelo por fase", v(p.npar,0), "un", `corrente por cabo ${v(p.Ib/p.npar,1)} A`)}
-    ${L("Seção de cada cabo", alS(x.p.S), "mm²", it.auto ? it.jusIkLim ? "menor seção do catálogo que atende aos outros critérios (a Icc mínima × magnético do montante não fecha com nenhuma seção)" : `menor seção do catálogo que atende a todos os critérios${it.criterio ? ` · definida por: ${esc(it.criterio)}` : ""}` : "escolhida")}
+    ${L("Seção de cada cabo", alS(x.p.S), "mm²", it.tabConc ? `tabela da concessionária: ${esc(it.tabConc.txt)} · ${esc(it.tabConc.fonte)}` : it.auto ? it.jusIkLim ? "menor seção do catálogo que atende aos outros critérios (a Icc mínima × magnético do montante não fecha com nenhuma seção)" : `menor seção do catálogo que atende a todos os critérios${it.criterio ? ` · definida por: ${esc(it.criterio)}` : ""}` : "escolhida")}
     ${H("Queda de tensão – cálculo completo (IEC 60287)")}
     ${L("Resistência CC a 20 ºC (R₀)", v(x.R0,4), "Ω/km", "tabela 18 (classe 5)")}
     ${L("Resistência CC a θ (R')", v(x.Rl,4), "Ω/km", `R' = R₀·[1 + α·(θ − 20)], α = ${p.mat===1?"0,00393":"0,00403"}`)}
