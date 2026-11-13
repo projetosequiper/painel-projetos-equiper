@@ -730,6 +730,16 @@
   body.tema-escuro{ color-scheme: dark; }
   /* Tema escuro: todo texto herda a cor do tema (antes as janelas herdavam preto do body) */
   body{ color:var(--ink); }
+  @media (max-width:900px){ .so-desk{display:none;} }
+  /* celular: dimensionamento aberto ocupa a tela inteira (barra com "‹ Clientes" em cima) */
+  @media (max-width:900px){
+    body.dim-aberto #dimensionamentosVoltarWrap{position:fixed; top:0; left:0; right:0; z-index:1000; height:calc(52px + env(safe-area-inset-top,0px)); box-sizing:border-box; margin:0 !important; padding:8px 12px calc(8px) ; padding-top:calc(8px + env(safe-area-inset-top,0px)); background:var(--sheet, #fff); border-bottom:1px solid var(--border); display:flex !important; align-items:center; gap:8px;}
+    body.dim-aberto #dimensionamentosVoltarWrap .btn{flex:none;}
+    body.dim-aberto #dimensionamentoClienteAtual, body.dim-aberto #dimensionamentosClienteAtual{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+    body.dim-aberto #iframeDimensionamento{position:fixed; left:0; right:0; top:calc(52px + env(safe-area-inset-top,0px)); width:100% !important; height:calc(100vh - 52px - env(safe-area-inset-top,0px)) !important; height:calc(100dvh - 52px - env(safe-area-inset-top,0px)) !important; border:0 !important; border-radius:0 !important; z-index:1000;}
+    body.dim-aberto{overflow:hidden;}
+    body.dim-aberto #barraInferiorMobile, body.dim-aberto .chat-fab, body.dim-aberto #chatFab, body.dim-aberto #botaoTema{display:none !important;}
+  }
   /* ===== Calculadora ===== */
   .sidebar-desktop-rodape .sidebar-calc-btn{margin-bottom:8px; text-align:left;}
   .sidebar-desktop-rodape .sidebar-calc-btn.on{background:var(--ink); color:var(--sheet); border-color:var(--ink);}
@@ -1114,7 +1124,7 @@
       <div id="dimensionamentosClientesLista"></div>
     </div>
     <div id="dimensionamentosVoltarWrap" style="display:none; margin-bottom:10px;">
-      <button class="btn small secondary" id="btnVoltarDimensionamentos">‹ Voltar pra lista de clientes</button>
+      <button class="btn small secondary" id="btnVoltarDimensionamentos">‹ <span class="so-desk">Voltar pra lista de </span>clientes</button>
       <b id="dimensionamentosClienteAtual" style="margin-left:8px;"></b>
     </div>
     <iframe id="iframeDimensionamento" style="display:none; width:100%; height:82vh; border:1px solid var(--border); border-radius:var(--r-md); background:#fff;"></iframe>
