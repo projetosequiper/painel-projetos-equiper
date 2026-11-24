@@ -3184,14 +3184,20 @@
 
   var LINK_ARTEFATO = 'https://claude.ai/public/artifacts/4343b0c8-1abc-4a4e-adb0-136ca3af7d8a';
   function abrirWhatsAppFecharQuadro(t){
-    var link = state.linkPainel || LINK_ARTEFATO;
+    var link = state.linkPainel || (/^https?:$/.test(location.protocol) && !/claude\.ai$/.test(location.hostname) ? location.origin + location.pathname : LINK_ARTEFATO);   // painel no GitHub Pages: link dele
     var nomeDe = function(x){ var pj = (state.projetos||[]).find(function(q){ return q.id === x.projetoId; }); return (pj && pj.nome) || x.projetoNome || x.cliente || 'Sem nome'; };
-    // todos os projetos na lista "Fechar quadro" (de todos os projetistas) que ainda não tiveram o quadro fechado
-    var lista = (state.tarefas||[]).filter(function(x){ return x.status === 'Fechar quadro' && !x.quadroFechado; });
-    if(t && !lista.some(function(x){ return x.id === t.id; })) lista.unshift(t);
-    lista.sort(function(a, b){ return (a.id === t.id ? -1 : 0) - (b.id === t.id ? -1 : 0) || String(nomeDe(a)).localeCompare(String(nomeDe(b)), 'pt-BR', {sensitivity:'base'}); });
-    var linha = function(x, i){ var nm = nomeDe(x); return (i+1)+'. '+nm+(x.cliente && x.cliente !== nm && x.cliente !== x.projetoNome ? ' — '+x.cliente : '')+(x.tipo && x.tipo !== 'Elétrica' ? ' ('+x.tipo+')' : '')+(x.responsavel ? ' · '+x.responsavel : '')+(x.id === t.id ? ' 🆕' : ''); };
-    var texto = '⚡ Quadros elétricos para fechar ('+lista.length+'):\n\n'+lista.map(linha).join('\n')+'\n\nAcompanhe pelo painel: '+link;
+    // todos os projetos na lista "Fechar quadro" (de todos os projetistas) que ainda não tiveram o quadro fechado; cliente repetido aparece uma vez só
+    var tarefas = (state.tarefas||[]).filter(function(x){ return x.status === 'Fechar quadro' && !x.quadroFechado; });
+    if(t && !tarefas.some(function(x){ return x.id === t.id; })) tarefas.unshift(t);
+    var grupos = {}, ordem = [];
+    tarefas.forEach(function(x){
+      var nm = nomeDe(x), k = normalizarTexto(nm);
+      if(!grupos[k]){ grupos[k] = { nome: nm, resp: [], novo: false }; ordem.push(k); }
+      if(x.responsavel && grupos[k].resp.indexOf(x.responsavel) === -1) grupos[k].resp.push(x.responsavel);
+      if(t && x.id === t.id) grupos[k].novo = true;
+    });
+    var lista = ordem.map(function(k){ return grupos[k]; }).sort(function(a, b){ return (b.novo ? 1 : 0) - (a.novo ? 1 : 0) || a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
+    var texto = 'Quadros elétricos para fechar ('+lista.length+'):\n\n'+lista.map(function(g, i){ return (i+1)+'. '+g.nome+(g.resp.length ? ' · '+g.resp.join(', ') : '')+(g.novo ? ' (novo)' : ''); }).join('\n')+'\n\nAcompanhe pelo painel: '+link;
     window.open('https://wa.me/?text='+encodeURIComponent(texto), '_blank');
   }
 
