@@ -1239,9 +1239,11 @@
           <div id="usuariosFinLista"></div>
         </div>
       </div>
+      <div class="cli-abas" id="finAbas" data-topico-fin="clientes"><button type="button" class="cli-aba" data-fin-aba="">Todos <span></span></button><button type="button" class="cli-aba" data-fin-aba="aberto">🟡 Em aberto <span></span></button><button type="button" class="cli-aba" data-fin-aba="quitado">✅ Finalizados (quitados) <span></span></button></div>
       <div class="toolbar" data-topico-fin="clientes">
         <input type="text" id="finBusca" placeholder="Buscar cliente ou localidade" style="min-width:220px" />
-        <select id="finFiltroSel" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); font-family:inherit;"><option value="">Todos os clientes</option><option value="cobrar">A cobrar (vencidas ou "Cobrar")</option><option value="art">ART pendente</option><option value="aberto">Com valor em aberto</option><option value="quitado">Quitados</option></select>
+        <select id="finFiltroSel" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); font-family:inherit;"><option value="">Todos os clientes</option><option value="cobrar">A cobrar (vencidas ou "Cobrar")</option><option value="art">ART pendente</option></select>
+        <select id="finOrdemSel" title="Ordem da lista" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); font-family:inherit;"><option value="">Ordem de fechamento</option><option value="az">Ordem alfabética (A–Z)</option></select>
         <button class="btn small secondary" id="btnIrParaFinal">⬇ Ir para o final</button>
         <button class="btn small" id="btnNovoClienteFin">+ Novo cliente fechado</button>
       </div>
@@ -8208,7 +8210,16 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     var el = document.getElementById('finLista');
     if(!el) return;
     el.innerHTML = '';
+    var quitadoFin = function(r){ return !!r.quitadoManual || ((r.valorTotal||0) - recebidoDoCliente(r)) <= 0.01; };
+    var nQuit = state.financeiro.filter(quitadoFin).length;
+    document.querySelectorAll('#finAbas [data-fin-aba]').forEach(function(b){
+      var k = b.getAttribute('data-fin-aba'); b.classList.toggle('on', k === finAba);
+      b.querySelector('span').textContent = '(' + (k === 'quitado' ? nQuit : k === 'aberto' ? state.financeiro.length - nQuit : state.financeiro.length) + ')';
+    });
     var lista = state.financeiro;
+    if(finAba === 'quitado') lista = lista.filter(quitadoFin);
+    else if(finAba === 'aberto') lista = lista.filter(function(r){ return !quitadoFin(r); });
+    if(finOrdem === 'az') lista = lista.slice().sort(function(a,b){ return (a.cliente||'').localeCompare(b.cliente||'', 'pt-BR', {sensitivity:'base'}); });
     if(finFiltro){
       lista = lista.filter(function(r){
         var rec2 = recebidoDoCliente(r), quit = !!r.quitadoManual || ((r.valorTotal||0) - rec2) <= 0.01;
@@ -8252,7 +8263,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     el.appendChild(btnInicio);
   }
 
-  var finAbaCliente = {}, finFiltro = '';
+  var finAbaCliente = {}, finFiltro = '', finAba = '', finOrdem = '';
   function renderClienteFinanceiroCard(rec){
     var card = document.createElement('div');
     card.className = 'fin-cliente';
@@ -10231,6 +10242,11 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   };
   document.getElementById('finBusca').addEventListener('input', function(e){ buscaFinanceiroTexto = e.target.value; renderFinanceiroLista(); });
   document.getElementById('finFiltroSel').addEventListener('change', function(e){ finFiltro = e.target.value; renderFinanceiroLista(); });
+  // abas Todos / Em aberto / Finalizados e ordem (lembradas neste aparelho)
+  try{ finAba = localStorage.getItem('equiper-fin-aba') || ''; finOrdem = localStorage.getItem('equiper-fin-ordem') || ''; }catch(e){}
+  document.getElementById('finOrdemSel').value = finOrdem;
+  document.getElementById('finOrdemSel').addEventListener('change', function(e){ finOrdem = e.target.value; try{ localStorage.setItem('equiper-fin-ordem', finOrdem); }catch(er){} renderFinanceiroLista(); });
+  document.querySelectorAll('#finAbas [data-fin-aba]').forEach(function(b){ b.addEventListener('click', function(){ finAba = b.getAttribute('data-fin-aba'); try{ localStorage.setItem('equiper-fin-aba', finAba); }catch(er){} colapsadoFinListaGeral = false; renderFinanceiroLista(); }); });
 
   var CHAVES_BACKUP = ['clm-projetos','clm-tarefas','clm-equipe','clm-tipos','clm-link-painel','clm-financeiro','clm-ferias','clm-reunioes','clm-relatorios-visita','clm-consideracoes-iniciais','clm-registros-art','clm-dimensionamentos','clm-permissoes-projetista','clm-emails-projetistas','clm-email-gerente','clm-usuarios-financeiro','clm-emails-financeiro-ind'];
   var CHAVES_RESTAURAVEIS_EXTRA = ['clm-ferias','clm-reunioes','clm-relatorios-visita','clm-consideracoes-iniciais','clm-registros-art','clm-dimensionamentos'];
