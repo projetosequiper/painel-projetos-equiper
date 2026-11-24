@@ -1239,7 +1239,7 @@
           <div id="usuariosFinLista"></div>
         </div>
       </div>
-      <div class="cli-abas" id="finAbas" data-topico-fin="clientes"><button type="button" class="cli-aba" data-fin-aba="">Todos <span></span></button><button type="button" class="cli-aba" data-fin-aba="aberto">🟡 Em aberto <span></span></button><button type="button" class="cli-aba" data-fin-aba="quitado">✅ Finalizados (quitados) <span></span></button></div>
+      <div class="cli-abas" id="finAbas" data-topico-fin="clientes"><button type="button" class="cli-aba" data-fin-aba="">Todos <span></span></button><button type="button" class="cli-aba" data-fin-aba="aberto">🟡 Em aberto <span></span></button><button type="button" class="cli-aba" data-fin-aba="espera">⏸️ Em espera <span></span></button><button type="button" class="cli-aba" data-fin-aba="quitado">✅ Finalizados (quitados) <span></span></button></div>
       <div class="toolbar" data-topico-fin="clientes">
         <input type="text" id="finBusca" placeholder="Buscar cliente ou localidade" style="min-width:220px" />
         <select id="finFiltroSel" style="font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--sheet); font-family:inherit;"><option value="">Todos os clientes</option><option value="cobrar">A cobrar (vencidas ou "Cobrar")</option><option value="art">ART pendente</option></select>
@@ -8211,14 +8211,17 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     if(!el) return;
     el.innerHTML = '';
     var quitadoFin = function(r){ return !!r.quitadoManual || ((r.valorTotal||0) - recebidoDoCliente(r)) <= 0.01; };
-    var nQuit = state.financeiro.filter(quitadoFin).length;
+    // em espera: projeto parado (marcado no cartão); sai de "Em aberto" enquanto estiver parado
+    var esperaFin = function(r){ return !!r.emEspera && !quitadoFin(r); };
+    var nQuit = state.financeiro.filter(quitadoFin).length, nEsp = state.financeiro.filter(esperaFin).length;
     document.querySelectorAll('#finAbas [data-fin-aba]').forEach(function(b){
       var k = b.getAttribute('data-fin-aba'); b.classList.toggle('on', k === finAba);
-      b.querySelector('span').textContent = '(' + (k === 'quitado' ? nQuit : k === 'aberto' ? state.financeiro.length - nQuit : state.financeiro.length) + ')';
+      b.querySelector('span').textContent = '(' + (k === 'quitado' ? nQuit : k === 'espera' ? nEsp : k === 'aberto' ? state.financeiro.length - nQuit - nEsp : state.financeiro.length) + ')';
     });
     var lista = state.financeiro;
     if(finAba === 'quitado') lista = lista.filter(quitadoFin);
-    else if(finAba === 'aberto') lista = lista.filter(function(r){ return !quitadoFin(r); });
+    else if(finAba === 'espera') lista = lista.filter(esperaFin);
+    else if(finAba === 'aberto') lista = lista.filter(function(r){ return !quitadoFin(r) && !esperaFin(r); });
     if(finOrdem === 'az') lista = lista.slice().sort(function(a,b){ return (a.cliente||'').localeCompare(b.cliente||'', 'pt-BR', {sensitivity:'base'}); });
     if(finFiltro){
       lista = lista.filter(function(r){
@@ -8292,6 +8295,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
         (temCobrar?' <span style="color:#fff;background:var(--red);font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;display:inline-block;white-space:nowrap;line-height:1.3;margin-top:2px;margin-bottom:2px;letter-spacing:0.2px;">💰 COBRAR</span>':'')+
         (temCobrancaEnviada?' <span style="color:var(--ink);background:var(--paper);border:1px solid var(--border);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;display:inline-block;white-space:nowrap;line-height:1.3;margin-top:2px;margin-bottom:2px;">✉ Cobrança enviada</span>':'')+
         (temPrevisto?' <span style="color:var(--ink);background:var(--amber-soft);border:1px solid var(--amber);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;display:inline-block;white-space:nowrap;line-height:1.3;margin-top:2px;margin-bottom:2px;">📅 paga em '+escapeHtml(fmtDate(temPrevisto))+'</span>':'')+
+        (rec.emEspera && !quitado?' <span style="color:#fff;background:#6B7280;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;display:inline-block;white-space:nowrap;line-height:1.3;margin-top:2px;margin-bottom:2px;" title="'+escapeHtml(rec.esperaMotivo||'')+'">⏸ EM ESPERA</span>':'')+
         (!temArt?' <span style="color:var(--ink);background:var(--amber-soft);border:1px solid var(--amber);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px;vertical-align:middle;display:inline-block;white-space:nowrap;line-height:1.3;margin-top:2px;margin-bottom:2px;">📐 ART pendente</span>':'')+
       '</div>'+
       '<div class="fin-col" data-rot="Contratado">'+formatarMoeda(rec.valorTotal||0)+'</div>'+
@@ -8304,6 +8308,20 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
     if(!isColapsado){
       var body = document.createElement('div');
       body.className = 'fin-cliente-body';
+
+      // Em espera (projeto parado)
+      var secEspera = document.createElement('div');
+      secEspera.className = 'fin-secao';
+      secEspera.style.marginTop = '10px';
+      secEspera.innerHTML = '<label class="envio-row '+(rec.emEspera?'enviado':'')+'" style="cursor:pointer;"><input type="checkbox" class="fin-espera-check" '+(rec.emEspera?'checked':'')+'> ⏸️ Projeto em espera</label>'+
+        (rec.emEspera ? '<div style="display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap;"><input type="text" class="fin-espera-motivo" placeholder="Motivo (opcional): aguardando cliente, obra parada…" value="'+escapeHtml(rec.esperaMotivo||'')+'" style="flex:1; min-width:220px;">'+(rec.esperaDesde ? '<span class="mut" style="font-size:12px;">desde '+escapeHtml(fmtDate(rec.esperaDesde))+'</span>' : '')+'</div>' : '');
+      secEspera.querySelector('.fin-espera-check').addEventListener('change', function(e){
+        if(e.target.checked){ rec.emEspera = true; rec.esperaDesde = todayISO(); }
+        else { delete rec.emEspera; delete rec.esperaDesde; delete rec.esperaMotivo; }
+        saveFinanceiro(); renderFinanceiroLista();
+      });
+      if(secEspera.querySelector('.fin-espera-motivo')) secEspera.querySelector('.fin-espera-motivo').addEventListener('change', function(e){ rec.esperaMotivo = e.target.value.trim(); saveFinanceiro(); });
+      body.appendChild(secEspera);
 
       // Quitado manual
       var secQuitado = document.createElement('div');
