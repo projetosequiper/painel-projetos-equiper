@@ -472,7 +472,10 @@ details, details *{box-sizing:border-box}
 .lnk-tec{font-size:13px;margin-top:4px;align-self:flex-start}
 
 .cm-c .tr-res{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))!important}
-.cm-cab{padding:12px;display:grid;gap:8px;grid-template-columns:1.2fr 1.3fr .75fr .8fr .8fr .75fr .9fr 40px;align-items:end}
+.cm-cab{padding:12px;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));align-items:end}
+.cm-cab .x{justify-self:end}
+.cm-cab .cm-chk{display:flex;align-items:center;gap:6px;font-size:14px;padding-bottom:12px;cursor:pointer;white-space:nowrap}
+.cm-cab .cm-t2{grid-column:1/-1;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));align-items:end;padding:8px 10px;border-left:3px solid var(--vermelho,#d10a1e);background:var(--cinza-1,#f7f7f7)}
 @media(max-width:900px){.cm-cab{grid-template-columns:1fr 1fr 40px}.cm-cab .campo:nth-child(2){grid-column:1/-1}}
 @media(min-width:720px){.c4{grid-column:span 4}}
 
@@ -3929,10 +3932,10 @@ function calcPluvial(){
 }
 
 /* ---------- Editor (estilo Ftool) ---------- */
-let PL = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null};
+let PL = {modo:"sel", sel:null, origem:null, mouse:null, arrasto:null, multi:new Set(), laco:null};   // multi: caixas/saídas marcadas no laço
 const PL_SNAP = 20, PL_CX = 22, PL_PW = 140;
 const MODOS_PL = {
-  sel:   "Clique numa caixa para lançar as áreas e as prumadas. Arraste a caixa ou uma prumada para mover. Delete apaga o selecionado.",
+  sel:   "Clique numa caixa para lançar as áreas e as prumadas. Arraste a caixa ou uma prumada para mover. Arraste no fundo para marcar várias caixas e mover tudo junto (Shift + clique soma ou tira). Delete apaga o selecionado.",
   caixa: "Clique no desenho para colocar uma caixa de areia; a janela de áreas abre em seguida.",
   ligar: "Clique na caixa de origem e depois na caixa (ou saída) que recebe a água.",
   saida: "Clique no desenho para colocar a saída final (rede pública, sarjeta…).",
@@ -3966,7 +3969,7 @@ function plDesenho(R, interativo){
     const a = t.de, b = t.para; if(!a || !b) return;
     const dx = b.x-a.x, dy = b.y-a.y, L = Math.hypot(dx,dy)||1, ux = dx/L, uy = dy/L;
     const rb = P.saidas.includes(b) ? 20 : PL_CX+3, x1 = a.x+ux*(PL_CX+2), y1 = a.y+uy*(PL_CX+2), x2 = b.x-ux*rb, y2 = b.y-uy*rb;
-    const mx = (x1+x2)/2, my = (y1+y2)/2, err = !!t.erro, sel = selId===t.l.id;
+    const mx = (x1+x2)/2, my = (y1+y2)/2, err = !!t.erro, sel = selId===t.l.id || (PL.multi.has(a.id) && PL.multi.has(b.id));
     let ang = Math.atan2(dy,dx)*180/Math.PI; if(ang>90) ang-=180; if(ang<-90) ang+=180;
     els.push(`<g class="pl-tubo ${err?"err":""} ${sel?"sel":""}" data-tipo="lig" data-id="${t.l.id}">
       ${interativo?`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="hit"/>`:""}
@@ -3975,7 +3978,7 @@ function plDesenho(R, interativo){
   });
   // caixas
   P.caixas.forEach(c=>{
-    const sel = selId===c.id, ori = PL.origem===c.id, sem = R.semSaida.includes(c);
+    const sel = selId===c.id || PL.multi.has(c.id), ori = PL.origem===c.id, sem = R.semSaida.includes(c);
     const prs = R.prumadas.filter(x=>x.c===c), nP = prs.length;
     const prSvg = prs.map(x=>{
       const q = plPosPrum(c, x.k), px = q.x, py = q.y, er = !!x.erro, F = PL_CX+2;
@@ -4002,12 +4005,14 @@ function plDesenho(R, interativo){
   });
   // saídas
   P.saidas.forEach(s=>{
-    const sel = selId===s.id;
+    const sel = selId===s.id || PL.multi.has(s.id);
     els.push(`<g class="pl-sd ${sel?"sel":""}" data-tipo="saida" data-id="${s.id}" transform="translate(${s.x} ${s.y})">
       <circle r="18" class="sd"/><path d="M-8 -4 L0 6 L8 -4" class="sd2"/>
       <text y="-26" class="cn" text-anchor="middle">${esc(s.nome)}</text>
       <text y="36" class="ca" text-anchor="middle">${fmt(R.acum(s.id),1)} m²</text></g>`);
   });
+  // laço de seleção
+  if(interativo && PL.laco){ const l = PL.laco; els.push(`<rect x="${Math.min(l.x0,l.x1)}" y="${Math.min(l.y0,l.y1)}" width="${Math.abs(l.x1-l.x0)}" height="${Math.abs(l.y1-l.y0)}" fill="rgba(209,10,30,.06)" stroke="#d10a1e" stroke-width="1.5" stroke-dasharray="6 4" pointer-events="none"/>`); }
   // linha elástica ao ligar
   if(interativo && PL.modo==="ligar" && PL.origem && PL.mouse){
     const o = P.caixas.find(c=>c.id===PL.origem);
@@ -4048,6 +4053,18 @@ function renderPlCanvas(R){
 function opcoesTipoArea(sel){ return TIPOS_AREA.map(t=>`<option value="${t.id}" ${t.id===sel?"selected":""}>${t.t}${t.c!=null?` (C = ${String(t.c).replace(".",",")})`:""}</option>`).join(""); }
 function renderPlPainel(R){
   const P = S.plu, sel = PL.sel, pn = $("pl-painel");
+  if(PL.multi.size > 1){
+    const nC = P.caixas.filter(c=>PL.multi.has(c.id)).length, nS = P.saidas.filter(x=>PL.multi.has(x.id)).length, nT = P.ligacoes.filter(l=>PL.multi.has(l.de) && PL.multi.has(l.para)).length;
+    pn.innerHTML = `<h4>${PL.multi.size} itens selecionados</h4>
+      <p class="dica" style="margin-top:0">${nC} caixa${nC!==1?"s":""}${nS ? `, ${nS} saída${nS!==1?"s":""}` : ""} e ${nT} tubulaç${nT!==1?"ões":"ão"} entre elas.</p>
+      <p class="dica">Arraste qualquer item marcado para mover o grupo inteiro; as tubulações e prumadas acompanham. Shift + clique põe ou tira um item. Esc desmarca.</p>
+      <p><button type="button" class="btn sec peq" data-pl-multi-del>Apagar os ${PL.multi.size} itens</button></p>`;
+    pn.querySelector("[data-pl-multi-del]").onclick = async ()=>{
+      if(!(await caixaConfirmar(`Apagar ${nC} caixa${nC!==1?"s":""}${nS ? ` e ${nS} saída${nS!==1?"s":""}` : ""} e as tubulações ligadas a elas?`, {perigo:true, ok:"Apagar"}))) return;
+      const ids = new Set(PL.multi); P.caixas = P.caixas.filter(c=>!ids.has(c.id)); P.saidas = P.saidas.filter(x=>!ids.has(x.id));
+      P.ligacoes = P.ligacoes.filter(l=>!ids.has(l.de) && !ids.has(l.para)); PL.multi = new Set(); PL.sel = null; plAlterou(); };
+    return;
+  }
   if(!sel){
     const nC = P.caixas.length, nL = P.ligacoes.length;
     pn.innerHTML = `<h4>Nada selecionado</h4>
@@ -4172,11 +4189,12 @@ function ligarPluvial(){
   });
   for(const k of ["doc","rev","obs"]) $("p-"+k).addEventListener("input", e=>{ P()[k]=e.target.value; salvar(); });
   // ferramentas
-  document.querySelectorAll(".pl-ferr [data-modo]").forEach(b=>b.addEventListener("click", ()=>{ PL.modo = b.dataset.modo; PL.origem = null; if(!["sel","caixa"].includes(PL.modo)) plFecharPop(); renderPluvial(); }));
+  document.querySelectorAll(".pl-ferr [data-modo]").forEach(b=>b.addEventListener("click", ()=>{ PL.modo = b.dataset.modo; PL.origem = null; if(PL.modo!=="sel") PL.multi = new Set(); if(!["sel","caixa"].includes(PL.modo)) plFecharPop(); renderPluvial(); }));
   addEventListener("keydown", e=>{
     if(S.modulo!=="plu" || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
     const mapa = {v:"sel", c:"caixa", l:"ligar", s:"saida", a:"apagar"};
-    if(e.key==="Escape"){ PL.origem = null; PL.sel = null; plFecharPop(); renderPluvial(); return; }
+    if(e.key==="Escape"){ PL.origem = null; PL.sel = null; PL.multi = new Set(); plFecharPop(); renderPluvial(); return; }
+    if((e.key==="Delete"||e.key==="Backspace") && PL.multi.size > 1){ e.preventDefault(); $("pl-painel").querySelector("[data-pl-multi-del]")?.click(); return; }
     if((e.key==="Delete"||e.key==="Backspace") && PL.sel){ e.preventDefault(); plApagar(PL.sel.tipo, PL.sel.id); return; }
     if(mapa[e.key.toLowerCase()] && !e.ctrlKey && !e.metaKey){ PL.modo = mapa[e.key.toLowerCase()]; PL.origem = null; renderPluvial(); }
   });
@@ -4224,8 +4242,19 @@ function ligarPluvial(){
       plAlterou(); return;
     }
     if(PL.modo==="apagar"){ if(tipo && tipo!=="fundo") plApagar(tipo, id); return; }
-    // selecionar / mover
-    if(!tipo || tipo==="fundo"){ PL.sel = null; plFecharPop(); renderPluvial(); return; }
+    // selecionar / mover · arrastar no fundo desenha um laço que marca várias caixas/saídas
+    if(!tipo || tipo==="fundo"){ PL.sel = null; plFecharPop();
+      PL.laco = {x0:pt.x, y0:pt.y, x1:pt.x, y1:pt.y, soma:e.shiftKey, antes:new Set(PL.multi)}; if(!e.shiftKey) PL.multi = new Set();
+      svg.setPointerCapture(e.pointerId); renderPluvial(); return; }
+    if((tipo==="caixa"||tipo==="saida") && e.shiftKey){             // Shift + clique: põe/tira do grupo
+      if(PL.sel && (PL.sel.tipo==="caixa"||PL.sel.tipo==="saida")) PL.multi.add(PL.sel.id);
+      if(PL.multi.has(id)) PL.multi.delete(id); else PL.multi.add(id);
+      PL.sel = null; plFecharPop(); renderPluvial(); return; }
+    if((tipo==="caixa"||tipo==="saida") && PL.multi.size > 1 && PL.multi.has(id)){   // arrastar o grupo
+      const objs = [...P().caixas, ...P().saidas].filter(o=>PL.multi.has(o.id));
+      PL.arrasto = {grupo: objs.map(o=>({o, x:o.x, y:o.y})), x0:pt.x, y0:pt.y, moveu:false};
+      plFecharPop(); svg.setPointerCapture(e.pointerId); return; }
+    PL.multi = new Set();
     PL.sel = {tipo, id};
     if(tipo!=="caixa") plFecharPop();
     if(tipo==="caixa"||tipo==="saida"){
@@ -4238,6 +4267,14 @@ function ligarPluvial(){
   svg.addEventListener("pointermove", e=>{
     const pt = plPonto(e);
     if(PL.modo==="ligar" && PL.origem){ PL.mouse = pt; renderPlCanvas(calcPluvial()); return; }
+    if(PL.laco){ PL.laco.x1 = pt.x; PL.laco.y1 = pt.y; const l = PL.laco, xa = Math.min(l.x0,l.x1), xb = Math.max(l.x0,l.x1), ya = Math.min(l.y0,l.y1), yb = Math.max(l.y0,l.y1);
+      PL.multi = new Set(l.soma ? l.antes : []); [...S.plu.caixas, ...S.plu.saidas].forEach(o=>{ if(o.x>=xa && o.x<=xb && o.y>=ya && o.y<=yb) PL.multi.add(o.id); });
+      renderPlCanvas(calcPluvial()); return; }
+    if(PL.arrasto && PL.arrasto.grupo){
+      const a = PL.arrasto; let dx = Math.round((pt.x-a.x0)/PL_SNAP)*PL_SNAP, dy = Math.round((pt.y-a.y0)/PL_SNAP)*PL_SNAP;
+      dx = Math.max(dx, PL_SNAP*2 - Math.min(...a.grupo.map(g=>g.x))); dy = Math.max(dy, PL_SNAP*2 - Math.min(...a.grupo.map(g=>g.y)));
+      if(a.dx!==dx || a.dy!==dy){ a.dx = dx; a.dy = dy; a.grupo.forEach(g=>{ g.o.x = g.x+dx; g.o.y = g.y+dy; }); a.moveu = a.moveu || !!(dx||dy); renderPlCanvas(calcPluvial()); }
+      return; }
     if(PL.arrasto && PL.arrasto.prum){
       const a = PL.arrasto, nx = Math.round((pt.x-a.c.x+a.dx)/10)*10, ny = Math.round((pt.y-a.c.y+a.dy)/10)*10, q = a.prum.pos;
       if(!q || q.x!==nx || q.y!==ny){ a.prum.pos = {x:nx, y:ny}; a.moveu = true; renderPlCanvas(calcPluvial()); }
@@ -4248,7 +4285,10 @@ function ligarPluvial(){
       if(nx!==a.obj.x || ny!==a.obj.y){ a.obj.x = nx; a.obj.y = ny; a.moveu = true; renderPlCanvas(calcPluvial()); }
     }
   });
-  const soltar = ()=>{ if(PL.arrasto){ const a = PL.arrasto; PL.arrasto = null;
+  const soltar = ()=>{
+    if(PL.laco){ PL.laco = null; if(PL.multi.size===1){ const [u] = PL.multi; PL.sel = {tipo: S.plu.caixas.some(c=>c.id===u) ? "caixa" : "saida", id:u}; PL.multi = new Set(); } renderPluvial(); return; }
+    if(PL.arrasto && PL.arrasto.grupo){ const a = PL.arrasto; PL.arrasto = null; if(a.moveu) salvar(); renderPluvial(); return; }
+    if(PL.arrasto){ const a = PL.arrasto; PL.arrasto = null;
     if(a.moveu){ salvar(); plPosPop(); }
     else if(S.plu.caixas.includes(a.obj)) plAbrirPop(a.obj.id, true);   // clique simples na caixa abre as áreas
   } };
@@ -7010,8 +7050,26 @@ function calcCirc(c){
   // circuitos de quadro (QDC…): o cabo é sempre o do projeto
   const qdc = (c.alim || /^\s*qdc/i.test(c.nome||"")) && num(c.caboProj) > 0;
   if(qdc){ const sp = num(c.caboProj); adot = linhas.find(x=>x.s===sp) || {s:sp, lmax:lMax(U,sp,I,curva), iz:(T36[sp]?.[col]||0)*f}; }
-  return {c, U, I, L, curva, tipo, cond, f, linhas, porComp, porCorr, adot, qdc,
+  const r = {c, U, I, L, curva, tipo, cond, f, linhas, porComp, porCorr, adot, qdc,
     erro: qdc ? null : !porComp ? "Comprimento acima do possível com 240 mm²" : !porCorr ? "Corrente acima da tabela" : null};
+  if(c.dupla) r.duas = cmxDuas(r);
+  return r;
+}
+// Circuito com duas bitolas em série (trecho 1 + trecho 2). Mesmos critérios do circuito simples:
+// • comprimento (curto no fim do circuito chega ao magnético): resistência do laço somada → L1/Lmáx(S1) + L2/Lmáx(S2) ≤ 1
+// • corrente: Iz de cada trecho ≥ In (o disjuntor protege os dois trechos)
+function cmxDuas(r){
+  const c = r.c, s1 = num(c.caboProj), L1 = num(c.comp), s2 = num(c.cabo2), L2 = num(c.comp2), K = S.cmx;
+  if(!(s1 > 0 && s2 > 0)) return {erro:"Escolha o cabo dos dois trechos"};
+  if(!(L1 > 0 && L2 > 0)) return {erro:"Informe o comprimento dos dois trechos"};
+  const l = s => r.linhas.find(x=>x.s===s) || {s, lmax: lMax(r.U, s, r.I, r.curva), iz: 0};
+  const a = l(s1), b = l(s2), uso = L1/a.lmax + L2/b.lmax;
+  const okComp = uso <= 1 + 1e-9, okCorr = !K.capac || (a.iz >= r.I && b.iz >= r.I), smin = num(c.smin || K.smin || 1.5), okMin = Math.min(s1, s2) >= smin;
+  // sugestões: o menor cabo em um trecho mantendo o outro
+  const cand = SECOES.filter(x=>x >= smin), cabe = (x, y) => (L1/l(x).lmax + L2/l(y).lmax <= 1 + 1e-9) && (!K.capac || (l(x).iz >= r.I && l(y).iz >= r.I));
+  const sug2 = cand.find(x=>cabe(s1, x)), sug1 = cand.find(x=>cabe(x, s2));
+  return {s1, L1, s2, L2, a, b, uso, okComp, okCorr, okMin, ok: okComp && okCorr && okMin, Ltot: L1 + L2, sug1, sug2,
+    lRestante2: Math.max(0, Math.floor((1 - L1/a.lmax) * b.lmax))};   // quanto o trecho 2 pode ter com o trecho 1 como está
 }
 // terra pela NBR 5410 (tabela 58): até 16 mm² igual à fase; até 35 mm², 16 mm²; acima, metade da fase
 function secTerra(sf){ if(sf<=16) return sf; if(sf<=35) return 16; const m = sf/2; return SECOES.find(x=>x>=m) || sf; }
@@ -7043,17 +7101,37 @@ function renderCmxLista(){
       <label class="campo">Tensão<span class="unid"><input data-cf="tensao" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.tensao)}" placeholder="${esc(K.tensao)}"><b>V</b></span></label>
       <label class="campo">Disjuntor<span class="unid"><input data-cf="disj" type="number" min="0" step="1" inputmode="decimal" value="${esc(c.disj)}" placeholder="0"><b>A</b></span></label>
       <label class="campo">Curva<select data-cf="curva"><option value="">Padrão (${K.curva})</option>${["B","C","D"].map(x=>`<option ${c.curva===x?"selected":""}>${x}</option>`).join("")}</select></label>
-      <label class="campo">Cabo projeto<select data-cf="caboProj"><option value="">—</option>${SECOES.map(x=>`<option value="${x}" ${num(c.caboProj)===x?"selected":""}>${fmt(x,x%1?1:0)}</option>`).join("")}</select></label>
-      <label class="campo">Comprimento<span class="unid"><input data-cf="comp" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.comp)}" placeholder="0"><b>m</b></span></label>
+      <label class="campo">${c.dupla ? "Cabo trecho 1" : "Cabo projeto"}<select data-cf="caboProj"><option value="">—</option>${SECOES.map(x=>`<option value="${x}" ${num(c.caboProj)===x?"selected":""}>${fmt(x,x%1?1:0)}</option>`).join("")}</select></label>
+      <label class="campo">${c.dupla ? "Compr. trecho 1" : "Comprimento"}<span class="unid"><input data-cf="comp" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.comp)}" placeholder="0"><b>m</b></span></label>
+      <label class="cm-chk" title="Circuito com dois cabos de seções diferentes em série (ex.: 10 mm² até a caixa e 4 mm² até o ponto)"><input type="checkbox" data-cf="dupla" ${c.dupla?"checked":""}> Duas bitolas</label>
       <button class="x" type="button" data-rm aria-label="Remover circuito">×</button>
+      ${c.dupla ? `<div class="cm-t2"><small style="grid-column:1/-1;color:var(--cinza-4)">Trecho 1 começa no disjuntor; o trecho 2 continua até a carga.</small>
+        <label class="campo">Cabo trecho 2<select data-cf="cabo2"><option value="">—</option>${SECOES.map(x=>`<option value="${x}" ${num(c.cabo2)===x?"selected":""}>${fmt(x,x%1?1:0)}</option>`).join("")}</select></label>
+        <label class="campo">Compr. trecho 2<span class="unid"><input data-cf="comp2" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(c.comp2 ?? "")}" placeholder="0"><b>m</b></span></label>
+        <div class="campo" style="align-self:center;display:flex;flex-direction:column;gap:2px"><small style="color:var(--cinza-4)">Total</small><b class="cm-tot">${num(c.comp)+num(c.comp2) > 0 ? fmt(num(c.comp)+num(c.comp2),1) + " m" : "—"}</b></div></div>` : ""}
     </div><div class="tr-res" data-res></div></div>`).join("") : `<p class="vazio">Nenhum circuito.</p>`);
   atualizarCmx();
 }
 const mm2 = s => `${fmt(s, s%1?1:0)} mm²`;
+function cmxDuasHtml(r){
+  const d = r.duas, K = S.cmx;
+  if(!r.linhas) return `<p class="vazio" style="margin:0">${r.erro}.</p>`;
+  if(d.erro) return `<p class="vazio" style="margin:0">${d.erro}.</p>`;
+  const e1 = eletrodutoCirc({...r, qdc:true, c:{...r.c, caboProj:d.s1}, adot:d.a, erro:null}), e2 = eletrodutoCirc({...r, qdc:true, c:{...r.c, caboProj:d.s2, caboN:"", caboT:""}, adot:d.b, erro:null});
+  const sug = [d.okComp ? "" : `com ${mm2(d.s1)} no trecho 1, o trecho 2 aguenta até ${fmt(d.lRestante2)} m em ${mm2(d.s2)}`, d.sug2 && d.sug2!==d.s2 ? `trecho 2 em ${mm2(d.sug2)}` : "", d.sug1 && d.sug1!==d.s1 ? `trecho 1 em ${mm2(d.sug1)}` : ""].filter(Boolean);
+  return `
+    <div class="${d.okComp?"":"falha"}"><small>Pelo comprimento (os dois trechos)</small><strong>${fmt(d.uso*100,0)}%</strong><em>${fmt(d.L1,1)}/${fmt(d.a.lmax)} + ${fmt(d.L2,1)}/${fmt(d.b.lmax)} m · máx. 100%</em></div>
+    <div class="${d.okCorr?"":"falha"}"><small>Pela corrente${K.capac?"":" (desligado)"}</small><strong>${K.capac ? fmt(Math.min(d.a.iz, d.b.iz),1) + " A" : "—"}</strong><em>${K.capac ? `Iz trecho 1 ${fmt(d.a.iz,1)} · trecho 2 ${fmt(d.b.iz,1)} ≥ ${fmt(r.I)} A` : ""}</em></div>
+    <div><small>Comprimento total</small><strong>${fmt(d.Ltot,1)}</strong><em>m · ${mm2(d.s1)} ${fmt(d.L1,1)} m + ${mm2(d.s2)} ${fmt(d.L2,1)} m</em></div>
+    <div><small>Sugestão</small><strong style="font-size:15px">${d.ok ? "—" : sug.length ? "" : "aumentar os cabos"}</strong><em>${d.ok ? "não precisa mudar" : esc(sug.join(" · ") || "")}</em></div>
+    <div class="tr-diam ${d.ok?"":"falha"}"><small>${d.ok ? "Duas bitolas" : !d.okMin ? "Abaixo da seção mínima" : "Não atende"}</small><strong>${mm2(d.s1)} + ${mm2(d.s2)}</strong><em>curva ${r.curva} · ${fmt(r.U)} V</em></div>
+    ${[e1, e2].map((e, i)=>e ? `<div class="tr-diam ${e.d?.ok?"":"falha"}"><small>Eletroduto trecho ${i+1} (${dutoNome(e.tipoDuto).toLowerCase()})</small><strong>${e.d?.ok?e.d.txt:"—"}</strong><em>${esc(e.cond)} mm²${e.d?.ok?` · ${e.d.ocupTxt}`:""}</em></div>` : "").join("")}`;
+}
 const cmxQ = c => c?.qid ? S.dem.quadros.find(q=>q.id===c.qid)?.nome || "" : "";
 function atualizarCmx(){
   const K = S.cmx, R = K.circs.map(calcCirc), comQ = K.circs.some(c=>cmxQ(c));
   document.querySelectorAll("#cm-lista .cm-c").forEach((el,i)=>{ const r = R[i]; if(!r) return;
+    if(r.duas){ el.querySelector("[data-res]").innerHTML = cmxDuasHtml(r); return; }
     el.querySelector("[data-res]").innerHTML = r.erro && !r.linhas ? `<p class="vazio" style="margin:0">${r.erro}.</p>` : `
       <div><small>Pelo comprimento</small><strong>${r.porComp?mm2(r.porComp.s):"—"}</strong><em>${r.porComp?`até ${fmt(r.porComp.lmax)} m`:""}</em></div>
       <div><small>Pela corrente${K.capac?"":" (desligado)"}</small><strong>${K.capac&&r.porCorr?mm2(r.porCorr.s):"—"}</strong><em>${K.capac&&r.porCorr?`${fmt(r.porCorr.iz,1)} A ≥ ${fmt(r.I)} A`:""}</em></div>
@@ -7062,8 +7140,9 @@ function atualizarCmx(){
       <div class="tr-diam ${r.adot&&!r.erro?"":"falha"}"><small>${r.erro||(r.qdc?"Cabo do projeto (QDC)":"Cabo adotado")}</small><strong>${r.adot&&!r.erro?mm2(r.adot.s):"—"}</strong><em>curva ${r.curva} · ${fmt(r.U)} V</em></div>
       ${(e=>e ? `<div class="tr-diam ${e.d?.ok?"":"falha"}"><small>Eletroduto (${dutoNome(e.tipoDuto).toLowerCase()})</small><strong>${e.d?.ok?e.d.txt:"—"}</strong><em>${esc(e.cond)} mm² · cabo ${e.origem}${e.d?.ok?` · ${e.d.ocupTxt}`:""}</em></div>` : "")(eletrodutoCirc(r))}`; });
   $("cm-quadro").innerHTML = R.length ? `<table class="quadro"><thead><tr>${comQ?"<th>Quadro</th>":""}<th>Circuito</th><th class="n">Tensão</th><th class="n">Disjuntor</th><th class="n">Comprimento</th><th class="n">Pelo comprimento</th><th class="n">Pela corrente</th><th>Cabo</th><th>Eletroduto</th>${R.some(r=>num(r.c.caboProj)>0)?"<th>No projeto</th>":""}</tr></thead><tbody>
-    ${R.map(r=>`<tr>${comQ?`<td>${esc(cmxQ(r.c))||"—"}</td>`:""}<td>${esc(r.c.nome)||"—"}</td><td class="n">${fmt(r.U)} V</td><td class="n">${fmt(r.I)} A ${r.curva}</td><td class="n">${r.L?fmt(r.L,1)+" m":"—"}</td><td class="n">${r.porComp?mm2(r.porComp.s):"—"}</td><td class="n">${K.capac&&r.porCorr?mm2(r.porCorr.s):"—"}</td>
-      <td class="d ${r.adot&&!r.erro?"":"falha"}">${r.adot&&!r.erro?mm2(r.adot.s):"—"}</td><td style="font-weight:600">${(e=>e&&e.d?.ok?`${e.d.txt} <span style="font-weight:400;color:var(--cinza-4)">${dutoNome(e.tipoDuto).toLowerCase()}</span>`:"—")(eletrodutoCirc(r))}</td>${R.some(x=>num(x.c.caboProj)>0)?`<td class="${num(r.c.caboProj)>0&&r.adot&&num(r.c.caboProj)<r.adot.s?"falha":""}" style="font-weight:600">${num(r.c.caboProj)>0?mm2(num(r.c.caboProj))+(r.adot?(num(r.c.caboProj)>=r.adot.s?" ✓":" ✗ aumentar"):""):"—"}</td>`:""}</tr>`).join("")}</tbody></table>` : `<p class="vazio">Adicione circuitos.</p>`;
+    ${R.map(r=>`<tr>${comQ?`<td>${esc(cmxQ(r.c))||"—"}</td>`:""}<td>${esc(r.c.nome)||"—"}</td><td class="n">${fmt(r.U)} V</td><td class="n">${fmt(r.I)} A ${r.curva}</td>${r.duas && !r.duas.erro ? `<td class="n">${fmt(r.duas.L1,1)} + ${fmt(r.duas.L2,1)} m</td><td class="n">${fmt(r.duas.uso*100,0)}%</td><td class="n">${K.capac ? fmt(Math.min(r.duas.a.iz, r.duas.b.iz),1)+" A" : "—"}</td>
+      <td class="d ${r.duas.ok?"":"falha"}">${mm2(r.duas.s1)} + ${mm2(r.duas.s2)}</td>` : `<td class="n">${r.L?fmt(r.L,1)+" m":"—"}</td><td class="n">${r.porComp?mm2(r.porComp.s):"—"}</td><td class="n">${K.capac&&r.porCorr?mm2(r.porCorr.s):"—"}</td>
+      <td class="d ${r.adot&&!r.erro?"":"falha"}">${r.adot&&!r.erro?mm2(r.adot.s):"—"}</td>`}<td style="font-weight:600">${(e=>e&&e.d?.ok?`${e.d.txt} <span style="font-weight:400;color:var(--cinza-4)">${dutoNome(e.tipoDuto).toLowerCase()}</span>`:"—")(eletrodutoCirc(r))}</td>${R.some(x=>num(x.c.caboProj)>0)?`<td class="${num(r.c.caboProj)>0&&r.adot&&num(r.c.caboProj)<r.adot.s?"falha":""}" style="font-weight:600">${num(r.c.caboProj)>0?mm2(num(r.c.caboProj))+(r.adot?(num(r.c.caboProj)>=r.adot.s?" ✓":" ✗ aumentar"):""):"—"}</td>`:""}</tr>`).join("")}</tbody></table>` : `<p class="vazio">Adicione circuitos.</p>`;
   // tabela de referência do primeiro circuito válido
   const ref = R.find(r=>r.linhas);
   $("cm-tab").innerHTML = ref ? `<p class="fonte" style="margin:0 0 6px">Comprimento máximo (m) por seção para ${esc(ref.c.nome||"o circuito")}: ${fmt(ref.U)} V, disjuntor ${fmt(ref.I)} A, curva ${ref.curva}</p>
@@ -7075,13 +7154,21 @@ function atualizarCmx(){
     .map(([a,b,c])=>`<div class="param"><small>${a}</small><strong>${b}</strong><em>${c}</em></div>`).join("");
   return R;
 }
+function cmxDuasMemorial(r){
+  const d = r.duas, f0 = x=>fmt(x, x%1?1:0), lm = s => `0,8 × ${fmt(r.U)} × ${f0(s)} ÷ (${String(R_SECAO(s)).replace(".",",")} × 2 × ${String(RHO_COBRE).replace(".",",")} × ${IM_CURVA[r.curva]||10} × ${fmt(r.I)})`;
+  if(d.erro) return `<div class="mc-bloco"><h4>${esc(r.c.nome)||"Circuito"}<span>duas bitolas</span></h4><p class="mc-l">${d.erro}.</p></div>`;
+  return `<div class="mc-bloco"><h4>${esc(r.c.nome)||"Circuito"}<span>${r.tipo[1]} · ${fmt(r.U)} V · ${fmt(r.I)} A curva ${r.curva} · duas bitolas: ${mm2(d.s1)} (${fmt(d.L1,1)} m) + ${mm2(d.s2)} (${fmt(d.L2,1)} m)</span></h4>
+    <p class="mc-l"><b>1.</b> Pelo comprimento (curto no fim do circuito, resistência dos dois trechos somada): L<sub>máx</sub>(${mm2(d.s1)}) = ${lm(d.s1)} = ${fmt(d.a.lmax)} m; L<sub>máx</sub>(${mm2(d.s2)}) = ${lm(d.s2)} = ${fmt(d.b.lmax)} m → ${fmt(d.L1,1)}/${fmt(d.a.lmax)} + ${fmt(d.L2,1)}/${fmt(d.b.lmax)} = <b>${fmt(d.uso*100,1)}%</b> ${d.okComp ? "≤ 100% · atende" : `<span class="falha">&gt; 100% · não atende</span>`}</p>
+    ${S.cmx.capac ? `<p class="mc-l"><b>2.</b> Pela corrente: I<sub>z</sub>(${mm2(d.s1)}) = ${fmt(d.a.iz,1)} A; I<sub>z</sub>(${mm2(d.s2)}) = ${fmt(d.b.iz,1)} A; o disjuntor de ${fmt(r.I)} A protege os dois trechos → ${d.okCorr ? "atende" : `<span class="falha">não atende</span>`}</p>` : ""}
+    <p class="mc-l fim">Resultado: <b>${d.ok ? "atende" : "não atende"}</b>${d.ok ? "" : [d.sug2 && d.sug2!==d.s2 ? ` · trecho 2 em ${mm2(d.sug2)}` : "", d.sug1 && d.sug1!==d.s1 ? ` · ou trecho 1 em ${mm2(d.sug1)}` : ""].join("")}</p></div>`;
+}
 function memorialCmx(R){
   const K = S.cmx; if(!R.length) return "";
   let h = `<div class="mc-bloco"><h4>Critérios</h4>
     <p class="mc-l">Comprimento máximo (proteção contra curto-circuito): L<sub>máx</sub> = 0,8 × U × S ÷ (r × 2 × ρ × I<sub>m</sub> × I<sub>n</sub>) <em>(ρ = ${String(RHO_COBRE).replace(".",",")} Ω·mm²/m, cobre; I<sub>m</sub> = 5 (curva B), 10 (C), 14 (D); r = 1 até 120 mm², 1,15 (150), 1,2 (185), 1,25 (240))</em></p>
     <p class="mc-l">Eletroduto de cada circuito: fases + neutro (se houver) + terra com a maior seção entre a calculada e a do projeto (circuitos QDC: sempre a do projeto) (terra pela NBR 5410: igual à fase até 16 mm², 16 mm² até 35 mm², metade acima), pelo método da planilha de Eletrodutos (cabo ${esc(CABOS[S.ele.cabo]?.t||"")}, taxa de ocupação ${S.ele.taxa==="nbr"?"NBR 5410":"Equiper"}).</p>
     ${K.capac?`<p class="mc-l">Capacidade de condução: I<sub>z</sub> = tabela 36 (PVC, 30 ºC, método ${K.metodo}) × fator de agrupamento ${fmt(fAgrup(K.agrup),2)} (${fmt(num(K.agrup))} circuito(s)) ≥ I<sub>n</sub> do disjuntor</p>`:""}</div>`;
-  h += R.filter(r=>r.linhas).map(r=>`<div class="mc-bloco"><h4>${esc(r.c.nome)||"Circuito"}<span>${r.tipo[1]} · ${fmt(r.U)} V · ${fmt(r.I)} A curva ${r.curva} · ${r.L?fmt(r.L,1)+" m":"sem comprimento"}</span></h4>
+  h += R.filter(r=>r.linhas).map(r=>r.duas ? cmxDuasMemorial(r) : `<div class="mc-bloco"><h4>${esc(r.c.nome)||"Circuito"}<span>${r.tipo[1]} · ${fmt(r.U)} V · ${fmt(r.I)} A curva ${r.curva} · ${r.L?fmt(r.L,1)+" m":"sem comprimento"}</span></h4>
     ${r.porComp?`<p class="mc-l"><b>1.</b> Pelo comprimento: L<sub>máx</sub>(${mm2(r.porComp.s)}) = 0,8 × ${fmt(r.U)} × ${fmt(r.porComp.s,r.porComp.s%1?1:0)} ÷ (${String(R_SECAO(r.porComp.s)).replace(".",",")} × 2 × ${String(RHO_COBRE).replace(".",",")} × ${IM_CURVA[r.curva]} × ${fmt(r.I)}) = <b>${fmt(r.porComp.lmax)} m</b> ≥ ${fmt(r.L,1)} m</p>`:`<p class="mc-l mc-aviso">Nenhuma seção atende ao comprimento.</p>`}
     ${K.capac?(r.porCorr?`<p class="mc-l"><b>2.</b> Pela corrente: ${mm2(r.porCorr.s)} → I<sub>z</sub> = ${fmt(r.porCorr.iz/r.f,1)} × ${fmt(r.f,2)} = <b>${fmt(r.porCorr.iz,1)} A</b> ≥ ${fmt(r.I)} A <em>(${r.cond} condutores carregados)</em></p>`:`<p class="mc-l mc-aviso">Corrente acima da tabela.</p>`):""}
     <p class="mc-l">Cabo adotado: <b>${r.adot&&!r.erro?mm2(r.adot.s):"—"}</b>${r.adot&&!r.erro?` · comprimento máximo com este cabo ${fmt(r.adot.lmax)} m`:""}</p>
@@ -7642,11 +7729,13 @@ function ligarCmx(){
   for(const k of ["doc","rev","obs"]) $("k-"+k).addEventListener("input", e=>{ K()[k] = e.target.value; salvar(); });
   $("cm-add").addEventListener("click", ()=>{ const u = K().circs[K().circs.length-1]; K().circs.push({nome:`C${K().circs.length+1}`, tipo:u?.tipo||"mn", tensao:"", disj:u?.disj||"", curva:"", comp:""}); renderCmxLista(); resumo(); salvar();
     const ins = document.querySelectorAll('#cm-lista [data-cf="disj"]'); ins[ins.length-1]?.focus(); });
-  $("cm-lista").addEventListener("input", e=>{ const i = +e.target.closest(".cm-c").dataset.i, f = e.target.dataset.cf; if(!f) return; K().circs[i][f] = e.target.value; alt(); });
+  $("cm-lista").addEventListener("input", e=>{ const i = +e.target.closest(".cm-c").dataset.i, f = e.target.dataset.cf; if(!f) return;
+    if(e.target.type==="checkbox"){ if(e.target.checked) K().circs[i][f] = true; else delete K().circs[i][f]; renderCmxLista(); resumo(); salvar(); return; }
+    K().circs[i][f] = e.target.value; if(f==="comp" || f==="comp2"){ const t = e.target.closest(".cm-c").querySelector(".cm-tot"); const c = K().circs[i]; if(t) t.textContent = num(c.comp)+num(c.comp2) > 0 ? fmt(num(c.comp)+num(c.comp2),1) + " m" : "—"; } alt(); });
   $("cm-lista").addEventListener("click", e=>{ if(!e.target.closest("[data-rm]")) return; K().circs.splice(+e.target.closest(".cm-c").dataset.i,1); renderCmxLista(); resumo(); salvar(); });
 }
 function resumoCmxParte(){ const R = S.cmx.circs.map(calcCirc).filter(r=>r.linhas); if(!R.length) return null;
-  return {det:`${R.length} circuito(s) · ${R.map(r=>`${esc(r.c.nome||"C")} ${r.adot&&!r.erro?mm2(r.adot.s):"—"}`).slice(0,4).join(", ")}${R.length>4?"…":""}`, ok: R.every(r=>r.adot && !r.erro)}; }
+  return {det:`${R.length} circuito(s) · ${R.map(r=>`${esc(r.c.nome||"C")} ${r.duas && !r.duas.erro ? mm2(r.duas.s1)+"+"+fmt(r.duas.s2, r.duas.s2%1?1:0) : r.adot&&!r.erro?mm2(r.adot.s):"—"}`).slice(0,4).join(", ")}${R.length>4?"…":""}`, ok: R.every(r=>r.duas ? r.duas.ok : (r.adot && !r.erro))}; }
 function relCmx(){
   const MREL = S.cmx, K = S.cmx, R = K.circs.map(calcCirc), td = (a,b)=>`<tr><td class="k">${a}</td><td>${b}</td></tr>`, S2 = secoes(), sec = S2.sec;
   const ok = R.length>0 && R.every(r=>r.adot && !r.erro), comQ = K.circs.some(c=>cmxQ(c));
