@@ -3048,6 +3048,10 @@
     if(a.tipo === 'imagem'){
       return '<span class="anexo-chip anexo-img" data-anexo-id="'+a.id+'"><img src="'+a.dataUrl+'" data-abrir-imagem="'+a.id+'"><button type="button" class="anexo-remove" data-remover-anexo="'+a.id+'">×</button></span>';
     }
+    var ehJson = /\.json$/i.test(a.nome||'');
+    if(ehJson) return '<span class="anexo-chip anexo-file" data-anexo-id="'+a.id+'" style="flex-wrap:wrap;max-width:100%;"><a href="'+a.dataUrl+'" download="'+escapeHtml(a.nome)+'" target="_blank" title="'+escapeHtml(a.nome)+'">'+(a.origem === 'dimensionamento' ? '📐 ' : '📄 ')+escapeHtml(a.nome)+'</a>'+
+      (a.origem === 'dimensionamento' ? '' : '<button type="button" class="btn small" data-abrir-dim-json="'+a.id+'" style="font-size:11px;padding:3px 8px;margin:2px 4px;" title="Abre o Dimensionamento deste cliente com este arquivo no Cálculo de demanda">⚡ Abrir no Cálculo de demanda</button>')+
+      '<button type="button" class="anexo-remove" data-remover-anexo="'+a.id+'">×</button></span>';
     return '<span class="anexo-chip anexo-file" data-anexo-id="'+a.id+'"><a href="'+a.dataUrl+'" download="'+escapeHtml(a.nome)+'" target="_blank">📄 '+escapeHtml(a.nome)+'</a><button type="button" class="anexo-remove" data-remover-anexo="'+a.id+'">×</button></span>';
   }
   function redimensionarImagem(file, maxDim, qualidade, callback){
@@ -3525,6 +3529,9 @@
         var pos = imagens.findIndex(function(a){ return a.id === img.getAttribute('data-abrir-imagem'); });
         abrirVisualizadorImagens(imagens.map(function(a){ return a.dataUrl; }), pos < 0 ? 0 : pos);
       });
+    });
+    card.querySelectorAll('[data-abrir-dim-json]').forEach(function(btn){
+      btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); abrirJsonNoDimensionamento(t.id, btn.getAttribute('data-abrir-dim-json')); });
     });
     card.querySelectorAll('[data-remover-anexo]').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -4737,6 +4744,28 @@
     dimForcar[cid] = true;
     if(dimPendente[cid]) salvarDimensionamentoCliente(cid, dimPendente[cid]);
   }
+  // ---- JSON do Revit anexado na tarefa → Cálculo de demanda do cliente (e o resultado volta para a mesma tarefa) ----
+  var dimImportarPendente = null;
+  function textoDeDataUrl(u){
+    var m = /^data:[^,]*?(;base64)?,(.*)$/.exec(u || ''); if(!m) return '';
+    if(!m[1]) return decodeURIComponent(m[2]);
+    var bin = atob(m[2]), bytes = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if(bytes[0] === 0xFF && bytes[1] === 0xFE) return new TextDecoder('utf-16le').decode(bytes);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+  function dataUrlDeTexto(txt){ var b = new TextEncoder().encode(txt), s2 = ''; for(var i = 0; i < b.length; i += 8192) s2 += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return 'data:application/json;base64,' + btoa(s2); }
+  function abrirJsonNoDimensionamento(taskId, anexoId){
+    var t = state.tarefas.find(function(x){ return x.id === taskId; }); if(!t) return;
+    var a = (t.anexos||[]).find(function(x){ return x.id === anexoId; }); if(!a) return;
+    var d = dadosDoCliente(t.projetoId), pj = d && d.pj;
+    if(!pj){ caixaAviso('Não achei o cliente desta tarefa.'); return; }
+    var cid = d.fin ? d.fin.id : (pj.finIdPendente || pj.id), nome = d.fin ? d.fin.cliente : pj.nome;
+    var texto = ''; try{ texto = textoDeDataUrl(a.dataUrl); }catch(e){}
+    if(!texto){ caixaAviso('Não consegui ler o arquivo ' + a.nome + '.'); return; }
+    dimImportarPendente = { cid: cid, texto: texto, nome: a.nome, tarefa: { id: t.id, nome: nome + ' · ' + (t.tipo || '') } };
+    ativarTopicoProjetos('dimensionamentos');
+    setTimeout(function(){ abrirDimensionamentoCliente(cid, nome); }, 50);
+  }
   function abrirDimensionamentoCliente(clienteId, clienteNome){
     dimensionamentoClienteAberto = clienteId;
     document.body.classList.add('dim-aberto');
@@ -4770,12 +4799,25 @@
               enderecoCliente: fAtual ? (fAtual.enderecoCompleto || '') : '',
               dados: dadosC
             }, '*');
+            if(dimImportarPendente && dimImportarPendente.cid === cidAbrir){
+              var pend = dimImportarPendente; dimImportarPendente = null;
+              try{ iframe.contentWindow.postMessage({ tipo: 'importar-json-revit', clienteId: cidAbrir, texto: pend.texto, nome: pend.nome, tarefa: pend.tarefa }, '*'); }catch(err){}
+            }
             // etapa 4: dados das Verificações (levantamento inicial) desta obra, para preencher campos do cálculo
             if(fAtual) vfLevantamentoParaCliente(fAtual.cliente).then(function(lev){
               if(!lev || dimensionamentoClienteAberto !== cidAbrir) return;
               try{ iframe.contentWindow.postMessage({ tipo: 'levantamento-dados', clienteId: cidAbrir, dados: lev }, '*'); }catch(err){}
             });
           });
+        } else if(msg.tipo === 'anexar-na-tarefa'){
+          var origemAnx = e.source, tAnx = state.tarefas.find(function(x){ return x.id === msg.taskId; });
+          var responder = function(ok, txt){ try{ if(origemAnx) origemAnx.postMessage({ tipo: 'anexar-na-tarefa-ok', ok: ok, msg: txt || '' }, '*'); }catch(err){} };
+          if(!tAnx || !msg.texto){ responder(false, 'A tarefa de origem não existe mais.'); return; }
+          var novoAnx = { id: uid('anx'), nome: msg.nome || 'dimensionamento.json', tipo: 'arquivo', dataUrl: dataUrlDeTexto(msg.texto), origem: 'dimensionamento', criadoEm: new Date().toISOString(), criadoPor: nomeAtor() };
+          var snapAnx = JSON.parse(JSON.stringify(state.tarefas));
+          if(!tAnx.anexos) tAnx.anexos = []; tAnx.anexos.push(novoAnx); renderBoard();
+          aplicarNaTarefaTransacional(tAnx.id, function(tarefa){ if(!tarefa.anexos) tarefa.anexos = []; tarefa.anexos.push(novoAnx); }, snapAnx);
+          responder(true, novoAnx.nome);
         } else if(msg.tipo === 'dimensionamento-salvo'){
           if(!msg.clienteId) return;
           var seqSalvo = msg.seq, origemSalvo = e.source;

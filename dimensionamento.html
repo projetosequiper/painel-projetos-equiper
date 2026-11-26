@@ -1393,6 +1393,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
       <div id="dm-conc-info"></div>
       <p class="fonte" style="margin-top:10px"><button type="button" class="lnk" id="dm-imp-bt">Importar cálculo de demanda de um arquivo (.equiper)</button> · troca só o cálculo de demanda e os alimentadores desta edificação; as outras disciplinas ficam como estão.</p>
       <input type="file" id="dm-imp-arq" accept=".equiper,.json,application/json" hidden>
+      <div id="tarefa-origem-dem"></div>
       <p style="margin:12px 0 0"><button class="btn peq" type="button" id="dm-rv-bt">⇪ Importar quadros e circuitos do Revit</button><input type="file" id="dm-rv-arq" accept=".json,application/json" hidden>
         <span class="fonte" style="margin-left:8px">arquivo do botão <b>Enviar ao Dimensionamento</b> (aba Equiper EL do Revit): cria os quadros ligados como no Revit e leva os circuitos para Comprimento de circuitos</span></p>
       <div class="imp-box" id="dm-rv" hidden style="margin-top:12px"></div>
@@ -1453,7 +1454,7 @@ table.r-t{width:100%;border-collapse:collapse;font-size:8.8pt;break-inside:auto}
           <div class="dm-diag" id="al-diag"></div>
           </div></div></article>
         <article class="etapa"><div class="num">2</div><div><div class="etapa-cab"><h3>Alimentadores</h3><span class="nbr">campos em branco usam as especificações gerais</span></div>
-          <div class="lista" id="al-lista"></div></div></article>
+          <div id="tarefa-origem-ali"></div><div class="lista" id="al-lista"></div></div></article>
         <article class="etapa"><div class="num">3</div><div><div class="etapa-cab"><h3>Quadro de alimentadores</h3><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq" type="button" id="al-revit" title="Baixa um arquivo com cabo, disjuntor, eletroduto e corrente de demanda de cada alimentador, para o botão Receber do Dimensionamento do Revit">⇩ Exportar para o Revit</button><button class="btn peq" type="button" id="al-ele" title="Cria ou atualiza um alimentador em Eletrodutos para cada linha, com a quantidade e a bitola dos cabos">Levar para Eletrodutos</button></span></div>
           <div class="rolar" id="al-quadro"></div><p class="fonte" style="margin-top:8px">Depois de levar, o diâmetro dos eletrodutos sai na aba <button type="button" class="lnk" data-ir-mod="ele">Eletrodutos</button>.</p></div></article>
         <article class="etapa"><div class="num">4</div><div><div class="etapa-cab"><h3>Memorial de cálculo</h3><span><select id="al-mem-sel" aria-label="Alimentador do memorial"></select></span></div><div class="rolar" id="al-memorial"></div></div></article>
@@ -7545,8 +7546,37 @@ async function rvAcao(a){
 }
 // app → Revit: {formato:"equiper-dimensionamento", versao:1, cliente, revisao, aprovado, aprovadoPor, dataAprovacao, gerado,
 //   quadros:[{nome, alimentadoPor, correnteDemanda, ok, avisos, alimentador:{fase, neutro, terra, paralelos, polos, disjuntor, eletroduto, texto, comprimento, quedaTrecho, quedaAcumulada, autotrafo}}]}
-function alExportarRevit(){
-  const its = alItens(); if(!its.length){ aviso("Nenhum alimentador calculado.", true); return; }
+function alExportarRevit(){ const r = alDadosRevit(); if(!r) return;
+  const url = URL.createObjectURL(new Blob([r.texto], {type:"application/json"}));
+  const a = document.createElement("a"); a.href = url; a.download = r.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  aviso(`${r.nome} baixado${r.aprov ? "" : " · atenção: o cálculo dos alimentadores não está aprovado"}. No Revit: aba Equiper EL → Receber do Dimensionamento.`, !r.aprov);
+}
+// ---- origem: JSON aberto a partir de uma tarefa do quadro (painel) → o resultado volta como anexo novo na mesma tarefa ----
+let TAREFA_ORIGEM = null;
+function tarefaOrigemBarra(){
+  const html = TAREFA_ORIGEM ? `<div class="dica" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px"><span style="flex:1;min-width:220px">📎 Aberto pelo quadro de tarefas: <b>${esc(TAREFA_ORIGEM.nome||"")}</b>. Quando terminar, salve o arquivo para o Revit de volta na tarefa (o arquivo original continua lá).</span><button type="button" class="btn peq" data-salvar-tarefa>💾 Salvar no quadro de tarefas</button></div>` : "";
+  ["tarefa-origem-dem","tarefa-origem-ali"].forEach(id=>{ const el = $(id); if(el) el.innerHTML = html; });
+}
+function salvarNaTarefaOrigem(){
+  if(!TAREFA_ORIGEM) return;
+  if(!concDe(S.dem.conc)?.t || !alItens().length){ aviso("Ainda não há alimentadores calculados: escolha a concessionária no Cálculo de demanda e confira os Alimentadores antes de salvar no quadro de tarefas.", true); return; }
+  const r = alDadosRevit(); if(!r) return;
+  const d = new Date(), p2 = n => String(n).padStart(2,"0");
+  const nome = `${((S.obra.cliente||"").trim() || "Sem cliente")} - DIMENSIONAMENTO para o Revit ${p2(d.getDate())}-${p2(d.getMonth()+1)}-${d.getFullYear()} ${p2(d.getHours())}h${p2(d.getMinutes())}.json`.replace(/[\\/:*?"<>|]+/g, "-");
+  try{ salvar(); }catch(e){}
+  window.parent.postMessage({tipo:"anexar-na-tarefa", taskId: TAREFA_ORIGEM.id, nome, texto: r.texto}, "*");
+}
+window.addEventListener("message", e=>{ const m = e.data; if(!m) return;
+  if(m.tipo==="importar-json-revit"){
+    TAREFA_ORIGEM = m.tarefa || null; tarefaOrigemBarra();
+    try{ mFecharDisciplinas(); fecharClientes(); }catch(er){} trocarModulo("dem"); window.scrollTo({top:0});
+    setTimeout(()=>{ rvAbrir(new File([m.texto], m.nome || "revit.json", {type:"application/json"}), "dm-rv").then(()=>{ $("dm-rv")?.scrollIntoView({behavior:"smooth", block:"start"}); }); }, 150);
+  }
+  if(m.tipo==="anexar-na-tarefa-ok") aviso(m.ok ? `Salvo no quadro de tarefas: ${m.msg}` : (m.msg || "Não foi possível salvar na tarefa."), !m.ok);
+});
+document.addEventListener("click", e=>{ if(e.target.closest("[data-salvar-tarefa]")) salvarNaTarefaOrigem(); });
+function alDadosRevit(){
+  const its = alItens(); if(!its.length){ aviso("Nenhum alimentador calculado.", true); return null; }
   let st = null; try{ st = apvSituacao("ali"); }catch(e){}
   const u = st?.u, aprov = !!(st && st.aprovada && !st.alterada);
   const n2 = v => v==null || !isFinite(v) ? null : Math.round(v*100)/100;
@@ -7560,9 +7590,7 @@ function alExportarRevit(){
   const dados = {formato:"equiper-dimensionamento", versao:1, cliente:(S.obra.cliente||"").trim(), revisao: st ? apvPad(st.n) : (S.dem.rev||""), aprovado: aprov,
     aprovadoPor: aprov ? u.por : "", dataAprovacao: aprov ? u.data : "", gerado: new Date().toISOString(), quadros};
   const nome = `${((S.obra.cliente||"").trim() || "Sem cliente")} - alimentadores para o Revit.json`.replace(/[\\/:*?"<>|]+/g, "-");
-  const url = URL.createObjectURL(new Blob([JSON.stringify(dados, null, 1)], {type:"application/json"}));
-  const a = document.createElement("a"); a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
-  aviso(`${nome} baixado${aprov ? "" : " · atenção: o cálculo dos alimentadores não está aprovado"}. No Revit: aba Equiper EL → Receber do Dimensionamento.`, !aprov);
+  return {nome, texto: JSON.stringify(dados, null, 1), aprov};
 }
 
 /* ---------- Ler print / foto do quadro (OCR no navegador) ---------- */
