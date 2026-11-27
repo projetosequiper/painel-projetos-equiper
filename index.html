@@ -1366,6 +1366,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script>
+// buscas: ignora maiúsculas/minúsculas e acentos
+function semAcento(t){ return String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+</script>
+<script>
   var firebaseConfig = {
     apiKey: "AIzaSyByoRErH-QrGarVFHmv-7Tkmjz9YAizZyM",
     authDomain: "projeto-equiper.firebaseapp.com",
@@ -2632,8 +2636,8 @@
     el.innerHTML = '';
     var lista = state.projetos.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}); });
     if(buscaProjetoTexto){
-      var q = buscaProjetoTexto.toLowerCase();
-      lista = lista.filter(function(pj){ return pj.nome.toLowerCase().indexOf(q) !== -1; });
+      var q = semAcento(buscaProjetoTexto);
+      lista = lista.filter(function(pj){ return semAcento(pj.nome).indexOf(q) !== -1; });
     }
     if(state.projetos.length === 0){
       el.innerHTML = '<div class="empty-hint">Nenhum projeto cadastrado ainda. Clique em "+ Novo projeto".</div>';
@@ -4455,10 +4459,10 @@
   function renderRelatoriosVisitaLista(){
     var lista = document.getElementById('relatoriosVisitaLista');
     if(!lista) return;
-    var busca = (document.getElementById('relatoriosVisitaBusca').value || '').toLowerCase();
+    var busca = semAcento((document.getElementById('relatoriosVisitaBusca').value || ''));
     var ordemSel = document.getElementById('relatoriosVisitaOrdem');
     var ordem = ordemSel ? ordemSel.value : 'alfa';
-    var itens = (state.relatoriosVisita||[]).filter(function(r){ return !busca || (r.clienteNome||'').toLowerCase().indexOf(busca) !== -1; })
+    var itens = (state.relatoriosVisita||[]).filter(function(r){ return !busca || semAcento((r.clienteNome||'')).indexOf(busca) !== -1; })
       .slice().sort(function(a,b){
         if(ordem === 'data') return (b.criadoEm||0) - (a.criadoEm||0);
         return (a.clienteNome||'').localeCompare(b.clienteNome||'', 'pt-BR', { sensitivity:'base' }) || ((b.criadoEm||0) - (a.criadoEm||0));
@@ -4667,9 +4671,9 @@
   function renderDimensionamentosLista(){
     var wrap = document.getElementById('dimensionamentosClientesLista');
     if(!wrap) return;
-    var busca = (document.getElementById('dimensionamentosBusca').value || '').toLowerCase();
-    var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
-    var semProj = (state.projetos || []).filter(function(p){ var s = situacaoCliente(p); return (s === 'sem' || s === 'aguardando') && (!busca || (p.nome||'').toLowerCase().indexOf(busca) !== -1); });
+    var busca = semAcento((document.getElementById('dimensionamentosBusca').value || ''));
+    var lista = (state.financeiro || []).filter(function(f){ return !busca || semAcento(f.cliente).indexOf(busca) !== -1; });
+    var semProj = (state.projetos || []).filter(function(p){ var s = situacaoCliente(p); return (s === 'sem' || s === 'aguardando') && (!busca || semAcento((p.nome||'')).indexOf(busca) !== -1); });
     if(lista.length === 0 && semProj.length === 0){
       wrap.innerHTML = '<div class="empty-hint">Nenhum cliente encontrado.</div>';
       return;
@@ -4810,14 +4814,30 @@
             });
           });
         } else if(msg.tipo === 'anexar-na-tarefa'){
-          var origemAnx = e.source, tAnx = state.tarefas.find(function(x){ return x.id === msg.taskId; });
+          var origemAnx = e.source, tAnx = msg.taskId ? state.tarefas.find(function(x){ return x.id === msg.taskId; }) : null;
           var responder = function(ok, txt){ try{ if(origemAnx) origemAnx.postMessage({ tipo: 'anexar-na-tarefa-ok', ok: ok, msg: txt || '' }, '*'); }catch(err){} };
+          if(!msg.taskId){   // aberto direto pelo cliente: acha a tarefa de Elétrica dele (preferindo a que está em "Fechar quadro")
+            var doCli = (state.tarefas||[]).filter(function(x){
+              if(x.tipo !== 'Elétrica') return false;
+              var dc = dadosDoCliente(x.projetoId), pjc = dc && dc.pj; if(!pjc) return false;
+              return (dc.fin ? dc.fin.id : (pjc.finIdPendente || pjc.id)) === msg.clienteId;
+            });
+            var niveis = [
+              doCli.filter(function(x){ return x.status === 'Fechar quadro' && !x.quadroFechado; }),
+              doCli.filter(function(x){ return x.status === 'Fechar quadro'; }),
+              doCli
+            ];
+            var nivel = niveis.filter(function(l){ return l.length; })[0] || [];
+            if(!nivel.length){ responder(false, 'Não achei tarefa de Elétrica deste cliente no quadro de tarefas.'); return; }
+            if(nivel.length > 1){ responder(false, 'Este cliente tem ' + nivel.length + ' tarefas de Elétrica: abra o arquivo JSON pela própria tarefa para salvar nela.'); return; }
+            tAnx = nivel[0];
+          }
           if(!tAnx || !msg.texto){ responder(false, 'A tarefa de origem não existe mais.'); return; }
           var novoAnx = { id: uid('anx'), nome: msg.nome || 'dimensionamento.json', tipo: 'arquivo', dataUrl: dataUrlDeTexto(msg.texto), origem: 'dimensionamento', criadoEm: new Date().toISOString(), criadoPor: nomeAtor() };
           var snapAnx = JSON.parse(JSON.stringify(state.tarefas));
-          if(!tAnx.anexos) tAnx.anexos = []; tAnx.anexos.push(novoAnx); renderBoard();
-          aplicarNaTarefaTransacional(tAnx.id, function(tarefa){ if(!tarefa.anexos) tarefa.anexos = []; tarefa.anexos.push(novoAnx); }, snapAnx);
-          responder(true, novoAnx.nome);
+          if(!tAnx.anexos) tAnx.anexos = []; tAnx.anexos.push(novoAnx); tAnx.quadroFechado = true; renderBoard();
+          aplicarNaTarefaTransacional(tAnx.id, function(tarefa){ if(!tarefa.anexos) tarefa.anexos = []; tarefa.anexos.push(novoAnx); tarefa.quadroFechado = true; }, snapAnx);
+          responder(true, novoAnx.nome + ' (tarefa marcada como Quadro fechado)');
         } else if(msg.tipo === 'dimensionamento-salvo'){
           if(!msg.clienteId) return;
           var seqSalvo = msg.seq, origemSalvo = e.source;
@@ -4854,10 +4874,10 @@
     var lista = document.getElementById('registrosArtLista');
     if(!lista) return;
     var buscaEl = document.getElementById('registrosArtBusca');
-    var busca = (buscaEl ? buscaEl.value : '').toLowerCase();
-    var itens = (state.registrosArt||[]).filter(function(r){ return !busca || r.clienteNome.toLowerCase().indexOf(busca) !== -1; })
+    var busca = semAcento((buscaEl ? buscaEl.value : ''));
+    var itens = (state.registrosArt||[]).filter(function(r){ return !busca || semAcento(r.clienteNome).indexOf(busca) !== -1; })
       .slice().sort(function(a,b){ return (b.criadoEm||0) - (a.criadoEm||0); });
-    var extras = clientesArtDoFinanceiro().filter(function(f){ return !busca || (f.cliente||'').toLowerCase().indexOf(busca) !== -1; })
+    var extras = clientesArtDoFinanceiro().filter(function(f){ return !busca || semAcento((f.cliente||'')).indexOf(busca) !== -1; })
       .sort(function(a,b){ return (a.cliente||'').localeCompare(b.cliente||'','pt-BR',{sensitivity:'base'}); });
     if(itens.length === 0 && extras.length === 0){
       lista.innerHTML = '<div class="empty-hint">Nenhuma ART registrada ainda.</div>';
@@ -5379,8 +5399,8 @@
     var lista = document.getElementById('consideracoesIniciaisLista');
     if(!lista) return;
     var buscaEl = document.getElementById('consideracoesIniciaisBusca');
-    var busca = (buscaEl ? buscaEl.value : '').toLowerCase();
-    var itens = (state.consideracoesIniciais||[]).filter(function(r){ return !busca || r.clienteNome.toLowerCase().indexOf(busca) !== -1; })
+    var busca = semAcento((buscaEl ? buscaEl.value : ''));
+    var itens = (state.consideracoesIniciais||[]).filter(function(r){ return !busca || semAcento(r.clienteNome).indexOf(busca) !== -1; })
       .slice().sort(function(a,b){ return (b.criadoEm||0) - (a.criadoEm||0); });
     if(itens.length === 0){
       lista.innerHTML = '<div class="empty-hint">Nenhuma consideração inicial registrada ainda.</div>';
@@ -6003,8 +6023,8 @@
     var el = document.getElementById('statusClientesLista');
     if(!el) return;
     await garantirClientes();
-    var busca = (document.getElementById('statusClientesBusca').value || '').toLowerCase();
-    var lista = (state.financeiro || []).filter(function(f){ return !busca || f.cliente.toLowerCase().indexOf(busca) !== -1; });
+    var busca = semAcento((document.getElementById('statusClientesBusca').value || ''));
+    var lista = (state.financeiro || []).filter(function(f){ return !busca || semAcento(f.cliente).indexOf(busca) !== -1; });
     var html = '';
     lista.forEach(function(f){
       var disciplinas = DISCIPLINAS_FINANCEIRO.filter(function(d){
@@ -8140,7 +8160,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
   function renderFinArt(){
     var lista = document.getElementById('finArtLista');
     if(!lista) return;
-    var busca = (document.getElementById('finArtBusca').value || '').toLowerCase();
+    var busca = semAcento((document.getElementById('finArtBusca').value || ''));
     var filtro = document.getElementById('finArtFiltro').value;
     var todos = (state.financeiro || []);
     var com = todos.filter(function(f){ return f.artEmitidaManual || f.artNumero; }).length;
@@ -8149,7 +8169,7 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       var tem = !!(f.artEmitidaManual || f.artNumero);
       if(filtro === 'com' && !tem) return false;
       if(filtro === 'sem' && tem) return false;
-      return !busca || (f.cliente || '').toLowerCase().indexOf(busca) !== -1;
+      return !busca || semAcento((f.cliente || '')).indexOf(busca) !== -1;
     }).sort(function(a, b){ return (a.cliente || '').localeCompare(b.cliente || '', 'pt-BR', { sensitivity: 'base' }); });
     if(!itens.length){ lista.innerHTML = '<div class="empty-hint">Nenhum cliente encontrado.</div>'; return; }
     lista.innerHTML = itens.map(function(f){
@@ -8289,8 +8309,8 @@ var caixaPerguntar = (msg, o) => caixaDialogo(Object.assign({titulo: "Informe", 
       });
     }
     if(buscaFinanceiroTexto){
-      var q = buscaFinanceiroTexto.toLowerCase();
-      lista = lista.filter(function(r){ return r.cliente.toLowerCase().indexOf(q) !== -1 || (r.localidade||'').toLowerCase().indexOf(q) !== -1; });
+      var q = semAcento(buscaFinanceiroTexto);
+      lista = lista.filter(function(r){ return semAcento(r.cliente).indexOf(q) !== -1 || semAcento((r.localidade||'')).indexOf(q) !== -1; });
     }
     var lbl = document.getElementById('lblFinLista');
     var expandidoAgora = buscaFinanceiroTexto ? true : !colapsadoFinListaGeral;

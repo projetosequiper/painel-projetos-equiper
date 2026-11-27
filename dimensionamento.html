@@ -7556,17 +7556,18 @@ function alExportarRevit(){ const r = alDadosRevit(); if(!r) return;
 // ---- origem: JSON aberto a partir de uma tarefa do quadro (painel) → o resultado volta como anexo novo na mesma tarefa ----
 let TAREFA_ORIGEM = null;
 function tarefaOrigemBarra(){
-  const html = TAREFA_ORIGEM ? `<div class="dica" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px"><span style="flex:1;min-width:220px">📎 Aberto pelo quadro de tarefas: <b>${esc(TAREFA_ORIGEM.nome||"")}</b>. Quando terminar, salve o arquivo para o Revit de volta na tarefa (o arquivo original continua lá).</span><button type="button" class="btn peq" data-salvar-tarefa>💾 Salvar no quadro de tarefas</button></div>` : "";
+  const btn = `<button type="button" class="btn peq" data-salvar-tarefa>💾 Salvar no quadro de tarefas</button>`;
+  const html = TAREFA_ORIGEM ? `<div class="dica" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px"><span style="flex:1;min-width:220px">📎 Aberto pelo quadro de tarefas: <b>${esc(TAREFA_ORIGEM.nome||"")}</b>. Quando terminar, salve o arquivo para o Revit de volta na tarefa (o arquivo original continua lá). A tarefa fica marcada como <b>Quadro fechado</b>.</span>${btn}</div>`
+    : (typeof EMBUTIDO !== "undefined" && EMBUTIDO && !LIVRE) ? `<div class="dica" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px"><span style="flex:1;min-width:220px">📎 Salva o arquivo para o Revit como anexo na tarefa de <b>Elétrica</b> deste cliente e marca <b>Quadro fechado</b>.</span>${btn}</div>` : "";
   ["tarefa-origem-dem","tarefa-origem-ali"].forEach(id=>{ const el = $(id); if(el) el.innerHTML = html; });
 }
 function salvarNaTarefaOrigem(){
-  if(!TAREFA_ORIGEM) return;
   if(!concDe(S.dem.conc)?.t || !alItens().length){ aviso("Ainda não há alimentadores calculados: escolha a concessionária no Cálculo de demanda e confira os Alimentadores antes de salvar no quadro de tarefas.", true); return; }
   const r = alDadosRevit(); if(!r) return;
   const d = new Date(), p2 = n => String(n).padStart(2,"0");
   const nome = `${((S.obra.cliente||"").trim() || "Sem cliente")} - DIMENSIONAMENTO para o Revit ${p2(d.getDate())}-${p2(d.getMonth()+1)}-${d.getFullYear()} ${p2(d.getHours())}h${p2(d.getMinutes())}.json`.replace(/[\\/:*?"<>|]+/g, "-");
   try{ salvar(); }catch(e){}
-  window.parent.postMessage({tipo:"anexar-na-tarefa", taskId: TAREFA_ORIGEM.id, nome, texto: r.texto}, "*");
+  window.parent.postMessage({tipo:"anexar-na-tarefa", taskId: TAREFA_ORIGEM ? TAREFA_ORIGEM.id : null, clienteId: S.obra.clienteIdExterno || "", nome, texto: r.texto}, "*");
 }
 window.addEventListener("message", e=>{ const m = e.data; if(!m) return;
   if(m.tipo==="importar-json-revit"){
@@ -12035,7 +12036,7 @@ if(EMBUTIDO){
   window.addEventListener("message", function(e){ var msg=e.data; if(!msg||msg.tipo!=="carregar-dimensionamento") return;
     S = migrar(msg.dados || estadoNovo()); S.obra.cliente = msg.clienteNome||""; S.obra.clienteIdExterno = msg.clienteId||"";
     if(!S.obra.endereco && msg.enderecoCliente){ S.obra.endereco = msg.enderecoCliente; }
-    preencherTudo(); renderLateralObra(); _pontePronta = true; mMostrarDisciplinas(); });
+    preencherTudo(); renderLateralObra(); _pontePronta = true; mMostrarDisciplinas(); try{ tarefaOrigemBarra(); }catch(er){} });
   function nomePDFPainel(){
     var plan = (NOME_MOD[S.modulo] || "Dimensionamento").replace(/\s*·\s*/g, " - ");
     var cli = (S.obra.cliente || "").trim();
