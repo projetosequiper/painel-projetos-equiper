@@ -11496,7 +11496,22 @@ function respPadrao(M){                              // obra nova: já vem com o
   if(!RESP.some(r=>r.id===id)) id = RESP.length===1 ? RESP[0].id : "";
   if(id) aplicarResp(M, id);
 }
+/* Projetos salvos por outra pessoa/navegador guardam o código (id) do responsável de lá, que não existe neste cadastro:
+   o campo ficava vazio ou "(removido do cadastro)". Aqui o vínculo é refeito pelo nome e, se o nome não está no cadastro, ele entra nele (mantendo o mesmo id). */
+function reconciliarResp(){
+  const sa = t => String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+  let mudou = false;
+  [S.esg, S.gas, S.plu, S.hid, S.est, S.ele, S.pis, S.res, S.cmx, S.cgl, S.dem].forEach(M=>{
+    if(!M || !M.resp || (M.respId && RESP.some(r=>r.id===M.respId))) return;
+    let r = RESP.find(x=>sa(x.nome)===sa(M.resp));
+    if(!r){ r = {id: M.respId || uid(), nome: M.resp, crea: M.crea || ""}; RESP.push(r); mudou = true; }
+    if(M.respId !== r.id) M.respId = r.id;
+    if(!r.crea && M.crea){ r.crea = M.crea; mudou = true; }
+  });
+  if(mudou) salvarResp();
+}
 function renderResp(){
+  try{ reconciliarResp(); }catch(e){}
   $("e-resp").innerHTML = opcoesResp(S.esg.respId);
   $("g-resp").innerHTML = opcoesResp(S.gas.respId);
   $("p-resp").innerHTML = opcoesResp(S.plu.respId);
