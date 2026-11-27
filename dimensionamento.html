@@ -11038,7 +11038,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
   const hib = D.hib && D.quadros.some(q=>q.id===D.hibQ) ? D.hibQ : null, placas = hib && D.hibPlacas;
   const temHibIrmao = q => !!hib && q.id!==hib && (D.quadros.find(x=>x.id===hib)?.pai||"") === (q.pai||"");
   const raizIds = new Set(dmRaizes().map(q=>q.id));
-  const GG = dmGerDisj(), GAPG = 84;
+  const GG = dmGerDisj(), GAPG = 74;
   const qtaNo = D.gerador && D.gerQ && D.quadros.some(q=>q.id===D.gerQ) && !raizIds.has(D.gerQ) ? D.gerQ : null, qtaTopo = D.gerador && !qtaNo;
   const fvQ = D.fv && D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : null, fvNoQtaNo = D.fv && D.fvLig==="qta" && !!qtaNo;
   const fvNoQta = D.fv && qtaTopo && D.fvLig==="qta", fvEnt = D.fv && !fvNoQta && !fvNoQtaNo && !fvQ;
@@ -11090,7 +11090,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
         <text x="${x+(WS+30)/2}" y="${yC-2}" class="t2">${num(D.gerKva)?`${fmt(num(D.gerKva),1)} kVA`:"potência a definir"}</text>
         <text x="${x+(WS+30)/2}" y="${yC+15}" class="t3">${num(D.gerMin)||num(D.gerMax)?`faixa ${num(D.gerMin)?fmt(num(D.gerMin),0):"—"} a ${num(D.gerMax)?fmt(num(D.gerMax),0):"—"} kVA`:"faixa a definir"}</text>
         <text x="${x+(WS+30)/2}" y="${yC+31}" class="t3 no">validar com o fornecedor</text></g>`; };
-  const djH = (xa, xb, yc, d) => { if(!GG || !d || !d.v) return ""; const xm = (xa+xb)/2; return `<g><rect x="${xm-7}" y="${yc-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${xm-7} ${yc+7} L${xm+7} ${yc-7}" class="lig"/><text x="${xm}" y="${yc-12}" class="dj" style="text-anchor:middle">${GG.pol} ${d.v} A</text></g>`; };
+  const djH = (xa, xb, yc, d) => { if(!GG || !d || !d.v) return ""; const xm = xa + 17; return `<g><rect x="${xm-7}" y="${yc-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${xm-7} ${yc+7} L${xm+7} ${yc-7}" class="lig"/><text x="${xa+9}" y="${yc-12}" class="dj" style="text-anchor:start">${GG.pol} ${d.v} A</text></g>`; };
   const djV = (cx, yc, d, lado) => { if(!GG || !d || !d.v) return ""; B(cx-62, yc-9, 72, 18); return `<g><rect x="${cx-7}" y="${yc-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${cx-7} ${yc+7} L${cx+7} ${yc-7}" class="lig"/><text x="${cx-12}" y="${yc+4}" class="dj" style="text-anchor:end">${GG.pol} ${d.v} A</text></g>`; };
   const caixaQta = (x, y) => { B(x, y, W, HQ); return `<g><rect x="${x}" y="${y}" width="${W}" height="${HQ}" rx="4" fill="#fff" stroke="#000" stroke-width="2.5"/><text x="${x+W/2}" y="${y+24}" class="t1">QTA</text><text x="${x+W/2}" y="${y+42}" class="t3">transferência automática</text></g>`; };
   // entrada (grupo arrastável)
@@ -11100,7 +11100,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
     g.push(`<rect x="${ent.x}" y="${ent.y}" width="${W}" height="${H}" rx="4" fill="#000"/><text x="${cx}" y="${ent.y+34}" class="t1 inv">Entrada · medidor</text><text x="${cx}" y="${ent.y+56}" class="t2 inv">${esc(c?.nome?.replace(/ \(.*\)$/,"")||"")}</text>`);
     if(fvEnt){ const xf = ent.x + W + 40; g.push(`<path d="M${ent.x+W} ${ent.y+H/2} H${xf}" class="lig"/>${caixaFV(xf, ent.y+H/2)}`); }
     if(qtaTopo){ const yQ = ent.yQ, xg = ent.x + W + GAPG;
-      g.push(`<path d="M${cx} ${ent.y} V${yQ+HQ}" class="lig"/>${caixaQta(ent.x, yQ)}<path d="M${ent.x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(ent.x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, (yQ+HQ+ent.y)/2, GG?.rede)}`);
+      g.push(`<path d="M${cx} ${ent.y} V${yQ+HQ}" class="lig"/>${caixaQta(ent.x, yQ)}<path d="M${ent.x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(ent.x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, yQ+HQ+17, GG?.rede)}`);
       if(fvNoQta){ const xf = ent.x - 40 - WS; g.push(`<path d="M${ent.x} ${yQ+HQ/2} H${xf+WS}" class="lig"/>${caixaFV(xf, yQ+HQ/2)}`); } }
     out.push(`<g ${interativo?'data-dmdrag="ent" class="dm-arr"':""}>${g.join("")}</g>`);
     ent.saida = {x: cx, y: qtaTopo ? ent.yQ : ent.y, caixa: qtaTopo ? {x:ent.x, y:ent.yQ, w:W, h:HQ} : {x:ent.x, y:ent.y, w:W, h:H}};
@@ -11148,7 +11148,11 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
     if(al){ const ch = chegada(n), yl = ch.y + ch.h + (ch.y===y && r && r.disj ? 32 : 18), xl = cx + 12;
       g.push(`<text x="${xl}" y="${yl}" class="al1 ${al.ok?"":"no"}">${esc(al.l1)}</text><text x="${xl}" y="${yl+14}" class="al2 ${al.ok?"":"no"}">${esc(al.l2)}</text>`);
       B(xl, yl - 11, Math.max(al.l1.length*6.6, al.l2.length*5.7), 30); }
-    g.push(`<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="4" fill="#fff" stroke="${sel?"#d10a1e":"#000"}" stroke-width="${sel?2.5:1.5}"/>
+    const avs = (r && r.avisos) || [], adotadoOk = !!(r && r.acima && num(r.disj) > 0 && num(r.disj) >= r.I - 1e-9);   // acima da tabela, mas o disjuntor escolhido cobre a corrente de demanda
+    const pend = avs.filter(a=>!(adotadoOk && /fora do atendimento individual/.test(a))), prev = pend.filter(a=>/previs[ãa]o/i.test(a)), grave = pend.length > prev.length;
+    const alerta = grave, amarelo = !grave && prev.length > 0, cinza = !grave && !amarelo && avs.length > 0;   // vermelho: alerta em aberto · amarelo: só carga de previsão · cinza: aviso já tratado com o disjuntor escolhido
+    const corA = alerta ? "#d10a1e" : amarelo ? "#e0a100" : cinza ? "#8c8c8c" : "#000", fundoA = alerta ? "#fff4f4" : amarelo ? "#fff8e1" : cinza ? "#f0f0f0" : "#fff", marca = alerta || amarelo || cinza;
+    g.push(`<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="4" fill="${fundoA}" stroke="${sel?"#d10a1e":corA}" stroke-width="${sel?2.5:marca?2:1.5}"/>${marca?`<rect x="${x}" y="${y+1}" width="5" height="${H-2}" fill="${corA}"/>`:""}
       <text x="${x+W/2}" y="${y+22}" class="t1">${esc(n.q.nome)||"—"}</text>
       ${n.mult>1?`<g><title>${dmIguais(n.q)>1?`${dmIguais(n.q)} quadros iguais`:"repetido junto com o quadro de baixo"}</title><rect x="${x+W-30}" y="${y-11}" width="44" height="22" rx="11" fill="#d10a1e"/><text x="${x+W-8}" y="${y+5}" class="mult">×${n.mult}</text></g>`:""}
       <text x="${x+W/2}" y="${y+38}" class="t4">${esc((n.q.local||"").trim().slice(0,26))||"local não informado"}</text>
