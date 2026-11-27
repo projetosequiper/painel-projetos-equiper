@@ -12120,6 +12120,48 @@ if(EMBUTIDO){
   setInterval(()=>{ btn.hidden = !!LIVRE; estadoEl.hidden = !!LIVRE; }, 700);
 })();
 </script>
+<script>
+/* Sugestões sem diferenciar maiúscula/acento: substitui a lista nativa (datalist) dos campos, que diferencia acento */
+(function(){
+  const sa = t => String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+  let pop = null, alvo = null, itens = [], sel = -1;
+  function criar(){
+    pop = document.createElement("div"); pop.id = "ac-pop"; pop.hidden = true;
+    pop.style.cssText = "position:fixed;z-index:99999;background:#fff;border:1px solid #8c8c8c;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-height:240px;overflow:auto;font:14px Helvetica,Arial,sans-serif";
+    pop.addEventListener("mousedown", e=>{ e.preventDefault(); const it = e.target.closest("[data-i]"); if(it) escolher(+it.dataset.i); });
+    document.body.appendChild(pop);
+  }
+  function fechar(){ if(pop) pop.hidden = true; sel = -1; }
+  function opcoes(inp){ const dl = document.getElementById(inp.dataset.acLista); return dl ? [...dl.options].map(o=>o.value).filter(Boolean) : []; }
+  function mostrar(inp){
+    if(!pop) criar(); alvo = inp;
+    const q = sa(inp.value), todas = opcoes(inp);
+    itens = (q ? todas.filter(v=>sa(v).includes(q)) : todas).slice(0, 60); sel = -1;
+    if(!itens.length || (itens.length===1 && sa(itens[0])===q)){ fechar(); return; }
+    pop.innerHTML = itens.map((v,i)=>`<div data-i="${i}" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #e4e4e4">${v.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}</div>`).join("");
+    const r = inp.getBoundingClientRect();
+    pop.style.left = r.left+"px"; pop.style.top = (r.bottom+2)+"px"; pop.style.minWidth = r.width+"px"; pop.hidden = false;
+  }
+  function marcar(){ [...pop.children].forEach((c,i)=>{ c.style.background = i===sel ? "#f3f3f3" : ""; if(i===sel) c.scrollIntoView({block:"nearest"}); }); }
+  function escolher(i){
+    if(!alvo || itens[i]==null) return; alvo.value = itens[i]; fechar();
+    alvo.dispatchEvent(new Event("input",{bubbles:true})); alvo.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  function prep(inp){ if(inp && inp.tagName==="INPUT" && inp.hasAttribute("list")){ inp.dataset.acLista = inp.getAttribute("list"); inp.removeAttribute("list"); } return inp && inp.dataset && inp.dataset.acLista ? inp : null; }
+  document.addEventListener("focusin", e=>{ const i = prep(e.target); if(i) mostrar(i); }, true);
+  document.addEventListener("input", e=>{ const i = prep(e.target); if(i && e.isTrusted) mostrar(i); }, true);
+  document.addEventListener("click", e=>{ const i = prep(e.target); if(i && pop && pop.hidden) mostrar(i); }, true);
+  document.addEventListener("focusout", e=>{ if(e.target===alvo) setTimeout(fechar, 120); }, true);
+  document.addEventListener("keydown", e=>{
+    if(!pop || pop.hidden || e.target!==alvo) return;
+    if(e.key==="ArrowDown"){ e.preventDefault(); sel = Math.min(itens.length-1, sel+1); marcar(); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); sel = Math.max(0, sel-1); marcar(); }
+    else if(e.key==="Enter" && sel>=0){ e.preventDefault(); e.stopPropagation(); escolher(sel); }
+    else if(e.key==="Escape"){ fechar(); }
+  }, true);
+  addEventListener("scroll", fechar, true); addEventListener("resize", fechar);
+})();
+</script>
 <style>
 /* dados do levantamento (Verificações do painel) */
 .nav-it[hidden]{display:none!important}
