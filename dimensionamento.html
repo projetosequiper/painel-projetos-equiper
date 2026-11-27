@@ -7439,7 +7439,13 @@ async function rvAbrir(f, alvo){
 // "ignorar" (sem circuitos e sem ligação com nenhum outro, ex.: quadro desenhado e ainda não ligado)
 function rvResumo(){
   const R = rvResumoBase(), papel = n => RV.papel?.[impNorm(n)] || "quadro";
-  R.forEach(r=>{ r.papel = papel(r.q.nome); if(r.pai && papel(r.pai)!=="quadro") r.paiEnt = r.pai; });
+  let jaQta = false;
+  R.forEach(r=>{ if(papel(r.q.nome)!=="qta") return;
+    const filhos = new Set([...R.filter(x=>impNorm(x.pai)===impNorm(r.q.nome)).map(x=>impNorm(x.q.nome)), ...r.alim.map(c=>impNorm(c.quadro))]);
+    r.qtaFilhos = filhos.size;
+    if(jaQta || !filhos.size || (filhos.size > 1 && r.pai && papel(r.pai)==="quadro")){ RV.papel[impNorm(r.q.nome)] = "quadro"; r.qtaNao = jaQta ? "já há outro QTA neste arquivo" : !filhos.size ? "não alimenta nenhum quadro" : "alimenta mais de um quadro"; }
+    else jaQta = true; });
+  R.forEach(r=>{ r.papel = papel(r.q.nome); if(r.pai && papel(r.pai)==="qta") r.paiQta = r.pai; else if(r.pai && papel(r.pai)!=="quadro") r.paiEnt = r.pai; });
   return R;
 }
 function rvResumoBase(){
@@ -7448,7 +7454,7 @@ function rvResumoBase(){
     const pai = String(q.alimentadoPor||"").trim(), feed = pai ? (Q.find(x=>impNorm(x.nome)===impNorm(pai))?.circuitos || []).find(c=>impNorm(c.quadro)===impNorm(q.nome)) : null;
     const existe = S.dem.quadros.some(x=>impNorm(x.nome)===impNorm(q.nome));
     const temFilho = Q.some(x=>impNorm(x.alimentadoPor)===impNorm(q.nome)) || alim.length > 0;
-    const papelAuto = !pai && !circ.length && !temFilho ? "ignorar" : !pai && !circ.length && temFilho ? "entrada" : "quadro";
+    const papelAuto = /^qta/.test(impNorm(q.nome)) && !circ.length && temFilho ? "qta" : !pai && !circ.length && !temFilho ? "ignorar" : !pai && !circ.length && temFilho ? "entrada" : "quadro";   // "qta": painel QTA do Revit = o QTA do gerador (não vira quadro)
     return {q, pai, circ, res, alim, L: rvNum(q.distanciaAlimentador) > 0 ? rvNum(q.distanciaAlimentador) : feed ? rvNum(feed.lmax) : NaN, existe, paiNoArq: pai && nomes.has(impNorm(pai)), papelAuto}; });
 }
 function rvRender(){
@@ -7466,12 +7472,12 @@ function rvRender(){
     <p class="fonte" style="margin:0 0 10px">${esc(RV.d.projeto || RV.arq)}${RV.d.gerado ? ` · gerado em ${esc(apvDataBR(String(RV.d.gerado).slice(0,10)))}` : ""} · ${R.length} quadro${R.length!==1?"s":""} · ${nC} circuito${nC!==1?"s":""}. Os quadros vão para o Cálculo de demanda (${novos ? `${novos} novo${novos!==1?"s":""}` : "todos já existem"}), ligados como no Revit, com as cargas dos circuitos. Em Comprimento de circuitos entram só os alimentadores dos quadros; os circuitos terminais ficam no Revit, que já verifica o comprimento deles. Reservas (0 W) ficam de fora.</p>
     ${(n=>n ? `<p class="dica" style="margin:0 0 10px">${n} circuito${n!==1?"s terminais":" terminal"} de importações anteriores do Revit ${n!==1?"saem":"sai"} de Comprimento de circuitos (ficam só no Revit). Os circuitos que você incluiu à mão continuam.</p>` : "")(S.cmx.circs.filter(c=>c.origem==="revit" && !c.alim).length)}
     <div class="rolar"><table class="quadro"><thead><tr><th>Painel no Revit</th><th>Entra como</th><th>Alimentado por</th><th class="n">Comprimento do alimentador</th><th class="n">Circuitos</th><th class="n">Reservas</th><th>Quadros ligados nele</th><th>No Cálculo de demanda</th></tr></thead><tbody>
-      ${R.map(r=>`<tr${r.papel!=="quadro"?' style="opacity:.6"':""}><td><b>${esc(r.q.nome)}</b></td>
-        <td><select data-rv-papel="${esc(impNorm(r.q.nome))}"><option value="quadro" ${r.papel==="quadro"?"selected":""}>Quadro</option><option value="entrada" ${r.papel==="entrada"?"selected":""}>Entrada (medidor)</option><option value="ignorar" ${r.papel==="ignorar"?"selected":""}>Não importar</option></select></td>
-        <td>${r.paiEnt ? `Entrada (${esc(r.paiEnt)})` : esc(r.pai) || "Entrada"}</td><td class="n">${r.L > 0 ? fmt(r.L,1) + " m" : "—"}</td><td class="n">${r.circ.length}</td><td class="n">${r.res.length}</td><td>${esc(r.alim.map(c=>c.quadro).join(", ")) || "—"}</td>
-        <td>${r.papel!=="quadro" ? "—" : r.existe ? "já existe (atualiza)" : "será criado"}</td></tr>`).join("")}
+      ${R.map(r=>`<tr${r.papel!=="quadro" && r.papel!=="qta"?' style="opacity:.6"':""}><td><b>${esc(r.q.nome)}</b></td>
+        <td><select data-rv-papel="${esc(impNorm(r.q.nome))}"><option value="quadro" ${r.papel==="quadro"?"selected":""}>Quadro</option><option value="entrada" ${r.papel==="entrada"?"selected":""}>Entrada (medidor)</option><option value="qta" ${r.papel==="qta"?"selected":""}>QTA do gerador</option><option value="ignorar" ${r.papel==="ignorar"?"selected":""}>Não importar</option></select></td>
+        <td>${r.paiQta ? `QTA (${esc(r.paiQta)})` : r.paiEnt ? `Entrada (${esc(r.paiEnt)})` : esc(r.pai) || "Entrada"}</td><td class="n">${r.L > 0 ? fmt(r.L,1) + " m" : "—"}</td><td class="n">${r.circ.length}</td><td class="n">${r.res.length}</td><td>${esc(r.alim.map(c=>c.quadro).join(", ")) || "—"}</td>
+        <td>${r.papel==="qta" ? "vira o QTA do gerador (não é quadro)" : r.papel!=="quadro" ? "—" : (r.existe ? "já existe (atualiza)" : "será criado") + (r.qtaNao ? ` · não entra como QTA: ${r.qtaNao}` : "")}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="fonte" style="margin:6px 0 0">Painel sem circuitos que só alimenta outros (ex.: PRÉDIO, medição) entra como <b>Entrada</b>; painel solto, sem circuitos e sem ligação, fica de fora. Troque se precisar.</p>
+    <p class="fonte" style="margin:6px 0 0">Painel sem circuitos que só alimenta outros (ex.: PRÉDIO, medição) entra como <b>Entrada</b>; painel solto, sem circuitos e sem ligação, fica de fora. Painel <b>QTA</b> sem circuitos entra como o <b>QTA do gerador</b>: não vira quadro, marca "Terá gerador (com QTA)" e o comprimento dele vai para o trecho até o QTA; na volta para o Revit ele sai com o mesmo nome. Troque se precisar.</p>
     <label class="chave" style="margin-top:12px"><input type="checkbox" data-rv-cargas ${RV.cargas?"checked":""}> Levar as cargas dos circuitos para o Cálculo de demanda (substitui as cargas dos quadros importados)</label>
     ${RV.cargas ? `<p class="fonte" style="margin:4px 0 6px">${cont("il")} em iluminação e tomadas · ${cont("aq")} em aquecimento · ${cont("ar")} ar-condicionado · ${cont("mo")} motores · ${cont("")} fora. A classificação vem do nome do circuito; confira. A área útil e o restante do quadro continuam com você.
       <button type="button" class="lnk" data-rv="vercargas">${RV.verCargas ? "Esconder a lista" : "Ver e ajustar circuito por circuito"}</button></p>
@@ -7507,14 +7513,25 @@ async function rvAcao(a){
   const criar = nome => { let q = achar(nome); if(!q){ q = {id:uid(), nome:String(nome).trim(), pai:"", area:"", ilum:"", aq:[], ar:[], mo:[]}; D.quadros.push(q); } return q; };
   let criados = 0; const antes = new Set(D.quadros.map(q=>q.id));
   const papel = n => RV.papel?.[impNorm(n)] || "quadro";
+  const rQta = R.find(r=>r.papel==="qta") || null;
   R.filter(r=>r.papel==="quadro").forEach(r=>criar(r.q.nome));
   R.forEach(r=>{ if(r.papel==="quadro"){ const q = achar(r.q.nome);
-      if(r.pai && papel(r.pai)==="quadro"){ const p = criar(r.pai); if(p.id!==q.id) q.pai = p.id; } else if(r.pai) q.pai = "";
+      if(r.pai && papel(r.pai)==="quadro"){ const p = criar(r.pai); if(p.id!==q.id) q.pai = p.id; }
+      else if(r.pai && papel(r.pai)==="qta"){ const gp = rQta && rQta.pai && papel(rQta.pai)==="quadro" ? criar(rQta.pai) : null; q.pai = gp && gp.id!==q.id ? gp.id : ""; }   // alimentado pelo QTA: no app fica ligado em quem alimenta o QTA
+      else if(r.pai) q.pai = "";
       if(r.L > 0) (q.al = q.al || {}).L = String(Math.round(r.L*100)/100); }
     if(r.papel==="ignorar") return;
-    r.alim.forEach(c=>{ if(papel(c.quadro)!=="quadro") return; const a = criar(c.quadro); const pq = r.papel==="quadro" ? achar(r.q.nome) : null;
+    r.alim.forEach(c=>{ if(papel(c.quadro)!=="quadro") return; const a = criar(c.quadro); const pq = r.papel==="quadro" ? achar(r.q.nome) : r.papel==="qta" && r.pai && papel(r.pai)==="quadro" ? criar(r.pai) : null;
       if(pq && a.id!==pq.id) a.pai = pq.id; else if(!pq) a.pai = "";
       if(rvNum(c.lmax) > 0) (a.al = a.al || {}).L = String(Math.round(rvNum(c.lmax)*100)/100); }); });
+  let qtaMsg = "";
+  if(rQta){                                               // painel QTA do Revit → QTA do gerador (trecho até o QTA em Alimentadores)
+    const nomesF = [...R.filter(x=>x.papel==="quadro" && impNorm(x.pai)===impNorm(rQta.q.nome)).map(x=>x.q.nome), ...rQta.alim.filter(c=>papel(c.quadro)==="quadro").map(c=>c.quadro)];
+    const f0 = nomesF.map(achar).find(Boolean);
+    D.gerador = true; if(f0) D.gerQ = f0.id; D.qtaRevit = String(rQta.q.nome).trim();
+    if(rQta.L > 0){ if(!D.qtaAl || typeof D.qtaAl!=="object") D.qtaAl = {}; (D.qtaAl.rede = D.qtaAl.rede || {}).L = String(Math.round(rQta.L*100)/100); }
+    qtaMsg = ` · ${D.qtaRevit} reconhecido como o QTA do gerador${f0 ? ` (antes do ${f0.nome})` : ""}`;
+  }
   if(RV.cargas){                                          // cargas dos circuitos → itens do quadro na demanda
     let fp = num(D.fp) > 0 ? num(D.fp) : 1;
     R.filter(r=>r.papel==="quadro" && r.circ.length).forEach(r=>{ const q = achar(r.q.nome), il = [], aq = [], ar = [], mo = [];
@@ -7537,7 +7554,9 @@ async function rvAcao(a){
   const comCabo = (x, nomeQ) => { if(num(x.caboProj) > 0) return x; const a = alCalc0[achar(nomeQ)?.id]; if(!a) return x; doCalc++;   // sem cabo no Revit: o calculado em Alimentadores
     return {...x, caboProj: a.S, caboN: a.S, caboT: a.PE, disj: a.In || x.disj, caboDoCalc: true}; };
   Rq.forEach(r=>{ const fq = achar(r.q.nome);
-    r.alim.forEach(c=>{ if((RV.papel?.[impNorm(c.quadro)] || "quadro")!=="quadro") return; novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador`, alim: true, qid: fq.id}, c.quadro)); }); });
+    r.alim.forEach(c=>{ if(!["quadro","qta"].includes(RV.papel?.[impNorm(c.quadro)] || "quadro")) return; novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador`, alim: true, qid: fq.id}, c.quadro)); }); });
+  if(rQta) rQta.alim.forEach(c=>{ if(papel(c.quadro)!=="quadro") return; const gp = rQta.pai && papel(rQta.pai)==="quadro" ? achar(rQta.pai) : null;
+    novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador (${String(rQta.q.nome).trim()})`, alim: true, qid: gp ? gp.id : ""}, c.quadro)); });
   R.filter(r=>r.papel==="entrada").forEach(r=>r.alim.forEach(c=>{ if((RV.papel?.[impNorm(c.quadro)] || "quadro")!=="quadro") return;
     novos.push(comCabo({...rvCirc(c), nome: `${String(c.quadro).trim()} · alimentador (${String(r.q.nome).trim()})`, alim: true, qid: ""}, c.quadro)); }));
   const nomesNovos = new Set(novos.map(c=>impNorm(c.nome)));
@@ -7548,7 +7567,7 @@ async function rvAcao(a){
   if(apagar){ const fora = new Set(brancos.filter(q=>dmVazio(q)).map(q=>q.id)); D.quadros = D.quadros.filter(q=>!fora.has(q.id)); if(fora.has(DM.sel)) DM.sel = D.quadros[0]?.id;
     if(fora.size) RV_cargasMsg += ` · ${brancos.filter(q=>fora.has(q.id)).map(q=>q.nome).join(", ")} apagado${fora.size>1?"s":""}`; }
   const falta = novos.filter(c=>!c.comp).length; RV = null; rvRender(); renderCmxLista(); if(S.modulo==="dem") renderDem(); resumo(); salvar();
-  aviso(`${Rq.length} quadro${Rq.length!==1?"s":""} importado${Rq.length!==1?"s":""} · ${novos.length} alimentador${novos.length!==1?"es":""} em Comprimento de circuitos${doCalc ? ` (${doCalc} sem cabo no Revit: usado o cabo e o disjuntor de Alimentadores)` : ""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
+  aviso(`${Rq.length} quadro${Rq.length!==1?"s":""} importado${Rq.length!==1?"s":""} · ${novos.length} alimentador${novos.length!==1?"es":""} em Comprimento de circuitos${qtaMsg}${doCalc ? ` (${doCalc} sem cabo no Revit: usado o cabo e o disjuntor de Alimentadores)` : ""}${RV_cargasMsg}${falta?` (${falta} sem comprimento)`:""}${criados?` · ${criados} quadro${criados!==1?"s":""} criado${criados!==1?"s":""} no Cálculo de demanda`:""}`);
 }
 // app → Revit: {formato:"equiper-dimensionamento", versao:1, cliente, revisao, aprovado, aprovadoPor, dataAprovacao, gerado,
 //   quadros:[{nome, alimentadoPor, correnteDemanda, ok, avisos, alimentador:{fase, neutro, terra, paralelos, polos, disjuntor, eletroduto, texto, comprimento, quedaTrecho, quedaAcumulada, autotrafo}}]}
@@ -7587,9 +7606,10 @@ function alDadosRevit(){
   let st = null; try{ st = apvSituacao("ali"); }catch(e){}
   const u = st?.u, aprov = !!(st && st.aprovada && !st.alterada);
   const n2 = v => v==null || !isFinite(v) ? null : Math.round(v*100)/100;
-  const quadros = its.map(it=>{ const x = it.res, p = it.p, pai = dmPai(it.q), at = !!(p.at && !p.at.erro), ok = !it.semCond && !!x?.p && alNum(x.p.S);
-    let Idem = null; try{ Idem = calcDemQ(it.q.id)?.I; }catch(e){}
-    return {nome: it.q.nome || "", alimentadoPor: pai?.nome || "", correnteDemanda: n2(Idem), ok: !!it.ok,
+  const qtaRv = String(S.dem.qtaRevit || "").trim();              // QTA que veio do Revit como painel: volta com o mesmo nome, entre quem o alimenta e o quadro atendido
+  const quadros = its.filter(it=>!it.q.virt || (it.q.virt==="rede" && qtaRv)).map(it=>{ const x = it.res, p = it.p, pai = dmPai(it.q), at = !!(p.at && !p.at.erro), ok = !it.semCond && !!x?.p && alNum(x.p.S);
+    let Idem = null; try{ Idem = it.q.virt ? it.r?.I : calcDemQ(it.q.id)?.I; }catch(e){}
+    return {nome: it.q.virt ? qtaRv : it.q.nome || "", alimentadoPor: it.aposQta && qtaRv ? qtaRv : pai?.nome || "", correnteDemanda: n2(Idem), ok: !!it.ok,
       avisos: (it.avisos || []).slice(0, 6),
       alimentador: ok ? {fase: x.p.S, neutro: x.p.S, terra: alNum(x.PE) ? x.PE : null, paralelos: p.npar || 1, polos: it.nF || 3,
         disjuntor: p.jus?.InMont > 0 ? p.jus.InMont : alNum(p.In) && p.In > 0 ? p.In : (alNum(x.In) ? x.In : null), ...(p.jus ? {disjuntorJusante: alNum(p.In) && p.In > 0 ? p.In : null} : {}), eletroduto: it.duto?.res?.txt ? `${it.duto.res.txt} ${dutoNome(it.duto.tipo).toLowerCase()}` : "",
@@ -8852,7 +8872,7 @@ function alMotVer(x, p, mont){
 // outros quadros durante a partida (6.5.1.2.1 b): queda permanente + parcela da partida nos alimentadores comuns
 function alMotOutros(its){
   const por = Object.fromEntries(its.map(it=>[it.q.id, it]));
-  const cam = it => { const c = []; let q = it.q; while(q){ c.push(q.id); q = dmPai(q); } return c; };
+  const ctxQ = alQtaCtx(), cam = it => { const c = []; let q = it.q; while(q){ c.push(q.id); if(alQtaAntes(q, ctxQ)) c.push(AL_QTA.rede); q = dmPai(q); } return c; };
   its.filter(it=>it.p.mot && !it.p.mot.erro && it.res?.motPart).forEach(M=>{
     const m = M.p.mot, cm = cam(M), k = m.fases==="tri" ? Math.sqrt(3) : 2, extraDe = {};
     const Vref = M.p.V, Iref = M.p.at?.tipo==="ele" && !M.p.at.erro ? m.Ipart*m.V/Vref : m.Ipart;
@@ -9054,16 +9074,28 @@ function alItem(q, r, T, mont){
   if(it.semCond){ it.cond = "—"; it.criterio = ""; }
   return it;
 }
+/* ---- QTA: dois alimentadores a mais (rede → QTA e gerador → QTA); o quadro atendido passa a ser alimentado pelo QTA ----
+   Os dados de cada trecho ficam em S.dem.qtaAl.rede / .ger (mesmos campos de q.al). Os "quadros" abaixo são virtuais (não entram em S.dem.quadros). */
+const AL_QTA = {rede:"__qta_rede", ger:"__qta_ger"};
+function alQtaCtx(){ const D = S.dem; if(!D.gerador) return null; const G = dmGerDisj(); if(!G) return null;
+  const rz = dmRaizes(), gq = D.quadros.find(q=>q.id===D.gerQ) || rz[0]; if(!gq) return null;
+  return {G, gq, rz, topo: rz.some(q=>q.id===gq.id)}; }
+function alQtaQ(tipo, cria, ctx){ const D = S.dem, c = ctx || alQtaCtx(); if(!c) return null;
+  if(cria){ if(!D.qtaAl || typeof D.qtaAl!=="object") D.qtaAl = {}; D.qtaAl[tipo] = D.qtaAl[tipo] || {}; }
+  return {...c.gq, id: AL_QTA[tipo], nome: tipo==="ger" ? "QTA (gerador)" : "QTA", iguais:1, pai: tipo==="ger" || c.topo ? "" : c.gq.pai, al: (D.qtaAl && D.qtaAl[tipo]) || {}, virt: tipo}; }
+function alQPorId(id){ return id===AL_QTA.rede ? alQtaQ("rede", true) : id===AL_QTA.ger ? alQtaQ("ger", true) : S.dem.quadros.find(x=>x.id===id); }
+const alQtaAntes = (q, ctx) => !!ctx && !!q && !q.virt && (ctx.topo ? !dmPai(q) : q.id===ctx.gq.id);   // o trecho rede → QTA vem antes deste quadro
 function alItens(){
   const D = S.dem, T = concDe(D.conc)?.t; if(!T) return [];
   const R = Object.fromEntries(D.quadros.map(q=>[q.id, calcDemQ(q.id)]));
   const acc = {};                                           // queda acumulada e impedância desde a origem, quadro a quadro (pais antes dos filhos)
   let o = null; if(icAtivo()){ const x = icOrigem(); if(x && !x.erro) o = x; }
-  const its = dmOrdem().map(({q, nivel})=>{ const pai = dmPai(q), m0 = pai ? (acc[pai.id] || {dv:0, ok:false}) : {dv:0, ok:true};
-    const zp = o ? (pai ? acc[pai.id]?.z || null : {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX}) : null, m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null, zs: pai ? (acc[pai.id]?.zs || 0) : 0};
+  const its = [], ctx = alQtaCtx();
+  const um = (q, r, nivel, m0, zp) => {
+    const m = {...m0, ik: zp ? icIk(o, zp.R, zp.X) : null, zs: m0.zs || 0};
     if(q.al?.jusOn && o && zp){ m.jusO = o; m.jusZp = zp; }
-    const it = alItem(q, R[q.id], T, m); it.nivel = nivel;
-    Object.defineProperty(it, "_sim", {value:{r:R[q.id], T, mont:m}, enumerable:false});   // para simular alternativas quando o alimentador não atende
+    const it = alItem(q, r, T, m); it.nivel = nivel;
+    Object.defineProperty(it, "_sim", {value:{r, T, mont:m}, enumerable:false});   // para simular alternativas quando o alimentador não atende
     let z = null;
     if(zp){ const x = it.res, L = it.p.L, n = it.p.npar || 1;
       if(it.atZ){ const c = it.atZ; z = {R: zp.R + c.R, X: zp.X + c.X, nR: zp.nR + c.nR, nX: zp.nX + c.nX, pR: zp.pR + c.pR, pX: zp.pX + c.pX};
@@ -9077,14 +9109,29 @@ function alItens(){
     else if(o) it.icFalta = "falta o quadro a montante";
     it.icZPai = zp; it.icZ = z;
     acc[q.id] = {...(it.dvTrecho!=null ? {dv: m0.dv + it.dvTrecho, ok: m0.ok} : {dv: m0.dv, ok:false}), z, zs: m.zs + ((it.zsEq ?? alZs(it.res, it.p)) || 0)};
-    return it; });
+    its.push(it); return it; };
+  const orig = () => o ? {R:o.R, X:o.X, nR:o.lR, nX:o.lX, pR:o.lR, pX:o.lX} : null;
+  dmOrdem().forEach(({q, nivel})=>{ const pai = dmPai(q), antes = alQtaAntes(q, ctx);
+    if(antes && !acc[AL_QTA.rede]){                                     // rede → QTA e gerador → QTA, logo antes do quadro atendido
+      const rr = R[ctx.gq.id] || {}, varios = ctx.topo && ctx.rz.length > 1, soma = k => ctx.rz.reduce((t, z)=>t + (R[z.id]?.[k] || 0), 0);
+      const paiQ = ctx.topo ? null : dmPai(ctx.gq), mR = paiQ ? (acc[paiQ.id] || {dv:0, ok:false}) : {dv:0, ok:true};
+      um(alQtaQ("rede", false, ctx), {...rr, I: varios ? soma("I") : rr.I, Dt: varios ? soma("Dt") : rr.Dt, disj: ctx.G.rede.v || rr.disj, polos: ctx.G.pol}, nivel, mR, o ? (paiQ ? acc[paiQ.id]?.z || null : orig()) : null).virt = "rede";
+      const ig = um(alQtaQ("ger", false, ctx), {...rr, I: ctx.G.Ig, Dt: num(D.gerKva), disj: ctx.G.ger.v, polos: ctx.G.pol, agr:null, t15:null, t16:null, lmb:null, acima:false}, nivel, {dv:0, ok:true}, null);
+      ig.virt = "ger"; ig.nome = "Gerador → QTA"; if(ig.icFalta) ig.icFalta = "alimentado pelo gerador (a Icc da rede não se aplica)";
+      if(!(ctx.G.Ig > 0)) ig.erro = "Informe a potência do gerador (kVA) no Cálculo de demanda para calcular este cabo.";
+    }
+    const ant = antes ? acc[AL_QTA.rede] : pai ? acc[pai.id] : null;
+    const it = um(q, R[q.id], nivel, ant || (pai || antes ? {dv:0, ok:false} : {dv:0, ok:true}), o ? (pai || antes ? ant?.z || null : orig()) : null);
+    if(antes){ it.nome = `QTA → ${q.nome || "—"}`; it.aposQta = true;
+      if(!pai && !ant?.ok && !it.erro) it.avisos.push("Falta o comprimento (ou a seção) do trecho até o QTA: a queda acumulada deste quadro está incompleta."); }
+  });
   alMotOutros(its);
   return its;
 }
 function alRotulos(){                                      // texto dos cabos no diagrama do cálculo de demanda
   if(alPad("diag")===false || !concDe(S.dem.conc)?.t) return null;
   const out = {}; alItens().forEach(it=>{ if(!it.res || !(it.p.L > 0)) return;
-    out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond}${it.p.at && !it.p.at.erro ? "" : " mm²"}`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${fmt(it.p.L)} m · ΔV ${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) + "%" + (dmPai(it.q) && it.dvAcum!=null ? ` (acum. ${fmt(it.dvAcum*100,2)}%)` : "") : "—"}`, ok: it.ok}; });
+    out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond}${it.p.at && !it.p.at.erro ? "" : " mm²"}`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${fmt(it.p.L)} m · ΔV ${it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) + "%" + ((dmPai(it.q) || it.p.dvMont > 0) && it.dvAcum!=null ? ` (acum. ${fmt(it.dvAcum*100,2)}%)` : "") : "—"}`, ok: it.ok}; });
   return Object.keys(out).length ? out : null;
 }
 const alSel = (k, val, ops, padTxt) => `<select data-af="${k}">${padTxt!=null ? `<option value="">${esc(padTxt)}</option>` : ""}${ops.map(([v,t,d])=>`<option value="${v}" ${String(val)===String(v)?"selected":""} ${d?"disabled":""}>${esc(t)}</option>`).join("")}</select>`;
@@ -9355,7 +9402,7 @@ function atualizarAli(its){
 }
 const AL_DG = {R:null, rot:null};                            // último diagrama dos alimentadores (para redesenhar ao arrastar sem recalcular)
 function alRotulosDe(its){ const out = {}; its.forEach(it=>{ if(!it.res || it.erro) return;
-  out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond}${it.p.at && !it.p.at.erro ? "" : " mm²"}`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${it.p.L > 0 ? fmt(it.p.L) + " m · ΔV " + (it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) + "%" + (dmPai(it.q) && it.dvAcum!=null ? ` (acum. ${fmt(it.dvAcum*100,2)}%)` : "") : "—") : "sem comprimento"}`, ok: it.ok}; }); return out; }
+  out[it.q.id] = it.semCond ? {l1:"sem dimensionamento", l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef==="-" ? "método não permitido" : it.res.aviso ? "disposição sem dados" : `método ${it.metRef} sem tabela`}`, ok:false} : {l1:`${it.cond}${it.p.at && !it.p.at.erro ? "" : " mm²"}`, l2:`${AL_MOD[it.p.modelo-1].cur} · ${it.metRef} · ${it.p.L > 0 ? fmt(it.p.L) + " m · ΔV " + (it.dvTrecho!=null ? fmt(it.dvTrecho*100,2) + "%" + ((dmPai(it.q) || it.p.dvMont > 0) && it.dvAcum!=null ? ` (acum. ${fmt(it.dvAcum*100,2)}%)` : "") : "—") : "sem comprimento"}`, ok: it.ok}; }); return out; }
 function alTabela(its, cls){
   return `<table class="${cls}"><thead><tr><th>Alimentador</th><th>Sistema</th><th class="n">Ib (A)</th><th class="n">In (A)</th><th class="n">L (m)</th><th>Método</th><th>Cabo</th><th>Condutores (mm²)</th><th class="n">Iz (A)</th><th class="n">ΔV trecho (%)</th><th class="n">ΔV acumulada (%)</th><th>Situação</th></tr></thead><tbody>
     ${its.map(it=>{ const x = it.res, p = it.p; return `<tr class="${it.ok?"":"falha"}"><td>${esc(it.nome)}${dmIguais(it.q)>1?` <b>×${dmIguais(it.q)}</b>`:""}</td><td>${({tri:"3F+N",bi:"2F+N",mono:"F+N"})[p.fases]} ${esc(p.tensTxt)}</td><td class="n">${p.Ib>0?fmt(p.Ib,1):"—"}${p.IbDem?` <small>(disj.; demanda ${fmt(p.IbDem,1)})</small>`:""}</td><td class="n">${p.at && !p.at.erro ? fmt(p.In) : x&&alNum(x.In)?fmt(x.In):"—"}${p.jus ? `<br><small>mont. ${p.jus.InMont > 0 ? fmt(p.jus.InMont) : "—"}</small>` : ""}</td><td class="n">${p.L>0?fmt(p.L,1):"—"}</td>
@@ -9456,16 +9503,16 @@ function ligarAli(){
   const valor = el => el.type==="checkbox" ? el.checked : el.value;
   M.addEventListener("input", e=>{ const t = e.target;
     if(t.dataset.alc && t.tagName==="INPUT" && t.type!=="checkbox"){ alCfg()[t.dataset.alc] = t.value; alt(); return; }
-    if(t.dataset.af && t.tagName==="INPUT" && t.type!=="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; if(t.dataset.af==="dext") q.al.dextS = t.dataset.sec; alt(); return; }
+    if(t.dataset.af && t.tagName==="INPUT" && t.type!=="checkbox"){ const q = alQPorId(t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.value; if(t.dataset.af==="dext") q.al.dextS = t.dataset.sec; alt(); return; }
     if(t.id==="al-doc" || t.id==="al-rev" || t.id==="al-obs"){ alCfg()[t.id.slice(3)] = t.value; salvar(); }
   });
   M.addEventListener("change", e=>{ const t = e.target;
     if(t.dataset.alc && (t.tagName==="SELECT" || t.type==="checkbox")){ alCfg()[t.dataset.alc] = valor(t); tudo(); return; }
-    if(t.dataset.af && t.tagName==="SELECT"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return;
+    if(t.dataset.af && t.tagName==="SELECT"){ const q = alQPorId(t.closest("[data-alq]")?.dataset.alq); if(!q) return;
       (q.al = q.al || {})[t.dataset.af] = t.value; if(t.dataset.af==="modelo") delete q.al.sec;
       if(t.dataset.af==="atVsel"){ if(t.value==="outra") q.al.atV = ""; else q.al.atV = t.value; }
       tudo(); return; }
-    if(t.dataset.af && t.type==="checkbox"){ const q = S.dem.quadros.find(x=>x.id===t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.checked; tudo(); return; }
+    if(t.dataset.af && t.type==="checkbox"){ const q = alQPorId(t.closest("[data-alq]")?.dataset.alq); if(!q) return; (q.al = q.al || {})[t.dataset.af] = t.checked; tudo(); return; }
     if(t.id==="al-mem-sel") atualizarAli();
   });
   M.addEventListener("click", e=>{
@@ -9473,7 +9520,7 @@ function ligarAli(){
     if(e.target.closest("#al-ele")){ alLevarEle(); return; }
     if(e.target.closest("#al-revit")){ alExportarRevit(); return; }
     const ap = e.target.closest("[data-alapl]");
-    if(ap){ const q = S.dem.quadros.find(x=>x.id===ap.closest("[data-alq]")?.dataset.alq); if(!q) return; const mud = JSON.parse(ap.dataset.alapl); q.al = q.al || {};
+    if(ap){ const q = alQPorId(ap.closest("[data-alq]")?.dataset.alq); if(!q) return; const mud = JSON.parse(ap.dataset.alapl); q.al = q.al || {};
       Object.entries(mud).forEach(([k,v])=>{ if(v===null) delete q.al[k]; else q.al[k] = v; }); tudo(); return; }
     const g = e.target.closest("#al-diag [data-alq]"); if(g && Date.now() < (DM.semCliqueAte || 0)) return;
     if(g){ const cxA = $("al-diag-caixa"); if(document.fullscreenElement===cxA) document.exitFullscreen?.(); if(cxA.classList.contains("cheio")){ cxA.classList.remove("cheio"); $("al-cheio").textContent = "⛶ Tela cheia"; } }
@@ -11038,7 +11085,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
   const hib = D.hib && D.quadros.some(q=>q.id===D.hibQ) ? D.hibQ : null, placas = hib && D.hibPlacas;
   const temHibIrmao = q => !!hib && q.id!==hib && (D.quadros.find(x=>x.id===hib)?.pai||"") === (q.pai||"");
   const raizIds = new Set(dmRaizes().map(q=>q.id));
-  const GG = dmGerDisj(), GAPG = 74;
+  const GG = dmGerDisj(), GAPG = 74, GQ = 64;                 // GQ: vão entre o quadro e o QTA abaixo dele (cabe o cabo QTA → quadro)
   const qtaNo = D.gerador && D.gerQ && D.quadros.some(q=>q.id===D.gerQ) && !raizIds.has(D.gerQ) ? D.gerQ : null, qtaTopo = D.gerador && !qtaNo;
   const fvQ = D.fv && D.quadros.some(q=>q.id===D.fvLig) ? D.fvLig : null, fvNoQtaNo = D.fv && D.fvLig==="qta" && !!qtaNo;
   const fvNoQta = D.fv && qtaTopo && D.fvLig==="qta", fvEnt = D.fv && !fvNoQta && !fvNoQtaNo && !fvQ;
@@ -11048,7 +11095,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
   const arr = (q, mult, prof, pai) => { if(vis.has(q.id)) return null; vis.add(q.id); mult *= dmIguais(q);
     const n = {q, mult, prof, pai, fs:[]};
     n.esq = Math.max(q.id===hib ? WI + GI + (placas ? 46 : 0) : 0, q.id===qtaNo && fvNoQtaNo ? WS + 34 : 0);
-    n.dir = Math.max(q.id===qtaNo ? WS + 30 + GAPG : 0, q.id===fvQ ? WS + 34 : 0, mult>1 ? 16 : 0);
+    n.dir = Math.max(q.id===qtaNo ? WS + 30 + GAPG + (AL && AL.__qta_ger ? 10 + Math.max(AL.__qta_ger.l1.length*6.6, AL.__qta_ger.l2.length*5.7) : 0) : 0, q.id===fvQ ? WS + 34 : 0, mult>1 ? 16 : 0);
     n.fs = dmFilhos(q.id).map(f=>arr(f, mult, prof+1, n)).filter(Boolean);
     if(n.fs.length) n.x = (n.fs[0].x + n.fs[n.fs.length-1].x)/2; else { n.x = cur + n.esq; cur = n.x + W + n.dir + GX; }
     nos.push(n); return n; };
@@ -11069,7 +11116,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
   // 4 · alturas: abaixo da caixa ficam a chave by-pass (híbrido) e o QTA (gerador antes do quadro)
   const abaixo = n => { let b = 0;
     if(n.q.id===hib) b = Math.max(40 + HC, 40 + HC/2 + HI/2 + 34 + HB);
-    if(n.q.id===qtaNo) b = Math.max(b, (n.q.id===hib ? 40 + HC : 0) + 40 + HQ);
+    if(n.q.id===qtaNo) b = Math.max(b, (n.q.id===hib ? 40 + HC : 0) + GQ + HQ);
     return b; };
   const altLin = Array.from({length:nLin}, (_, l)=>Math.max(niveis.length ? 120 : 0, ...nos.filter(n=>n.lin===l).map(n=>TOPO + H + abaixo(n) + VAO)));
   const topoLin = []; let acc = 0; for(let l = nLin-1; l >= 0; l--){ topoLin[l] = acc; acc += altLin[l]; }
@@ -11092,6 +11139,8 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
         <text x="${x+(WS+30)/2}" y="${yC+31}" class="t3 no">validar com o fornecedor</text></g>`; };
   const djH = (xa, xb, yc, d) => { if(!GG || !d || !d.v) return ""; const xm = xa + 17; return `<g><rect x="${xm-7}" y="${yc-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${xm-7} ${yc+7} L${xm+7} ${yc-7}" class="lig"/><text x="${xa+9}" y="${yc-12}" class="dj" style="text-anchor:start">${GG.pol} ${d.v} A</text></g>`; };
   const djV = (cx, yc, d, lado) => { if(!GG || !d || !d.v) return ""; B(cx-62, yc-9, 72, 18); return `<g><rect x="${cx-7}" y="${yc-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${cx-7} ${yc+7} L${cx+7} ${yc-7}" class="lig"/><text x="${cx-12}" y="${yc+4}" class="dj" style="text-anchor:end">${GG.pol} ${d.v} A</text></g>`; };
+  const rotAl = (id, xl, yl) => { const al = AL && AL[id]; if(!al) return ""; B(xl, yl - 11, Math.max(al.l1.length*6.6, al.l2.length*5.7), 30);   // cabos dos trechos do QTA (rede → QTA e gerador → QTA)
+    return `<text x="${xl}" y="${yl}" class="al1 ${al.ok?"":"no"}">${esc(al.l1)}</text><text x="${xl}" y="${yl+14}" class="al2 ${al.ok?"":"no"}">${esc(al.l2)}</text>`; };
   const caixaQta = (x, y) => { B(x, y, W, HQ); return `<g><rect x="${x}" y="${y}" width="${W}" height="${HQ}" rx="4" fill="#fff" stroke="#000" stroke-width="2.5"/><text x="${x+W/2}" y="${y+24}" class="t1">QTA</text><text x="${x+W/2}" y="${y+42}" class="t3">transferência automática</text></g>`; };
   // entrada (grupo arrastável)
   {
@@ -11100,13 +11149,13 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
     g.push(`<rect x="${ent.x}" y="${ent.y}" width="${W}" height="${H}" rx="4" fill="#000"/><text x="${cx}" y="${ent.y+34}" class="t1 inv">Entrada · medidor</text><text x="${cx}" y="${ent.y+56}" class="t2 inv">${esc(c?.nome?.replace(/ \(.*\)$/,"")||"")}</text>`);
     if(fvEnt){ const xf = ent.x + W + 40; g.push(`<path d="M${ent.x+W} ${ent.y+H/2} H${xf}" class="lig"/>${caixaFV(xf, ent.y+H/2)}`); }
     if(qtaTopo){ const yQ = ent.yQ, xg = ent.x + W + GAPG;
-      g.push(`<path d="M${cx} ${ent.y} V${yQ+HQ}" class="lig"/>${caixaQta(ent.x, yQ)}<path d="M${ent.x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(ent.x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, yQ+HQ+17, GG?.rede)}`);
+      g.push(`<path d="M${cx} ${ent.y} V${yQ+HQ}" class="lig"/>${caixaQta(ent.x, yQ)}<path d="M${ent.x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(ent.x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, yQ+HQ+17, GG?.rede)}${rotAl("__qta_rede", cx+12, yQ+HQ+16)}${rotAl("__qta_ger", xg+WS+30+10, yQ+HQ/2-3)}`);
       if(fvNoQta){ const xf = ent.x - 40 - WS; g.push(`<path d="M${ent.x} ${yQ+HQ/2} H${xf+WS}" class="lig"/>${caixaFV(xf, yQ+HQ/2)}`); } }
     out.push(`<g ${interativo?'data-dmdrag="ent" class="dm-arr"':""}>${g.join("")}</g>`);
     ent.saida = {x: cx, y: qtaTopo ? ent.yQ : ent.y, caixa: qtaTopo ? {x:ent.x, y:ent.yQ, w:W, h:HQ} : {x:ent.x, y:ent.y, w:W, h:H}};
   }
   // ponto de chegada da alimentação de cada quadro (o elemento mais baixo dele: QTA, chave by-pass ou a própria caixa)
-  const yByp = n => n.y + H + 40, yQta = n => n.y + H + (n.q.id===hib ? 40 + HC : 0) + 40;
+  const yByp = n => n.y + H + 40, yQta = n => n.y + H + (n.q.id===hib ? 40 + HC : 0) + GQ;
   const chegada = n => n.q.id===qtaNo ? {x:n.x, y:yQta(n), w:W, h:HQ} : n.q.id===hib ? {x:n.x, y:yByp(n), w:W, h:HC} : {x:n.x, y:n.y, w:W, h:H};
   // ligação: de cima da caixa de origem até embaixo da caixa de destino; se o destino não estiver acima, contorna pelo lado
   const liga = (o, d) => { const xo = o.x + o.w/2, yo = o.y, xd = d.x + d.w/2, yd = d.y + d.h;
@@ -11136,7 +11185,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
     }
     if(n.q.id===qtaNo){                                      // QTA logo abaixo do quadro (antes dele na alimentação), gerador ao lado
       const yQ = yQta(n), ateY = n.q.id===hib ? yByp(n) + HC : y + H, xg = x + W + GAPG;
-      g.push(`${caixaQta(x, yQ)}<path d="M${cx} ${yQ} V${ateY}" class="lig"/><path d="M${x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, yQ+HQ+17, GG?.rede)}`);
+      g.push(`${caixaQta(x, yQ)}<path d="M${cx} ${yQ} V${ateY}" class="lig"/><path d="M${x+W} ${yQ+HQ/2} H${xg}" class="lig"/>${djH(x+W, xg, yQ+HQ/2, GG?.ger)}${caixaGer(xg, yQ+HQ/2)}${djV(cx, yQ+HQ+17, GG?.rede)}${rotAl("__qta_rede", cx+12, yQ+HQ+18)}${rotAl("__qta_ger", xg+WS+30+10, yQ+HQ/2-3)}`);
       if(fvNoQtaNo){ const xf = x - 34 - WS; g.push(`<path d="M${x} ${yQ+HQ/2} H${xf+WS}" class="lig"/>${caixaFV(xf, yQ+HQ/2)}`); }
     }
     if(n.q.id===fvQ){ const xf = x + W + 34; g.push(`<path d="M${x+W} ${y+H/2} H${xf}" class="lig"/>${caixaFV(xf, y+H/2)}`); }
@@ -11145,7 +11194,7 @@ function dmDiagrama(R, interativo, AL, clicavel){                         // dia
       g.push(`<g><rect x="${cx-7}" y="${yb-7}" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1.5"/><path d="M${cx-7} ${yb+7} L${cx+7} ${yb-7}" class="lig"/>
         <text x="${cx+12}" y="${yb+5}" class="dj">${r.polos} ${r.disj} A</text></g>`); B(cx, yb, 80, 8); }
     const al = AL && AL[n.q.id];                             // cabos do alimentador (aba Alimentadores)
-    if(al){ const ch = chegada(n), yl = ch.y + ch.h + (ch.y===y && r && r.disj ? 32 : 18), xl = cx + 12;
+    if(al){ const ch = n.q.id===qtaNo && n.q.id!==hib ? {x:n.x, y:n.y, w:W, h:H} : chegada(n), yl = ch.y + ch.h + (ch.y===y && r && r.disj ? 32 : 18), xl = cx + 12;
       g.push(`<text x="${xl}" y="${yl}" class="al1 ${al.ok?"":"no"}">${esc(al.l1)}</text><text x="${xl}" y="${yl+14}" class="al2 ${al.ok?"":"no"}">${esc(al.l2)}</text>`);
       B(xl, yl - 11, Math.max(al.l1.length*6.6, al.l2.length*5.7), 30); }
     const avs = (r && r.avisos) || [], adotadoOk = !!(r && r.acima && num(r.disj) > 0 && num(r.disj) >= r.I - 1e-9);   // acima da tabela, mas o disjuntor escolhido cobre a corrente de demanda
